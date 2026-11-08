@@ -45,11 +45,15 @@ window.BHHome = (function () {
       for (var k = 0; k < tiles.length; k++) {
         tiles[k].className = tiles[k].className.replace(/ (focus|playing)/g, '');
         if (i === r && k === c) tiles[k].className += ' focus';
-        if (row.kind === 'radio' && row.items[k].id === playingId) tiles[k].className += ' playing';
+        if (row.kind === 'radio') {
+          var on = row.items[k].id === playingId;
+          if (on) tiles[k].className += ' playing';
+          tiles[k].querySelector('small').textContent = (on ? 'Läuft · ' : '') + (row.items[k].sub || '');
+        }
       }
       var first = tiles[0];
       if (first) {
-        var w = first.offsetWidth + 22; var shift = i === r ? Math.max(0, c - 3) : 0;
+        var w = first.offsetWidth + 22; var shift = i === r ? (row.shift = Math.max(0, c - 3)) : (row.shift || 0);
         row.el.querySelector('.track').style.transform = 'translateX(' + (-shift * w) + 'px)';
       }
     });
@@ -76,7 +80,7 @@ window.BHHome = (function () {
 
   function setPlaying(id) {
     playingId = id;
-    if (id && rows[0] && rows[0].kind === 'radio') {
+    if (id && !tuneTimer && rows[0] && rows[0].kind === 'radio') {
       for (var i = 0; i < rows[0].items.length; i++) if (rows[0].items[i].id === id && r === 0) c = i;
     }
     paint();
@@ -90,8 +94,12 @@ window.BHHome = (function () {
   // Laeuft das Radio, wechseln Links und Rechts direkt den Sender (kurz verzoegert, damit man durchblaettern kann).
   function move(dr, dc) {
     if (!rows.length) return;
+    var slot = c - (rows[r].shift || 0);
     r = Math.max(0, Math.min(rows.length - 1, r + dr));
-    var from = dr ? Math.min(c, rows[r].items.length - 1) : c;
+    var from = dr ? Math.min(rows[r].items.length - 1, (rows[r].shift || 0) + slot) : c;
+    if (dr && rows[r].kind === 'radio' && api.isRadioOn()) {
+      for (var j = 0; j < rows[r].items.length; j++) if (rows[r].items[j].id === playingId) from = j;
+    }
     // Beim Radio immer vom laufenden Sender aus weiterblaettern.
     if (dc && rows[r].kind === 'radio' && api.isRadioOn() && !tuneTimer) {
       for (var i = 0; i < rows[r].items.length; i++) if (rows[r].items[i].id === playingId) from = i;
@@ -114,6 +122,15 @@ window.BHHome = (function () {
 
   tick(); setInterval(tick, 5000);
   weather(); setInterval(weather, 900000);
+  // Naechster Sender vom laufenden aus, ohne Menue (beim Video).
+  api.step = function (dir) {
+    var row = rows[0]; if (!row || row.kind !== 'radio') return null;
+    var at = -1;
+    for (var i = 0; i < row.items.length; i++) if (row.items[i].id === playingId) at = i;
+    var next = at < 0 ? 0 : (at + dir + row.items.length) % row.items.length;
+    playingId = row.items[next].id; r = 0; c = next; paint();
+    return row.items[next];
+  };
   api.setMenu = setMenu; api.setPlaying = setPlaying;
   return api;
 })();

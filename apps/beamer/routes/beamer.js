@@ -33,11 +33,21 @@ function buildRouter() {
     res.json({ zustand, now });
   });
 
-  async function playMood(mood) {
-    await stopRadioFirst();
-    await play('beamer_play_youtube', { video: mood.video }, { kind: 'mood', id: mood.id, label: mood.label });
+  // Läuft schon Radio oder eine Stimmung, kommt das Neue dazu: Feuer knistert, Radio spielt.
+  const currentRadio = () => (now?.kind === 'radio' ? byId(STATIONS, now.id) : now?.radio ? byId(STATIONS, now.radio.id) : null);
+  function ambient(mood, station) {
+    const args = { video: mood.video, title: mood.label, ...(station ? { radio_url: station.url, station: station.label } : {}) };
+    const next = { kind: 'mood', id: mood.id, label: station ? `${mood.label} + ${station.label}` : mood.label, ...(station ? { radio: { id: station.id, label: station.label } } : {}) };
+    return play('beamer_play_ambient', args, next);
   }
-  const playStation = (station) => play('beamer_play_radio', { url: station.url, title: station.label }, { kind: 'radio', id: station.id, label: station.label });
+  const playMood = (mood) => ambient(mood, currentRadio());
+  const playOnlyRadio = (station) => play('beamer_play_radio', { url: station.url, title: station.label }, { kind: 'radio', id: station.id, label: station.label });
+  const playStation = (station) => (now?.kind === 'mood' ? ambient(byId(MOODS, now.id), station) : playOnlyRadio(station));
+  const backToHome = async () => { await gateway.call('beamer_home'); now = null; replay = null; };
+  async function leaveMood() {
+    const station = currentRadio();
+    if (station) await playOnlyRadio(station); else await backToHome();
+  }
 
   router.post('/mood', action(async ({ id }) => {
     const mood = byId(MOODS, id);
@@ -52,8 +62,8 @@ function buildRouter() {
   }));
 
   router.post('/radio/stop', action(async () => {
-    await gateway.call('beamer_stop_radio');
-    now = null;
+    if (now?.kind === 'mood') await ambient(byId(MOODS, now.id), null);
+    else { await gateway.call('beamer_stop_radio'); now = null; }
   }));
 
   router.post('/youtube', action(async ({ video }) => {
@@ -90,11 +100,12 @@ function buildRouter() {
   }));
 
   // Stoppen je nach Inhalt: Radio in BH Screen beenden, alles andere endet mit dem Sprung auf die Startseite.
-  router.post('/stop', action(async () => {
+  async function stopAll() {
     if (now?.kind === 'share') { await endShare(); return; }
     await gateway.call('beamer_home');
     now = null;
-  }));
+  }
+  router.post('/stop', action(stopAll));
 
   router.post('/share/answer', action(async ({ session }) => {
     if (typeof session !== 'string' || !/^[0-9a-f]{18}$/.test(session)) return bad('Sitzung ungültig');
@@ -125,6 +136,9 @@ function buildRouter() {
   router.commands = {
     radio: (id) => { const s = byId(STATIONS, id); return s ? playStation(s) : null; },
     mood: (id) => { const m = byId(MOODS, id); return m ? playMood(m) : null; },
+    back: () => (now?.kind === 'mood' ? leaveMood() : null),
+    stop: stopAll,
+    radiooff: () => (now?.kind === 'mood' ? ambient(byId(MOODS, now.id), null) : null),
   };
   return router;
 }

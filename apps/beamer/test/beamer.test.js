@@ -25,26 +25,31 @@ for (const w of WRITES) {
 
 test('Stimmung spielt das hinterlegte Video, fremde Kennung nicht', async () => {
   assert.equal((await post('/mood', { id: 'kamin' })).status, 200);
-  assert.deepEqual(calls[0], ['beamer_play_youtube', { video: '6VB4bgiB0yA' }]);
+  assert.equal(calls[0][0], 'beamer_play_ambient'); assert.equal(calls[0][1].video, '6VB4bgiB0yA');
   calls.length = 0;
   assert.equal((await post('/mood', { id: 'evil' })).status, 400);
   assert.equal(calls.length, 0);
 });
 
 test('Radio: Adresse kommt aus dem Katalog, eigene Adresse wird ignoriert', async () => {
+  await post('/stop'); calls.length = 0; // ohne laufende Stimmung, sonst käme das Radio dazu
   await post('/radio', { id: 'ndr2', url: 'https://boese.example/x.mp3' });
   assert.equal(calls[0][0], 'beamer_play_radio'); assert.match(calls[0][1].url, /ndr\.de/); assert.equal(calls[0][1].title, 'NDR 2');
   assert.equal((await post('/radio', { id: 'nix' })).status, 400);
 });
 
-test('Video nach Radio beendet erst das Radio und meldet, was läuft', async () => {
+test('Stimmung und Radio laufen zusammen, Zurück lässt das Radio weiterlaufen', async () => {
   await post('/radio', { id: 'ndr2' });
   calls.length = 0;
   const r = await (await post('/mood', { id: 'regen' })).json();
-  assert.deepEqual(calls.map((c) => c[0]), ['beamer_stop_radio', 'beamer_play_youtube']);
-  assert.equal(r.now.label, 'Regen am Fenster');
+  assert.equal(calls[0][0], 'beamer_play_ambient'); assert.match(calls[0][1].radio_url, /ndr/);
+  assert.equal(r.now.id, 'regen'); assert.equal(r.now.radio.id, 'ndr2');
+  assert.match(r.now.label, /Regen am Fenster \+ NDR 2/);
   const s = await (await t.call('/api/status', { as: 'u@beispiel.de' })).json();
   assert.equal(s.zustand, 'on'); assert.equal(s.now.id, 'regen');
+  calls.length = 0;
+  const near = await (await post('/radio', { id: 'fritz' })).json();
+  assert.equal(near.now.radio.id, 'fritz'); assert.equal(calls[0][1].station, 'Fritz');
 });
 
 test('Status: Ausfall des Gateways ist kein Fehler, sondern ein Zustand', async () => {
@@ -122,6 +127,18 @@ test('Ein/Aus: nur on und off, Aus räumt die Anzeige, Fehler kommt an', async (
   fail = 'Der Beamer ist trotz Ausschalt-Befehl noch an';
   const r = await post('/power', { state: 'off' });
   assert.equal(r.status, 502); assert.match((await r.json()).error, /noch an/);
+});
+
+test('Zurück am Beamer: nur Stimmung geht zum Startbild, mit Radio läuft das Radio weiter', async () => {
+  const { buildRouter } = require('../routes/beamer');
+  const { commands } = buildRouter();
+  assert.equal(await commands.back(), null);
+  await commands.mood('kamin');
+  calls.length = 0; await commands.back();
+  assert.deepEqual(calls.map((c) => c[0]), ['beamer_home']);
+  await commands.radio('ndr2'); await commands.mood('kamin');
+  calls.length = 0; await commands.back();
+  assert.deepEqual(calls.map((c) => c[0]), ['beamer_play_radio']);
 });
 
 test('Menü: Auswahl am Beamer wird ausgeführt, unbekanntes ignoriert, Menü wird gesetzt', async () => {

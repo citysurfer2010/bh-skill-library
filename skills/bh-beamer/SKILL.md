@@ -23,6 +23,7 @@ Bedient den Samsung The Premiere über das zentrale MCP-Gateway und den WireGuar
 | `beamer_play_radio` | Radiosender/Musik-Stream (https, mp3/aac) in der App BH Screen abspielen |
 | `beamer_stop_radio` | Radio beenden |
 | `beamer_share_start` / `beamer_share_answer` | Bildschirmfreigabe vermitteln (WebRTC-Angebot abgeben, Antwort des Beamers holen); Oberfläche in der App Beamer |
+| `beamer_play_ambient` | Stimmungsvideo in BH Screen, auf Wunsch mit Radio dazu; die Zurück-Taste führt zum Startbild |
 | `beamer_home` | Startbild mit Uhr, Wetter und Menü zeigen |
 | `beamer_menu_set` / `beamer_menu_requests` | Menü der App BH Screen setzen, Auswahl der Fernbedienung abholen (nutzt die App Beamer) |
 | `beamer_power` | Ein-/Ausschalten (`state: on\|off`), meldet Erfolg nur bei bestätigtem Zustand |

@@ -39,7 +39,7 @@
     $('bm-nowbar').hidden = !(scrolledPast && on && (now || pending));
     setText($('bm-nowbar-text'), pending ? `Startet: ${pending}` : now ? `Läuft: ${now.label}` : '');
     all('[data-now]').forEach((b) => {
-      const active = on && !!now && b.dataset.now === `${now.kind}:${now.id}`;
+      const active = on && !!now && (b.dataset.now === `${now.kind}:${now.id}` || (!!now.radio && b.dataset.now === `radio:${now.radio.id}`));
       b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active));
     });
   }

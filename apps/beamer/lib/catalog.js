@@ -14,6 +14,7 @@ const STATIONS = [
   { id: 'radioeins', sub: 'rbb', label: 'radioeins', url: rndfnk('rbb/radioeins') },
   { id: 'fritz', sub: 'rbb', label: 'Fritz', url: rndfnk('rbb/fritz') },
   { id: 'rbb888', sub: 'Berlin', label: 'rbb 88.8', url: rndfnk('rbb/rbb888') },
+  { id: 'jump', sub: 'MDR', label: 'MDR JUMP', url: 'https://mdr-284320-0.sslcast.mdr.de/mdr/284320/0/mp3/high/stream.mp3' },
   { id: 'dlf', sub: 'Information', label: 'Deutschlandfunk', url: 'https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3' },
   { id: 'dlfkultur', sub: 'Kultur', label: 'Deutschlandfunk Kultur', url: 'https://st02.sslstream.dlf.de/dlf/02/128/mp3/stream.mp3' },
   { id: 'ndr2', sub: 'Hamburg', label: 'NDR 2', url: 'https://icecast.ndr.de/ndr/ndr2/hamburg/mp3/128/stream.mp3' },
@@ -36,9 +37,10 @@ const publicCatalog = () => ({
 });
 
 // Menue fuer die App auf dem Beamer: Sie spielt Sender selbst und braucht darum die Adressen.
+const byIdVideo = (id) => MOODS.find((m) => m.id === id).video;
 const beamerMenu = () => ({
   radio: STATIONS.map(({ id, label, sub, url }) => ({ id, name: label.replace(/ Kultur$/, ''), sub, url })),
-  mood: publicCatalog().moods.map(({ id, label, thumb }) => ({ id, label, thumb })),
+  mood: publicCatalog().moods.map((m) => ({ id: m.id, label: m.label, thumb: m.thumb, video: byIdVideo(m.id) })),
 });
 
 module.exports = { beamerMenu, MOODS, STATIONS, APPS, KEYS, publicCatalog };
