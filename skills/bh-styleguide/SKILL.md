@@ -31,6 +31,7 @@ Nie Farben fest in den Code schreiben, immer die Tokens. Dunkel gilt automatisch
 | Getönte Fläche | `--bh-primary-soft` | `#dbeafe` | `#1e3a8a` |
 | Rahmen getönter Flächen | `--bh-primary-border` | `#93b4ee` | `#2f5aa8` |
 | Navbar | `--bh-navbar` | `#1d4ed8` | `#1e40af` |
+| Verlauf der Navbar | `--bh-navbar-gradient` | `#172554 → #1d4ed8 → #6d28d9 → #c2410c` | `#0f1f4d → #1e40af → #5b21b6 → #9a3412` |
 | Schrift auf der Navbar | `--bh-on-navbar` | `#ffffff` | `#ffffff` |
 | Akzent aktiver Tab | `--bh-navbar-accent` | `#bfdbfe` | `#bfdbfe` |
 | Seitenhintergrund | `--bh-bg` | `#f5f8fe` | `#0b1730` |
@@ -46,6 +47,8 @@ Nie Farben fest in den Code schreiben, immer die Tokens. Dunkel gilt automatisch
 | Information | `--bh-info` / `-bg` | `#1d4ed8` / `#eff5ff` | `#93c5fd` / `#16305c` |
 | Erfolg | `--bh-ok` / `-bg` | `#15803d` / `#edf9f1` | `#86efac` / `#12331f` |
 | KI-Aktionen | `--bh-magic` / `-bg` | `#6d28d9` / `#f3effe` | `#c4b5fd` / `#2a2150` |
+
+**Verlauf:** Von tiefem Blau über Violett in warmes Orange, von dunkel nach heller, 100 Grad. Nur für die Navbar und große Flächen wie Startbilder, nie für Knöpfe oder Text. Weiße Schrift muss überall mindestens 4,5:1 erreichen.
 
 **Bedeutung ist fest vergeben:** Blau ist Aktion und Marke, Grün Erfolg, Gelb Warnung, Rot Gefahr. Violett steht ausschließlich für Knöpfe und Ladezustände, die einen KI-Aufruf auslösen, und wird sparsam eingesetzt.
 

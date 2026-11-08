@@ -7,6 +7,7 @@
   --bh-on-primary: #ffffff;
   --bh-focus-ring: rgba(29, 78, 216, .16);
   --bh-navbar: #1d4ed8;
+  --bh-navbar-gradient: linear-gradient(100deg, #172554 0%, #1d4ed8 48%, #6d28d9 78%, #c2410c 100%);
   --bh-navbar-accent: #bfdbfe;
   --bh-on-navbar: #ffffff;
   --bh-on-navbar-muted: rgba(255, 255, 255, .78);
@@ -53,6 +54,7 @@ html[data-theme="dark"] {
   --bh-on-primary: #0b1730;
   --bh-focus-ring: rgba(96, 165, 250, .25);
   --bh-navbar: #1e40af;
+  --bh-navbar-gradient: linear-gradient(100deg, #0f1f4d 0%, #1e40af 50%, #5b21b6 80%, #9a3412 100%);
   --bh-navbar-accent: #bfdbfe;
   --bh-on-navbar: #ffffff;
   --bh-on-navbar-muted: rgba(255, 255, 255, .78);
