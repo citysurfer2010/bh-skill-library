@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Virtueller Bildschirm fuer Tizen Studio, nur ueber SSH-Tunnel erreichbar (noVNC auf 127.0.0.1:6080).
+#   bh-desktop start|stop|status|run <programm...>
+set -u
+case "${1:-}" in
+  start)
+    pgrep -x Xvfb >/dev/null || runuser -u tizen -- bash -c 'Xvfb :1 -screen 0 1600x1000x24 >/tmp/xvfb.log 2>&1 &'; sleep 1
+    pgrep -x fluxbox >/dev/null || runuser -u tizen -- bash -c 'DISPLAY=:1 fluxbox >/tmp/fluxbox.log 2>&1 &'
+    pgrep -x x11vnc >/dev/null || runuser -u tizen -- bash -c 'x11vnc -display :1 -localhost -nopw -forever -shared -rfbport 5901 -q >/tmp/x11vnc.log 2>&1 &'
+    pgrep -f websockify >/dev/null || runuser -u tizen -- bash -c 'websockify --web=/usr/share/novnc 127.0.0.1:6080 127.0.0.1:5901 >/tmp/novnc.log 2>&1 &'
+    sleep 1; "$0" status ;;
+  stop) pkill -f websockify; pkill -x x11vnc; pkill -x fluxbox; pkill -x Xvfb; echo "Bildschirm aus" ;;
+  status) for p in Xvfb fluxbox x11vnc websockify; do pgrep -f "$p" >/dev/null && echo "$p: laeuft" || echo "$p: aus"; done; ss -tln | grep -E ':(5901|6080) ' | awk '{print "lauscht:", $4}' ;;
+  run) shift; runuser -u tizen -- bash -c "cd /home/tizen && DISPLAY=:1 nohup $* >/tmp/app.log 2>&1 &"; echo "gestartet: $*" ;;
+  *) echo "bh-desktop start|stop|status|run <programm>"; exit 1 ;;
+esac

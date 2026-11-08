@@ -44,3 +44,4 @@ Samsung stellt Zertifikate nur über Tizen Studio aus, deshalb läuft das Paketi
 
 Danach erkennt der Skill die App und nutzt sie automatisch.
 
+Hintergründe, Grenzen und der komplette Einrichtungsweg: `BUSINESS_LOGIC.md`.

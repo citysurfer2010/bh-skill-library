@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Oeffnet Links aus Tizen-Werkzeugen im Browser des virtuellen Bildschirms, mit eigener Laufzeitumgebung des Benutzers tizen.
+export HOME=/home/tizen USER=tizen LOGNAME=tizen XDG_RUNTIME_DIR=/run/user/$(id -u) DISPLAY=${DISPLAY:-:1} GTK_A11Y=none NO_AT_BRIDGE=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1
+unset DBUS_SESSION_BUS_ADDRESS
+setsid nohup dbus-run-session -- epiphany-browser --new-window "$1" >>/tmp/browser.log 2>&1 </dev/null &
