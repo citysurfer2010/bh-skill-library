@@ -91,11 +91,16 @@ window.BHHome = (function () {
   function move(dr, dc) {
     if (!rows.length) return;
     r = Math.max(0, Math.min(rows.length - 1, r + dr));
-    c = Math.max(0, Math.min(rows[r].items.length - 1, dr ? Math.min(c, rows[r].items.length - 1) : c + dc));
+    var from = dr ? Math.min(c, rows[r].items.length - 1) : c;
+    // Beim Radio immer vom laufenden Sender aus weiterblaettern.
+    if (dc && rows[r].kind === 'radio' && api.isRadioOn() && !tuneTimer) {
+      for (var i = 0; i < rows[r].items.length; i++) if (rows[r].items[i].id === playingId) from = i;
+    }
+    c = Math.max(0, Math.min(rows[r].items.length - 1, from + dc));
     paint();
     if (dc && rows[r].kind === 'radio' && api.isRadioOn()) {
       clearTimeout(tuneTimer);
-      tuneTimer = setTimeout(choose, 500);
+      tuneTimer = setTimeout(function () { tuneTimer = null; choose(); }, 500);
     }
   }
 

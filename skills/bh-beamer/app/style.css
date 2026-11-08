@@ -26,7 +26,7 @@ body.audio #playing { display: flex; }
 .row h2 { margin: 0 0 14px; font-size: 38px; font-weight: 700; color: #0f1f3d; }
 .track { white-space: nowrap; transition: transform 160ms ease-out; }
 .tile { display: inline-block; vertical-align: top; margin-right: 22px; box-sizing: border-box; border-radius: 16px; background: #fff; color: #0f1f3d; font-size: 34px; font-weight: 700; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); border: 6px solid transparent; overflow: hidden; transition: transform 120ms ease-out; }
-.tile.station { width: 310px; padding: 22px 24px; }
+.tile.station { width: 350px; padding: 22px 24px; }
 .tile.station small { display: block; margin-top: 4px; font-size: 26px; font-weight: 400; color: #566583; }
 .tile.mood { position: relative; width: 340px; height: 192px; }
 .tile.mood img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
