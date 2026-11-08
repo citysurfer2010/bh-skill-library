@@ -32,9 +32,13 @@ function mediaUrl(u) {
   return parsed.href;
 }
 
+// Medienart bestimmt Klasse und Typangabe; Radio-Streams (mp3/aac ohne Ende) laufen als Audio.
+const CLASSES = { image: ['object.item.imageItem.photo', 'image/jpeg'], audio: ['object.item.audioItem.audioBroadcast', 'audio/mpeg'], video: ['object.item.videoItem', '*'] };
+
 async function play(url, title = 'BH Platform', kind = 'video') {
   const href = mediaUrl(url);
-  const didl = `<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"><item id="0" parentID="-1" restricted="1"><dc:title>${esc(title)}</dc:title><upnp:class>${kind === 'image' ? 'object.item.imageItem.photo' : 'object.item.videoItem'}</upnp:class><res protocolInfo="http-get:*:${kind === 'image' ? 'image/jpeg' : '*'}:*">${esc(href)}</res></item></DIDL-Lite>`;
+  const [cls, mime] = CLASSES[kind] || CLASSES.video;
+  const didl = `<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"><item id="0" parentID="-1" restricted="1"><dc:title>${esc(title)}</dc:title><upnp:class>${cls}</upnp:class><res protocolInfo="http-get:*:${mime}:*">${esc(href)}</res></item></DIDL-Lite>`;
   await soap('SetAVTransportURI', `<CurrentURI>${esc(href)}</CurrentURI><CurrentURIMetaData>${esc(didl)}</CurrentURIMetaData>`);
   await soap('Play', '<Speed>1</Speed>');
 }
@@ -42,4 +46,4 @@ async function play(url, title = 'BH Platform', kind = 'video') {
 const stop = () => soap('Stop');
 async function state() { return /<CurrentTransportState>([^<]+)/.exec(await soap('GetTransportInfo'))?.[1] || 'unbekannt'; }
 
-module.exports = { play, stop, state, setFetch, esc };
+module.exports = { play, stop, state, setFetch, esc, CLASSES };
