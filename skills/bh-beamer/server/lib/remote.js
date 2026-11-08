@@ -102,7 +102,7 @@ async function press(key) {
 }
 
 // Je nach Softwarestand heisst der Browser anders; der Beamer meldet, ob der Start geklappt hat.
-const BROWSERS = ['org.tizen.browser', '3201907018807'];
+const BROWSERS = ['org.tizen.browser'];
 
 async function launchBrowser(url, waitMs = 4000) {
   let answer = () => {};

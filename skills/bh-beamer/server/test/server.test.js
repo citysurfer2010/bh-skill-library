@@ -50,16 +50,14 @@ test('TLS bleibt pruefpflichtig, Zertifikat wird verglichen', () => {
   assert.ok(o.checkServerIdentity('x', { fingerprint256: 'BB' }) instanceof Error);
 });
 
-test('Browser: naechster Name, wenn der erste nicht startet, Fehler wenn keiner geht', async () => {
+test('Browser: startet nie eine fremde App und meldet den Fehlschlag', async () => {
   const sent = [];
   r.setOpener(async (_p, onText) => {
     setImmediate(() => onText(JSON.stringify({ event: 'ms.channel.connect', data: {} })));
-    return { send: (t) => { const m = JSON.parse(t); sent.push(m.params.data.appId); setImmediate(() => onText(JSON.stringify({ event: 'ed.apps.launch', data: sent.length === 2 ? 200 : 404 }))); }, close() {} };
+    return { send: (t) => { sent.push(JSON.parse(t).params.data.appId); setImmediate(() => onText(JSON.stringify({ event: 'ed.apps.launch', data: 404 }))); }, close() {} };
   });
-  await r.launchBrowser('https://a.de/', 200);
-  assert.deepEqual(sent, ['org.tizen.browser', '3201907018807']);
-  sent.length = 5;
   await assert.rejects(r.launchBrowser('https://a.de/', 50), /nicht starten/);
+  assert.deepEqual(sent, ['org.tizen.browser']);
 });
 
 test('Anzeige: nur https, Inhalt geht mit Schreib-Schluessel an den Dienst', async () => {
