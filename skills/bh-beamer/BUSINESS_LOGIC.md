@@ -23,7 +23,7 @@ Was wir über den Samsung-Beamer (The Premiere SP-LSP7TFAX, Tizen 5.5) gelernt h
 | Radio / Musik | **Nicht per DLNA:** der Beamer lehnt Live-Streams mit Fehler 716 ab (DLF und NDR 2 getestet, auch als Video). Weg: App BH Screen spielt den Stream selbst (`beamer_play_radio`, Modus `audio`). |
 | Entwickler-App im REST-Status | Eine per `sdb` installierte App meldet immer `running:false, visible:false`, auch wenn sie läuft; ein Start der bereits laufenden App bekommt keine Antwort (Timeout). `openApp` wertet darum `true` oder Timeout nach erfolgreicher Abfrage als Erfolg. |
 | Ausschalten | Kurzer Klick auf `KEY_POWER` wirkt nicht; die Taste 3 s halten (Press/Release). Bestätigt 08.11. |
-| Einschalten | Nach etwa 15 s Standby ist der Beamer nicht mehr im Netz, Wake-on-LAN durch den Tunnel kam nicht an (getestet 08.11.). Erst testen, wenn am Beamer das Einschalten über Mobilgerät erlaubt ist. |
+| Einschalten | Wake-on-LAN (UDP 9 durch den Tunnel, `BH_BEAMER_MAC`) weckt ihn, wenn am Beamer unter Allgemein → Netzwerk → Experteneinstellungen das Einschalten über Mobilgerät und der IP-Fernzugriff an sind. Im Standby antwortet er auf nichts, auch nicht auf Ping; trotzdem kommt das Weckpaket an. Getestet 08.11.: nach 30 s Standby in 9 s wieder an. Ohne diese Einstellungen: keine Reaktion. |
 
 ## App „BH Screen“
 
