@@ -50,6 +50,9 @@ test("Gesperrter User: Sitzung endet sofort, kein neuer Login", async () => {
 test("Weiterleitung nur auf eigene Pfade", () => {
   for (const bad of ["https://evil.de", "//evil.de", "/\\evil.de", "", "javascript:x", "/a\r\nX: y"]) assert.equal(safeNext(bad), "/", bad);
   assert.equal(safeNext("/admin?x=1"), "/admin?x=1");
+  const ok = ["https://apps.beispiel.de"];
+  assert.equal(safeNext("https://apps.beispiel.de/a?b=1", ok), "https://apps.beispiel.de/a?b=1");
+  for (const bad of ["https://evil.de/", "https://apps.beispiel.de@evil.de/", "http://apps.beispiel.de/", "https://apps.beispiel.de.evil.de/"]) assert.equal(safeNext(bad, ok), "/", bad);
 });
 
 test("Einladungslink: gilt einmal, Passwortregeln greifen", async () => {
@@ -60,7 +63,8 @@ test("Einladungslink: gilt einmal, Passwortregeln greifen", async () => {
     const c = g.client();
     assert.equal((await c(`/set-password?token=${token}`)).status, 200);
     assert.equal((await c("/set-password", { form: { token, password: "kurz", confirm: "kurz" } })).status, 400);
-    assert.equal((await c("/set-password", { form: { token, password: PW, confirm: PW } })).status, 200);
+    const saved = await c("/set-password", { form: { token, password: PW, confirm: PW } });
+    assert.equal(saved.headers.get("location"), "/login?notice=saved");
     assert.equal((await c(`/set-password?token=${token}`)).status, 400);
     assert.equal((await g.login(c, "n@b.de")).status, 302);
   } finally { await g.stop(); }
@@ -91,4 +95,15 @@ test("Fremde Herkunft bei POST wird abgewiesen", async () => {
   const g = await start();
   try { assert.equal((await g.client()("/login", { form: { email: "x" }, headers: { origin: "https://evil.de" } })).status, 403); }
   finally { await g.stop(); }
+});
+
+test("Formular zum Passwort-Link sendet im Browser eine echte Herkunft", async () => {
+  const g = await start();
+  try {
+    const u = await g.addUser("n@b.de", { password: false });
+    const r = await g.client()(`/set-password?token=${g.users.issueLink(u.id, "invite")}`);
+    assert.equal(r.status, 200);
+    // Mit no-referrer senden Browser "Origin: null", die Herkunftspruefung weist das Formular dann ab.
+    assert.equal(r.headers.get("referrer-policy"), "same-origin");
+  } finally { await g.stop(); }
 });

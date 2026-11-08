@@ -19,6 +19,7 @@ export function loadConfig(env = process.env) {
     publicUrl, dataDir, google,
     port: Number(env.PORT || 3337),
     cookieDomain: env.AUTH_COOKIE_DOMAIN || undefined,
+    returnOrigins: (env.RETURN_ORIGINS || "").split(/\s+/).filter(Boolean),
     secure: publicUrl.startsWith("https://"),
     key: sessionKey(dataDir),
     fetch: globalThis.fetch,

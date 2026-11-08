@@ -26,8 +26,13 @@ export function sessions(config, users) {
   };
 }
 
-/** Nur Pfade dieser Anwendung, nie fremde Adressen. */
-export function safeNext(next) {
+/** Nur eigene Pfade oder ausdruecklich freigegebene Adressen, sonst die Startseite. */
+export function safeNext(next, origins = []) {
   const n = String(next || "");
-  return n.startsWith("/") && !n.startsWith("//") && !n.startsWith("/\\") && !/[\r\n]/.test(n) ? n : "/";
+  if (/[\r\n]/.test(n)) return "/";
+  if (n.startsWith("/") && !n.startsWith("//") && !n.startsWith("/\\")) return n;
+  try {
+    const u = new URL(n);
+    return origins.includes(u.origin) ? u.href : "/";
+  } catch { return "/"; }
 }

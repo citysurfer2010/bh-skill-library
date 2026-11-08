@@ -38,6 +38,6 @@ server {
   }
 
   location @login {
-    return 302 https://auth.__DOMAIN__/login;
+    return 302 https://auth.__DOMAIN__/login?next=https://apps.__DOMAIN__$request_uri;
   }
 }

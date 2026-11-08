@@ -16,7 +16,7 @@ export function googleRoutes({ config, users, sessions }) {
     if (!config.google) return res.redirect("/login");
     const state = b64(randomBytes(24));
     const verifier = b64(randomBytes(48));
-    res.cookie(COOKIE, JSON.stringify({ state, verifier, next: safeNext(req.query.next) }), { ...cookie, maxAge: 600_000 });
+    res.cookie(COOKIE, JSON.stringify({ state, verifier, next: safeNext(req.query.next, config.returnOrigins) }), { ...cookie, maxAge: 600_000 });
     const q = new URLSearchParams({
       client_id: config.google.clientId, redirect_uri: redirectUri, response_type: "code",
       scope: "openid email profile", prompt: "select_account", state,
@@ -46,7 +46,7 @@ export function googleRoutes({ config, users, sessions }) {
       if (!user.googleSub) users.bindGoogle(user.id, g.sub);
       res.clearCookie(COOKIE, cookie);
       await sessions.start(res, users.byId(user.id));
-      res.redirect(safeNext(saved.next));
+      res.redirect(safeNext(saved.next, config.returnOrigins));
     } catch (e) {
       console.error(`[google] ${e.message}`);
       fail(res);

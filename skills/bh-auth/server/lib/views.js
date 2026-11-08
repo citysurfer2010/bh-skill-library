@@ -12,9 +12,9 @@ const alert = (m, kind = "error") => (m ? `<p class="alert ${kind}" role="alert"
 
 const googleIcon = `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.2-.2-1.7H9v3.2h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.4z"/><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8z"/><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3L15 2.3A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/></svg>`;
 
-export function loginView({ error, next, google }) {
+export function loginView({ error, notice, next, google }) {
   const n = esc(next || "/");
-  return center("Anmelden", `<h1>Anmelden</h1><p class="muted">Willkommen zurück.</p>${alert(error)}
+  return center("Anmelden", `<h1>Anmelden</h1><p class="muted">Willkommen zurück.</p>${alert(notice, "ok")}${alert(error)}
 ${google ? `<a class="button secondary" href="/oauth/google?next=${encodeURIComponent(next || "/")}">${googleIcon}<span>Mit Google anmelden</span></a><div class="divider"><span>oder</span></div>` : ""}
 <form method="post" action="/login"><input type="hidden" name="next" value="${n}">
 <label>E-Mail<input type="email" name="email" autocomplete="username" required autofocus></label>
@@ -49,4 +49,4 @@ export function shell(user, title, content) {
 <main class="page">${content}</main>`);
 }
 
-export const homeView = (user) => shell(user, "Start", `<h1>Hallo ${esc(user.name)}</h1><section class="card"><p class="muted">Du bist angemeldet als ${esc(user.email)}.</p></section>`);
+export const homeView = (user, appsUrl) => shell(user, "Start", `<h1>Hallo ${esc(user.name)}</h1><section class="card"><p class="muted">Du bist angemeldet als ${esc(user.email)}.</p>${appsUrl ? `<a class="button" href="${esc(appsUrl)}/">Zu den Apps</a>` : ""}</section>`);

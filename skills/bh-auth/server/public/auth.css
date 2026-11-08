@@ -28,7 +28,7 @@ button:hover { background: var(--bh-primary-hover); }
 .button.secondary { width: 100%; background: var(--bh-surface); color: var(--bh-text); border: 1px solid var(--bh-border); }
 .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--bh-muted); font-size: 14px; }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--bh-border); }
-.alert { margin: 0 0 16px; padding: 10px 12px; border-radius: 8px; font-size: 14px; } .alert.error { background: var(--bh-danger-bg); color: var(--bh-danger); }
+.alert { margin: 0 0 16px; padding: 10px 12px; border-radius: 8px; font-size: 14px; } .alert.error { background: var(--bh-danger-bg); color: var(--bh-danger); } .alert.ok { background: var(--bh-ok-bg); color: var(--bh-ok); }
 .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 24px; background: var(--bh-surface); border-bottom: 1px solid var(--bh-border); }
 nav { display: flex; align-items: center; gap: 16px; font-size: 14px; flex-wrap: wrap; } nav a { text-decoration: none; } nav form { display: inline; } .who { color: var(--bh-muted); }
 button.link { height: auto; padding: 0; background: none; color: var(--bh-primary); font-weight: 400; }
