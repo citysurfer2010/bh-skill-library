@@ -13,6 +13,7 @@
 .bh-btn-primary { background: var(--bh-primary); border-color: var(--bh-primary); color: var(--bh-on-primary); }
 .bh-btn-primary:hover { background: var(--bh-primary-hover); border-color: var(--bh-primary-hover); color: var(--bh-on-primary); }
 .bh-btn-danger { color: var(--bh-danger); }
+.bh-btn-magic { background: var(--bh-magic-bg); border-color: var(--bh-magic); color: var(--bh-magic); }
 .bh-btn-sm { height: var(--bh-control-h-sm); padding: 0 12px; font-size: 12px; }
 
 .bh-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--bh-text); }

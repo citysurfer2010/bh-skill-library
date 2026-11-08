@@ -22,7 +22,7 @@ Die Startseite `/` ist die App-Übersicht unter `apps.<domain>`:
 - Kacheln in Abschnitten („Anwendungen“, für Admins „Verwaltung“), nur freigegebene Apps. Admin-Apps tragen ein Admin-Schild.
 - Untermodule erscheinen in der Trefferliste, sobald eine App sie liefert (Feld `modules` der Suchdaten).
 
-Navbar und Benutzermenü folgen dem Standard im Skill `bh-webapp-skeleton`.
+Navbar und Benutzermenü folgen dem Standard im Skill `bh-webapp-skeleton`, alles Weitere dem Skill `bh-styleguide`.
 
 ## Anbindung einer App
 

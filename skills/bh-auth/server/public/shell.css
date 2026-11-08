@@ -15,7 +15,7 @@
 .bh-um-avatar { overflow: hidden; } .bh-um-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .bh-um-name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bh-um-chevron { display: inline-flex; }
-.bh-um-pop { position: absolute; top: 100%; right: 0; z-index: 70; width: 260px; margin-top: 4px; padding: 8px; background: var(--bh-surface); color: var(--bh-text); border: 1px solid var(--bh-border); border-radius: 10px; box-shadow: var(--bh-shadow); }
+.bh-um-pop { position: absolute; top: 100%; right: 0; z-index: 70; width: 260px; margin-top: 4px; padding: 8px; background: var(--bh-surface); color: var(--bh-text); border: 1px solid var(--bh-border); border-radius: 8px; box-shadow: var(--bh-shadow); }
 .bh-um-pop[hidden] { display: none; }
 .bh-um-head { padding: 8px 10px 10px; border-bottom: 1px solid var(--bh-border); margin-bottom: 6px; }
 .bh-um-who { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }

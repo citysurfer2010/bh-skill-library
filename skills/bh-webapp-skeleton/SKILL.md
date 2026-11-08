@@ -104,6 +104,10 @@ Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
 
 Commit und Pull Request: Skill `bh-github`.
 
+## Style Guide
+
+Farben, Ecken, Schrift und Komponenten stehen im Skill `bh-styleguide`; er gilt für jede Oberfläche.
+
 ## Standard: Navbar und Benutzermenü (verbindlich)
 
 Gilt für jede Oberfläche der BH Platform, auch den Anmeldedienst `bh-auth`. Nicht pro App neu erfinden.
