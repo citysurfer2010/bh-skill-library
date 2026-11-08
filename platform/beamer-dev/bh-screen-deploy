@@ -1,21 +1,40 @@
 #!/usr/bin/env bash
-# Registriert das Profil BH fuer die Kommandozeile, paketiert BH Screen und installiert die App auf dem Beamer.
+# Registriert das Profil BH fuer die Kommandozeile (Klartext-Passwoerter, die GUI-Verschluesselung kennt die CLI nicht),
+# paketiert BH Screen, erteilt dem Beamer die Installationserlaubnis und installiert die App.
 set -uo pipefail
 H=/home/tizen; TS=$H/tizen-studio; T=$TS/tools/ide/bin/tizen; S=$TS/tools/sdb; C=$H/SamsungCertificate/BH; ENV=/srv/bh-platform/.env
-B=$(sed -n 's/^BH_BEAMER_IP=//p' $ENV | tail -1); PW=$(sed -n 's/^BH_TIZEN_AUTHOR_PW=//p' $ENV | tail -1)
+P=$H/tizen-studio-data/profile/profiles.xml; B=$(sed -n 's/^BH_BEAMER_IP=//p' $ENV | tail -1); PW=$(sed -n 's/^BH_TIZEN_AUTHOR_PW=//p' $ENV | tail -1)
 [ -n "$PW" ] || { echo "BH_TIZEN_AUTHOR_PW fehlt in $ENV"; exit 1; }
-run(){ runuser -u tizen -- bash -c "cd $H && export PATH=/usr/local/bin:\$PATH; $*"; }
-openssl pkcs12 -in $C/author.p12 -passin pass:"$PW" -noout -legacy 2>/dev/null || openssl pkcs12 -in $C/author.p12 -passin pass:"$PW" -noout 2>/dev/null || { echo "Autoren-Passwort passt nicht"; exit 2; }
-DPW=""; for cand in "$PW" tizenpkcs12passfordsigner; do if openssl pkcs12 -in $C/distributor.p12 -passin pass:"$cand" -noout -legacy 2>/dev/null || openssl pkcs12 -in $C/distributor.p12 -passin pass:"$cand" -noout 2>/dev/null; then DPW=$cand; break; fi; done
+run(){ runuser -u tizen -- bash -c "cd $H && export PATH=/usr/local/bin:\$PATH; $*" </dev/null; }
+p12ok(){ openssl pkcs12 -in "$1" -passin pass:"$2" -noout -legacy 2>/dev/null || openssl pkcs12 -in "$1" -passin pass:"$2" -noout 2>/dev/null; }
+p12ok $C/author.p12 "$PW" || { echo "Autoren-Passwort passt nicht"; exit 2; }
+DPW=""; for cand in "$PW" tizenpkcs12passfordsigner; do p12ok $C/distributor.p12 "$cand" && { DPW=$cand; break; }; done
 [ -n "$DPW" ] || { echo "Distributor-Passwort unbekannt"; exit 3; }
-echo "Passwoerter geprueft (Distributor: $([ "$DPW" = "$PW" ] && echo gleich || echo Standard))"
-cp -n $H/tizen-studio-data/profile/profiles.xml $H/tizen-studio-data/profile/profiles.xml.gui-backup 2>/dev/null
-run "$T security-profiles remove -n BH" >/dev/null 2>&1
-run "$T security-profiles add -n BH -a $C/author.p12 -p '$PW' -d $C/distributor.p12 -dp '$DPW'" 2>&1 | tail -1
-run "$T security-profiles set-active -n BH" >/dev/null 2>&1
-run "cd bhscreen && rm -f .buildResult/*.wgt && $T package -t wgt -s BH -- .buildResult" 2>&1 | grep -iE 'error|Package File' | tail -2 | cut -c1-140
+echo "DUID laut Geraet: $(run "$S -s $B:26101 shell 0 getduid" 2>/dev/null | tail -1) | im Zertifikat: $(openssl x509 -in $C/distributor.crt -noout -ext subjectAltName | grep -oE 'deviceid=[^,]+' | cut -d= -f2)"
+cp -n $P $P.gui-backup 2>/dev/null
+runuser -u tizen -- python3 -I - "$P" "$C" "$PW" "$DPW" <<'PY'
+import sys
+p, c, pw, dpw = sys.argv[1:5]
+x = lambda s: s.replace('&', '&amp;').replace('"', '&quot;').replace('<', '&lt;')
+open(p, 'w').write(f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<profiles active="BH" version="3.1">
+<profile name="BH">
+<profileitem ca="" distributor="0" key="{c}/author.p12" password="{x(pw)}" rootca=""/>
+<profileitem ca="" distributor="1" key="{c}/distributor.p12" password="{x(dpw)}" rootca=""/>
+<profileitem ca="" distributor="2" key="" password="" rootca=""/>
+</profile>
+</profiles>
+''')
+PY
+chmod 600 $P
+rm -rf $H/bhscreen/.buildResult $H/bhscreen/*signature*.xml $H/bhscreen/BHScreen.wgt
+run "cd bhscreen && $T build-web -- ." >/dev/null 2>&1
+run "cd bhscreen && $T package -t wgt -s BH -- .buildResult" 2>&1 | grep -iE 'error|Package File' | tail -1 | cut -c1-120
 W=$(ls $H/bhscreen/.buildResult/*.wgt 2>/dev/null | head -1); [ -n "$W" ] || { grep -iE 'exception' $H/tizen-studio-data/cli/logs/cli.log | grep -v '^\s*at ' | tail -1 | cut -c1-160; exit 4; }
-echo "Paket: $(basename "$W") $(stat -c %s "$W") Bytes"
-run "$S connect $B:26101" >/dev/null 2>&1; run "$T install -n '$W' -t $B:26101" 2>&1 | grep -iE 'install|error|fail|ok|key' | tail -3 | cut -c1-140
-run "$T run -p bhscreen01.BHScreen -t $B:26101" 2>&1 | tail -1 | cut -c1-120; sleep 5
+mv -f "$W" $H/bhscreen/BHScreen.wgt; echo "Paket: BHScreen.wgt $(stat -c %s $H/bhscreen/BHScreen.wgt) Bytes"
+run "$S connect $B:26101" >/dev/null 2>&1
+run "$S -s $B:26101 push $C/device-profile.xml /home/owner/share/tmp/sdk_tools/device-profile.xml" >/dev/null 2>&1
+run "$S -s $B:26101 push $H/bhscreen/BHScreen.wgt /home/owner/share/tmp/sdk_tools/tmp/BHScreen.wgt" >/dev/null 2>&1
+run "$S -s $B:26101 shell 0 vd_appinstall bhscreen01 /home/owner/share/tmp/sdk_tools/tmp/BHScreen.wgt" 2>&1 | grep -E 'install (ok|failed)|ok' | tail -1 | cut -c1-170
+run "$S -s $B:26101 shell 0 was_execute bhscreen01.BHScreen" >/dev/null 2>&1; sleep 5
 curl -s -m 6 http://$B:8001/api/v2/applications/bhscreen01.BHScreen | jq -c '{name,running,visible,version}'
