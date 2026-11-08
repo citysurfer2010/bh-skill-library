@@ -9,10 +9,10 @@
 .bm-state[data-tone="on"] { background: var(--bh-ok-bg); color: var(--bh-ok); }
 .bm-state[data-tone="off"] { background: var(--bh-warn-bg); color: var(--bh-warn); }
 #bm-now { font-size: 14px; font-weight: 600; color: var(--bh-text); }
-.bm-notice { margin-bottom: 24px; padding: 10px 12px; border-radius: var(--bh-radius); background: var(--bh-warn-bg); color: var(--bh-warn); font-size: 14px; }
+.bm-notice { margin-bottom: 8px; padding: 10px 12px; border-radius: var(--bh-radius); background: var(--bh-warn-bg); color: var(--bh-warn); font-size: 14px; }
 .bm-moods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .bm-mood { display: flex; flex-direction: column; padding: 0; overflow: hidden; border: 1px solid var(--bh-input-border); border-radius: var(--bh-radius-lg); background: var(--bh-surface); color: var(--bh-text); font: inherit; text-align: left; cursor: pointer; }
-.bm-mood img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--bh-bg-subtle); }
+.bm-mood img { display: block; width: 100%; aspect-ratio: 2 / 1; object-fit: cover; background: var(--bh-bg-subtle); }
 .bm-mood span { padding: 8px 12px; font-size: 14px; font-weight: 600; }
 .bm-mood.is-active { outline: 2px solid var(--bh-primary); outline-offset: -2px; }
 .bm-mood.is-active span::after, .bm-station.is-active::after { content: " · Läuft"; color: var(--bh-primary); }
@@ -46,4 +46,5 @@
   .bm-moods, .bm-stations { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bm-extra .bh-btn, .bm-apps .bh-btn, .bm-share .bh-btn, .bm-head .bh-btn, .bm-row .bh-btn, .bm-row .bh-input { height: 48px; }
   .bm-row .bh-input { font-size: 16px; }
+  .app-topbar .app-topbar-actions .bh-btn, .bm-status .bh-btn { height: 48px; }
 }

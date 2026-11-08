@@ -35,7 +35,9 @@ export function createApp({ config = loadConfig(), db = openDb(config.dataDir), 
   // Formulare nur von der eigenen Adresse.
   app.use((req, res, next) => {
     const origin = req.get("origin");
-    if (req.method === "POST" && origin && origin !== config.publicUrl) return res.status(403).send("Ungültige Herkunft");
+    // Die App auf dem Beamer hat keine eigene Herkunft; ihre Antwort ist ueber den geheimen Link abgesichert, nicht ueber Cookies.
+    const fromBeamer = /^\/screen\/[^/]+\/answer$/.test(req.path);
+    if (req.method === "POST" && origin && origin !== config.publicUrl && !fromBeamer) return res.status(403).send("Ungültige Herkunft");
     next();
   });
 
