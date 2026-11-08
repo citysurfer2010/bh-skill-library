@@ -8,7 +8,7 @@ window.BeamerView = (() => {
     up: svg('M6 15l6-6 6 6'), down: svg('M6 9l6 6 6-6'), left: svg('M15 6l-6 6 6 6'), right: svg('M9 6l6 6-6 6'),
     back: svg('M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3', 20), home: svg('M3 11l9-8 9 8M5 10v10h14V10', 20),
     plus: svg('M12 5v14M5 12h14'), minus: svg('M5 12h14'), mute: svg('M11 5L6 9H3v6h3l5 4zM22 9l-6 6M16 9l6 6'),
-    playpause: svg('M6 5v14l8-7zM17 5v14M21 5v14', 20), stop: svg('M6 6h12v12H6z', 16),
+    playpause: svg('M6 5v14l8-7zM17 5v14M21 5v14', 20), stop: svg('M6 6h12v12H6z', 16), remote: svg('M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 7h.01M12 12h.01'),
     radio: svg('M4 9v11h16V9zM4 9l13-5M8 15h.01M13 13h4M13 16h4', 18),
   };
   const key = (k, label, aria, cls = '') => `<button type="button" class="bm-key ${cls}" data-key="${k}" aria-label="${aria}">${label}</button>`;
@@ -19,7 +19,7 @@ window.BeamerView = (() => {
   const form = (id, label, name, placeholder, cta, type = 'text') => `<form class="bm-form" data-form="${id}"><label class="bh-label" for="f-${id}">${label}</label><input id="f-${id}" class="bh-input" name="${name}" type="${type}" placeholder="${placeholder}" required autocomplete="off"><button class="bh-btn">${cta}</button></form>`;
 
   function hero() {
-    return `<section class="bm-hero" id="bm-hero"><img id="bm-hero-img" alt="" hidden><div class="bm-hero-body"><span class="bm-state" id="bm-state">Wird geprüft</span><h1 id="bm-title">Beamer</h1><p id="bm-sub" aria-live="polite"></p></div>
+    return `<section class="bm-hero" id="bm-hero"><img id="bm-hero-img" alt="" hidden><div class="bm-hero-body" aria-live="polite" aria-atomic="true"><span class="bm-state" id="bm-state">Wird geprüft</span><h1 id="bm-title">Beamer</h1><p id="bm-sub"></p></div>
       <div class="bm-hero-actions"><button type="button" class="bh-btn bh-btn-primary" data-stop hidden>${I.stop}Stoppen</button><button type="button" class="bh-btn bh-btn-primary" data-power="on" hidden>Einschalten</button><button type="button" class="bh-btn bm-off" data-power="off" hidden>Ausschalten</button><button type="button" class="bh-btn bh-btn-danger" data-power-confirm hidden>Ja, ausschalten</button><button type="button" class="bh-btn" data-power-cancel hidden>Abbrechen</button></div></section>`;
   }
 
@@ -33,7 +33,7 @@ window.BeamerView = (() => {
     const screen = BeamerShare.canScreen();
     const share = `<div class="bm-share">${screen ? '<button type="button" class="bh-btn" data-share="screen">Bildschirm teilen</button>' : ''}<button type="button" class="bh-btn" data-share="camera">Kamera zeigen</button></div><p class="bm-hint" id="bm-share-state" aria-live="polite">${screen ? 'Der Laptop muss im Heimnetz sein.' : 'Das Handy muss im Heimnetz sein.'}</p>`;
     return `${hero()}
-      <div class="bm-nowbar" id="bm-nowbar" hidden><span id="bm-nowbar-text"></span><button type="button" class="bh-btn bh-btn-primary" data-stop hidden>${I.stop}Stoppen</button></div>
+      <div class="bm-nowbar" id="bm-nowbar" hidden><span id="bm-nowbar-text"></span><button type="button" class="bh-btn bh-btn-primary" data-stop hidden>${I.stop}Stoppen</button><button type="button" class="bh-btn" data-goto-remote aria-label="Fernbedienung">${I.remote}</button></div>
       <div class="bm-view" role="tablist" aria-label="Ansicht"><button type="button" role="tab" data-view="start" aria-selected="true">Starten</button><button type="button" role="tab" data-view="remote" aria-selected="false">Fernbedienung</button></div>
       <div class="bm-layout" id="bm-layout" data-view="start"><div class="bm-main">
         ${section('Stimmung', `<div class="bm-moods">${c.moods.map(moodTile).join('')}</div>`)}

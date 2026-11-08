@@ -14,7 +14,8 @@
   function model() {
     if (poweringOn) return { state: ['Startet', ''], title: 'Wird eingeschaltet …', sub: 'Das dauert einen Moment.' };
     if (statusFailed) return { state: ['Unbekannt', 'off'], title: 'Status nicht abrufbar', sub: 'Die Verbindung zum Beamer ist gestört.' };
-    if (zustand && zustand !== 'on') return { state: ['Aus', 'off'], title: 'Der Beamer ist aus', sub: 'Tippe etwas an, er schaltet sich dann ein.' };
+    if (zustand === 'nicht erreichbar') return { state: ['Unbekannt', 'off'], title: 'Beamer aus oder nicht erreichbar', sub: 'Tippe eine Stimmung, einen Sender oder eine App an, um ihn einzuschalten.' };
+    if (zustand && zustand !== 'on') return { state: ['Aus', 'off'], title: 'Der Beamer ist aus', sub: 'Tippe eine Stimmung, einen Sender oder eine App an, er schaltet sich dann ein.' };
     if (pending) return { state: ['An', 'on'], title: `Startet: ${pending}`, sub: 'Einen Moment …' };
     if (now) return { state: ['Läuft', 'live'], title: now.label, sub: '' };
     return { state: [zustand ? 'An' : 'Wird geprüft', zustand ? 'on' : ''], title: 'Bereit', sub: 'Such dir etwas aus.' };
@@ -30,7 +31,8 @@
     if (mood && img.getAttribute('src') !== mood.hero) img.src = mood.hero;
     img.hidden = !mood; $('bm-hero').classList.toggle('has-image', !!mood);
     const canStop = on && !!now && !pending;
-    setHidden('[data-stop]', !canStop);
+    setHidden('[data-stop]', !canStop || confirmOff);
+    $('bm-layout').toggleAttribute('data-off', !on);
     setHidden('[data-power="on"]', !zustand || on || poweringOn);
     setHidden('[data-power="off"]', !on || confirmOff);
     setHidden('[data-power-confirm], [data-power-cancel]', !on || !confirmOff);
@@ -61,6 +63,7 @@
       if (zustand !== 'on' && !(await powerOn())) return;
       const r = await BeamerApi.send(path, body);
       if ('now' in r) now = r.now;
+      paused = false;
       Toast.success(ok || `${label} läuft`);
       return true;
     } catch (e) { Toast.error(e.message || 'Hat nicht geklappt'); return false; }
@@ -93,30 +96,38 @@
   }
 
   // Taste: sofort senden, nie mehrere gleichzeitig; das Gateway braucht je Druck einige Hundert Millisekunden.
-  let inflight = false; let lastError = 0; let holdTimer = null; let repeatTimer = null;
-  function press(key) {
-    if (inflight) return;
+  const queue = []; let draining = false; let lastError = 0; let holdTimer = null; let repeatTimer = null;
+  async function drain() {
+    if (draining) return;
+    draining = true;
+    while (queue.length) {
+      try { const r = await BeamerApi.send('/key', { key: queue.shift() }); if (r.now !== undefined && r.now?.label !== now?.label) { now = r.now; paint(); } }
+      catch (e) { queue.length = 0; if (Date.now() - lastError > 5000) { lastError = Date.now(); Toast.error(e.message); } }
+    }
+    draining = false;
+  }
+  function press(key, repeat = false) {
+    if (zustand !== 'on') { if (!repeat) Toast.error('Der Beamer ist aus.'); return; }
+    if (repeat ? (queue.length || draining) : queue.length >= 6) return;
     let k = key;
     if (key === 'TOGGLE') { k = paused ? 'KEY_PLAY' : 'KEY_PAUSE'; paused = !paused; }
-    inflight = true;
-    BeamerApi.send('/key', { key: k }).then((r) => { if (r.now !== undefined && (r.now?.label) !== (now?.label)) { now = r.now; paint(); } })
-      .catch((e) => { if (Date.now() - lastError > 5000) { lastError = Date.now(); Toast.error(e.message); } })
-      .finally(() => { inflight = false; });
+    queue.push(k); drain();
   }
   const release = () => { clearTimeout(holdTimer); clearInterval(repeatTimer); };
   document.addEventListener('touchstart', () => {}, { passive: true });
   host.addEventListener('pointerdown', (e) => {
     const b = e.target.closest('[data-key]');
-    if (!b) return;
+    if (!b || e.button !== 0) return;
     if (navigator.vibrate) navigator.vibrate(10);
     press(b.dataset.key);
-    if (REPEAT.has(b.dataset.key)) holdTimer = setTimeout(() => { repeatTimer = setInterval(() => press(b.dataset.key), 400); }, 350);
+    if (REPEAT.has(b.dataset.key)) holdTimer = setTimeout(() => { repeatTimer = setInterval(() => press(b.dataset.key, true), 400); }, 350);
   });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => host.addEventListener(t, release, true));
 
   host.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
+    if ('gotoRemote' in b.dataset) { host.querySelector('[role="tab"][data-view="remote"]').click(); $('bm-hero').scrollIntoView(); return; }
     if (b.dataset.key) { if (e.detail === 0) press(b.dataset.key); return; } // Tastatur; Maus und Finger laufen über pointerdown
     if (b.dataset.view) {
       $('bm-layout').dataset.view = b.dataset.view;

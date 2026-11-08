@@ -104,9 +104,9 @@ async function press(key) {
 // Auf diesem Beamer per Abfrage bestaetigt. Vor jedem Start wird der echte Name erneut geprueft.
 const APPS = { 'BH Screen': 'bhscreen01.BHScreen', YouTube: '111299001912', 'Prime Video': '3201910019365', Netflix: '3201907018807', 'Disney+': '3201901017640', 'Apple TV': '3201807016597', Spotify: '3201606009684', WOW: '3201411000562', Internet: '3201907018784' };
 
-function realRest(method, id) {
+function realRest(method, id, timeout = 6000) {
   return new Promise((resolve, reject) => {
-    const req = https.request({ ...tlsOptions(), host: process.env.BH_BEAMER_IP, port: PORT, path: `/api/v2/applications/${id}`, method, timeout: 6000 }, (res) => {
+    const req = https.request({ ...tlsOptions(), host: process.env.BH_BEAMER_IP, port: PORT, path: `/api/v2/applications/${id}`, method, timeout }, (res) => {
       let t = ''; res.on('data', (c) => { t += c; });
       res.on('end', () => { let json = {}; try { json = JSON.parse(t); } catch { /* leere Antwort */ } resolve({ status: res.statusCode, json }); });
     });
@@ -134,7 +134,12 @@ async function waitVisible(id, tries, delayMs) {
   return false;
 }
 
-async function isInstalled(app) { try { await appInfo(app); return true; } catch { return false; } }
+const installedUntil = new Map();
+// Installiert bleibt installiert: Das Ergebnis spart bei jedem Umschalten eine Abfrage.
+async function isInstalled(app) {
+  if ((installedUntil.get(app) || 0) > Date.now()) return true;
+  try { await appInfo(app); installedUntil.set(app, Date.now() + 600_000); return true; } catch { return false; }
+}
 
 // Per sdb installierte Entwickler-Apps (BH Screen) melden dem REST-Endpunkt nie `running`/`visible`.
 // Dort gilt die Antwort `true` auf den Start als Erfolg; laeuft die App schon im Vordergrund, antwortet
@@ -143,7 +148,8 @@ async function openApp(app, { tries = 8, delayMs = 750, restart = false } = {}) 
   const { id } = await appInfo(app);
   if (restart) { await rest('DELETE', id).catch(() => {}); await pause(1500); }
   let started = false; let busy = false;
-  try { started = (await rest('POST', id)).json === true; } catch (e) { if (e.message !== 'timeout') throw e; busy = true; }
+  // Kurzes Limit: Auf den Start einer laufenden App antwortet der Beamer nicht und blockiert solange alle anderen Abfragen.
+  try { started = (await rest('POST', id, 1500)).json === true; } catch (e) { if (e.message !== 'timeout') throw e; busy = true; }
   if (await waitVisible(id, started || busy ? 2 : tries, delayMs)) return 'visible';
   if (started) return 'started';
   if (busy) return 'running';

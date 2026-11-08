@@ -54,13 +54,15 @@ Nie Farben fest in den Code schreiben, immer die Tokens. Dunkel gilt automatisch
 
 ## Teil 3: Form und Schrift
 
-**Ecken:** 6 px für Bedienelemente und Schilder (`--bh-radius-sm`), 8 px für Flächen und Menüs (`--bh-radius`), 12 px für große Flächen (`--bh-radius-lg`). Keine Pillen, auch nicht für Knöpfe. Rund sind nur Avatare.
+**Ecken:** 6 px für Bedienelemente und Schilder (`--bh-radius-sm`), 8 px für Flächen und Menüs (`--bh-radius`), 12 px für große Flächen (`--bh-radius-lg`). Keine Pillen, auch nicht für Knöpfe Ausnahme: die runde OK-Taste im Steuerkreuz einer Fernbedienung.. Rund sind nur Avatare.
 
 **Schrift:** Systemschrift über `--bh-font`.
 
 | Element | Größe | Gewicht |
 |---|---|---|
 | Seitentitel | 24 px | 700 |
+| Titel im Band einer App | 28 px | 700 |
+| Abschnittsüberschrift | 18 px | 600 |
 | Kartentitel | 16 px | 600 |
 | Fließtext, Felder | 14 px | 400 |
 | Nebentext | 13 px | 400 |
@@ -145,7 +147,7 @@ Jede App hat von oben nach unten dieselben Zonen. Sie entstehen über `BHAppShel
 | **Seitenkopf** (`.app-topbar`) | Links Titel (24 px) und Status, rechts die Hauptaktion | Höchstens ein Hauptknopf |
 | **Hinweisbalken** | Warnung oder Zustand, der die ganze Seite betrifft | Nur wenn nötig, `--bh-warn-bg` |
 | **Sidebar** | Unterseiten einer App, einklappbar | Nur bei mehreren Bereichen |
-| **Inhalt** | Abschnitte mit Überschrift (16 px, 600), volle Breite | Reine Formularseiten höchstens 760 px |
+| **Inhalt** | Abschnitte mit Überschrift (18 px, 600), volle Breite | Reine Formularseiten höchstens 760 px |
 
 **Linke Kante:** Logo, Brotkrumen, Titel und Inhalt fluchten (24 px, am Handy 12 px).
 
