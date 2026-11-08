@@ -14,6 +14,8 @@
 .bm-station.is-active, .bm-mood.is-active { border-color: var(--bh-primary); box-shadow: inset 0 0 0 2px var(--bh-primary); }
 .bm-station.is-active { color: var(--bh-primary); }
 [aria-busy="true"] { opacity: .6; cursor: progress; }
+.bm-share { display: flex; flex-wrap: wrap; gap: 8px; }
+.bm-hint { margin: 8px 0 0; font-size: 13px; color: var(--bh-muted); }
 .bm-forms { display: grid; gap: 16px; }
 .bm-row { display: flex; gap: 8px; }
 .bm-row .bh-input { flex: 1; min-width: 0; }
@@ -26,7 +28,7 @@
   .bm-layout { grid-template-columns: minmax(0, 1fr); }
   /* Am Handy: Stimmung, Radio, Fernbedienung, Apps, zuletzt die Eingabefelder. */
   .bm-main, .bm-side { display: contents; }
-  .bm-main > :nth-child(3) { order: 2; }
+  .bm-main > :nth-child(4) { order: 2; }
   .bm-moods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bm-stations { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

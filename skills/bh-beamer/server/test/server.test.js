@@ -14,7 +14,7 @@ function fake(events) {
   return { sent, paths, closed: () => closed };
 }
 
-test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'open_app', 'play_media', 'play_radio', 'play_youtube', 'power', 'press', 'show_text', 'show_url', 'status', 'stop_media', 'stop_radio']));
+test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'open_app', 'play_media', 'play_radio', 'play_youtube', 'power', 'press', 'share_answer', 'share_start', 'show_text', 'show_url', 'status', 'stop_media', 'stop_radio']));
 
 test('Frames: verschluesselt gesendet, Nachrichten werden erkannt', () => {
   const f = r.encodeText('hi');
@@ -150,6 +150,24 @@ test('Radio: nur https, App wird gestartet, nach Webseite neu gestartet', async 
     await assert.rejects(playRadio('http://r.de/s.mp3', 'x', { remote }), /https/);
     await assert.rejects(playRadio('https://r.de/s.mp3', 'x', { remote: { isInstalled: async () => false } }), /BH Screen/);
   } finally { global.fetch = realFetch; }
+});
+
+test('Freigabe: Angebot geht an den Dienst, App kommt nach vorn, Antwort wird abgeholt', async () => {
+  process.env.BH_AUTH_INTERNAL = 'http://x'; process.env.BH_SCREEN_WRITE = 'W';
+  const { shareStart, shareAnswer } = require('../lib/screen.js');
+  const realFetch = global.fetch; const sent = [];
+  global.fetch = async (_u, o) => { sent.push(JSON.parse(o.body)); return { ok: true, json: async () => ({ previous: 'url', session: 'abc' }) }; };
+  try {
+    const opened = []; const remote = { isInstalled: async () => true, openApp: async (a, o) => opened.push([a, o]) };
+    assert.equal(await shareStart('v=0', { remote }), 'abc');
+    assert.deepEqual(sent.at(-1), { mode: 'share', offer: 'v=0' }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
+    await assert.rejects(shareStart('v=0', { remote: { isInstalled: async () => false } }), /BH Screen/);
+  } finally { global.fetch = realFetch; }
+  let seen;
+  assert.equal(await shareAnswer('a b', async (u, o) => { seen = [u, o]; return { ok: true, json: async () => ({ answer: 'v=0 x' }) }; }), 'v=0 x');
+  assert.match(seen[0], /session=a%20b/); assert.equal(seen[1].headers.authorization, 'Bearer W');
+  assert.equal(await shareAnswer('a', async () => ({ ok: true, json: async () => ({ answer: null }) })), '');
+  await assert.rejects(shareAnswer('a', async () => ({ ok: false, status: 401 })), /401/);
 });
 
 test('Power: Erfolg nur mit bestaetigtem Zustand, Wecken mit Magic Packet', async () => {

@@ -15,8 +15,8 @@ function buildRouter() {
   const action = (fn) => [requireJson, async (req, res) => {
     try {
       const result = await fn(req.body || {});
-      if (result === undefined) return res.json({ ok: true, now });
-      return res.status(result.status).json({ error: result.error });
+      if (result?.status) return res.status(result.status).json({ error: result.error });
+      return res.json({ ok: true, now, ...result });
     } catch (e) { return res.status(502).json({ error: e.message }); }
   }];
   const bad = (error) => ({ status: 400, error });
@@ -77,6 +77,23 @@ function buildRouter() {
     await stopRadioFirst();
     await gateway.call('beamer_open_app', { app });
     now = { kind: 'app', label: app };
+  }));
+
+  router.post('/share/start', action(async ({ offer }) => {
+    if (typeof offer !== 'string' || !offer.startsWith('v=0') || offer.length > 24000) return bad('Angebot ungültig');
+    const session = await gateway.call('beamer_share_start', { offer });
+    now = { kind: 'share', label: 'Bildschirmfreigabe' };
+    return { session };
+  }));
+
+  router.post('/share/answer', action(async ({ session }) => {
+    if (typeof session !== 'string' || !/^[0-9a-f]{18}$/.test(session)) return bad('Sitzung ungültig');
+    return { answer: await gateway.call('beamer_share_answer', { session }) };
+  }));
+
+  router.post('/share/stop', action(async () => {
+    await gateway.call('beamer_stop_radio');
+    now = null;
   }));
 
   router.post('/key', action(async ({ key }) => {

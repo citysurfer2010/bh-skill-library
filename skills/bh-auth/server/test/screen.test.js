@@ -14,7 +14,7 @@ test("Anzeige: nur mit geheimem Link lesbar, nur mit Schreib-Schluessel aenderba
     assert.notEqual((await fetch(`${g.base}/screen/schreiben`, { redirect: "manual" })).status, 200);
     const html = await (await fetch(`${g.base}/screen/lesen`)).text();
     assert.match(html, /Hallo/); assert.match(html, /Welt/);
-    assert.deepEqual(await (await fetch(`${g.base}/screen/lesen/content`)).json(), { mode: "text", title: "Hallo", text: "Welt", url: null });
+    assert.deepEqual(await (await fetch(`${g.base}/screen/lesen/content`)).json(), { mode: "text", title: "Hallo", text: "Welt", url: null, offer: null, session: null, answer: null });
   } finally { await g.stop(); }
 });
 
@@ -61,3 +61,27 @@ test("Anzeige: Webseiten-Modus nur mit https", async () => {
   } finally { await g.stop(); }
 });
 
+
+test("Freigabe: Angebot, Antwort nur zur laufenden Sitzung und nur mit den richtigen Schluesseln", async () => {
+  const g = await start();
+  const answer = (token, body) => fetch(`${g.base}/screen/${token}/answer`, { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify(body) });
+  const read = (token, s) => fetch(`${g.base}/screen-answer?session=${s}`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
+  try {
+    assert.equal((await post(g, "schreiben", { mode: "share", offer: "kaputt" })).status, 400);
+    const { session } = await (await post(g, "schreiben", { mode: "share", offer: "v=0 angebot" })).json();
+    assert.match(session, /^[0-9a-f]{18}$/);
+    const c = await (await fetch(`${g.base}/screen/lesen/content`)).json();
+    assert.equal(c.mode, "share"); assert.equal(c.offer, "v=0 angebot"); assert.equal(c.session, session);
+    assert.equal((await read(null, session)).status, 401);
+    assert.equal((await read("lesen", session)).status, 401);
+    assert.equal((await (await read("schreiben", session)).json()).answer, null);
+    assert.notEqual((await answer("falsch", { session, sdp: "v=0 a" })).status, 204);
+    assert.equal((await answer("lesen", { session: "alt", sdp: "v=0 a" })).status, 409);
+    assert.equal((await answer("lesen", { session, sdp: "kein sdp" })).status, 409);
+    assert.equal((await answer("lesen", { session, sdp: "v=0 antwort" })).status, 204);
+    assert.equal((await (await read("schreiben", session)).json()).answer, "v=0 antwort");
+    assert.equal((await (await read("schreiben", "andere")).json()).answer, null);
+    await post(g, "schreiben", { title: "x" });
+    assert.equal((await answer("lesen", { session, sdp: "v=0 spaet" })).status, 409);
+  } finally { await g.stop(); }
+});

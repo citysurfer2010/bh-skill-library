@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 const post = (url, body, as = 'u@beispiel.de') => t.call(`/api${url}`, { method: 'POST', as, body: body || {} });
 
-const WRITES = ['/mood', '/radio', '/radio/stop', '/youtube', '/text', '/url', '/app', '/key', '/power'];
+const WRITES = ['/mood', '/radio', '/radio/stop', '/youtube', '/text', '/url', '/app', '/key', '/power', '/share/start', '/share/answer', '/share/stop'];
 for (const w of WRITES) {
   test(`POST ${w}: ohne Anmeldung 401, ohne JSON 415`, async () => {
     assert.equal((await t.call(`/api${w}`, { method: 'POST', body: {} })).status, 401);
@@ -70,6 +70,19 @@ test('Tasten und Apps nur aus der Liste, Ausschalten nie als Taste', async () =>
   assert.equal(calls.length, 0);
   assert.equal((await post('/key', { key: 'KEY_VOLUP' })).status, 200);
   assert.deepEqual(calls[0], ['beamer_press', { key: 'KEY_VOLUP' }]);
+});
+
+test('Freigabe: nur gültiges Angebot, Sitzung kommt zurück, Antwort wird durchgereicht', async () => {
+  assert.equal((await post('/share/start', { offer: 'quatsch' })).status, 400);
+  assert.equal((await post('/share/start', { offer: `v=0${'x'.repeat(24001)}` })).status, 400);
+  assert.equal((await post('/share/answer', { session: '../etc' })).status, 400);
+  assert.equal(calls.length, 0);
+  gateway.setCaller(async (name) => { calls.push(name); return name === 'beamer_share_start' ? 'aabbccddeeff001122' : 'v=0 antwort'; });
+  const start = await (await post('/share/start', { offer: 'v=0 a' })).json();
+  assert.equal(start.session, 'aabbccddeeff001122'); assert.equal(start.now.kind, 'share');
+  assert.equal((await (await post('/share/answer', { session: start.session })).json()).answer, 'v=0 antwort');
+  assert.equal((await (await post('/share/stop')).json()).now, null);
+  assert.deepEqual(calls, ['beamer_share_start', 'beamer_share_answer', 'beamer_stop_radio']);
 });
 
 test('Ein/Aus: nur on und off, Aus räumt die Anzeige, Fehler kommt an', async () => {

@@ -8,6 +8,10 @@
   var player = document.getElementById('player');
   var shownUrl = null;
   var playingUrl = null;
+  var shareEl = document.getElementById('share');
+  var pc = null;
+  var shareSession = null;
+  var caps = '';
 
   function stopAudio() {
     if (!playingUrl) return;
@@ -30,7 +34,57 @@
   player.addEventListener('waiting', function () { noteEl.textContent = 'Puffert …'; });
   player.addEventListener('error', function () { noteEl.textContent = 'Stream nicht erreichbar'; });
 
+  function stopShare() {
+    if (!shareSession) return;
+    shareSession = null;
+    try { pc.close(); } catch (e) { /* schon zu */ }
+    pc = null;
+    shareEl.srcObject = null;
+    document.body.className = '';
+  }
+
+  function attach(stream) {
+    shareEl.srcObject = stream;
+    var p = shareEl.play();
+    if (p && p.catch) p.catch(function (e) { caps = 'play-' + e.name; });
+  }
+
+  function sendAnswer(session) {
+    if (session !== shareSession || !pc || !pc.localDescription) return;
+    var x = new XMLHttpRequest();
+    x.open('POST', window.BH_SCREEN_URL + '/answer');
+    x.setRequestHeader('Content-Type', 'text/plain');
+    x.onload = function () { caps = 'answer-' + x.status; };
+    x.onerror = function () { caps = 'answer-netz'; };
+    x.send(JSON.stringify({ session: session, sdp: pc.localDescription.sdp }));
+  }
+
+  // Ohne Trickle-ICE: Die Antwort geht erst raus, wenn alle Kandidaten drinstehen (spaetestens nach 2,5 s).
+  function startShare(c) {
+    stopAudio();
+    shareSession = c.session;
+    document.body.className = 'share';
+    var PC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+    var session = c.session; var sent = false;
+    var send = function () { if (!sent) { sent = true; sendAnswer(session); } };
+    pc = new PC({ iceServers: [] });
+    pc.ontrack = function (e) { if (e.streams && e.streams[0]) attach(e.streams[0]); };
+    pc.onaddstream = function (e) { attach(e.stream); };
+    pc.onicecandidate = function (e) { if (!e.candidate) send(); };
+    pc.oniceconnectionstatechange = function () { if (pc) caps = 'ice-' + pc.iceConnectionState; };
+    pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: c.offer }))
+      .then(function () { return pc.createAnswer(); })
+      .then(function (a) { return pc.setLocalDescription(a); })
+      .then(function () { setTimeout(send, 2500); })
+      .catch(function (e) { caps = 'share-' + e.name; });
+  }
+
   function render(c) {
+    if (c.mode === 'share' && c.offer) {
+      if (c.session !== shareSession) { stopShare(); startShare(c); }
+      return;
+    }
+    stopShare();
     if (c.mode === 'url' && c.url && c.url !== shownUrl) {
       stopAudio();
       shownUrl = c.url;
@@ -42,8 +96,7 @@
     textEl.textContent = c.text || '';
   }
 
-  // Meldet einmalig, was das Geraet kann; landet nur im Zugriffsprotokoll des Servers.
-  var caps = '';
+  // Meldet einmalig, was das Geraet kann, danach den Stand der Freigabe; landet nur im Zugriffsprotokoll des Servers.
   function probe() {
     var PC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
     var chrome = (navigator.userAgent.match(/Chrome\/[\d.]+/) || ['?'])[0];
