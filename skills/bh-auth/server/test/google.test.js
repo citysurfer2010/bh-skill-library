@@ -151,7 +151,7 @@ test("Profilbild: wird gespeichert, angezeigt und beim Trennen geloescht", async
   try {
     const u = await g.addUser("a@b.de");
     const c = g.client(); await g.login(c, "a@b.de");
-    assert.equal((await c("/avatar/me")).status, 404);
+    assert.equal((await c("/avatar/me")).status, 204);
     await link(c);
     assert.ok(seen.some((x) => x.endsWith("=s256-c")));
     const img = await c("/avatar/me");
@@ -160,7 +160,7 @@ test("Profilbild: wird gespeichert, angezeigt und beim Trennen geloescht", async
     assert.match(await (await c("/profile")).text(), /src="\/avatar\/me/);
     await c("/profile/google/unlink", { form: {} });
     assert.equal(g.users.byId(u.id).avatarType, null);
-    assert.equal((await c("/avatar/me")).status, 404);
+    assert.equal((await c("/avatar/me")).status, 204);
     assert.equal((await g.client()("/avatar/me")).status, 302);
   } finally { await g.stop(); }
 });

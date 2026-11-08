@@ -20,6 +20,7 @@ location /$1/ {
   auth_request_set \$u_role \$upstream_http_x_auth_role;
   error_page 401 = @login;
   set \$app http://bh-apps:$2;
+  rewrite ^/$1/(.*)\$ /\$1 break;
   proxy_pass \$app;
   proxy_set_header Host \$host;
   proxy_set_header X-User-Email \$u_email;

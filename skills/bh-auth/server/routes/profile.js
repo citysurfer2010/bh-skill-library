@@ -18,7 +18,7 @@ export function profileRoutes({ config, users, sessions, avatars, requireLogin }
     error: req.query.google === "taken" ? "Dieses Google-Konto ist bereits mit einem anderen Benutzer verknüpft." : null,
   }));
   r.get("/avatar/me", requireLogin, (req, res) => {
-    if (!req.user.avatarType) return res.status(404).end();
+    if (!req.user.avatarType) return res.status(204).end();
     res.set({ "Content-Type": req.user.avatarType, "Cache-Control": "private, max-age=3600" }).send(avatars.read(req.user));
   });
   r.get("/change-password", requireLogin, (_req, res) => res.redirect("/profile?pw=1"));
