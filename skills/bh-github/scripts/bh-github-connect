@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Verbindet das GitHub-Konto des Users mit dem zentralen Gateway. Das Token laeuft nicht durch das Modell.
+set -euo pipefail
+token=$(gh auth token) || { echo "Zuerst anmelden: gh auth login" >&2; exit 1; }
+curl -fsS -H "authorization: Bearer $(cat /etc/devbox/llm/token)" -H "content-type: application/json" \
+  -d "$(jq -n --arg t "$token" '{token: $t}')" http://mcp-gateway:18800/connect/github
+echo

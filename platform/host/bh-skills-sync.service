@@ -1,0 +1,7 @@
+[Unit]
+Description=BH-Skills aktualisieren
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/git -C /opt/bh-skill-library pull --ff-only -q

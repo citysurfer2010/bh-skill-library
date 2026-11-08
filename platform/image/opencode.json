@@ -1,0 +1,52 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "provider": {
+    "gateway": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Zentrales LLM-Gateway",
+      "options": {
+        "baseURL": "http://llm-gateway:18790/v1",
+        "apiKey": "{file:/etc/devbox/llm/token}"
+      },
+      "models": {
+        "tier:fast": {
+          "name": "Schnell (GLM 5.3 Flash)",
+          "tool_call": true,
+          "limit": {
+            "context": 256000,
+            "output": 16000
+          }
+        },
+        "tier:balanced": {
+          "name": "Standard (DeepSeek V4.1 Flash)",
+          "tool_call": true,
+          "limit": {
+            "context": 256000,
+            "output": 16000
+          }
+        },
+        "tier:quality": {
+          "name": "Qualitaet (GLM 5.3)",
+          "tool_call": true,
+          "limit": {
+            "context": 256000,
+            "output": 16000
+          }
+        }
+      }
+    }
+  },
+  "model": "gateway/tier:balanced",
+  "mcp": {
+    "bh": {
+      "type": "remote",
+      "url": "http://mcp-gateway:18800/mcp",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {file:/etc/devbox/llm/token}"
+      }
+    }
+  }
+}

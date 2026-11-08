@@ -1,0 +1,12 @@
+[Unit]
+Description=Netzgrenzen fuer User-Container
+After=docker.service ufw.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/devbox-firewall
+
+[Install]
+WantedBy=docker.service

@@ -1,0 +1,14 @@
+{
+  "fast": [
+    { "provider": "melious", "model": "glm-5.3-flash" },
+    { "provider": "melious", "model": "deepseek-v4.1-flash" }
+  ],
+  "balanced": [
+    { "provider": "melious", "model": "deepseek-v4.1-flash" },
+    { "provider": "melious", "model": "qwen3-coder-next" }
+  ],
+  "quality": [
+    { "provider": "melious", "model": "glm-5.3" },
+    { "provider": "melious", "model": "deepseek-v4.1-flash" }
+  ]
+}

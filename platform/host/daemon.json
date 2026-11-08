@@ -1,0 +1,10 @@
+{
+  "userns-remap": "default",
+  "no-new-privileges": true,
+  "icc": false,
+  "live-restore": true,
+  "log-driver": "local",
+  "log-opts": { "max-size": "10m", "max-file": "3" },
+  "default-address-pools": [ { "base": "172.30.0.0/16", "size": 24 } ],
+  "features": { "containerd-snapshotter": false }
+}

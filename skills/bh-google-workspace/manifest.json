@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-google-workspace",
+  "name": "bh-google-workspace",
+  "version": "1.0.0",
+  "description": "Gmail, Google Drive, Docs, Sheets, Slides, Kalender und Chat des eigenen Google-Kontos lesen und bearbeiten. Nutzen, sobald eine Aufgabe E-Mails, Dateien, Dokumente, Tabellen oder Termine in Google betrifft, und zum Einrichten der Anmeldung.",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}

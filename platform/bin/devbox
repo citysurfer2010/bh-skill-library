@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# Verwaltung der User-Container. Nur root auf dem VPS.
+#   devbox add <name> <pubkey-datei> | list | set-key <name> <pubkey-datei>
+#   devbox rotate-llm-token <name> | restart <name> | recreate <name>|--all
+#   devbox remove <name> [--purge]     (ohne --purge bleiben die Daten erhalten)
+set -euo pipefail
+
+ROOT=/srv/devbox; USERS=$ROOT/users; IMAGE=devbox:current
+MAPPED_UID=101000          # uid 1000 im Container (dockremap-Basis 100000 + 1000)
+PORT_BASE=2201
+HOME_SIZE=${DEVBOX_HOME_SIZE:-10G}
+MEM=${DEVBOX_MEM:-2500m}; MEM_SWAP=${DEVBOX_MEM_SWAP:-3g}
+CPUS=${DEVBOX_CPUS:-0.9}; PIDS=${DEVBOX_PIDS:-512}
+PUBLIC_IP=${DEVBOX_PUBLIC_IP:-$(hostname -I | awk '{print $1}')}
+SKILLS=/opt/bh-skill-library/skills
+GATEWAYS="llm-gateway mcp-gateway"
+
+die() { echo "Fehler: $*" >&2; exit 1; }
+check_name() { [[ $1 =~ ^[a-z][a-z0-9-]{1,30}$ ]] || die "ungueltiger Name: $1"; }
+exists() { [ -d "$USERS/$1" ]; }
+need() { exists "$1" || die "User $1 existiert nicht"; }
+
+# Genau ein Schluessel, ohne Optionen wie command= oder from=.
+check_key() {
+  [ "$(grep -c . "$1")" = 1 ] || die "Schluesseldatei muss genau eine Zeile enthalten"
+  grep -qE '^(ssh-ed25519|ecdsa-sha2-[a-z0-9-]+|sk-ssh-ed25519@openssh.com|sk-ecdsa-sha2-nistp256@openssh.com|ssh-rsa) ' "$1" \
+    || die "kein gueltiger oeffentlicher SSH-Schluessel"
+  ssh-keygen -lf "$1" >/dev/null || die "Schluessel nicht lesbar"
+}
+
+next_port() {
+  local p=$PORT_BASE
+  while grep -qsx "$p" "$USERS"/*/port; do p=$((p + 1)); done
+  echo "$p"
+}
+
+run_container() {
+  local n=$1 d=$USERS/$1 port
+  port=$(cat "$d/port")
+  docker network inspect "devbox-net-$n" >/dev/null 2>&1 || docker network create "devbox-net-$n" >/dev/null
+  # Gateways (falls vorhanden) in jedes User-Netz haengen: mehr sieht der User dort nicht.
+  local gw
+  for gw in $GATEWAYS; do
+    docker inspect "$gw" >/dev/null 2>&1 && docker network connect "devbox-net-$n" "$gw" 2>/dev/null || true
+  done
+  docker run -d --name "devbox-$n" --hostname "$n" --network "devbox-net-$n" \
+    --restart unless-stopped --init=false \
+    --read-only --tmpfs /tmp:rw,nosuid,nodev,exec,size=512m \
+    --cap-drop ALL --security-opt no-new-privileges \
+    --memory "$MEM" --memory-swap "$MEM_SWAP" --cpus "$CPUS" --pids-limit "$PIDS" \
+    --ulimit nofile=4096:8192 \
+    -p "0.0.0.0:$port:2222" \
+    -v "$d/home:/home/dev" -v "$d/ssh:/etc/devbox/ssh:ro" -v "$d/llm:/etc/devbox/llm:ro" \
+    -v "$SKILLS:/etc/devbox/skills:ro" \
+    "$IMAGE" >/dev/null
+}
+
+cmd_add() {
+  local n=${1:-} key=${2:-} d
+  check_name "$n"; [ -f "$key" ] || die "Schluesseldatei fehlt"; check_key "$key"
+  exists "$n" && die "User $n existiert bereits"
+  d=$USERS/$n
+  install -d -m 711 "$d"
+  install -d -m 755 "$d/ssh" "$d/home"
+  install -d -m 700 -o "$MAPPED_UID" -g "$MAPPED_UID" "$d/llm"
+  next_port >"$d/port"
+
+  # Eigenes Dateisystem je User: harte Plattengrenze, nosuid/nodev.
+  truncate -s "$HOME_SIZE" "$d/home.img"
+  mkfs.ext4 -q -F -m 0 "$d/home.img"
+  echo "$d/home.img $d/home ext4 loop,nosuid,nodev,noatime,nofail 0 2" >>/etc/fstab
+  mount "$d/home"
+  rmdir "$d/home/lost+found" 2>/dev/null || true
+  chown "$MAPPED_UID:$MAPPED_UID" "$d/home"
+
+  ssh-keygen -q -t ed25519 -N '' -C "devbox-$n" -f "$d/ssh/ssh_host_ed25519_key"
+  chown "$MAPPED_UID:$MAPPED_UID" "$d/ssh/ssh_host_ed25519_key"*
+  install -m 644 "$key" "$d/ssh/authorized_keys"
+  install -m 400 -o "$MAPPED_UID" -g "$MAPPED_UID" /dev/null "$d/llm/token"
+  issue_token "$n"
+
+  run_container "$n"
+  echo "Angelegt: ssh -p $(cat "$d/port") dev@$PUBLIC_IP"
+}
+
+cmd_list() {
+  local d n
+  printf '%-20s %-6s %-12s %s\n' NAME PORT STATUS HOME
+  for d in "$USERS"/*/; do
+    [ -d "$d" ] || continue
+    n=$(basename "$d")
+    printf '%-20s %-6s %-12s %s\n' "$n" "$(cat "$d/port")" \
+      "$(docker inspect -f '{{.State.Status}}' "devbox-$n" 2>/dev/null || echo fehlt)" \
+      "$(df -h --output=used,size "$d/home" | tail -1 | xargs)"
+  done
+}
+
+cmd_set_key() {
+  need "$1"; [ -f "${2:-}" ] || die "Schluesseldatei fehlt"; check_key "$2"
+  install -m 644 "$2" "$USERS/$1/ssh/authorized_keys.new"
+  mv "$USERS/$1/ssh/authorized_keys.new" "$USERS/$1/ssh/authorized_keys"
+  echo "Schluessel von $1 ersetzt"
+}
+
+# Je User ein eigenes Gateway-Token, das fest an seinen Aufrufer gebunden ist.
+TOKENS=/srv/llm-gateway/config/user-tokens.json
+write_tokens() {   # $1 = jq-Filter, restliche Argumente an jq
+  local filter=$1; shift
+  jq "$@" "$filter" "$TOKENS" >"$TOKENS.new"
+  chown "$MAPPED_UID:$MAPPED_UID" "$TOKENS.new"; chmod 400 "$TOKENS.new"
+  mv "$TOKENS.new" "$TOKENS"
+}
+
+issue_token() {
+  [ -f "$TOKENS" ] || return 0
+  local t; t=$(openssl rand -hex 32)
+  write_tokens 'with_entries(select(.value != $c)) + {($t): $c}' --arg t "$t" --arg c "devbox/$1"
+  printf '%s' "$t" >"$USERS/$1/llm/token.new"
+  chown "$MAPPED_UID:$MAPPED_UID" "$USERS/$1/llm/token.new"; chmod 400 "$USERS/$1/llm/token.new"
+  mv "$USERS/$1/llm/token.new" "$USERS/$1/llm/token"
+}
+
+revoke_token() { [ -f "$TOKENS" ] || return 0; write_tokens 'with_entries(select(.value != $c))' --arg c "devbox/$1"; }
+
+cmd_rotate_token() { need "${1:-}"; issue_token "$1"; echo "LLM-Token von $1 erneuert"; }
+
+cmd_recreate_one() { need "$1"; docker rm -f "devbox-$1" >/dev/null 2>&1 || true; run_container "$1"; echo "$1 neu erzeugt"; }
+
+cmd_recreate() {
+  [ "${1:-}" = --all ] || { cmd_recreate_one "${1:-}"; return; }
+  local d; for d in "$USERS"/*/; do [ -d "$d" ] && cmd_recreate_one "$(basename "$d")"; done
+}
+
+cmd_remove() {
+  local n=${1:-} purge=${2:-} d; need "$n"; d=$USERS/$n
+  docker rm -f "devbox-$n" >/dev/null 2>&1 || true
+  revoke_token "$n"
+  local gw
+  for gw in $GATEWAYS; do
+    docker network disconnect "devbox-net-$n" "$gw" 2>/dev/null || true
+  done
+  docker network rm "devbox-net-$n" >/dev/null 2>&1 || true
+  if [ "$purge" = --purge ]; then
+    umount "$d/home" 2>/dev/null || true
+    sed -i "\#^$d/home.img #d" /etc/fstab
+    rm -rf --one-file-system "$d"
+    echo "$n samt Daten geloescht"
+  else
+    echo "$n gestoppt, Daten liegen weiter unter $d (endgueltig: --purge)"
+  fi
+}
+
+[ "$(id -u)" = 0 ] || die "nur als root"
+c=${1:-}; shift || true
+case "$c" in
+  add) cmd_add "$@" ;;
+  list) cmd_list ;;
+  set-key) cmd_set_key "$@" ;;
+  rotate-llm-token) cmd_rotate_token "$@" ;;
+  restart) need "${1:-}"; docker restart "devbox-$1" >/dev/null; echo "$1 neu gestartet" ;;
+  recreate) cmd_recreate "$@" ;;
+  remove) cmd_remove "$@" ;;
+  *) sed -n '2,5p' "$0"; exit 1 ;;
+esac
