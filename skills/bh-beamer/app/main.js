@@ -59,6 +59,12 @@
     x.send(JSON.stringify({ session: session, sdp: pc.localDescription.sdp }));
   }
 
+  // Der Browser des Beamers ist aelter als die Laptops: unbekannte Zeilen lehnt er als Ganzes ab. mDNS-Kandidaten
+  // kann er nicht aufloesen; das schadet nicht, der Laptop meldet sich bei seiner echten Adresse.
+  function compatibleSdp(sdp) {
+    return sdp.split('\r\n').filter(function (l) { return !/^a=extmap-allow-mixed/.test(l) && !/^a=candidate:.*\.local /.test(l); }).join('\r\n');
+  }
+
   // Ohne Trickle-ICE: Die Antwort geht erst raus, wenn alle Kandidaten drinstehen (spaetestens nach 2,5 s).
   function startShare(c) {
     stopAudio();
@@ -72,11 +78,11 @@
     pc.onaddstream = function (e) { attach(e.stream); };
     pc.onicecandidate = function (e) { if (!e.candidate) send(); };
     pc.oniceconnectionstatechange = function () { if (pc) caps = 'ice-' + pc.iceConnectionState; };
-    pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: c.offer }))
+    pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: compatibleSdp(c.offer) }))
       .then(function () { return pc.createAnswer(); })
       .then(function (a) { return pc.setLocalDescription(a); })
       .then(function () { setTimeout(send, 2500); })
-      .catch(function (e) { caps = 'share-' + e.name; });
+      .catch(function (e) { caps = 'share-' + e.name + '-' + String(e.message).slice(0, 120); });
   }
 
   function render(c) {
