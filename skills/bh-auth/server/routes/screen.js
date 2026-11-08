@@ -12,6 +12,9 @@ export function screenRoutes({ config }) {
   const r = Router();
   const file = path.join(config.dataDir, "screen.json");
   const load = () => { try { return { mode: "text", url: null, ...JSON.parse(readFileSync(file, "utf8")) }; } catch { return { mode: "text", title: "", text: "", url: null }; } };
+  const menuFile = path.join(config.dataDir, "screen-menu.json");
+  const loadMenu = () => { try { return JSON.parse(readFileSync(menuFile, "utf8")); } catch { return null; } };
+  const requests = [];
   const waiters = new Set();
   let version = String(Date.now());
   const changed = () => { version = String(Number(version) + 1); [...waiters].forEach((w) => w()); };
@@ -28,7 +31,7 @@ export function screenRoutes({ config }) {
   r.get("/screen/:token/content", (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
     if (req.query.since === undefined) return res.json(load());
-    const send = () => res.json({ ...load(), v: version });
+    const send = () => res.json({ ...load(), menu: loadMenu(), v: version });
     if (req.query.since !== version) return send();
     let finished = false;
     const finish = (reply) => { if (finished) return; finished = true; clearTimeout(timer); waiters.delete(done); if (reply) send(); };
@@ -48,6 +51,23 @@ export function screenRoutes({ config }) {
     const answer = sdp(body?.sdp); const c = load();
     if (!answer || c.mode !== "share" || body?.session !== c.session) return res.status(409).json({ error: "Sitzung passt nicht" });
     writeFileSync(file, JSON.stringify({ ...c, answer }), { mode: 0o600 });
+    res.status(204).end();
+  });
+  // Auswahl mit der Fernbedienung; die App Beamer holt sie ab und fuehrt sie aus.
+  r.post("/screen/:token/request", express.text({ type: "*/*", limit: "2kb" }), (req, res, next) => {
+    if (!same(req.params.token, config.screenRead)) return next();
+    let body; try { body = JSON.parse(req.body); } catch { return res.status(400).json({ error: "unlesbar" }); }
+    if (!["radio", "mood"].includes(body?.kind) || !/^[a-z0-9]{1,40}$/.test(String(body?.id))) return res.status(400).json({ error: "ungueltig" });
+    if (requests.length < 10) requests.push({ kind: body.kind, id: body.id });
+    res.status(204).end();
+  });
+  const writer = (req) => { const a = /^Bearer (.+)$/.exec(req.get("authorization") || ""); return a && same(a[1], config.screenWrite); };
+  r.get("/screen-requests", (req, res) => (writer(req) ? res.json({ requests: requests.splice(0) }) : res.status(401).json({ error: "unauthorized" })));
+  r.post("/screen-menu", express.json({ limit: "32kb" }), (req, res) => {
+    if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
+    if (!Array.isArray(req.body?.radio) || !Array.isArray(req.body?.mood)) return res.status(400).json({ error: "ungueltig" });
+    writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood }), { mode: 0o600 });
+    changed();
     res.status(204).end();
   });
   r.get("/screen-answer", (req, res) => {

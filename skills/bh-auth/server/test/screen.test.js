@@ -100,3 +100,23 @@ test("Anzeige: Beamer wartet auf Aenderungen und bekommt sie sofort", async () =
     assert.equal((await fetch(`${g.base}/screen/falsch/content?since=1`, { redirect: "manual" })).status === 200, false);
   } finally { await g.stop(); }
 });
+
+test("Menue: nur mit Schreib-Schluessel, Auswahl des Beamers wird einmal abgeholt", async () => {
+  const g = await start();
+  const write = (path, token, body) => fetch(`${g.base}${path}`, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+  const ask = (token, body) => fetch(`${g.base}/screen/${token}/request`, { method: "POST", headers: { "content-type": "text/plain", origin: "file://" }, body: JSON.stringify(body) });
+  const take = (token) => fetch(`${g.base}/screen-requests`, { headers: { authorization: `Bearer ${token}` } });
+  try {
+    assert.equal((await write("/screen-menu", "lesen", { radio: [], mood: [] })).status, 401);
+    assert.equal((await write("/screen-menu", "schreiben", { radio: 1 })).status, 400);
+    assert.equal((await write("/screen-menu", "schreiben", { radio: [{ id: "a" }], mood: [] })).status, 204);
+    assert.equal((await (await fetch(`${g.base}/screen/lesen/content?since=`)).json()).menu.radio[0].id, "a");
+    assert.equal((await ask("falsch", { kind: "radio", id: "a" })).status === 204, false);
+    assert.equal((await ask("lesen", { kind: "boese", id: "a" })).status, 400);
+    assert.equal((await ask("lesen", { kind: "radio", id: "../x" })).status, 400);
+    assert.equal((await ask("lesen", { kind: "radio", id: "ndr2" })).status, 204);
+    assert.equal((await take("lesen")).status, 401);
+    assert.deepEqual((await (await take("schreiben")).json()).requests, [{ kind: "radio", id: "ndr2" }]);
+    assert.deepEqual((await (await take("schreiben")).json()).requests, []);
+  } finally { await g.stop(); }
+});

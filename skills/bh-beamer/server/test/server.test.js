@@ -14,7 +14,7 @@ function fake(events) {
   return { sent, paths, closed: () => closed };
 }
 
-test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'open_app', 'play_media', 'play_radio', 'play_youtube', 'power', 'press', 'share_answer', 'share_start', 'show_text', 'show_url', 'status', 'stop_media', 'stop_radio']));
+test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['home', 'media_state', 'menu_requests', 'menu_set', 'open_app', 'play_media', 'play_radio', 'play_youtube', 'power', 'press', 'share_answer', 'share_start', 'show_text', 'show_url', 'status', 'stop_media', 'stop_radio']));
 
 test('Frames: verschluesselt gesendet, Nachrichten werden erkannt', () => {
   const f = r.encodeText('hi');

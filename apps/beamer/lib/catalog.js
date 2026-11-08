@@ -35,4 +35,10 @@ const publicCatalog = () => ({
   apps: APPS,
 });
 
-module.exports = { MOODS, STATIONS, APPS, KEYS, publicCatalog };
+// Menue fuer die App auf dem Beamer: Sie spielt Sender selbst und braucht darum die Adressen.
+const beamerMenu = () => ({
+  radio: STATIONS.map(({ id, label, sub, url }) => ({ id, name: label.replace(/ Kultur$/, ''), sub, url })),
+  mood: publicCatalog().moods.map(({ id, label, thumb }) => ({ id, label, thumb })),
+});
+
+module.exports = { beamerMenu, MOODS, STATIONS, APPS, KEYS, publicCatalog };

@@ -6,16 +6,24 @@
 <title>BH Screen</title>
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<main id="screen">
-  <div id="radio" aria-hidden="true"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
-  <h1 id="title">BH Screen</h1>
-  <p id="text">Verbinde …</p>
-  <p id="note"></p>
-</main>
+<body class="home">
+<div id="home">
+  <svg class="hills" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true"><path fill="#f8ecd9" d="M0 640 C 380 540 820 700 1220 610 S 1720 540 1920 600 V1080 H0Z"/><path fill="#f1dfc2" d="M0 800 C 500 710 930 860 1410 770 S 1790 730 1920 770 V1080 H0Z"/></svg>
+  <header class="top">
+    <div><div id="clock">--:--</div><div id="date"></div></div>
+    <div class="weather"><div id="temp"></div><div id="sky"></div></div>
+  </header>
+  <section id="playing">
+    <div id="radio"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+    <div class="now"><div id="station"></div><div id="note"></div></div>
+  </section>
+  <nav id="menu"></nav>
+</div>
+<main id="screen"><h1 id="title"></h1><p id="text"></p></main>
 <audio id="player" preload="none"></audio>
 <video id="share" autoplay playsinline></video>
 <script src="config.js"></script>
+<script src="home.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

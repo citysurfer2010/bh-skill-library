@@ -13,26 +13,43 @@
   var shareSession = null;
   var caps = '';
 
+  var stationEl = document.getElementById('station');
+  var view = 'home';
+  function setView(name) { view = name; document.body.className = name; }
+  function homeView() { setView(playingUrl ? 'home audio' : 'home'); }
+
   function stopAudio() {
     if (!playingUrl) return;
     playingUrl = null;
     try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* kein Player */ }
-    document.body.className = '';
+    BHHome.setPlaying(null);
   }
 
-  function playAudio(url) {
+  function playAudio(url, title, id) {
+    stationEl.textContent = title || '';
+    BHHome.setPlaying(id || null);
     if (url === playingUrl) return;
     playingUrl = url;
-    document.body.className = 'audio';
     noteEl.textContent = 'Verbinde …';
     player.src = url;
     var p = player.play();
     if (p && p.catch) p.catch(function () { noteEl.textContent = 'Wiedergabe nicht möglich'; });
   }
 
-  player.addEventListener('playing', function () { noteEl.textContent = 'Läuft'; });
+  function sendRequest(kind, id) {
+    var x = new XMLHttpRequest();
+    x.open('POST', window.BH_SCREEN_URL + '/request');
+    x.setRequestHeader('Content-Type', 'text/plain');
+    x.send(JSON.stringify({ kind: kind, id: id }));
+  }
+  // Sofort umschalten, die App erfaehrt es parallel und zeigt denselben Stand.
+  BHHome.onTune = function (st) { playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
+  BHHome.onMood = function (m) { sendRequest('mood', m.id); };
+  BHHome.isRadioOn = function () { return !!playingUrl; };
+
+  player.addEventListener('playing', function () { noteEl.textContent = '◀ ▶ Sender wechseln'; });
   player.addEventListener('waiting', function () { noteEl.textContent = 'Puffert …'; });
-  player.addEventListener('error', function () { noteEl.textContent = 'Stream nicht erreichbar'; });
+  player.addEventListener('error', function () { if (playingUrl) noteEl.textContent = 'Stream nicht erreichbar'; });
 
   function stopShare() {
     if (!shareSession) return;
@@ -40,7 +57,7 @@
     try { pc.close(); } catch (e) { /* schon zu */ }
     pc = null;
     shareEl.srcObject = null;
-    document.body.className = '';
+    homeView();
   }
 
   function attach(stream) {
@@ -69,7 +86,7 @@
   function startShare(c) {
     stopAudio();
     shareSession = c.session;
-    document.body.className = 'share';
+    setView('share');
     var PC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
     var session = c.session; var sent = false;
     var send = function () { if (!sent) { sent = true; sendAnswer(session); } };
@@ -85,7 +102,14 @@
       .catch(function (e) { caps = 'share-' + e.name + '-' + String(e.message).slice(70, 420); });
   }
 
+  function stationIdFor(c) {
+    var list = (c.menu && c.menu.radio) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].url === c.url) return list[i].id;
+    return null;
+  }
+
   function render(c) {
+    BHHome.setMenu(c.menu);
     if (c.mode === 'share' && c.offer) {
       if (c.session !== shareSession) { stopShare(); startShare(c); }
       return;
@@ -97,9 +121,11 @@
       window.location.replace(c.url);
       return;
     }
-    if (c.mode === 'audio' && c.url) playAudio(c.url); else stopAudio();
+    if (c.mode === 'audio' && c.url) { playAudio(c.url, c.title, stationIdFor(c)); homeView(); return; }
+    stopAudio();
     titleEl.textContent = c.title || '';
     textEl.textContent = c.text || '';
+    if (c.title || c.text) setView('text'); else homeView();
   }
 
   // Meldet einmalig, was das Geraet kann, danach den Stand der Freigabe; landet nur im Zugriffsprotokoll des Servers.
@@ -127,11 +153,11 @@
     x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now() + '&since=' + encodeURIComponent(version) + '&caps=' + encodeURIComponent(caps));
     x.timeout = 35000;
     x.onload = function () {
-      if (x.status !== 200) { textEl.textContent = 'Server antwortet nicht (' + x.status + ')'; again(3000); return; }
-      try { var c = JSON.parse(x.responseText); version = c.v || ''; render(c); } catch (e) { textEl.textContent = 'Antwort unlesbar'; }
+      if (x.status !== 200) { again(3000); return; }
+      try { var c = JSON.parse(x.responseText); version = c.v || ''; render(c); } catch (e) { /* naechste Antwort */ }
       again(30);
     };
-    x.onerror = function () { textEl.textContent = 'Keine Verbindung zum Server'; again(3000); };
+    x.onerror = function () { again(3000); };
     x.ontimeout = function () { again(100); };
     x.send();
   }

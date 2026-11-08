@@ -82,13 +82,15 @@ app.get('/api/me', (req, res) => {
   res.json({ id: email, email, name, role });
 });
 app.use('/api/me/api-keys', apiKeyRoutes.buildRouter());
-app.use('/api', beamerRoutes.buildRouter());
+const beamer = beamerRoutes.buildRouter();
+app.use('/api', beamer);
 
 app.use(errorPage.notFound);
 app.use(errorPage.errorHandler);
 
 if (require.main === module) {
   getDb();
+  require('./lib/menu-bridge').start(beamer.commands);
   const server = app.listen(PORT, HOST, () => console.log(`[${APP_ID}] läuft auf http://${HOST}:${PORT} (Pfad: "${APP_BASE}")`));
   const stop = () => server.close(() => { closeDb(); process.exit(0); });
   process.on('SIGTERM', stop);
