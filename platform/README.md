@@ -48,3 +48,9 @@ Container: `gh` ist vorinstalliert. Jeder User meldet sich selbst an, gespeicher
 
 `gateway/setup-gateway.sh` startet das LLM-Gateway (Tageslimit 10 EUR), `gateway/setup-mcp-gateway.sh` das MCP-Gateway.
 Beide haben keine veroeffentlichten Ports. Jeder User bekommt beim Anlegen ein Token, das fuer beide gilt.
+
+## Geheimnisse
+
+Tokens und Passwoerter stehen ausschliesslich in `/srv/bh-platform/.env` (root, Rechte 600), nie in Einzeldateien
+oder im Repo. Setup-Skripte erzeugen daraus je Dienst nur die Werte, die er braucht. Enthalten sind
+`CLOUDFLARE_API_TOKEN`, `MELIOUS_API_KEY`, `LLM_PROXY_TOKEN`.

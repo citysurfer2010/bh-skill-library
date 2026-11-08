@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Baut und startet den llm-proxy als Container "llm-gateway" (idempotent).
-# Voraussetzung: /srv/llm-gateway/melious.key und der Proxy-Quellcode unter ./proxy-src
+# Voraussetzung: MELIOUS_API_KEY in /srv/bh-platform/.env und der Proxy-Quellcode unter ./proxy-src
 # (nicht Teil dieses Repos).
 # Der Container wird nicht veroeffentlicht; erreichbar ist er nur aus den User-Netzen.
 set -euo pipefail
 cd "$(dirname "$0")"
 D=/srv/llm-gateway; U=101000     # uid 1000 im Container
-[ -s "$D/melious.key" ] || { echo "melious.key fehlt" >&2; exit 1; }
+ENV=/srv/bh-platform/.env
+val() { sed -n "s/^$1=//p" "$ENV" | head -1; }
+[ -n "$(val MELIOUS_API_KEY)" ] || { echo "MELIOUS_API_KEY fehlt in $ENV" >&2; exit 1; }
 
 chmod 711 "$D"
 install -d -m 750 -o "$U" -g "$U" "$D/config"
@@ -18,8 +20,8 @@ if [ ! -f "$D/config/user-tokens.json" ]; then
 fi
 (
   umask 077
-  [ -s "$D/admin.token" ] || openssl rand -hex 32 >"$D/admin.token"
-  printf 'MELIOUS_API_KEY=%s\nLLM_PROXY_TOKEN=%s\n' "$(cat "$D/melious.key")" "$(cat "$D/admin.token")" >"$D/env"
+  [ -n "$(val LLM_PROXY_TOKEN)" ] || echo "LLM_PROXY_TOKEN=$(openssl rand -hex 32)" >>"$ENV"
+  printf 'MELIOUS_API_KEY=%s\nLLM_PROXY_TOKEN=%s\n' "$(val MELIOUS_API_KEY)" "$(val LLM_PROXY_TOKEN)" >"$D/env"
 )
 
 docker build -q -t llm-gateway:current proxy-src
