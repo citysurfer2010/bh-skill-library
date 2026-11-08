@@ -60,7 +60,7 @@ window.BeamerShare = (() => {
     onState('connecting');
     await conn.setLocalDescription(await conn.createOffer());
     await gathered(conn);
-    const { session } = await BeamerApi.send('/share/start', { offer: conn.localDescription.sdp });
+    const { session } = await BeamerApi.send('/share/start', { offer: conn.localDescription.sdp, kind });
     for (let i = 0; i < ANSWER_TRIES && mine === run; i++) {
       await sleep(ANSWER_MS);
       const { answer } = await BeamerApi.send('/share/answer', { session });

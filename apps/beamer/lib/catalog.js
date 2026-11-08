@@ -30,7 +30,7 @@ const APPS = ['YouTube', 'Prime Video', 'Netflix', 'Disney+', 'Apple TV', 'Spoti
 const KEYS = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_ENTER', 'KEY_RETURN', 'KEY_HOME', 'KEY_VOLUP', 'KEY_VOLDOWN', 'KEY_MUTE', 'KEY_PLAY', 'KEY_PAUSE'];
 
 const publicCatalog = () => ({
-  moods: MOODS.map(({ id, label, video }) => ({ id, label, thumb: `https://i.ytimg.com/vi/${video}/mqdefault.jpg` })),
+  moods: MOODS.map(({ id, label, video }) => ({ id, label, thumb: `https://i.ytimg.com/vi/${video}/hq1.jpg` })),
   stations: STATIONS.map(({ id, label }) => ({ id, label })),
   apps: APPS,
 });

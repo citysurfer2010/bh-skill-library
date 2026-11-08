@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 const post = (url, body, as = 'u@beispiel.de') => t.call(`/api${url}`, { method: 'POST', as, body: body || {} });
 
-const WRITES = ['/mood', '/radio', '/radio/stop', '/youtube', '/text', '/url', '/app', '/key', '/power', '/share/start', '/share/answer', '/share/stop'];
+const WRITES = ['/mood', '/radio', '/radio/stop', '/youtube', '/text', '/url', '/app', '/key', '/power', '/share/start', '/share/answer', '/share/stop', '/stop'];
 for (const w of WRITES) {
   test(`POST ${w}: ohne Anmeldung 401, ohne JSON 415`, async () => {
     assert.equal((await t.call(`/api${w}`, { method: 'POST', body: {} })).status, 401);
@@ -83,6 +83,15 @@ test('Freigabe: nur gültiges Angebot, Sitzung kommt zurück, Antwort wird durch
   assert.equal((await (await post('/share/answer', { session: start.session })).json()).answer, 'v=0 antwort');
   assert.equal((await (await post('/share/stop')).json()).now, null);
   assert.deepEqual(calls, ['beamer_share_start', 'beamer_share_answer', 'beamer_stop_radio']);
+});
+
+test('Stoppen: Radio endet in BH Screen, Video über die Startseite', async () => {
+  await post('/radio', { id: 'ndr2' }); calls.length = 0;
+  assert.equal((await (await post('/stop')).json()).now, null);
+  assert.deepEqual(calls, [['beamer_stop_radio', {}]]);
+  await post('/mood', { id: 'kamin' }); calls.length = 0;
+  await post('/stop');
+  assert.deepEqual(calls, [['beamer_press', { key: 'KEY_HOME' }]]);
 });
 
 test('Ein/Aus: nur on und off, Aus räumt die Anzeige, Fehler kommt an', async () => {
