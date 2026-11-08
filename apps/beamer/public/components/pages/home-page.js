@@ -161,6 +161,7 @@
     let view = 'start'; try { view = localStorage.getItem('beamer-view') || 'start'; } catch { /* egal */ }
     host.querySelector(`[role="tab"][data-view="${view === 'remote' ? 'remote' : 'start'}"]`).click();
     new IntersectionObserver(([en]) => { scrolledPast = !en.isIntersecting; paint(); }).observe($('bm-hero'));
+    BeamerApi.schedule().then((plan) => { $('bm-schedule').innerHTML = BeamerView.schedule(plan); $('bm-schedule').hidden = false; }).catch(() => {});
     await refresh();
     setInterval(() => { if (!document.hidden) refresh(); }, 15000);
   } catch (err) { Toast.error(err.message || 'Fehler beim Laden'); }

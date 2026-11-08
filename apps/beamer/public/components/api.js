@@ -29,5 +29,5 @@ window.BeamerApi = (() => {
     return fresh;
   }
 
-  return { me, catalog: () => req('GET', '/api/catalog'), status: () => req('GET', '/api/status'), send: (path, body = {}) => req('POST', `/api${path}`, body) };
+  return { me, catalog: () => req('GET', '/api/catalog'), schedule: () => req('GET', '/api/schedule'), status: () => req('GET', '/api/status'), send: (path, body = {}) => req('POST', `/api${path}`, body) };
 })();

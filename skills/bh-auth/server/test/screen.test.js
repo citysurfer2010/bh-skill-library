@@ -136,3 +136,15 @@ test("Video: Kennung wird geprueft, Player-Seite nur mit geheimem Link und ohne 
     assert.notEqual((await fetch(`${g.base}/screen/lesen/player?v=%22%3E%3Cb`, { redirect: "manual" })).status, 200);
   } finally { await g.stop(); }
 });
+
+test("Menue: Die App wartet auf eine Auswahl und bekommt sie sofort", async () => {
+  const g = await start();
+  try {
+    const t0 = Date.now();
+    const waiting = fetch(`${g.base}/screen-requests?wait=20`, { headers: { authorization: "Bearer schreiben" } }).then((r) => r.json());
+    await new Promise((r) => setTimeout(r, 100));
+    await fetch(`${g.base}/screen/lesen/request`, { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify({ kind: "radio", id: "ndr2" }) });
+    assert.deepEqual((await waiting).requests, [{ kind: "radio", id: "ndr2" }]);
+    assert.ok(Date.now() - t0 < 2000);
+  } finally { await g.stop(); }
+});

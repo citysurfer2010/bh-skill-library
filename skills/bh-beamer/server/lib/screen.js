@@ -66,8 +66,8 @@ async function setMenu(menu, http = fetch) {
   const r = await http(`${process.env.BH_AUTH_INTERNAL}/screen-menu`, { method: 'POST', headers: { ...authed(), 'content-type': 'application/json' }, body: JSON.stringify(menu) });
   if (!r.ok) throw new Error(`Menue nicht gesetzt (${r.status})`);
 }
-async function menuRequests(http = fetch) {
-  const r = await http(`${process.env.BH_AUTH_INTERNAL}/screen-requests`, { headers: authed() });
+async function menuRequests(wait = 0, http = fetch) {
+  const r = await http(`${process.env.BH_AUTH_INTERNAL}/screen-requests?wait=${Number(wait) || 0}`, { headers: authed() });
   if (!r.ok) throw new Error(`Auswahl nicht lesbar (${r.status})`);
   return (await r.json()).requests;
 }

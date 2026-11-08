@@ -115,3 +115,13 @@ test("Server mit users-Liste: andere sehen ihn nicht und koennen ihn nicht aufru
   } finally { await g.stop(); }
 });
 
+
+test("Dienst-Konto startet nur ausdruecklich freigegebene Server", async () => {
+  const { Registry } = await import("../server/lib/registry.mjs");
+  const started = [];
+  const pool = { get: (user, s) => { started.push(s.id); return { request: async () => ({ tools: [{ name: "x" }] }) }; } };
+  const reg = new Registry([{ id: "offen" }, { id: "beamer", users: ["bh-apps"] }], pool);
+  const list = await reg.list("bh-apps");
+  assert.deepEqual(list.map((t) => t.name), ["beamer_x"]);
+  assert.deepEqual(started, ["beamer"]);
+});
