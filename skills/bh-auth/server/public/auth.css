@@ -45,6 +45,7 @@ summary.small { display: inline-flex; align-items: center; cursor: pointer; list
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .lead, .muted-line { color: var(--bh-muted); margin: 0; font-size: 14px; } .lead { font-size: 16px; }
 .who { color: var(--bh-muted); text-decoration: none; }
+form.inline { display: inline; }
 .inline-form { justify-items: start; margin-top: 12px; }
 .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .app-card { display: flex; align-items: center; gap: 14px; padding: 18px; background: var(--bh-surface); border: 1px solid var(--bh-border); border-radius: 12px; color: var(--bh-text); text-decoration: none; }

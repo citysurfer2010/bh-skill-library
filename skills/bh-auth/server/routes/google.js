@@ -5,24 +5,34 @@ import { safeNext } from "../lib/session.js";
 const COOKIE = "bh_oauth";
 const b64 = (b) => b.toString("base64url");
 
-// Google bestaetigt nur, wem ein Konto gehoert. Zugang haben ausschliesslich eingeladene Adressen.
-export function googleRoutes({ config, users, sessions }) {
+// Google bestaetigt nur, wem ein Konto gehoert. Zugang haben eingeladene Adressen und Konten,
+// die ein angemeldeter User selbst mit seinem Profil verknuepft hat.
+export function googleRoutes({ config, users, sessions, requireLogin }) {
   const r = Router();
   const redirectUri = `${config.publicUrl}/oauth/google/callback`;
   const cookie = { httpOnly: true, sameSite: "lax", secure: config.secure, path: "/oauth/google" };
   const fail = (res, kind = "1") => { res.clearCookie(COOKIE, cookie); res.redirect(`/login?error=${kind}`); };
 
-  r.get("/oauth/google", (req, res) => {
-    if (!config.google) return res.redirect("/login");
+  function toGoogle(res, payload) {
     const state = b64(randomBytes(24));
     const verifier = b64(randomBytes(48));
-    res.cookie(COOKIE, JSON.stringify({ state, verifier, next: safeNext(req.query.next, config.returnOrigins) }), { ...cookie, maxAge: 600_000 });
+    res.cookie(COOKIE, JSON.stringify({ state, verifier, ...payload }), { ...cookie, maxAge: 600_000 });
     const q = new URLSearchParams({
       client_id: config.google.clientId, redirect_uri: redirectUri, response_type: "code",
       scope: "openid email profile", prompt: "select_account", state,
       code_challenge: b64(createHash("sha256").update(verifier).digest()), code_challenge_method: "S256",
     });
     res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${q}`);
+  }
+
+  r.get("/oauth/google", (req, res) => {
+    if (!config.google) return res.redirect("/login");
+    toGoogle(res, { next: safeNext(req.query.next, config.returnOrigins) });
+  });
+
+  r.get("/oauth/google/link", requireLogin, (req, res) => {
+    if (!config.google) return res.redirect("/profile");
+    toGoogle(res, { linkUid: req.user.id });
   });
 
   r.get("/oauth/google/callback", async (req, res) => {
@@ -41,7 +51,16 @@ export function googleRoutes({ config, users, sessions }) {
       if (!info.ok) return fail(res);
       const g = await info.json();
       if (!g.sub || !g.email || g.email_verified !== true) return fail(res, "no-access");
-      const user = users.byEmail(g.email);
+      if (saved.linkUid) {
+        const me = await sessions.resolve(req);
+        if (!me || me.id !== saved.linkUid) return fail(res);
+        const holder = users.byGoogleSub(g.sub);
+        res.clearCookie(COOKIE, cookie);
+        if (holder && holder.id !== me.id) return res.redirect("/profile?google=taken");
+        users.bindGoogle(me.id, g.sub);
+        return res.redirect("/profile?saved=1");
+      }
+      const user = users.byGoogleSub(g.sub) || users.byEmail(g.email);
       if (!user || user.disabled || (user.googleSub && user.googleSub !== g.sub)) return fail(res, "no-access");
       if (!user.googleSub) users.bindGoogle(user.id, g.sub);
       res.clearCookie(COOKIE, cookie);

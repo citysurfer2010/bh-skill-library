@@ -52,6 +52,8 @@ export function usersStore(db) {
     },
 
     touchLogin: (id) => db.prepare("UPDATE users SET lastLogin = ? WHERE id = ?").run(now(), id),
+    byGoogleSub: (sub) => get("SELECT * FROM users WHERE googleSub = ?", String(sub)),
+    unbindGoogle: (id) => db.prepare("UPDATE users SET googleSub = NULL WHERE id = ?").run(id),
     bindGoogle: (id, sub) => db.prepare("UPDATE users SET googleSub = ? WHERE id = ?").run(sub, id),
     setName: (id, name) => db.prepare("UPDATE users SET name = ? WHERE id = ?").run(name, id),
     setAdmin: (id, on) => db.prepare("UPDATE users SET isAdmin = ? WHERE id = ?").run(on ? 1 : 0, id),

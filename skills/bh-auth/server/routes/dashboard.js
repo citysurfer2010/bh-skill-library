@@ -2,17 +2,24 @@ import { Router } from "express";
 import { validAppUrl } from "../lib/apps.js";
 import { adminAppsView, dashboardView, profileView } from "../lib/views-dashboard.js";
 
-export function dashboardRoutes({ users, apps, sessions, requireLogin, requireAdmin }) {
+export function dashboardRoutes({ config, users, apps, sessions, requireLogin, requireAdmin }) {
   const r = Router();
   const html = (res, body, status = 200) => res.status(status).type("html").send(body);
   const adminPage = (req, res, error, status = 200) => html(res, adminAppsView({ me: req.user, apps: apps.list({ admin: true }), error }), status);
 
   r.get("/", requireLogin, (req, res) => html(res, dashboardView(req.user, apps.list({ admin: !!req.user.isAdmin }))));
 
-  r.get("/profile", requireLogin, (req, res) => html(res, profileView({ user: req.user, saved: req.query.saved === "1" })));
+  const profile = (req, extra = {}) => profileView({ user: req.user, googleEnabled: !!config.google, ...extra });
+  const TAKEN = "Dieses Google-Konto ist bereits mit einem anderen Benutzer verknüpft.";
+  r.get("/profile", requireLogin, (req, res) => html(res, profile(req, { saved: req.query.saved === "1", error: req.query.google === "taken" ? TAKEN : null })));
+  r.post("/profile/google/unlink", requireLogin, (req, res) => {
+    if (!req.user.passwordHash) return html(res, profile(req, { error: "Lege zuerst ein Passwort fest, sonst kannst du dich nicht mehr anmelden." }), 400);
+    users.unbindGoogle(req.user.id);
+    res.redirect("/profile?saved=1");
+  });
   r.post("/profile", requireLogin, (req, res) => {
     const name = String(req.body.name || "").trim();
-    if (!name || name.length > 80) return html(res, profileView({ user: req.user, error: "Bitte einen Namen mit höchstens 80 Zeichen angeben." }), 400);
+    if (!name || name.length > 80) return html(res, profile(req, { error: "Bitte einen Namen mit höchstens 80 Zeichen angeben." }), 400);
     users.setName(req.user.id, name);
     res.redirect("/profile?saved=1");
   });

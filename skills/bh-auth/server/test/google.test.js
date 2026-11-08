@@ -64,3 +64,71 @@ test("Unbestaetigte E-Mail und fremdes Konto zur selben Adresse werden abgewiese
     assert.match((await (await flow(other, other.client())).cb()).headers.get("location"), /no-access/);
   } finally { await other.stop(); }
 });
+
+const via = (...infos) => { let i = 0; return async (url) => (String(url).includes("/token") ? { ok: true, json: async () => ({ access_token: "t" }) } : { ok: true, json: async () => infos[Math.min(i++, infos.length - 1)] }); };
+const privat = { sub: "g1", email: "privat@gmail.com", email_verified: true };
+
+async function link(c) {
+  const r = await c("/oauth/google/link");
+  const state = new URL(r.headers.get("location")).searchParams.get("state");
+  return c(`/oauth/google/callback?state=${state}&code=c`);
+}
+
+test("Verknuepfen: Google-Konto mit anderer Adresse meldet danach genau diesen User an", async () => {
+  const g = await start({ google: true, fetchImpl: via(privat) });
+  try {
+    const u = await g.addUser("matti@firma.de");
+    const c = g.client(); await g.login(c, "matti@firma.de");
+    assert.equal((await link(c)).headers.get("location"), "/profile?saved=1");
+    assert.equal(g.users.byId(u.id).googleSub, "g1");
+    const neu = g.client();
+    await (await flow(g, neu)).cb();
+    assert.equal((await (await neu("/validate")).json()).email, "matti@firma.de");
+    assert.equal(g.users.byEmail("privat@gmail.com"), null);
+  } finally { await g.stop(); }
+});
+
+test("Verknuepfen nur angemeldet, ein Google-Konto gehoert genau einem User", async () => {
+  const g = await start({ google: true, fetchImpl: via(privat) });
+  try {
+    assert.equal((await g.client()("/oauth/google/link")).headers.get("location").startsWith("/login"), true);
+    const a = await g.addUser("a@b.de"); await g.addUser("b@b.de");
+    g.users.bindGoogle(a.id, "g1");
+    const c = g.client(); await g.login(c, "b@b.de");
+    assert.equal((await link(c)).headers.get("location"), "/profile?google=taken");
+    assert.equal(g.users.byEmail("b@b.de").googleSub, null);
+  } finally { await g.stop(); }
+});
+
+test("Verknuepfung bricht ab, wenn die Sitzung inzwischen weg ist", async () => {
+  const g = await start({ google: true, fetchImpl: via(privat) });
+  try {
+    const u = await g.addUser("a@b.de");
+    const c = g.client(); await g.login(c, "a@b.de");
+    const r = await c("/oauth/google/link");
+    const state = new URL(r.headers.get("location")).searchParams.get("state");
+    await c("/logout", { form: {} });
+    assert.match((await c(`/oauth/google/callback?state=${state}&code=c`)).headers.get("location"), /error/);
+    assert.equal(g.users.byId(u.id).googleSub, null);
+  } finally { await g.stop(); }
+});
+
+test("Trennen braucht ein Passwort, sonst waere das Konto ausgesperrt", async () => {
+  const g = await start({ google: true, fetchImpl: via(privat) });
+  try {
+    const u = await g.addUser("a@b.de");
+    const c = g.client(); await g.login(c, "a@b.de");
+    await link(c);
+    assert.equal((await c("/profile/google/unlink", { form: {} })).status, 302);
+    assert.equal(g.users.byId(u.id).googleSub, null);
+    await link(c);
+    assert.match(await (await c("/profile")).text(), /Trennen/);
+  } finally { await g.stop(); }
+});
+
+test("Profil bietet Verknuepfung nur an, wenn Google eingerichtet ist", async () => {
+  const on = await start({ google: true, fetchImpl: via(privat) });
+  try { await on.addUser("a@b.de"); const c = on.client(); await on.login(c, "a@b.de"); assert.match(await (await c("/profile")).text(), /oauth\/google\/link/); } finally { await on.stop(); }
+  const off = await start();
+  try { await off.addUser("a@b.de"); const c = off.client(); await off.login(c, "a@b.de"); assert.doesNotMatch(await (await c("/profile")).text(), /oauth\/google\/link/); } finally { await off.stop(); }
+});

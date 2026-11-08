@@ -15,7 +15,12 @@ export function dashboardView(user, apps) {
 ${cards ? `<div class="app-grid">${cards}</div>` : empty}`);
 }
 
-export function profileView({ user, saved, error }) {
+function googleAction(user, enabled) {
+  if (user.googleSub) return `<form class="inline" method="post" action="/profile/google/unlink"><button class="link">Trennen</button></form>`;
+  return enabled ? `<a href="/oauth/google/link">Mit Google verknüpfen</a>` : "";
+}
+
+export function profileView({ user, saved, error, googleEnabled }) {
   const status = (on, yes, no) => `<span class="tag ${on ? "on" : "wait"}">${on ? yes : no}</span>`;
   return shell(user, "Profil", `<h1>Profil</h1>
 ${saved ? `<p class="alert ok" role="status">Gespeichert.</p>` : ""}${error ? `<p class="alert error" role="alert">${esc(error)}</p>` : ""}
@@ -26,7 +31,7 @@ ${saved ? `<p class="alert ok" role="status">Gespeichert.</p>` : ""}${error ? `<
 <section class="card"><h2>Anmeldung</h2><dl class="facts">
 <dt>E-Mail</dt><dd>${esc(user.email)}</dd>
 <dt>Passwort</dt><dd>${status(user.passwordHash, "Festgelegt", "Nicht festgelegt")} <a href="/change-password">${user.passwordHash ? "Ändern" : "Festlegen"}</a></dd>
-<dt>Google</dt><dd>${status(user.googleSub, "Verknüpft", "Nicht verknüpft")}</dd>
+<dt>Google</dt><dd>${status(user.googleSub, "Verknüpft", "Nicht verknüpft")} ${googleAction(user, googleEnabled)}</dd>
 <dt>Letzte Anmeldung</dt><dd>${when(user.lastLogin)}</dd></dl></section>
 <section class="card"><h2>Sicherheit</h2><p class="muted-line">Beendet deine Anmeldung auf allen anderen Geräten.</p>
 <form class="inline-form" method="post" action="/profile/sessions"><button class="small" type="submit">Auf allen anderen Geräten abmelden</button></form></section>`);
