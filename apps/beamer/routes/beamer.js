@@ -33,17 +33,22 @@ function buildRouter() {
     res.json({ zustand, now });
   });
 
+  async function playMood(mood) {
+    await stopRadioFirst();
+    await play('beamer_play_youtube', { video: mood.video }, { kind: 'mood', id: mood.id, label: mood.label });
+  }
+  const playStation = (station) => play('beamer_play_radio', { url: station.url, title: station.label }, { kind: 'radio', id: station.id, label: station.label });
+
   router.post('/mood', action(async ({ id }) => {
     const mood = byId(MOODS, id);
     if (!mood) return bad('Unbekannte Stimmung');
-    await stopRadioFirst();
-    await play('beamer_play_youtube', { video: mood.video }, { kind: 'mood', id: mood.id, label: mood.label });
+    await playMood(mood);
   }));
 
   router.post('/radio', action(async ({ id }) => {
     const station = byId(STATIONS, id);
     if (!station) return bad('Unbekannter Sender');
-    await play('beamer_play_radio', { url: station.url, title: station.label }, { kind: 'radio', id: station.id, label: station.label });
+    await playStation(station);
   }));
 
   router.post('/radio/stop', action(async () => {
@@ -87,8 +92,7 @@ function buildRouter() {
   // Stoppen je nach Inhalt: Radio in BH Screen beenden, alles andere endet mit dem Sprung auf die Startseite.
   router.post('/stop', action(async () => {
     if (now?.kind === 'share') { await endShare(); return; }
-    if (now?.kind === 'radio' || now?.kind === 'text') await gateway.call('beamer_stop_radio');
-    else await gateway.call('beamer_press', { key: 'KEY_HOME' });
+    await gateway.call('beamer_home');
     now = null;
   }));
 
@@ -115,9 +119,13 @@ function buildRouter() {
   router.post('/power', action(async ({ state }) => {
     if (state !== 'on' && state !== 'off') return bad('Ein oder Aus');
     await gateway.call('beamer_power', { state });
-    if (state === 'off') now = null;
+    if (state === 'off') now = null; else gateway.call('beamer_home').catch(() => {});
   }));
 
+  router.commands = {
+    radio: (id) => { const s = byId(STATIONS, id); return s ? playStation(s) : null; },
+    mood: (id) => { const m = byId(MOODS, id); return m ? playMood(m) : null; },
+  };
   return router;
 }
 

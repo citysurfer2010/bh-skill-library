@@ -103,10 +103,10 @@ test('Nach der Freigabe läuft wieder der vorherige Inhalt', async () => {
 test('Stoppen: Radio endet in BH Screen, Video über die Startseite', async () => {
   await post('/radio', { id: 'ndr2' }); calls.length = 0;
   assert.equal((await (await post('/stop')).json()).now, null);
-  assert.deepEqual(calls, [['beamer_stop_radio', {}]]);
+  assert.deepEqual(calls, [['beamer_home', {}]]);
   await post('/mood', { id: 'kamin' }); calls.length = 0;
   await post('/stop');
-  assert.deepEqual(calls, [['beamer_press', { key: 'KEY_HOME' }]]);
+  assert.deepEqual(calls, [['beamer_home', {}]]);
 });
 
 test('Home beendet die Anzeige, laufende App wird gemerkt', async () => {
@@ -122,4 +122,17 @@ test('Ein/Aus: nur on und off, Aus räumt die Anzeige, Fehler kommt an', async (
   fail = 'Der Beamer ist trotz Ausschalt-Befehl noch an';
   const r = await post('/power', { state: 'off' });
   assert.equal(r.status, 502); assert.match((await r.json()).error, /noch an/);
+});
+
+test('Menü: Auswahl am Beamer wird ausgeführt, unbekanntes ignoriert, Menü wird gesetzt', async () => {
+  const bridge = require('../lib/menu-bridge');
+  const done = [];
+  const commands = { radio: async (id) => done.push(['radio', id]), mood: async (id) => done.push(['mood', id]) };
+  let pending = JSON.stringify([{ kind: 'radio', id: 'ndr2' }, { kind: 'x', id: 'y' }, { kind: 'mood', id: 'kamin' }]);
+  gateway.setCaller(async (name, args) => { calls.push([name, args]); if (name === 'beamer_menu_requests') { const p = pending; pending = '[]'; return p; } return 'ok'; });
+  await bridge.tick(commands);
+  assert.deepEqual(done, [['radio', 'ndr2'], ['mood', 'kamin']]);
+  await bridge.pushMenu();
+  const set = calls.find((c) => c[0] === 'beamer_menu_set');
+  assert.match(set[1].menu.radio[0].url, /^https:/); assert.ok(set[1].menu.mood[0].thumb);
 });

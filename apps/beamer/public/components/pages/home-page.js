@@ -32,7 +32,7 @@
     img.hidden = !mood; $('bm-hero').classList.toggle('has-image', !!mood);
     const canStop = on && !!now && !pending;
     setHidden('[data-stop]', !canStop || confirmOff);
-    $('bm-layout').toggleAttribute('data-off', !on);
+    $('bm-layout').toggleAttribute('data-off', !!zustand && !on);
     setHidden('[data-power="on"]', !zustand || on || poweringOn);
     setHidden('[data-power="off"]', !on || confirmOff);
     setHidden('[data-power-confirm], [data-power-cancel]', !on || !confirmOff);
@@ -107,7 +107,7 @@
     draining = false;
   }
   function press(key, repeat = false) {
-    if (zustand !== 'on') { if (!repeat) Toast.error('Der Beamer ist aus.'); return; }
+    if (zustand && zustand !== 'on') { if (!repeat) Toast.error('Der Beamer ist aus.'); return; }
     if (repeat ? (queue.length || draining) : queue.length >= 6) return;
     let k = key;
     if (key === 'TOGGLE') { k = paused ? 'KEY_PLAY' : 'KEY_PAUSE'; paused = !paused; }

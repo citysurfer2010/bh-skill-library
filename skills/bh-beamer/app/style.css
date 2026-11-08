@@ -1,18 +1,35 @@
-html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0b1730; color: #e6eefc; font-family: "Samsung One", "SamsungOne", sans-serif; }
-main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #2563eb; color: #0f1f3d; font-family: "Samsung One", "SamsungOne", sans-serif; }
+#home, #screen, #share { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
+body.home #home { display: block; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 34%, #bfdbfe 56%, #fdf3e3 78%); }
+body.text #screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 45%, #fdf3e3 100%); color: #fff; }
+body.share #share { display: block; background: #000; object-fit: contain; }
+.hills { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
 h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap: break-word; max-width: 100%; }
-p { margin: 30px 0 0; font-size: 56px; color: #9fb2d1; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
-p:empty { display: none; }
-/* Radio: Pegelbalken ueber dem Sendernamen, Hinweis klein darunter. */
-#radio { display: none; height: 160px; margin-bottom: 50px; }
-#radio .bar { display: inline-block; width: 28px; height: 160px; margin: 0 14px; border-radius: 14px; background: #3b82f6; transform-origin: bottom; animation: pulse 1.2s ease-in-out infinite; }
+#text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
+#text:empty, #title:empty { display: none; }
+.top { position: absolute; left: 90px; right: 90px; top: 60px; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
+#clock { font-size: 128px; font-weight: 700; line-height: 1; }
+#date { margin-top: 8px; font-size: 40px; }
+.weather { text-align: right; }
+#temp { font-size: 96px; font-weight: 700; line-height: 1; }
+#sky { margin-top: 12px; font-size: 40px; }
+#playing { display: none; position: absolute; left: 90px; top: 310px; align-items: center; color: #0f1f3d; }
+body.audio #playing { display: flex; }
+#radio { height: 120px; margin-right: 44px; }
+#radio .bar { display: inline-block; width: 22px; height: 120px; margin: 0 9px; border-radius: 11px; background: #c2410c; transform-origin: bottom; animation: pulse 1.2s ease-in-out infinite; }
 #radio .bar:nth-child(2) { animation-delay: .15s; } #radio .bar:nth-child(3) { animation-delay: .3s; } #radio .bar:nth-child(4) { animation-delay: .45s; } #radio .bar:nth-child(5) { animation-delay: .6s; }
 @keyframes pulse { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
-body.audio #radio { display: block; }
-body.audio h1 { font-size: 110px; }
-body.audio #note { font-size: 40px; color: #6f86ab; }
-#note:empty { display: none; }
-/* Bildschirmfreigabe: Video ueber die ganze Flaeche, auf Schwarz. */
-#share { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; object-fit: contain; }
-body.share #share { display: block; }
-body.share main { display: none; }
+#station { font-size: 88px; font-weight: 700; line-height: 1.1; }
+#note { margin-top: 6px; font-size: 36px; color: #1e3a8a; }
+#menu { position: absolute; left: 90px; right: 0; bottom: 56px; }
+.row { margin-top: 28px; }
+.row h2 { margin: 0 0 14px; font-size: 38px; font-weight: 700; color: #0f1f3d; }
+.track { white-space: nowrap; transition: transform 160ms ease-out; }
+.tile { display: inline-block; vertical-align: top; margin-right: 22px; box-sizing: border-box; border-radius: 16px; background: #fff; color: #0f1f3d; font-size: 34px; font-weight: 700; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); border: 6px solid transparent; overflow: hidden; transition: transform 120ms ease-out; }
+.tile.station { width: 310px; padding: 22px 24px; }
+.tile.station small { display: block; margin-top: 4px; font-size: 26px; font-weight: 400; color: #566583; }
+.tile.mood { position: relative; width: 340px; height: 192px; }
+.tile.mood img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
+.tile.mood span { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 18px 12px; color: #fff; font-size: 30px; background: linear-gradient(to top, rgba(11, 23, 48, .86), rgba(11, 23, 48, .6) 50%, transparent); }
+.tile.focus { border-color: #1d4ed8; transform: scale(1.06); box-shadow: 0 12px 30px rgba(15, 31, 61, .32); }
+.tile.playing { background: #ffedd5; color: #9a3412; }

@@ -36,7 +36,7 @@ export function createApp({ config = loadConfig(), db = openDb(config.dataDir), 
   app.use((req, res, next) => {
     const origin = req.get("origin");
     // Die App auf dem Beamer hat keine eigene Herkunft; ihre Antwort ist ueber den geheimen Link abgesichert, nicht ueber Cookies.
-    const fromBeamer = /^\/screen\/[^/]+\/answer$/.test(req.path);
+    const fromBeamer = /^\/screen\/[^/]+\/(answer|request)$/.test(req.path);
     if (req.method === "POST" && origin && origin !== config.publicUrl && !fromBeamer) return res.status(403).send("Ungültige Herkunft");
     next();
   });

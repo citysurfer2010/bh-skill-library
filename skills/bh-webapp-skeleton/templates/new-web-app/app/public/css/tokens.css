@@ -12,7 +12,7 @@
   --bh-tile-scrim: linear-gradient(to top, rgba(11, 23, 48, .86) 0%, rgba(11, 23, 48, .68) 50%, transparent 100%);
   --bh-hero-stage: #172554;
   --bh-key: #dfe9f8;
-  --bh-ghost-on-image: rgba(11, 23, 48, .45);
+  --bh-ghost-on-image: rgba(11, 23, 48, .62);
   --bh-ghost-on-image-border: rgba(255, 255, 255, .5);
   --bh-on-image: #ffffff;
   --bh-warm: #c2410c;

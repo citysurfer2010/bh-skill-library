@@ -54,7 +54,7 @@ Nie Farben fest in den Code schreiben, immer die Tokens. Dunkel gilt automatisch
 
 ## Teil 3: Form und Schrift
 
-**Ecken:** 6 px für Bedienelemente und Schilder (`--bh-radius-sm`), 8 px für Flächen und Menüs (`--bh-radius`), 12 px für große Flächen (`--bh-radius-lg`). Keine Pillen, auch nicht für Knöpfe Ausnahme: die runde OK-Taste im Steuerkreuz einer Fernbedienung.. Rund sind nur Avatare.
+**Ecken:** 6 px für Bedienelemente und Schilder (`--bh-radius-sm`), 8 px für Flächen und Menüs (`--bh-radius`), 12 px für große Flächen (`--bh-radius-lg`). Keine Pillen, auch nicht für Knöpfe. Rund sind nur Avatare und die OK-Taste im Steuerkreuz einer Fernbedienung.
 
 **Schrift:** Systemschrift über `--bh-font`.
 

@@ -51,6 +51,21 @@ async function showUrl(url, { remote = require('./remote.js') } = {}) {
   return 'browser';
 }
 
+async function showHome({ remote = require('./remote.js') } = {}) {
+  bringToFront(remote, await setContent({ mode: 'text', title: '', text: '' }));
+}
+
+const authed = () => ({ authorization: `Bearer ${process.env.BH_SCREEN_WRITE}` });
+async function setMenu(menu, http = fetch) {
+  const r = await http(`${process.env.BH_AUTH_INTERNAL}/screen-menu`, { method: 'POST', headers: { ...authed(), 'content-type': 'application/json' }, body: JSON.stringify(menu) });
+  if (!r.ok) throw new Error(`Menue nicht gesetzt (${r.status})`);
+}
+async function menuRequests(http = fetch) {
+  const r = await http(`${process.env.BH_AUTH_INTERNAL}/screen-requests`, { headers: authed() });
+  if (!r.ok) throw new Error(`Auswahl nicht lesbar (${r.status})`);
+  return (await r.json()).requests;
+}
+
 async function playRadio(url, title, { remote = require('./remote.js') } = {}) {
   const href = httpsUrl(url);
   if (!(await remote.isInstalled('BH Screen'))) throw new Error('Radio braucht die App BH Screen');
@@ -72,4 +87,4 @@ async function shareAnswer(session, http = fetch) {
   return (await r.json()).answer || '';
 }
 
-module.exports = { httpsUrl, setContent, showText, showUrl, playRadio, stopRadio, shareStart, shareAnswer };
+module.exports = { httpsUrl, setContent, showText, showUrl, playRadio, stopRadio, shareStart, shareAnswer, showHome, setMenu, menuRequests };
