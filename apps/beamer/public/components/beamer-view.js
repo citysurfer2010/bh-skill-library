@@ -22,8 +22,8 @@ window.BeamerView = (() => {
     if (!plan) return scheduleError();
     const kids = (plan.kids || []).filter((k) => k.lessons.length);
     const merged = (list) => list.filter((l, i) => !i || list[i - 1].subject !== l.subject || list[i - 1].state !== l.state || list[i - 1].exam !== l.exam);
-    const tag = (l) => `<span class="bm-l ${l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state}" title="${esc(l.title || '')}">${esc(l.subject)}${l.exam ? ' (Klausur)' : l.state === 'changed' ? ' (geändert)' : ''}</span>`;
-    const kid = (k) => { const live = k.lessons.filter((l) => l.state !== 'cancelled'); return `<div class="bm-kid"><b>${esc(k.name)}</b><small>${live.length ? `${esc(live[0].from)} – ${esc(live[live.length - 1].to)}` : 'alles fällt aus'}</small><div>${merged(k.lessons).map(tag).join(' · ')}</div></div>`; };
+    const tag = (l) => `<span class="bm-l ${l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state}" title="${esc(l.title || '')}">${esc(l.subject)}${l.exam ? ' Klausur' : l.state === 'changed' ? ' geändert' : ''}</span>`;
+    const kid = (k) => { const live = k.lessons.filter((l) => l.state !== 'cancelled'); return `<div class="bm-kid"><span class="bm-mono" aria-hidden="true">${esc(k.name[0])}</span><b>${esc(k.name)}</b><small>${live.length ? `${esc(live[0].from)} – ${esc(live[live.length - 1].to)}` : 'alles fällt aus'}</small><div class="bm-blocks">${merged(k.lessons).map(tag).join('')}</div></div>`; };
     return `<h2>Schultag · ${esc(plan.label)}</h2><div class="bm-kids">${kids.length ? kids.map(kid).join('') : '<div class="bm-kid"><b>Schulfrei</b></div>'}</div>`;
   }
 

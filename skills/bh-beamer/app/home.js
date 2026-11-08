@@ -80,14 +80,14 @@ window.BHHome = (function () {
     var kids = plan && plan.kids ? plan.kids.filter(function (k) { return k.lessons.length; }) : [];
     if (!plan || !plan.kids || (plan.date && plan.date < iso(new Date()))) { el.className = ''; return; }
     el.className = 'on';
-    el.innerHTML = '<h3>' + esc(plan.date ? dayLabel(plan.date) : plan.label) + '</h3>' + (kids.length ? kids.map(function (k) {
+    el.innerHTML = '<h3>' + esc(plan.date ? dayLabel(plan.date) : plan.label) + '</h3><div class="kids">' + (kids.length ? kids.map(function (k) {
       var live = k.lessons.filter(function (l) { return l.state !== 'cancelled'; });
       var time = live.length ? live[0].from + ' – ' + live[live.length - 1].to : 'alles fällt aus';
-      return '<div class="kid"><div class="kid-head">' + esc(k.name) + ' <span>' + esc(time) + '</span></div><div class="kid-plan">' + k.lessons.map(function (l) {
+      return '<div class="kid"><div class="kid-head">' + esc(k.name) + '</div><div class="kid-time">' + esc(time) + '</div><div class="kid-plan">' + merged(k.lessons).map(function (l) {
         var cls = l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state;
-        return '<span class="' + cls + '">' + esc(l.subject) + (l.exam ? ' (Klausur)' : l.state === 'changed' ? ' (geändert)' : '') + '</span>';
-      }).join(' · ') + '</div></div>';
-    }).join('') : '<div class="kid"><div class="kid-head">Schulfrei</div></div>');
+        return '<span class="lb ' + cls + '">' + esc(l.subject) + (l.exam ? ' Klausur' : l.state === 'changed' ? ' geändert' : '') + '</span>';
+      }).join('') + '</div></div>';
+    }).join('') : '<div class="kid"><div class="kid-head">Schulfrei</div></div>') + '</div>';
   }
 
   function setMenu(menu) {

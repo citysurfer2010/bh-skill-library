@@ -97,9 +97,10 @@
 .bm-kid { padding: 12px 16px; border: 1px solid var(--bh-border-light); border-radius: var(--bh-radius); background: var(--bh-surface); box-shadow: var(--bh-shadow-sm); font-size: 14px; color: var(--bh-text); }
 .bm-kid b { font-size: 16px; font-weight: 600; }
 .bm-kid small { margin-left: 8px; color: var(--bh-muted); font-size: 13px; }
-.bm-kid div { margin-top: 4px; }
-.bm-l.cancelled { color: var(--bh-danger); text-decoration: line-through; }
-.bm-l.changed { color: var(--bh-warm); font-weight: 600; }
-.bm-l.exam { color: var(--bh-primary); font-weight: 600; }
+.bm-kid .bm-mono { margin-right: 10px; vertical-align: middle; }
+.bm-blocks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.bm-l { padding: 4px 10px; border-radius: var(--bh-radius-sm); background: var(--bh-bg-subtle); font-weight: 600; }
+.bm-l.cancelled { background: var(--bh-danger-bg); color: var(--bh-danger); text-decoration: line-through; }
+.bm-l.changed { background: var(--bh-warm-soft); color: var(--bh-warm); }
+.bm-l.exam { background: var(--bh-primary-soft); color: var(--bh-primary); }
 #bm-schedule { min-height: 112px; }
-.bm-l.cancelled { font-weight: 600; }
