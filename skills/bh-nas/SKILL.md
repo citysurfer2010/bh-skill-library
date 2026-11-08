@@ -9,6 +9,8 @@ description: Liest Ordner und Textdateien auf der Synology im Heimnetz mit dem e
 
 Jeder User greift über das zentrale MCP-Gateway mit seinem **eigenen Synology-Konto** auf seine Daten zu. Er sieht genau das, was dieses Konto auf der Synology darf. Der Zugriff ist ausschließlich lesend.
 
+> **Derzeit noch nicht nutzbar:** Das Zertifikat der Synology ist noch nicht eingerichtet. Stand und Schritte stehen in `LIMITATIONS.md`.
+
 ## Einmalig verbinden
 
 Der User führt im **eigenen Terminal** aus:

@@ -91,7 +91,8 @@ function checkPath(p) {
 }
 
 const ok = (v) => ({ content: [{ type: 'text', text: typeof v === 'string' ? v : JSON.stringify(v, null, 2) }] });
-const failed = (e) => ({ content: [{ type: 'text', text: e.message }], isError: true });
+const TLS_CODES = new Set(['UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'SELF_SIGNED_CERT_IN_CHAIN', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY']);
+const failed = (e) => ({ content: [{ type: 'text', text: TLS_CODES.has(e.code) ? 'Das Zertifikat der Synology ist noch nicht eingerichtet (siehe LIMITATIONS.md im Skill bh-nas).' : e.message }], isError: true });
 const guarded = (fn) => async (args) => { try { return ok(await fn(args || {})); } catch (e) { return failed(e); } };
 
 module.exports = { call, download, checkPath, guarded, setTransport, tlsOptions };

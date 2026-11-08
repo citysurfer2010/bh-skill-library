@@ -76,3 +76,11 @@ test('Suche raeumt ihre Aufgabe auf', async () => {
   assert.equal(r.files[0].name, 'a.pdf');
   assert.deepEqual(seen.filter((s) => ['stop', 'clean'].includes(s.method)).map((s) => s.method), ['stop', 'clean']);
 });
+
+test('Fehlendes Zertifikat: verstaendliche Meldung statt TLS-Fehler', async () => {
+  connect();
+  dsm.setTransport(async () => { throw Object.assign(new Error('unable to verify'), { code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' }); });
+  const r = await require('../tools/nas/list-shares.js').handler({});
+  assert.equal(r.isError, true); assert.match(text(r), /LIMITATIONS/);
+});
+
