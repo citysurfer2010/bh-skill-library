@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>__APP_NAME__</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="__APP_BASE__/favicon.svg?v=1">
+  <link rel="apple-touch-icon" href="__APP_BASE__/branding/apple-touch-icon.png?v=1">
+  <link rel="manifest" href="__APP_BASE__/manifest.webmanifest">
+  <meta name="theme-color" content="#1d4ed8">
+  <!-- Theme vor den Stylesheets setzen, sonst blitzt die Seite weiß auf. -->
+  <script>(function(){var s;try{s=localStorage.getItem('bh-theme');}catch(e){}var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=s||(d?'dark':'light');})();</script>
+  <!-- Keine style=-Attribute: Hilfsklassen in css/utilities.css oder eine eigene Klasse in css/*.css. -->
+  <link rel="stylesheet" href="__APP_BASE__/bh-styles.css">
+  <link rel="stylesheet" href="__APP_BASE__/app.css">
+</head>
+<body>
+  <!-- Navbar.render() baut den Rahmen um #page-host. Jede Seite zeichnet ihren eigenen Seitenkopf. -->
+  <div id="page-host"></div>
+
+  <script>window.APP_BASE = "__APP_BASE__";</script>
+  <!-- Alle Komponenten als ein Bündel: 1 Request statt N. -->
+  <script src="__APP_BASE__/app.js"></script>
+  <script src="__APP_BASE__/build-version-check.js"></script>
+  <script src="__APP_BASE__/components/pages/home-page.js"></script>
+</body>
+</html>

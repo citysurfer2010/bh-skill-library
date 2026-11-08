@@ -1,0 +1,19 @@
+{
+  "name": "__SLUG__",
+  "version": "0.1.0",
+  "private": true,
+  "description": "__DESCRIPTION__",
+  "main": "server.js",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server.js",
+    "test": "bash test/run-all.sh"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "c8": "^10.1.3"
+  }
+}

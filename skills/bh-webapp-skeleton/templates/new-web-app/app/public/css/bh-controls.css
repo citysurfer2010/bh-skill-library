@@ -1,0 +1,27 @@
+/* BH-Bedienelemente: Knöpfe, Felder, Beschriftungen. */
+.bh-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: var(--bh-control-h); padding: 0 14px; box-sizing: border-box;
+  border: 1px solid var(--bh-input-border); border-radius: var(--bh-radius-sm);
+  background: var(--bh-surface); color: var(--bh-text);
+  font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; text-decoration: none; cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.bh-btn:hover { background: var(--bh-bg-subtle); border-color: var(--bh-primary); text-decoration: none; }
+.bh-btn:focus-visible { outline: 2px solid var(--bh-primary); outline-offset: 1px; }
+.bh-btn:disabled { opacity: .55; cursor: not-allowed; }
+.bh-btn-primary { background: var(--bh-primary); border-color: var(--bh-primary); color: var(--bh-on-primary); }
+.bh-btn-primary:hover { background: var(--bh-primary-hover); border-color: var(--bh-primary-hover); color: var(--bh-on-primary); }
+.bh-btn-danger { color: var(--bh-danger); }
+.bh-btn-sm { height: var(--bh-control-h-sm); padding: 0 12px; font-size: 12px; }
+
+.bh-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--bh-text); }
+.bh-label-micro { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--bh-muted); }
+.bh-label-required::after { content: ' *'; color: var(--bh-danger); }
+.bh-field { display: flex; flex-direction: column; gap: 6px; }
+.bh-input {
+  width: 100%; height: var(--bh-control-h); padding: 0 12px; box-sizing: border-box;
+  border: 1px solid var(--bh-input-border); border-radius: var(--bh-radius-sm);
+  background: var(--bh-surface); color: var(--bh-text); font: inherit; font-size: 13px;
+}
+.bh-input:focus { outline: none; border-color: var(--bh-primary); box-shadow: 0 0 0 3px var(--bh-focus-ring); }

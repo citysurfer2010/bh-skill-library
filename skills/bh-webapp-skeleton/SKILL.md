@@ -1,0 +1,105 @@
+---
+name: bh-webapp-skeleton
+description: Pflicht-Scaffold für jede neue Web-App der BH Platform. Erzeugt per Skript eine App mit Express, SQLite, blauem BH-Design, Rollen, drei Pflicht-Dokus, fünf Pflicht-Test-Suiten und Pre-Commit-Gate. Nutzen, sobald eine neue App oder ein Tool mit Weboberfläche entstehen soll.
+---
+
+# BH Web-App-Skeleton
+
+Der einzige Weg, eine neue Web-App anzulegen. Neue Apps entstehen nie von Hand.
+
+## Zweck
+
+Die Regeln für Web-Apps (fünf Pflicht-Suiten, drei Pflicht-Dokus, Coverage-Schwelle, Commit-Gate) greifen nur, wenn sie von Minute 1 da sind. Dieser Skill sorgt dafür: Eine neue App erfüllt sie durch den Standard, nicht durch Disziplin.
+
+## Verwendung
+
+### Neue App anlegen
+
+```bash
+bash /etc/devbox/skills/bh-webapp-skeleton/setup/init.sh <slug> "<Titel>" \
+  [--port 3000] [--base /pfad] [--label "Kurztext"] [--description "Beschreibung"] [--dest PFAD]
+```
+
+Beispiel:
+
+```bash
+bash /etc/devbox/skills/bh-webapp-skeleton/setup/init.sh ideen-board "Ideen-Board" --port 3050
+cd ~/projects/ideen-board
+npm install
+npm test
+DEV_USER_EMAIL=ich@beispiel.de DEV_USER_ROLE=admin npm start
+```
+
+Ziel ist `~/projects/<slug>`. Das Skript prüft den Slug, überschreibt nichts, legt ein Git-Repository an und installiert das Commit-Gate. Es läuft ohne sudo, ohne globale Installationen und mit read-only Root-Dateisystem.
+
+Vom Laptop ansehen: `ssh -L 3000:localhost:3000 -p <port> dev@<server>`, dann `http://localhost:3000`.
+
+`--base` nur setzen, wenn die App hinter einem Proxy unter einem Pfad-Präfix läuft, der das Präfix vor der App entfernt.
+
+Danach:
+
+1. `PRODUCT_CONTEXT.md` ausfüllen (10 Abschnitte).
+2. Feature bauen. Jeder neue geschützte Endpoint bekommt im selben Commit einen Eintrag in `test/rbac.test.js`.
+3. `npm test` muss vor jedem Commit grün sein.
+4. Dauerhaft starten: `bash scripts/app.sh start` (auch `stop`, `restart`, `status`). Der Start ist idempotent.
+
+### Bestehende App prüfen
+
+```bash
+bash /etc/devbox/skills/bh-webapp-skeleton/setup/audit.sh ~/projects/<slug>
+```
+
+Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
+
+## Was entsteht
+
+```
+~/projects/<slug>/
+├── server.js                  Express-Kern: öffentliche Routen, Anmeldung, Seiten, Fehlerseiten
+├── routes/                    api-keys.js, external.js (Bearer-API), je Modul eine Datei
+├── lib/                       auth.js, db.js (node:sqlite), llm.js, error-page.js, assets.js, api-keys.js, config.js
+├── public/
+│   ├── index.html, admin.html Nur <link> und <script>, kein Inline-Code außer Theme-Start und APP_BASE
+│   ├── css/                   tokens.css (alle Farben) + kleine Module, ausgeliefert als /bh-styles.css und /app.css
+│   ├── components/            BHAppShell, BHListPage, BHDataTable, BHSideDrawer, BHSelect, gebündelt als /app.js
+│   │   └── pages/             Seiten-Orchestratoren
+│   └── branding/              App-Icons mit der BH-Marke, erzeugt von scripts/make-app-icons.mjs
+├── scripts/                   app.sh (Start/Stopp), make-app-icons.mjs
+├── PRODUCT_CONTEXT.md         Warum: Vision, Regeln, Lessons Learned
+├── DEVELOPMENT.md             Wie: Aufbau, Tests, Regeln
+├── LIMITATIONS.md             Was fehlt
+├── docs/limitations/          Details je Modul
+└── test/                      run-all.sh, Pflicht-Suiten und Ratchets
+```
+
+## Regeln
+
+1. **Tests zuerst.** `npm test` startet eine Wegwerf-Instanz auf Port + 36000 mit eigener Datenbank und fährt alle Suiten plus Coverage (Zeilen 60 %, Funktionen 60 %, Branches 50 %). Rot heißt kein Commit, `--no-verify` ist keine Lösung.
+2. **Pflicht-Suiten:** `validate`, `smoke`, `rbac`, `restart`, `e2e`. Dazu `unit-server` und die Oberflächen-Ratchets `no-native-select`, `no-blocking-resources`, `no-bare-table`, `branding`. Kein Browser nötig, `e2e` läuft über HTTP.
+3. **Rollen-Frage vor jedem Endpoint.** Neue Route bekommt `requireRole` oder bewusst `requireUser`, dazu einen Eintrag in `test/rbac.test.js`. Oberfläche nach `user.role` filtern, nicht ausgrauen.
+4. **Anmeldung nur über `lib/auth.js`.** Mit `TRUST_PROXY_AUTH=1` gelten nur `X-User-Email`, `X-User-Name` und `X-User-Role` des BH-Auth-Proxys, und die App darf ausschließlich hinter ihm erreichbar sein. Sonst gelten nur `DEV_USER_EMAIL` und `DEV_USER_ROLE`. Ohne gültige E-Mail gibt es keinen Zugang, eine unbekannte Rolle ist `user`.
+5. **KI-Aufrufe nur über das Gateway:** `lib/llm.js`, also `http://llm-gateway:18790/v1` mit dem Token aus `/etc/devbox/llm/token`. Nie direkt beim Anbieter.
+6. **Farben nur als `--bh-*`-Tokens** aus `public/css/tokens.css`, hell und dunkel. Nie feste Werte in `public/css/`, keine `style=`-Attribute.
+7. **Dropdown ist BHSelect, Tabelle ist BHDataTable,** Listen randlos und nie in einer `.card`, kein `window.alert/confirm/prompt`.
+8. **Ladestandard:** Rahmen sofort zeichnen, Platzhalter bis die Daten da sind, nichts Fremdes blockiert das erste Zeichnen.
+9. **Standalone:** kein Import außerhalb des App-Ordners. Geheimnisse nur in `.env`, nie im Repo.
+10. **Dateien klein halten,** Richtwert 200 Zeilen. Das Gate blockt neue oder wachsende größere Dateien.
+11. **Pflichtlektüre vor jeder Änderung:** `PRODUCT_CONTEXT.md`, `DEVELOPMENT.md`, `LIMITATIONS.md`. Bei Modul-Arbeit zusätzlich `docs/limitations/<modul>.md`.
+12. **Neue Fehlerlehre:** Eintrag in `LIMITATIONS.md` und `test/regression-<slug>.test.js` im selben Commit.
+
+## Was das Template mitbringt
+
+- Rahmen: Navbar 52 px, Breadcrumb 40 px, Sidebar 240 px (einklappbar, ziehbar 180 bis 420 px), Hell/Dunkel-Umschalter, Benutzermenü, Admin-Zahnrad nur für Admins.
+- Listenseite `BHListPage` mit Suche, KPI-Filterboxen, Toolbar und `BHDataTable` (Sortieren über alle Zeilen, Spaltenbreiten, Blättern, Auswahl und Sammelaktionen).
+- Detailpanel `BHSideDrawer` mit echtem Pfad (`/eintraege/<id>`).
+- `BHSelect` mit Tastaturbedienung und Bottom-Sheet auf dem Handy.
+- Bearer-API `/api/external/*` mit selbstverwalteten API-Keys (gespeichert wird nur der SHA-256-Hash), Datei-Upload mit Typ- und Größenprüfung.
+- Eigene Fehlerseiten für 401, 403, 404 und 500, unter `/api/` als JSON, nie mit Stacktrace.
+- Hinweis „Neue Version verfügbar“ über `/api/build-id`, Cache-Buster an jedem Asset.
+- `manifest.webmanifest`, Favicon und App-Icons mit der Marke „BH“.
+
+## Vorlagen ändern
+
+Änderungen an Vorlagen passieren hier in `templates/`, nicht in einzelnen Apps. Platzhalter und Aufbau: `templates/README.md`.
+
+Commit und Pull Request: Skill `bh-github`.

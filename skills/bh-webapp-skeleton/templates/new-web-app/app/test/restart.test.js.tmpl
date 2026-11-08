@@ -1,0 +1,57 @@
+'use strict';
+/**
+ * Restart: Die App übersteht einen Neustart über scripts/app.sh, der Start ist idempotent, Daten bleiben erhalten.
+ * Eigener Port und eigenes DATA_DIR, damit die laufende App und die Testinstanz unberührt bleiben.
+ */
+const { test, after } = require('node:test');
+const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const { APP, tmpDir } = require('./helpers');
+
+const PORT = parseInt(process.env.PORT || '__PORT__', 10) + 1;
+const DATA_DIR = tmpDir();
+const env = { ...process.env, PORT: String(PORT), DATA_DIR, HOST: '127.0.0.1', TRUST_PROXY_AUTH: '1' };
+const script = (cmd) => execFileSync('bash', [path.join(APP, 'scripts', 'app.sh'), cmd], { env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 40_000 }).toString();
+const url = (p) => `http://127.0.0.1:${PORT}${p}`;
+// Nach einem Neustart kann der Client noch eine tote Keep-Alive-Verbindung im Pool haben.
+async function fetchFresh(u, opts) {
+  for (let i = 0; ; i++) {
+    try { return await fetch(u, opts); } catch (e) { if (i >= 3) throw e; }
+  }
+}
+const pid = () => fs.readFileSync(path.join(DATA_DIR, 'app.pid'), 'utf8').trim();
+
+after(() => { script('stop'); });
+
+test('start: /health antwortet', async () => {
+  script('start');
+  const res = await fetch(url('/health'));
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).skill, '__SLUG__');
+});
+
+test('start ist idempotent: gleicher Prozess bleibt', () => {
+  const before = pid();
+  assert.match(script('start'), /läuft bereits/);
+  assert.equal(pid(), before);
+});
+
+test('restart: neuer Prozess, API-Key aus der Datenbank gilt weiter', async () => {
+  const created = await (await fetch(url('/api/me/api-keys'), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-user-email': 'neustart@beispiel.de' },
+    body: JSON.stringify({ label: 'neustart' }),
+  })).json();
+  const before = pid();
+  script('restart');
+  assert.notEqual(pid(), before);
+  const res = await fetchFresh(url('/api/external/records'), { headers: { Authorization: `Bearer ${created.key}` } });
+  assert.equal(res.status, 200);
+});
+
+test('stop: Port ist frei', async () => {
+  script('stop');
+  await assert.rejects(fetchFresh(url('/health')));
+});

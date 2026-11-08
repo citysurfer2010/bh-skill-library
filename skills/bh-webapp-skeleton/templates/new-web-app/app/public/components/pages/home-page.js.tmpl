@@ -1,0 +1,136 @@
+'use strict';
+/**
+ * Beispielseite, schlank. Zeigt die Muster, mit denen jede App startet; Beispieldaten durch __NS__Api-Aufrufe ersetzen.
+ *   /                Übersicht: Kennzahlen (AppShell.kpis) + kleine randlose Liste (AppShell.list)
+ *   /eintraege       Listenseite: BHListPage + BHDataTable (Sortieren, Spaltenbreiten, Blättern, Auswahl + Sammelaktionen)
+ *   /eintraege/<id>  dieselbe Liste + Eintrag im Detailpanel rechts (BHSideDrawer)
+ * Ladestandard: Navbar, Sidebar und Breadcrumb vor jedem Request, Platzhalter bis die Daten da sind, Links im Modul ohne Reload.
+ */
+(async () => {
+  const esc = AppShell.esc;
+  const BASE = '__APP_BASE__';
+  const host = document.getElementById('page-host');
+  // ── Example data (replace) ─────────────────────────────────────────────────────────────
+  const STATUS = ['Offen', 'In Arbeit', 'Erledigt'];
+  const DEMO = Array.from({ length: 120 }, (_, i) => ({
+    id: i + 1, name: `Beispiel-Eintrag ${String(i + 1).padStart(3, '0')}`, status: STATUS[i % 3],
+    owner: ['A. Muster', 'B. Beispiel', 'C. Vorlage'][i % 3], updated: new Date(Date.now() - i * 7 * 36e5).toISOString().slice(0, 10),
+    amount: ((i * 137) % 5000) + 250,
+  }));
+  const euro = (n) => `${Number(n).toLocaleString('de-DE')} €`;
+  const path = () => location.pathname.slice(BASE.length) || '/';
+
+  function sidebar(active) {
+    ModuleSidebar.show({
+      title: '__SHORT_LABEL__', active, storageKey: '__SLUG__-sidebar-collapsed',
+      items: [
+        { id: 'overview', label: 'Übersicht', href: `${BASE}/`, icon: 'chart' },
+        { id: 'list', label: 'Einträge', href: `${BASE}/eintraege`, icon: 'list', count: DEMO.length },
+      ],
+    });
+  }
+
+  let me = null; let page = null; let table = null; let worklist = 'all';
+
+  async function overview() {
+    sidebar('overview');
+    AppShell.crumbs([['__APP_NAME__', `${BASE}/`], ['Übersicht']]);
+    AppShell.loading(host, 'Übersicht');
+    me = me || await __NS__Api.me();
+    const open = DEMO.filter((r) => r.status !== 'Erledigt').length;
+    AppShell.render(host, `<header class="app-topbar"><div><h1>Übersicht</h1><div class="sub">Willkommen, ${esc(me.name || me.email)} — Beispielseite, ersetzen.</div></div><div class="app-topbar-actions" data-page-actions></div></header>
+      ${AppShell.kpis([{ label: 'Einträge', value: DEMO.length }, { label: 'Offen', value: open }, { label: 'Summe', value: euro(DEMO.reduce((s, r) => s + r.amount, 0)), sub: `Stand ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}` }])}
+      ${AppShell.list({
+        title: 'Zuletzt geändert',
+        columns: [{ key: 'name', label: 'Name' }, { key: 'status', label: 'Status' }, { key: 'updated', label: 'Geändert' }],
+        rows: DEMO.slice(0, 5), rowHref: (r) => `${BASE}/eintraege/${r.id}`,
+      })}
+      <section class="card"><!-- Karten nur für Formulare und Kennzahlen. Dropdown = BHSelect. -->
+        <label class="bh-label" for="demo-status">Status</label>
+        <div id="demo-status" class="demo-select" data-bh-select data-label="Status" data-value="" data-placeholder="Bitte wählen"
+          data-options="${esc(JSON.stringify(STATUS.map((s) => ({ value: s, label: s }))))}"></div>
+      </section>`);
+    BHSelectCore.mountAll(host);
+    AppShell.actions(`<a class="bh-btn bh-btn-primary" href="${BASE}/eintraege">Alle Einträge</a>`);
+  }
+
+  function toCsv(rows) {
+    const cell = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    const lines = [['Nr', 'Name', 'Status', 'Verantwortlich', 'Geändert', 'Betrag'].map(cell).join(';')]
+      .concat(rows.map((r) => [r.id, r.name, r.status, r.owner, r.updated, r.amount].map(cell).join(';')));
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' })), download: 'eintraege.csv' });
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  // KPI-Filterboxen = Arbeitslisten: Klick filtert, aktive Box blau umrandet.
+  const kpis = () => [{ key: 'all', label: 'Alle', value: DEMO.length }].concat(STATUS.map((st) => ({ key: st, label: st, value: DEMO.filter((r) => r.status === st).length })));
+  function load() { // replace with __NS__Api
+    table.setLoading(true);
+    setTimeout(() => table.setRows(worklist === 'all' ? DEMO : DEMO.filter((r) => r.status === worklist)), 200);
+  }
+
+  function list(id) {
+    sidebar('list');
+    const entry = id ? DEMO.find((r) => String(r.id) === String(id)) : null;
+    AppShell.crumbs([['__APP_NAME__', `${BASE}/`], ['Einträge', `${BASE}/eintraege`]].concat(entry ? [[entry.name]] : []));
+    if (!page || !host.contains(page.root)) {
+      page = BHListPage.render(host, {
+        title: 'Einträge', sub: 'Beispielliste — ersetzen.', search: { placeholder: 'Einträge suchen …' },
+        kpis: kpis(), kpiActive: worklist, onKpi: (k) => { worklist = k; page.setKpis(kpis(), k); load(); },
+        topActions: [{ label: 'Neuer Eintrag', primary: true, icon: 'plus', onClick: () => Toast.success('Beispiel: hier öffnet sich das Formular.') }],
+        toolbarActions: [{ label: 'Aktualisieren', onClick: load }],
+        countLabel: ['Eintrag', 'Einträge'],
+        table: {
+          storageKey: '__SLUG__-entries', rowHref: (r) => `${BASE}/eintraege/${r.id}`,
+          columns: [
+            { key: 'name', label: 'Name', width: 280 }, { key: 'status', label: 'Status', width: 140 },
+            { key: 'owner', label: 'Verantwortlich' }, { key: 'updated', label: 'Geändert', width: 140 },
+            { key: 'amount', label: 'Betrag', width: 140, align: 'right', render: (r) => esc(euro(r.amount)), sortValue: (r) => r.amount },
+          ],
+          // Selection + bulk actions are optional per table (default off).
+          selectable: true,
+          bulkActions: [
+            { id: 'done', label: 'Als erledigt markieren', onClick: (rows, t) => { rows.forEach((r) => { r.status = 'Erledigt'; }); t.clearSelection(); page.setKpis(kpis(), worklist); load(); Toast.success(`${rows.length} erledigt`); } },
+            { id: 'csv', label: 'Als CSV exportieren', onClick: (rows) => toCsv(rows) },
+          ],
+        },
+      });
+      table = page.table;
+      load();
+    }
+    if (entry) detail(entry);
+    else if (BHSideDrawer.isOpen()) BHSideDrawer.close({ silent: true });
+  }
+
+  function detail(r) {
+    const i = DEMO.indexOf(r);
+    const o = {
+      title: esc(r.name), storageKey: '__SLUG__-detail', position: `${i + 1} von ${DEMO.length}`,
+      body: `<dl class="app-dl"><dt>Status</dt><dd>${esc(r.status)}</dd><dt>Verantwortlich</dt><dd>${esc(r.owner)}</dd>`
+        + `<dt>Geändert</dt><dd>${esc(r.updated)}</dd><dt>Betrag</dt><dd>${esc(euro(r.amount))}</dd></dl>`,
+      prev: i > 0 ? () => go(`${BASE}/eintraege/${DEMO[i - 1].id}`) : null,
+      next: i < DEMO.length - 1 ? () => go(`${BASE}/eintraege/${DEMO[i + 1].id}`) : null,
+      onClose: () => { if (/^\/eintraege\/./.test(path())) go(`${BASE}/eintraege`); },
+    };
+    if (BHSideDrawer.isOpen()) BHSideDrawer.update(o); else BHSideDrawer.open(o);
+  }
+
+  async function route() {
+    const m = path().match(/^\/eintraege(?:\/([^/]+))?\/?$/);
+    if (m) return list(m[1]);
+    page = null;
+    if (BHSideDrawer.isOpen()) BHSideDrawer.close({ silent: true });
+    return overview();
+  }
+  const go = (href) => { history.pushState(null, '', href); route().catch((e) => Toast.error(e.message || 'Fehler beim Laden')); };
+  AppShell.links(`${BASE}/`, go);
+  window.addEventListener('popstate', () => route().catch((e) => Toast.error(e.message || 'Fehler beim Laden')));
+  try {
+    Navbar.render('home', null); // navbar at once; the user menu fills in when /api/me answers
+    const pending = route();
+    Navbar.render('home', await __NS__Api.me());
+    await pending;
+  } catch (e) {
+    Toast.error(e.message || 'Fehler beim Laden');
+  }
+})();
