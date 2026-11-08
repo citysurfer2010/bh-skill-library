@@ -9,11 +9,11 @@ body.bhs-active{margin:0;height:100vh;overflow:hidden}
 .bhs-tab:hover{color:var(--bh-on-navbar)}.bhs-tab.active{color:var(--bh-on-navbar);border-bottom-color:var(--bh-navbar-accent)}
 .bhs-tab-disabled,.bhs-tab-disabled:hover{color:rgba(255,255,255,.35);cursor:default}
 .bhs-spacer{flex:1}
-.bhs-icon-btn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:var(--bh-on-navbar-muted);text-decoration:none}
+.bhs-icon-btn{width:32px;height:32px;padding:0;border:0;background:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:var(--bh-on-navbar-muted);text-decoration:none}
 .bhs-icon-btn:hover{background:rgba(255,255,255,.15);color:var(--bh-on-navbar)}.bhs-icon-btn[hidden]{display:none}
 .bhs-sep{width:1px;height:20px;background:rgba(255,255,255,.2);margin:0 4px;flex-shrink:0}
 .bhs-bell,.bhs-user{display:inline-flex;align-items:center}
-.bhs-crumbs{min-height:40px;box-sizing:border-box;padding:10px 24px;flex-shrink:0;font-size:12px;line-height:1.4;background:var(--bh-surface);border-bottom:1px solid var(--bh-border);color:var(--bh-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bhs-crumbs{min-height:40px;box-sizing:border-box;padding:10px 24px;flex-shrink:0;font-size:13px;line-height:1.4;background:var(--bh-surface);border-bottom:1px solid var(--bh-border);color:var(--bh-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bhs-crumbs:empty{display:none}.bhs-crumbs a{color:var(--bh-primary);text-decoration:none}.bhs-crumbs a:hover{text-decoration:underline}
 .bhs-crumb-sep{margin:0 6px;opacity:.55}.bhs-crumb-current{font-weight:600;color:var(--bh-text)}
 .bhs-body{display:flex;flex:1;min-height:0}
@@ -43,3 +43,5 @@ body.bhs-active{margin:0;height:100vh;overflow:hidden}
 @media (max-width:720px){.bhs-navbar{padding:0 8px}.bhs-logo{min-width:0;padding-right:8px}.bhs-logo span{overflow:hidden;text-overflow:ellipsis}.bhs-sep{display:none}}
 @media (max-width:480px){.bhs-logo span{display:none}}
 @media (max-width:900px){.bhs-user .bh-um-btn,.bhs-icon-btn{height:44px;min-width:44px}.bhs-crumbs a{display:inline-block;padding:10px 8px;margin:-10px -8px}.bhs-crumbs{padding-inline:12px}.bhs-logo{padding-left:4px}}
+html[data-theme="dark"] .bhs-crumbs{background:var(--bh-bg-subtle);color:var(--bh-text)}
+.bhs-sun{display:none}html[data-theme="dark"] .bhs-sun{display:block}html[data-theme="dark"] .bhs-moon{display:none}

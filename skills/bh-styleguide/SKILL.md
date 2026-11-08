@@ -26,20 +26,26 @@ Nie Farben fest in den Code schreiben, immer die Tokens. Dunkel gilt automatisch
 | Zweck | Token | Hell | Dunkel |
 |---|---|---|---|
 | Marke, Hauptaktion, Links | `--bh-primary` | `#1d4ed8` | `#60a5fa` |
-| Hover | `--bh-primary-hover` | `#1e40af` | `#93c5fd` |
-| Getönte Fläche | `--bh-primary-soft` | `#dbeafe` | siehe tokens.css |
-| Navbar | `--bh-navbar` | `#1d4ed8` | `#12233f` |
-| Seitenhintergrund | `--bh-bg` | `#f5f8fe` | siehe tokens.css |
-| Karten, Panels | `--bh-surface` | `#ffffff` | siehe tokens.css |
-| Hover, Zebra | `--bh-bg-subtle` | `#ecf2fc` | `#172c4d` |
-| Text | `--bh-text` | `#0f1f3d` | siehe tokens.css |
-| Nebentext | `--bh-muted` | `#566583` | siehe tokens.css |
-| Linien | `--bh-border` | `#d6e0f2` | siehe tokens.css |
-| Feldrahmen | `--bh-input-border` | `#b4c3de` | siehe tokens.css |
-| Gefahr | `--bh-danger` / `-bg` | `#b91c1c` | `#fca5a5` |
-| Warnung | `--bh-warn` / `-bg` | `#92590a` | siehe tokens.css |
-| Erfolg | `--bh-ok` / `-bg` | `#15803d` | siehe tokens.css |
-| KI-Aktionen | `--bh-magic` / `-bg` | `#6d28d9` | `#c4b5fd` |
+| Hover der Hauptaktion | `--bh-primary-hover` | `#1e40af` | `#93c5fd` |
+| Text auf Hauptaktion | `--bh-on-primary` | `#ffffff` | `#0b1730` |
+| Getönte Fläche | `--bh-primary-soft` | `#dbeafe` | `#1e3a8a` |
+| Rahmen getönter Flächen | `--bh-primary-border` | `#93b4ee` | `#2f5aa8` |
+| Navbar | `--bh-navbar` | `#1d4ed8` | `#1e40af` |
+| Schrift auf der Navbar | `--bh-on-navbar` | `#ffffff` | `#ffffff` |
+| Akzent aktiver Tab | `--bh-navbar-accent` | `#bfdbfe` | `#bfdbfe` |
+| Seitenhintergrund | `--bh-bg` | `#f5f8fe` | `#0b1730` |
+| Karten, Panels, Seitenkopf | `--bh-surface` | `#ffffff` | `#12233f` |
+| Hover, Zebra, Brotkrumen dunkel | `--bh-bg-subtle` | `#ecf2fc` | `#172c4d` |
+| Text | `--bh-text` | `#0f1f3d` | `#e6eefc` |
+| Nebentext | `--bh-muted` | `#566583` | `#9fb2d1` |
+| Platzhalter | `--bh-placeholder` | `#7a88a3` | `#7f94b8` |
+| Linien | `--bh-border` | `#d6e0f2` | `#27406a` |
+| Feldrahmen, Kachelrahmen | `--bh-input-border` | `#b4c3de` | `#3b5a8d` |
+| Gefahr | `--bh-danger` / `-bg` | `#b91c1c` / `#fef2f2` | `#fca5a5` / `#3a1a22` |
+| Warnung | `--bh-warn` / `-bg` | `#92590a` / `#fff8e6` | `#fcd34d` / `#33290f` |
+| Information | `--bh-info` / `-bg` | `#1d4ed8` / `#eff5ff` | `#93c5fd` / `#16305c` |
+| Erfolg | `--bh-ok` / `-bg` | `#15803d` / `#edf9f1` | `#86efac` / `#12331f` |
+| KI-Aktionen | `--bh-magic` / `-bg` | `#6d28d9` / `#f3effe` | `#c4b5fd` / `#2a2150` |
 
 **Bedeutung ist fest vergeben:** Blau ist Aktion und Marke, Grün Erfolg, Gelb Warnung, Rot Gefahr. Violett steht ausschließlich für Knöpfe und Ladezustände, die einen KI-Aufruf auslösen, und wird sparsam eingesetzt.
 
@@ -116,7 +122,33 @@ Listenseiten mit `BHListPage.render`, Tabellen mit `BHDataTable`, Details in `BH
 
 ### Dunkles Design
 
-Jede Oberfläche unterstützt Hell und Dunkel. Das Design wird vor dem ersten Zeichnen gesetzt und unter `bh-theme` gespeichert. Inline-Styles dürfen keine festen Farben enthalten.
+Jede Oberfläche unterstützt Hell und Dunkel. Ohne gespeicherte Wahl gilt die Einstellung des Geräts; die Wahl des Nutzers wird unter `bh-theme` gespeichert und vor dem ersten Zeichnen gesetzt. Inline-Styles dürfen keine festen Farben enthalten.
+
+- **Umschalten:** Sonne/Mond direkt in der Navbar, immer sichtbar, zusätzlich „Design: Hell/Dunkel“ im Benutzermenü. Beide bleiben synchron.
+- **Ebenen von hinten nach vorn:** Seite `--bh-bg`, Flächen `--bh-surface`, Hover und Brotkrumen `--bh-bg-subtle`. Zwei benachbarte Ebenen haben nie denselben Farbton.
+- **Navbar bleibt kräftig blau** mit weißer Schrift. Sie darf nie die Farbe einer Fläche annehmen, sonst verschwindet sie.
+- **Hauptaktion dreht sich um:** helles Blau mit dunkler Schrift (`--bh-on-primary`).
+- **Kontrast:** Text mindestens 4,5:1, Rahmen von Bedienelementen über `--bh-input-border`.
+
+## Aufbau einer App
+
+Jede App hat von oben nach unten dieselben Zonen. Sie entstehen über `BHAppShell`, nie von Hand.
+
+| Zone | Inhalt | Regel |
+|---|---|---|
+| **Navbar** (52 px, `--bh-navbar`) | Links BH-Kachel und App-Name, dahinter Tabs. Rechts Hell/Dunkel, Admin-Zahnrad (nur Admins), Benutzermenü | Tabs erst ab zwei Seiten. Keine Seitenknöpfe |
+| **Benutzermenü** | Name und Rolle, App-Übersicht, Mein Profil, Design, Abmelden | In jeder App gleich |
+| **Brotkrumen** (`AppShell.crumbs`) | `Apps › App › Seite`, erster Eintrag führt zur App-Übersicht | Immer vorhanden, 13 px |
+| **Seitenkopf** (`.app-topbar`) | Links Titel (24 px) und Status, rechts die Hauptaktion | Höchstens ein Hauptknopf |
+| **Hinweisbalken** | Warnung oder Zustand, der die ganze Seite betrifft | Nur wenn nötig, `--bh-warn-bg` |
+| **Sidebar** | Unterseiten einer App, einklappbar | Nur bei mehreren Bereichen |
+| **Inhalt** | Abschnitte mit Überschrift (16 px, 600), volle Breite | Reine Formularseiten höchstens 760 px |
+
+**Linke Kante:** Logo, Brotkrumen, Titel und Inhalt fluchten (24 px, am Handy 12 px).
+
+**Handy (bis 960 px):** eine Spalte, das Wichtigste zuerst, Tippflächen mindestens 44 px, Felder 16 px. Kein waagerechter Überstand.
+
+**Zustände:** Jede Aktion zeigt sofort, was passiert: lädt (`aria-busy`), Erfolg oder Fehler als Toast, aktiver Inhalt mit Rahmen und Text „Läuft“, nie allein über Farbe. Daten laden mit Platzhalter (`AppShell.loading`), leere Listen mit `.empty`.
 
 ## Teil 5: Qualitätscheckliste
 
@@ -125,7 +157,8 @@ Vor jedem Commit:
 - [ ] Mit `bh-webapp-skeleton` angelegt, alle Pflicht-Suiten grün
 - [ ] Nur Tokens, keine festen Farben außerhalb von `tokens.css`
 - [ ] Hell, Dunkel und 390 px Breite im Browser angesehen, kein waagerechter Überstand
-- [ ] Standard-Navbar und Benutzermenü
+- [ ] Zonen wie unter „Aufbau einer App“: Navbar, Brotkrumen, Seitenkopf, Inhalt
+- [ ] Umschalter Hell/Dunkel sichtbar, Navbar und Brotkrumen in beiden Designs klar abgesetzt
 - [ ] Knöpfe `bh-btn`, Felder `bh-field` mit `--bh-input-border`
 - [ ] Jedes Dropdown `BHSelectCore`
 - [ ] Kein `alert`, `confirm`, `prompt`

@@ -36,11 +36,12 @@ window.BHUserMenu = (() => {
     btn.addEventListener('click', () => set(pop.hidden));
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
-    closeOpen = () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
-    const choices = host.querySelectorAll('[data-um-theme]');
+        const choices = host.querySelectorAll('[data-um-theme]');
     const mark = () => choices.forEach((c) => c.classList.toggle('is-active', c.dataset.umTheme === Theme.get()));
     choices.forEach((c) => c.addEventListener('click', () => { if (Theme.get() !== c.dataset.umTheme) Theme.toggle(); mark(); }));
     mark();
+    document.addEventListener('bh-theme-change', mark);
+    closeOpen = () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); document.removeEventListener('bh-theme-change', mark); };
   }
 
   return { mount };
