@@ -41,4 +41,3 @@
 .bhs-theme:hover { background: rgba(255, 255, 255, .15); }
 .bhs-theme:focus-visible { outline: 2px solid var(--bh-on-navbar); outline-offset: 1px; }
 .bhs-sun { display: none; } html[data-theme="dark"] .bhs-sun { display: block; } html[data-theme="dark"] .bhs-moon { display: none; }
-.bhs-navbar { background: var(--bh-navbar-gradient); }

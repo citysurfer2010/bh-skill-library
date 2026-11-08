@@ -65,7 +65,7 @@
     return sdp.split('\r\n').filter(function (l) { return !/^a=extmap-allow-mixed/.test(l) && !/^a=candidate:.*\.local /.test(l); }).join('\r\n');
   }
 
-  // Ohne Trickle-ICE: Die Antwort geht erst raus, wenn alle Kandidaten drinstehen (spaetestens nach 2,5 s).
+  // Ohne Trickle-ICE: Die Antwort geht erst raus, wenn alle Kandidaten drinstehen (spaetestens nach 0,8 s).
   function startShare(c) {
     stopAudio();
     shareSession = c.session;
@@ -81,7 +81,7 @@
     pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: compatibleSdp(c.offer) }))
       .then(function () { return pc.createAnswer(); })
       .then(function (a) { return pc.setLocalDescription(a); })
-      .then(function () { setTimeout(send, 2500); })
+      .then(function () { setTimeout(send, 800); })
       .catch(function (e) { caps = 'share-' + e.name + '-' + String(e.message).slice(70, 420); });
   }
 
@@ -131,5 +131,5 @@
   }
 
   poll();
-  setInterval(poll, 3000);
+  setInterval(poll, 1500);
 })();

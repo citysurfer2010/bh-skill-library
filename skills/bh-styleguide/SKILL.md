@@ -27,11 +27,11 @@ Nie Farben fest in den Code schreiben, immer die Tokens. Dunkel gilt automatisch
 |---|---|---|---|
 | Marke, Hauptaktion, Links | `--bh-primary` | `#1d4ed8` | `#60a5fa` |
 | Hover der Hauptaktion | `--bh-primary-hover` | `#1e40af` | `#93c5fd` |
-| Text auf Hauptaktion | `--bh-on-primary` | `#ffffff` | `#0b1730` |
+| Gefüllte Hauptaktion / Schrift | `--bh-action` / `--bh-on-action` | `#1d4ed8` / `#ffffff` | `#2563eb` / `#ffffff` |
+| Läuft, aktiv | `--bh-warm` / `-soft` | `#c2410c` / `#ffedd5` | `#fb923c` / `#4a2a1c` |
 | Getönte Fläche | `--bh-primary-soft` | `#dbeafe` | `#1e3a8a` |
 | Rahmen getönter Flächen | `--bh-primary-border` | `#93b4ee` | `#2f5aa8` |
 | Navbar | `--bh-navbar` | `#1d4ed8` | `#1e40af` |
-| Verlauf der Navbar | `--bh-navbar-gradient` | `#172554 → #1d4ed8 → #6d28d9 → #c2410c` | `#0f1f4d → #1e40af → #5b21b6 → #9a3412` |
 | Schrift auf der Navbar | `--bh-on-navbar` | `#ffffff` | `#ffffff` |
 | Akzent aktiver Tab | `--bh-navbar-accent` | `#bfdbfe` | `#bfdbfe` |
 | Seitenhintergrund | `--bh-bg` | `#f5f8fe` | `#0b1730` |
@@ -48,9 +48,9 @@ Nie Farben fest in den Code schreiben, immer die Tokens. Dunkel gilt automatisch
 | Erfolg | `--bh-ok` / `-bg` | `#15803d` / `#edf9f1` | `#86efac` / `#12331f` |
 | KI-Aktionen | `--bh-magic` / `-bg` | `#6d28d9` / `#f3effe` | `#c4b5fd` / `#2a2150` |
 
-**Verlauf:** Von tiefem Blau über Violett in warmes Orange, von dunkel nach heller, 100 Grad. Nur für die Navbar und große Flächen wie Startbilder, nie für Knöpfe oder Text. Weiße Schrift muss überall mindestens 4,5:1 erreichen.
+**Verlauf:** Weiche, helle Verläufe nur für große Bühnenflächen: das Band oben in der App (`--bh-hero-idle`, Blau über Lila zu warmem Pfirsich) und das Startbild auf dem Beamer. Die Navbar bleibt immer einfarbig, nie Verlauf auf Knöpfen oder Text.
 
-**Bedeutung ist fest vergeben:** Blau ist Aktion und Marke, Grün Erfolg, Gelb Warnung, Rot Gefahr. Violett steht ausschließlich für Knöpfe und Ladezustände, die einen KI-Aufruf auslösen, und wird sparsam eingesetzt.
+**Bedeutung ist fest vergeben:** Blau ist Aktion und Marke, Grün Erfolg, Gelb Warnung, Rot Gefahr, Orange (`--bh-warm`) heißt „läuft gerade/aktiv“. Violett und Orange sind als Verlaufsfarben frei; als Knopf bleibt Violett (`bh-btn-magic`) ausschließlich KI vorbehalten.
 
 ## Teil 3: Form und Schrift
 
@@ -129,8 +129,8 @@ Jede Oberfläche unterstützt Hell und Dunkel. Ohne gespeicherte Wahl gilt die E
 
 - **Umschalten:** Sonne/Mond direkt in der Navbar, immer sichtbar, zusätzlich „Design: Hell/Dunkel“ im Benutzermenü. Beide bleiben synchron.
 - **Ebenen von hinten nach vorn:** Seite `--bh-bg`, Flächen `--bh-surface`, Hover und Brotkrumen `--bh-bg-subtle`. Zwei benachbarte Ebenen haben nie denselben Farbton.
-- **Navbar bleibt kräftig blau** mit weißer Schrift. Sie darf nie die Farbe einer Fläche annehmen, sonst verschwindet sie.
-- **Hauptaktion dreht sich um:** helles Blau mit dunkler Schrift (`--bh-on-primary`).
+- **Navbar bleibt einfarbig kräftig blau** mit weißer Schrift. Sie darf nie die Farbe einer Fläche annehmen, sonst verschwindet sie.
+- **Gefüllte Hauptaktion:** `--bh-action` mit weißer Schrift, im Dunkeln `#2563eb`. Das helle `--bh-primary` nur für Links und Akzente.
 - **Kontrast:** Text mindestens 4,5:1, Rahmen von Bedienelementen über `--bh-input-border`.
 
 ## Aufbau einer App
@@ -169,7 +169,7 @@ Vor jedem Commit:
 - [ ] Kein `alert`, `confirm`, `prompt`
 - [ ] Ecken 6, 8 oder 12 px, keine Pillen
 - [ ] Keine Emojis, nur Inline-SVG
-- [ ] Violett nur für KI
+- [ ] Violett als Knopf nur für KI, Orange nur für „läuft/aktiv“
 - [ ] Sichtbare Texte mit echten Umlauten
 - [ ] Rollen geprüft: Was jemand nicht darf, wird nicht angezeigt
 

@@ -61,7 +61,8 @@ const stopRadio = () => setContent({ mode: 'text', title: '', text: '' });
 async function shareStart(offer, { remote = require('./remote.js') } = {}) {
   if (!(await remote.isInstalled('BH Screen'))) throw new Error('Freigabe braucht die App BH Screen');
   const current = await setContent({ mode: 'share', offer });
-  await remote.openApp('BH Screen', afterPrevious(current));
+  // Nicht warten: Laeuft die App schon, antwortet der Beamer auf den Start gar nicht, und der Laptop verloere 6 Sekunden.
+  remote.openApp('BH Screen', afterPrevious(current)).catch(() => {});
   return current.session;
 }
 

@@ -1,50 +1,42 @@
 'use strict';
-/** Bedienseite des Beamers. Zustand oben, Inhalte links, Fernbedienung rechts; Reihenfolge am Handy in beamer.css. */
+/** Logik der Bedienseite; Markup in beamer-view.js, Gestaltung in css/beamer.css. */
 (async () => {
-  const esc = AppShell.esc;
   const host = document.getElementById('page-host');
-  const STATE = { on: ['An', 'on'], standby: ['Aus', 'off'], 'nicht erreichbar': ['Aus oder nicht erreichbar', 'off'] };
-  const arrow = (d) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-  const PAD = [[], ['KEY_UP', arrow('M6 15l6-6 6 6'), 'Hoch'], [], ['KEY_LEFT', arrow('M15 6l-6 6 6 6'), 'Links'], ['KEY_ENTER', 'OK', 'Bestätigen'], ['KEY_RIGHT', arrow('M9 6l6 6-6 6'), 'Rechts'], ['KEY_RETURN', 'Zurück', 'Zurück'], ['KEY_DOWN', arrow('M6 9l6 6 6-6'), 'Runter'], ['KEY_HOME', 'Home', 'Startseite']];
-  const EXTRA = [['KEY_VOLDOWN', 'Leiser'], ['KEY_MUTE', 'Stumm'], ['KEY_VOLUP', 'Lauter'], ['KEY_PLAY', 'Play'], ['KEY_PAUSE', 'Pause']];
-  let now = null; let zustand = null; let statusFailed = false; let poweringOn = false; let shareLive = false;
+  const REPEAT = new Set(['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_VOLUP', 'KEY_VOLDOWN']);
+  const SHARE_TEXT = { connecting: 'Verbinde mit dem Beamer …', live: 'Wird auf dem Beamer gezeigt.', ended: 'Freigabe beendet.', failed: 'Keine Verbindung zum Beamer. Ist das Gerät im Heimnetz?' };
+  let catalog; let now = null; let zustand = null; let statusFailed = false; let poweringOn = false; let shareLive = false;
+  let pending = null; let scrolledPast = false; let confirmOff = false; let confirmTimer = null; let paused = false;
+  const $ = (id) => document.getElementById(id);
+  const all = (sel) => host.querySelectorAll(sel);
+  const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
+  const setHidden = (sel, hidden) => all(sel).forEach((b) => { b.hidden = hidden; });
 
-  const section = (title, body, extra = '', id = '') => `<section class="bm-section" ${id ? `id="${id}"` : ''}><div class="bm-head"><h2>${title}</h2>${extra}</div>${body}</section>`;
-  const data = (o) => esc(JSON.stringify(o));
-  const moodTile = (m) => `<button class="bm-mood" data-send="/mood" data-body="${data({ id: m.id })}" data-now="mood:${esc(m.id)}"><img src="${esc(m.thumb)}" alt="" loading="lazy"><span>${esc(m.label)}</span></button>`;
-  const stationTile = (s) => `<button class="bm-station" data-send="/radio" data-body="${data({ id: s.id })}" data-now="radio:${esc(s.id)}">${esc(s.label)}</button>`;
-  const form = (id, label, name, placeholder, cta, type = 'text') => `<form class="bm-form" data-form="${id}"><label class="bh-label" for="f-${id}">${label}</label><div class="bm-row"><input id="f-${id}" class="bh-input" name="${name}" type="${type}" placeholder="${placeholder}" required autocomplete="off"><button class="bh-btn">${cta}</button></div></form>`;
-  const shareButtons = () => (BeamerShare.canScreen() ? '<button class="bh-btn bh-btn-primary" data-share="screen">Bildschirm teilen</button>' : '') + '<button class="bh-btn" data-share="camera">Kamera zeigen</button><button class="bh-btn" data-share="stop" hidden>Beenden</button>';
-
-  function page(c) {
-    return `<header class="app-topbar"><div><h1>Beamer</h1><div class="sub bm-status" aria-live="polite"><span class="bm-state" id="bm-state">Wird geprüft</span><span id="bm-now"></span><button class="bh-btn bh-btn-sm" data-stop hidden>Stoppen</button></div></div>
-      <div class="app-topbar-actions"><button class="bh-btn bh-btn-primary" data-power="on" hidden>Einschalten</button><button class="bh-btn bh-btn-danger" data-power="off" hidden>Ausschalten</button></div></header>
-      <div class="bm-notice" id="bm-notice" role="status" hidden>Der Beamer ist aus. Schalte ihn ein, bevor du etwas startest.</div>
-      <div class="bm-layout"><div class="bm-main">
-        ${section('Stimmung', `<div class="bm-moods">${c.moods.map(moodTile).join('')}</div>`)}
-        ${section('Radio', `<div class="bm-stations">${c.stations.map(stationTile).join('')}</div>`, '<button class="bh-btn bh-btn-sm" data-send="/radio/stop" data-body="{}" data-radio-stop hidden>Radio aus</button>')}
-        ${section('Vom Laptop zeigen', `<div class="bm-share">${shareButtons()}</div><p class="bm-hint" id="bm-share-state" aria-live="polite">${BeamerShare.canScreen() ? 'Der Laptop muss im Heimnetz sein.' : 'Bildschirm teilen geht nur am Laptop.'}</p>`)}
-        ${section('Eigene Inhalte', `<div class="bm-forms">${form('youtube', 'YouTube-Link', 'video', 'https://www.youtube.com/watch?v=…', 'Abspielen')}${form('text', 'Text anzeigen', 'title', 'Hallo zusammen', 'Anzeigen')}${form('url', 'Webseite öffnen', 'url', 'https://…', 'Öffnen', 'url')}</div>`)}
-      </div><aside class="bm-side">
-        ${section('Fernbedienung', `<div class="bm-pad">${PAD.map(([k, l, a]) => (k ? `<button class="bm-key" data-key="${k}" aria-label="${a}">${l}</button>` : '<span></span>')).join('')}</div><div class="bm-extra">${EXTRA.map(([k, l]) => `<button class="bh-btn" data-key="${k}">${l}</button>`).join('')}</div>`)}
-        ${section('Apps', `<div class="bm-apps">${c.apps.map((a) => `<button class="bh-btn" data-send="/app" data-body="${data({ app: a })}">${esc(a)}</button>`).join('')}</div>`)}
-      </aside></div>`;
+  function model() {
+    if (poweringOn) return { state: ['Startet', ''], title: 'Wird eingeschaltet …', sub: 'Das dauert einen Moment.' };
+    if (statusFailed) return { state: ['Unbekannt', 'off'], title: 'Status nicht abrufbar', sub: 'Die Verbindung zum Beamer ist gestört.' };
+    if (zustand && zustand !== 'on') return { state: ['Aus', 'off'], title: 'Der Beamer ist aus', sub: 'Tippe etwas an, er schaltet sich dann ein.' };
+    if (pending) return { state: ['An', 'on'], title: `Startet: ${pending}`, sub: 'Einen Moment …' };
+    if (now) return { state: ['Läuft', 'live'], title: now.label, sub: '' };
+    return { state: [zustand ? 'An' : 'Wird geprüft', zustand ? 'on' : ''], title: 'Bereit', sub: 'Such dir etwas aus.' };
   }
 
-  const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
   function paint() {
-    const stateEl = document.getElementById('bm-state');
-    if (!stateEl) return;
-    const [label, tone] = poweringOn ? ['Wird eingeschaltet …', ''] : statusFailed ? ['Status nicht abrufbar', 'off'] : STATE[zustand] || [zustand || 'Wird geprüft', ''];
-    setText(stateEl, label); stateEl.dataset.tone = tone;
-    const on = zustand === 'on';
-    setText(document.getElementById('bm-now'), on && now ? `Läuft: ${now.label}` : '');
-    document.getElementById('bm-notice').hidden = !zustand || on || statusFailed || poweringOn;
-    host.querySelector('[data-stop]').hidden = !on || !now || (now.kind === 'share' && shareLive);
-    host.querySelector('[data-radio-stop]').hidden = now?.kind !== 'radio';
-    host.querySelector('[data-power="on"]').hidden = !zustand || on;
-    host.querySelector('[data-power="off"]').hidden = !on;
-    host.querySelectorAll('[data-now]').forEach((b) => {
+    if (!$('bm-hero')) return;
+    const m = model(); const on = zustand === 'on';
+    setText($('bm-state'), m.state[0]); $('bm-state').dataset.tone = m.state[1];
+    setText($('bm-title'), m.title); setText($('bm-sub'), m.sub);
+    const mood = on && now?.kind === 'mood' && catalog.moods.find((x) => x.id === now.id);
+    const img = $('bm-hero-img');
+    if (mood && img.getAttribute('src') !== mood.hero) img.src = mood.hero;
+    img.hidden = !mood; $('bm-hero').classList.toggle('has-image', !!mood);
+    const canStop = on && !!now && !pending;
+    setHidden('[data-stop]', !canStop);
+    setHidden('[data-power="on"]', !zustand || on || poweringOn);
+    setHidden('[data-power="off"]', !on || confirmOff);
+    setHidden('[data-power-confirm], [data-power-cancel]', !on || !confirmOff);
+    $('bm-nowbar').hidden = !(scrolledPast && on && (now || pending));
+    setText($('bm-nowbar-text'), pending ? `Startet: ${pending}` : now ? `Läuft: ${now.label}` : '');
+    all('[data-now]').forEach((b) => {
       const active = on && !!now && b.dataset.now === `${now.kind}:${now.id}`;
       b.classList.toggle('is-active', active); b.setAttribute('aria-pressed', String(active));
     });
@@ -55,55 +47,109 @@
     paint();
   }
 
-  async function busy(el, work) {
-    el.setAttribute('aria-busy', 'true'); el.disabled = true;
-    try { return await work(); } catch (e) { Toast.error(e.message || 'Hat nicht geklappt'); return null; } finally { el.removeAttribute('aria-busy'); el.disabled = false; paint(); }
-  }
-  async function send(el, path, body, ok) {
-    const r = await busy(el, () => BeamerApi.send(path, body));
-    if (!r) return false;
-    if ('now' in r) now = r.now;
-    paint();
-    if (ok) Toast.success(ok);
-    return true;
+  async function powerOn() {
+    poweringOn = true; paint();
+    try { await BeamerApi.send('/power', { state: 'on' }); await refresh(); return zustand === 'on'; }
+    catch (e) { Toast.error(e.message); await refresh(); return false; }
+    finally { poweringOn = false; paint(); }
   }
 
-  const SHARE_TEXT = { connecting: 'Verbinde mit dem Beamer …', live: 'Wird auf dem Beamer gezeigt.', ended: 'Freigabe beendet.', failed: 'Keine Verbindung zum Beamer. Ist der Laptop im Heimnetz?' };
+  async function start(b, path, body, label, ok) {
+    if (pending) return;
+    pending = label; b.classList.add('is-pending'); b.setAttribute('aria-disabled', 'true'); paint();
+    try {
+      if (zustand !== 'on' && !(await powerOn())) return;
+      const r = await BeamerApi.send(path, body);
+      if ('now' in r) now = r.now;
+      Toast.success(ok || `${label} läuft`);
+      return true;
+    } catch (e) { Toast.error(e.message || 'Hat nicht geklappt'); return false; }
+    finally { pending = null; b.classList.remove('is-pending'); b.removeAttribute('aria-disabled'); paint(); }
+  }
+
   function shareState(s) {
-    setText(document.getElementById('bm-share-state'), SHARE_TEXT[s]);
+    setText($('bm-share-state'), SHARE_TEXT[s]);
     shareLive = s !== 'ended' && s !== 'failed';
-    host.querySelector('[data-share="stop"]').hidden = s === 'ended' || s === 'failed';
-    if (s === 'ended' || s === 'failed') { now = null; paint(); }
+    if (!shareLive) { now = null; paint(); }
   }
   async function share(b) {
-    if (b.dataset.share === 'stop') { await busy(b, () => BeamerShare.stop()); shareState('ended'); return; }
+    if (zustand !== 'on' && !(await powerOn())) return;
     try { await BeamerShare.start(b.dataset.share, shareState); await refresh(); }
     catch (e) { shareState('ended'); if (e.name !== 'NotAllowedError') Toast.error(e.message || 'Freigabe nicht möglich'); }
   }
+  async function stop() {
+    try {
+      if (shareLive) { await BeamerShare.stop(); shareState('ended'); } else { const r = await BeamerApi.send('/stop'); now = r.now; }
+      Toast.success('Gestoppt');
+    } catch (e) { Toast.error(e.message); }
+    paint();
+  }
 
-  host.addEventListener('click', async (e) => {
+  function setConfirm(v) { confirmOff = v; clearTimeout(confirmTimer); if (v) confirmTimer = setTimeout(() => setConfirm(false), 5000); paint(); }
+  async function powerOff() {
+    setConfirm(false);
+    try { await BeamerApi.send('/power', { state: 'off' }); Toast.success('Beamer ist aus'); } catch (e) { Toast.error(e.message); }
+    refresh();
+  }
+
+  // Taste: sofort senden, nie mehrere gleichzeitig; das Gateway braucht je Druck einige Hundert Millisekunden.
+  let inflight = false; let lastError = 0; let holdTimer = null; let repeatTimer = null;
+  function press(key) {
+    if (inflight) return;
+    let k = key;
+    if (key === 'TOGGLE') { k = paused ? 'KEY_PLAY' : 'KEY_PAUSE'; paused = !paused; }
+    inflight = true;
+    BeamerApi.send('/key', { key: k }).then((r) => { if (r.now !== undefined && (r.now?.label) !== (now?.label)) { now = r.now; paint(); } })
+      .catch((e) => { if (Date.now() - lastError > 5000) { lastError = Date.now(); Toast.error(e.message); } })
+      .finally(() => { inflight = false; });
+  }
+  const release = () => { clearTimeout(holdTimer); clearInterval(repeatTimer); };
+  document.addEventListener('touchstart', () => {}, { passive: true });
+  host.addEventListener('pointerdown', (e) => {
+    const b = e.target.closest('[data-key]');
+    if (!b) return;
+    if (navigator.vibrate) navigator.vibrate(10);
+    press(b.dataset.key);
+    if (REPEAT.has(b.dataset.key)) holdTimer = setTimeout(() => { repeatTimer = setInterval(() => press(b.dataset.key), 400); }, 350);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => host.addEventListener(t, release, true));
+
+  host.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
-    if (b.dataset.share) return share(b);
-    // Tasten ohne Sperre: Schnelle Pfeilfolgen dürfen nicht verloren gehen.
-    if (b.dataset.key) return BeamerApi.send('/key', { key: b.dataset.key }).catch((err) => Toast.error(err.message));
-    if ('stop' in b.dataset) return send(b, '/stop', {}, 'Gestoppt');
-    if (b.dataset.power) { const on = b.dataset.power === 'on'; poweringOn = on; paint(); await send(b, '/power', { state: b.dataset.power }, on ? 'Beamer ist an' : 'Beamer ist aus'); await refresh(); poweringOn = false; paint(); return; }
-    if (b.dataset.send) return send(b, b.dataset.send, JSON.parse(b.dataset.body), b.textContent.trim().slice(0, 40));
+    if (b.dataset.key) { if (e.detail === 0) press(b.dataset.key); return; } // Tastatur; Maus und Finger laufen über pointerdown
+    if (b.dataset.view) {
+      $('bm-layout').dataset.view = b.dataset.view;
+      all('[data-view][role="tab"]').forEach((t) => t.setAttribute('aria-selected', String(t === b)));
+      try { localStorage.setItem('beamer-view', b.dataset.view); } catch { /* egal */ }
+      return;
+    }
+    if (b.dataset.share) { share(b); return; }
+    if ('stop' in b.dataset) { stop(); return; }
+    if (b.dataset.power === 'on') { powerOn(); return; }
+    if (b.dataset.power === 'off') { setConfirm(true); return; }
+    if ('powerConfirm' in b.dataset) { powerOff(); return; }
+    if ('powerCancel' in b.dataset) { setConfirm(false); return; }
+    if (b.dataset.send) start(b, b.dataset.send, JSON.parse(b.dataset.body), b.dataset.label);
   });
   host.addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = e.target; const input = f.querySelector('input');
-    if (await send(f.querySelector('button'), `/${f.dataset.form}`, { [input.name]: input.value }, 'Wird auf dem Beamer gezeigt')) input.value = '';
+    if (await start(f.querySelector('button'), `/${f.dataset.form}`, { [input.name]: input.value }, 'Eigener Inhalt', 'Wird auf dem Beamer gezeigt')) input.value = '';
   });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 
   try {
     Navbar.render('home', null);
     AppShell.crumbs([['Apps', '/'], ['Beamer']]);
     AppShell.loading(host, 'Beamer', 'cards');
-    const [me, catalog] = await Promise.all([BeamerApi.me(), BeamerApi.catalog()]);
+    let me; [me, catalog] = await Promise.all([BeamerApi.me(), BeamerApi.catalog()]);
     Navbar.render('home', me);
-    AppShell.render(host, page(catalog));
+    AppShell.render(host, BeamerView.page(catalog));
+    if (window.matchMedia('(min-width: 961px)').matches) $('bm-more').open = true;
+    let view = 'start'; try { view = localStorage.getItem('beamer-view') || 'start'; } catch { /* egal */ }
+    host.querySelector(`[role="tab"][data-view="${view === 'remote' ? 'remote' : 'start'}"]`).click();
+    new IntersectionObserver(([en]) => { scrolledPast = !en.isIntersecting; paint(); }).observe($('bm-hero'));
     await refresh();
     setInterval(() => { if (!document.hidden) refresh(); }, 15000);
   } catch (err) { Toast.error(err.message || 'Fehler beim Laden'); }
