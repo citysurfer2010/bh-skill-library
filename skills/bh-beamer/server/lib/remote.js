@@ -102,7 +102,7 @@ async function press(key) {
 }
 
 // Auf diesem Beamer per Abfrage bestaetigt. Vor jedem Start wird der echte Name erneut geprueft.
-const APPS = { YouTube: '111299001912', 'Prime Video': '3201910019365', Netflix: '3201907018807', 'Disney+': '3201901017640', 'Apple TV': '3201807016597', Spotify: '3201606009684', WOW: '3201411000562', Internet: '3201907018784' };
+const APPS = { 'BH Screen': 'bhscreen01.BHScreen', YouTube: '111299001912', 'Prime Video': '3201910019365', Netflix: '3201907018807', 'Disney+': '3201901017640', 'Apple TV': '3201807016597', Spotify: '3201606009684', WOW: '3201411000562', Internet: '3201907018784' };
 
 function realRest(method, id) {
   return new Promise((resolve, reject) => {
@@ -134,8 +134,11 @@ async function waitVisible(id, tries, delayMs) {
   return false;
 }
 
-async function openApp(app, { tries = 8, delayMs = 750 } = {}) {
+async function isInstalled(app) { try { await appInfo(app); return true; } catch { return false; } }
+
+async function openApp(app, { tries = 8, delayMs = 750, restart = false } = {}) {
   const { id } = await appInfo(app);
+  if (restart) { await rest('DELETE', id).catch(() => {}); await pause(1500); }
   await rest('POST', id);
   if (!(await waitVisible(id, tries, delayMs))) throw new Error(`${app} liess sich nicht starten`);
 }
@@ -163,4 +166,4 @@ function status() {
 const ok = (v) => ({ content: [{ type: 'text', text: typeof v === 'string' ? v : JSON.stringify(v, null, 2) }] });
 const guarded = (fn) => async (args) => { try { return ok(await fn(args || {})); } catch (e) { return { content: [{ type: 'text', text: e.message }], isError: true }; } };
 
-module.exports = { KEYS, APPS, press, launchBrowser, openApp, setRest, status, encodeText, decodeFrames, setOpener, tlsOptions, guarded, tokenFile };
+module.exports = { KEYS, APPS, press, launchBrowser, openApp, isInstalled, setRest, status, encodeText, decodeFrames, setOpener, tlsOptions, guarded, tokenFile };
