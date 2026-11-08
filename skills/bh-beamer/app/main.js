@@ -62,7 +62,7 @@
   // Der Browser des Beamers ist aelter als die Laptops: unbekannte Zeilen lehnt er als Ganzes ab. mDNS-Kandidaten
   // kann er nicht aufloesen; das schadet nicht, der Laptop meldet sich bei seiner echten Adresse.
   function compatibleSdp(sdp) {
-    return sdp.split('\r\n').filter(function (l) { return !/^a=extmap-allow-mixed/.test(l) && !/^a=candidate:.*\.local /.test(l); }).join('\r\n');
+    return sdp.split('\r\n').filter(function (l) { return !/^a=extmap-allow-mixed/.test(l) && !/^a=ssrc:\d+ msid:/.test(l) && !/^a=candidate:.*\.local /.test(l); }).join('\r\n');
   }
 
   // Ohne Trickle-ICE: Die Antwort geht erst raus, wenn alle Kandidaten drinstehen (spaetestens nach 2,5 s).
@@ -82,7 +82,7 @@
       .then(function () { return pc.createAnswer(); })
       .then(function (a) { return pc.setLocalDescription(a); })
       .then(function () { setTimeout(send, 2500); })
-      .catch(function (e) { caps = 'share-' + e.name + '-' + String(e.message).slice(0, 120); });
+      .catch(function (e) { caps = 'share-' + e.name + '-' + String(e.message).slice(70, 420); });
   }
 
   function render(c) {
