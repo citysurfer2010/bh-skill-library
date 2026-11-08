@@ -1,12 +1,11 @@
 import { Router } from "express";
 import { safeNext } from "../lib/session.js";
-import { loginView, messageView, setPasswordView, changePasswordView } from "../lib/views.js";
-import { MIN_PASSWORD } from "../lib/users.js";
+import { loginView, messageView, setPasswordView } from "../lib/views.js";
+import { MIN_PASSWORD, passwordProblem } from "../lib/users.js";
 
-export function loginRoutes({ config, users, sessions, limiter, requireLogin }) {
+export function loginRoutes({ config, users, sessions, limiter }) {
   const r = Router();
   const html = (res, body, status = 200) => res.status(status).type("html").send(body);
-  const badPassword = (p, c) => (String(p).length < MIN_PASSWORD ? `Mindestens ${MIN_PASSWORD} Zeichen.` : p !== c ? "Die Passwörter stimmen nicht überein." : null);
 
   r.get("/login", async (req, res) => {
     const next = safeNext(req.query.next, config.returnOrigins);
@@ -38,22 +37,10 @@ export function loginRoutes({ config, users, sessions, limiter, requireLogin }) 
   r.post("/set-password", async (req, res) => {
     const user = users.byLink(req.body.token);
     if (!user) return html(res, messageView("Link ungültig", "Dieser Link ist abgelaufen oder wurde bereits verwendet."), 400);
-    const error = badPassword(req.body.password, req.body.confirm);
+    const error = passwordProblem(req.body.password, req.body.confirm);
     if (error) return html(res, setPasswordView({ error, token: req.body.token, email: user.email, min: MIN_PASSWORD }), 400);
     await users.setPassword(user.id, req.body.password);
     res.redirect("/login?notice=saved");
-  });
-
-  r.get("/change-password", requireLogin, (_req, res) => html(res, changePasswordView({ min: MIN_PASSWORD, hasPassword: !!req.user.passwordHash })));
-
-  r.post("/change-password", requireLogin, async (req, res) => {
-    const view = (error, status) => html(res, changePasswordView({ error, min: MIN_PASSWORD, hasPassword: !!req.user.passwordHash }), status);
-    if (req.user.passwordHash && !(await users.checkPassword(req.user.email, req.body.current))) return view("Das aktuelle Passwort ist falsch.", 400);
-    const error = badPassword(req.body.password, req.body.confirm);
-    if (error) return view(error, 400);
-    await users.setPassword(req.user.id, req.body.password);
-    await sessions.start(res, users.byId(req.user.id));
-    res.redirect("/profile?saved=1");
   });
 
   return r;

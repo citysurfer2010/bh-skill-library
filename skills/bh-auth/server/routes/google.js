@@ -7,7 +7,7 @@ const b64 = (b) => b.toString("base64url");
 
 // Google bestaetigt nur, wem ein Konto gehoert. Zugang haben eingeladene Adressen und Konten,
 // die ein angemeldeter User selbst mit seinem Profil verknuepft hat.
-export function googleRoutes({ config, users, sessions, requireLogin }) {
+export function googleRoutes({ config, users, sessions, avatars, requireLogin }) {
   const r = Router();
   const redirectUri = `${config.publicUrl}/oauth/google/callback`;
   const cookie = { httpOnly: true, sameSite: "lax", secure: config.secure, path: "/oauth/google" };
@@ -57,12 +57,14 @@ export function googleRoutes({ config, users, sessions, requireLogin }) {
         const holder = users.byGoogleSub(g.sub);
         res.clearCookie(COOKIE, cookie);
         if (holder && holder.id !== me.id) return res.redirect("/profile?google=taken");
-        users.bindGoogle(me.id, g.sub);
-        return res.redirect("/profile?saved=1");
+        users.bindGoogle(me.id, g.sub, g.email);
+        await avatars.fromGoogle(me.id, g.picture);
+        return res.redirect("/profile?saved=google");
       }
       const user = users.byGoogleSub(g.sub) || users.byEmail(g.email);
       if (!user || user.disabled || (user.googleSub && user.googleSub !== g.sub)) return fail(res, "no-access");
-      if (!user.googleSub) users.bindGoogle(user.id, g.sub);
+      users.bindGoogle(user.id, g.sub, g.email);
+      await avatars.fromGoogle(user.id, g.picture);
       res.clearCookie(COOKIE, cookie);
       await sessions.start(res, users.byId(user.id));
       res.redirect(safeNext(saved.next, config.returnOrigins));

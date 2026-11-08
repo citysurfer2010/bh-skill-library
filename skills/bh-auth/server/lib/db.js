@@ -25,6 +25,9 @@ const MIGRATIONS = [
      adminOnly INTEGER NOT NULL DEFAULT 0,
      createdAt INTEGER NOT NULL
    )`,
+  "ALTER TABLE users ADD COLUMN googleEmail TEXT",
+  "ALTER TABLE users ADD COLUMN avatarType TEXT",
+  "ALTER TABLE users ADD COLUMN avatarAt INTEGER",
 ];
 
 export function openDb(fileOrDir) {

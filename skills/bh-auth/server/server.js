@@ -6,12 +6,14 @@ import { loadConfig } from "./lib/config.js";
 import { openDb } from "./lib/db.js";
 import { usersStore } from "./lib/users.js";
 import { appsStore } from "./lib/apps.js";
+import { avatarStore } from "./lib/avatars.js";
 import { sessions as makeSessions } from "./lib/session.js";
 import { rateLimiter } from "./lib/rate-limit.js";
 import { loginRoutes } from "./routes/login.js";
 import { googleRoutes } from "./routes/google.js";
 import { adminRoutes } from "./routes/admin.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
+import { profileRoutes } from "./routes/profile.js";
 import { verifyRoutes } from "./routes/verify.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -47,10 +49,12 @@ export function createApp({ config = loadConfig(), db = openDb(config.dataDir), 
   });
 
   const apps = appsStore(db);
-  const deps = { config, users, apps, sessions, limiter, requireLogin, requireAdmin };
+  const avatars = avatarStore(config, users);
+  const deps = { config, users, apps, avatars, sessions, limiter, requireLogin, requireAdmin };
   app.use(verifyRoutes(deps));
   app.use(googleRoutes(deps));
   app.use(dashboardRoutes(deps));
+  app.use(profileRoutes(deps));
   app.use(adminRoutes(deps));
   app.use(loginRoutes(deps));
   return app;

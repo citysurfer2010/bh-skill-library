@@ -6,6 +6,7 @@ const hashToken = (t) => createHash("sha256").update(t).digest("hex");
 const normal = (email) => String(email || "").trim().toLowerCase();
 export const MIN_PASSWORD = 12;
 export const HOURS = { invite: 72, reset: 1 };
+export const passwordProblem = (p, c) => (String(p).length < MIN_PASSWORD ? `Mindestens ${MIN_PASSWORD} Zeichen.` : p !== c ? "Die Passwörter stimmen nicht überein." : null);
 // Gleiche Rechenzeit auch fuer unbekannte Adressen.
 const DUMMY = bcrypt.hashSync("nicht-vorhanden", 12);
 
@@ -53,8 +54,10 @@ export function usersStore(db) {
 
     touchLogin: (id) => db.prepare("UPDATE users SET lastLogin = ? WHERE id = ?").run(now(), id),
     byGoogleSub: (sub) => get("SELECT * FROM users WHERE googleSub = ?", String(sub)),
-    unbindGoogle: (id) => db.prepare("UPDATE users SET googleSub = NULL WHERE id = ?").run(id),
-    bindGoogle: (id, sub) => db.prepare("UPDATE users SET googleSub = ? WHERE id = ?").run(sub, id),
+    setAvatar: (id, type) => db.prepare("UPDATE users SET avatarType = ?, avatarAt = ? WHERE id = ?").run(type, now(), id),
+    clearAvatar: (id) => db.prepare("UPDATE users SET avatarType = NULL, avatarAt = NULL WHERE id = ?").run(id),
+    unbindGoogle: (id) => db.prepare("UPDATE users SET googleSub = NULL, googleEmail = NULL WHERE id = ?").run(id),
+    bindGoogle: (id, sub, email) => db.prepare("UPDATE users SET googleSub = ?, googleEmail = ? WHERE id = ?").run(sub, email ?? null, id),
     setName: (id, name) => db.prepare("UPDATE users SET name = ? WHERE id = ?").run(name, id),
     setAdmin: (id, on) => db.prepare("UPDATE users SET isAdmin = ? WHERE id = ?").run(on ? 1 : 0, id),
     setDisabled: (id, on) => db.prepare("UPDATE users SET disabled = ?, tokenInvalidatedAt = ? WHERE id = ?").run(on ? 1 : 0, now(), id),

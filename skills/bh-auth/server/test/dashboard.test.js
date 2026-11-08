@@ -125,3 +125,34 @@ test("Suche: Umlaute in beiden Schreibweisen, App schlaegt schwaecheren Treffer"
   assert.doesNotMatch(html, /<b>|javascript:/);
 });
 
+test("Passwort im Profil: Fehler bleiben in der Zeile, Erfolg meldet sich", async () => {
+  const g = await start();
+  try {
+    const u = await logged(g, "u@b.de");
+    assert.equal((await u("/change-password")).headers.get("location"), "/profile?pw=1");
+    const wrong = await u("/change-password", { form: { current: "falsch-falsch-falsch", password: "ein-neues-passwort", confirm: "ein-neues-passwort" } });
+    assert.equal(wrong.status, 400);
+    const page = await wrong.text();
+    assert.match(page, /Das aktuelle Passwort ist falsch/);
+    assert.doesNotMatch(page, /id="pwForm"[^>]*hidden/);
+    assert.equal((await u("/change-password", { form: { current: "ein-langes-passwort", password: "ein-neues-passwort", confirm: "anders" } })).status, 400);
+    assert.equal((await u("/change-password", { form: { current: "ein-langes-passwort", password: "ein-neues-passwort", confirm: "ein-neues-passwort" } })).headers.get("location"), "/profile?saved=password");
+    assert.match(await (await u("/profile?saved=password")).text(), /wurde geändert/);
+  } finally { await g.stop(); }
+});
+
+test("Google trennen fragt nach und geht ohne Passwort nicht", async () => {
+  const g = await start({ google: true });
+  try {
+    const u = await logged(g, "u@b.de");
+    const id = g.users.byEmail("u@b.de").id;
+    assert.match(await (await u("/profile")).text(), /oauth\/google\/link/);
+    g.users.bindGoogle(id, "s1", "x@gmail.com");
+    const page = await (await u("/profile")).text();
+    assert.match(page, /x@gmail\.com/);
+    assert.match(page, /id="unlinkConfirm"[^>]*hidden/);
+    assert.equal((await u("/profile/google/unlink", { form: {} })).headers.get("location"), "/profile?saved=unlink");
+    assert.equal(g.users.byId(id).googleEmail, null);
+  } finally { await g.stop(); }
+});
+

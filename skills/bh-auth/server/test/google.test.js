@@ -79,8 +79,10 @@ test("Verknuepfen: Google-Konto mit anderer Adresse meldet danach genau diesen U
   try {
     const u = await g.addUser("matti@firma.de");
     const c = g.client(); await g.login(c, "matti@firma.de");
-    assert.equal((await link(c)).headers.get("location"), "/profile?saved=1");
+    assert.equal((await link(c)).headers.get("location"), "/profile?saved=google");
     assert.equal(g.users.byId(u.id).googleSub, "g1");
+    assert.equal(g.users.byId(u.id).googleEmail, "privat@gmail.com");
+    assert.match(await (await c("/profile")).text(), /privat@gmail\.com/);
     const neu = g.client();
     await (await flow(g, neu)).cb();
     assert.equal((await (await neu("/validate")).json()).email, "matti@firma.de");
@@ -132,3 +134,48 @@ test("Profil bietet Verknuepfung nur an, wenn Google eingerichtet ist", async ()
   const off = await start();
   try { await off.addUser("a@b.de"); const c = off.client(); await off.login(c, "a@b.de"); assert.doesNotMatch(await (await c("/profile")).text(), /oauth\/google\/link/); } finally { await off.stop(); }
 });
+
+const PIC = "https://lh3.googleusercontent.com/a/abc=s96-c";
+function withPicture(bytes, type = "image/jpeg", seen = []) {
+  return async (url) => {
+    const u = String(url); seen.push(u);
+    if (u.includes("/token")) return { ok: true, json: async () => ({ access_token: "t" }) };
+    if (u.includes("googleusercontent")) return { ok: true, headers: new Headers({ "content-type": type }), arrayBuffer: async () => bytes };
+    return { ok: true, json: async () => ({ ...privat, picture: PIC }) };
+  };
+}
+
+test("Profilbild: wird gespeichert, angezeigt und beim Trennen geloescht", async () => {
+  const seen = [];
+  const g = await start({ google: true, fetchImpl: withPicture(Uint8Array.from([1, 2, 3]).buffer, "image/jpeg", seen) });
+  try {
+    const u = await g.addUser("a@b.de");
+    const c = g.client(); await g.login(c, "a@b.de");
+    assert.equal((await c("/avatar/me")).status, 404);
+    await link(c);
+    assert.ok(seen.some((x) => x.endsWith("=s256-c")));
+    const img = await c("/avatar/me");
+    assert.equal(img.headers.get("content-type"), "image/jpeg");
+    assert.deepEqual([...new Uint8Array(await img.arrayBuffer())], [1, 2, 3]);
+    assert.match(await (await c("/profile")).text(), /src="\/avatar\/me/);
+    await c("/profile/google/unlink", { form: {} });
+    assert.equal(g.users.byId(u.id).avatarType, null);
+    assert.equal((await c("/avatar/me")).status, 404);
+    assert.equal((await g.client()("/avatar/me")).status, 302);
+  } finally { await g.stop(); }
+});
+
+test("Profilbild: nur Google-Adressen und nur Bilder, Fehler stoeren den Login nicht", async () => {
+  const { pictureUrl } = await import("../lib/avatars.js");
+  assert.equal(pictureUrl(PIC), "https://lh3.googleusercontent.com/a/abc=s256-c");
+  for (const bad of ["http://lh3.googleusercontent.com/a", "https://evil.de/a.jpg", "https://lh3.googleusercontent.com.evil.de/a", "", undefined]) assert.equal(pictureUrl(bad), null, String(bad));
+  const g = await start({ google: true, fetchImpl: withPicture(new ArrayBuffer(4), "text/html") });
+  try {
+    const u = await g.addUser("a@b.de");
+    const c = g.client(); await g.login(c, "a@b.de");
+    assert.equal((await link(c)).headers.get("location"), "/profile?saved=google");
+    assert.equal(g.users.byId(u.id).avatarType, null);
+    assert.equal(g.users.byId(u.id).googleSub, "g1");
+  } finally { await g.stop(); }
+});
+
