@@ -12,3 +12,7 @@ body.audio #radio { display: block; }
 body.audio h1 { font-size: 110px; }
 body.audio #note { font-size: 40px; color: #6f86ab; }
 #note:empty { display: none; }
+/* Bildschirmfreigabe: Video ueber die ganze Flaeche, auf Schwarz. */
+#share { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; object-fit: contain; }
+body.share #share { display: block; }
+body.share main { display: none; }

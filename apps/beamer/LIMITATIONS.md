@@ -21,9 +21,10 @@ Details zu einem Modul: `docs/limitations/<modul>.md`.
 - „Läuft gerade“ merkt sich nur die App; was jemand per Fernbedienung umschaltet, sieht sie nicht. Nach einem Neustart der App ist die Anzeige leer.
 - Einschalten braucht am Beamer die Einstellungen „Einschalten über Mobilgerät“ und IP-Fernzugriff; nach einem Stromausfall nur per Fernbedienung erprobt.
 
+- Bildschirm und Kamera teilen geht nur im selben Heimnetz (WebRTC ohne STUN/TURN). Am Handy gibt es nur die Kamera, Browser dort können keinen Bildschirm teilen.
+
 ## Backlog
 
-- Bildschirm und Kamera vom Laptop auf den Beamer teilen (zuerst prüfen, ob die Beamer-App WebRTC kann).
 - Ruhebild mit Uhr und Wetter, wenn nichts läuft.
 - BH Screen mit der echten Fernbedienung bedienen (Senderwahl per Pfeiltasten).
 - Szenen und Zeitpläne, z. B. „Abend“ = Kamin + Radio leise.

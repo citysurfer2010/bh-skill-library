@@ -57,4 +57,18 @@ async function playRadio(url, title, { remote = require('./remote.js') } = {}) {
 
 const stopRadio = () => setContent({ mode: 'text', title: '', text: '' });
 
-module.exports = { httpsUrl, setContent, showText, showUrl, playRadio, stopRadio };
+// Bildschirmfreigabe: Der Server vermittelt nur Angebot und Antwort, das Bild laeuft direkt im Heimnetz.
+async function shareStart(offer, { remote = require('./remote.js') } = {}) {
+  if (!(await remote.isInstalled('BH Screen'))) throw new Error('Freigabe braucht die App BH Screen');
+  const current = await setContent({ mode: 'share', offer });
+  await remote.openApp('BH Screen', afterPrevious(current));
+  return current.session;
+}
+
+async function shareAnswer(session, http = fetch) {
+  const r = await http(`${process.env.BH_AUTH_INTERNAL}/screen-answer?session=${encodeURIComponent(session)}`, { headers: { authorization: `Bearer ${process.env.BH_SCREEN_WRITE}` } });
+  if (!r.ok) throw new Error(`Antwort des Beamers nicht lesbar (${r.status})`);
+  return (await r.json()).answer || '';
+}
+
+module.exports = { httpsUrl, setContent, showText, showUrl, playRadio, stopRadio, shareStart, shareAnswer };

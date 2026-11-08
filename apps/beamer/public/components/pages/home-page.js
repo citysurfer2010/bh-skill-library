@@ -19,6 +19,7 @@
       <div class="bm-layout"><div class="bm-main">
         ${section('Stimmung', `<div class="bm-moods">${c.moods.map(moodTile).join('')}</div>`)}
         ${section('Radio', `<div class="bm-stations">${c.stations.map(stationTile).join('')}</div>`, '<button class="bh-btn bh-btn-sm" data-send="/radio/stop" data-body="{}">Radio aus</button>')}
+        ${section('Vom Laptop zeigen', `<div class="bm-share"><button class="bh-btn bh-btn-primary" data-share="screen" ${BeamerShare.canScreen() ? '' : 'disabled'}>Bildschirm teilen</button><button class="bh-btn" data-share="camera">Kamera zeigen</button><button class="bh-btn" data-share="stop" hidden>Beenden</button></div><p class="bm-hint" id="bm-share-state" aria-live="polite">Der Laptop muss im Heimnetz sein.</p>`)}
         ${section('Eigene Inhalte', `<div class="bm-forms">${form('youtube', 'YouTube-Link', 'video', 'https://www.youtube.com/watch?v=…', 'Abspielen')}${form('text', 'Text anzeigen', 'title', 'Hallo zusammen', 'Anzeigen')}${form('url', 'Webseite öffnen', 'url', 'https://…', 'Öffnen', 'url')}</div>`)}
       </div><aside class="bm-side">
         ${section('Fernbedienung', `<div class="bm-pad">${PAD.map(([k, l, a]) => (k ? `<button class="bm-key" data-key="${k}" aria-label="${a}">${l}</button>` : '<span></span>')).join('')}</div><div class="bm-extra">${EXTRA.map(([k, l]) => `<button class="bh-btn" data-key="${k}">${l}</button>`).join('')}</div>`)}
@@ -51,9 +52,22 @@
     return true;
   }
 
+  const SHARE_TEXT = { connecting: 'Verbinde mit dem Beamer …', live: 'Wird auf dem Beamer gezeigt.', ended: 'Freigabe beendet.', failed: 'Keine Verbindung zum Beamer. Ist der Laptop im Heimnetz?' };
+  function shareState(s) {
+    document.getElementById('bm-share-state').textContent = SHARE_TEXT[s];
+    host.querySelector('[data-share="stop"]').hidden = s === 'ended' || s === 'failed';
+    if (s === 'ended' || s === 'failed') { now = null; paint(); }
+  }
+  async function share(b) {
+    if (b.dataset.share === 'stop') { await busy(b, () => BeamerShare.stop()); shareState('ended'); return; }
+    try { await BeamerShare.start(b.dataset.share, shareState); now = { kind: 'share', label: 'Bildschirmfreigabe' }; paint(); }
+    catch (e) { shareState('ended'); if (e.name !== 'NotAllowedError') Toast.error(e.message || 'Freigabe nicht möglich'); }
+  }
+
   host.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
     if (!b) return;
+    if (b.dataset.share) return share(b);
     if (b.dataset.key) return send(b, '/key', { key: b.dataset.key });
     if (b.dataset.power) { const on = b.dataset.power === 'on'; if (await send(b, '/power', { state: b.dataset.power }, on ? 'Beamer ist an' : 'Beamer ist aus')) refresh(); return; }
     if (b.dataset.send) return send(b, b.dataset.send, JSON.parse(b.dataset.body), b.textContent.trim().slice(0, 40));
