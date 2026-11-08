@@ -155,6 +155,8 @@ Jede App hat von oben nach unten dieselben Zonen. Sie entstehen über `BHAppShel
 
 ## Teil 5: Qualitätscheckliste
 
+**Prüfung ist Pflicht:** Jede sichtbare Änderung prüfen ein UI/UX-Agent und ein Design-Experte getrennt, mit Screenshots in Hell, Dunkel, 390 px und mit echtem Zustand. Befunde umsetzen, erneut prüfen, bis beide freigeben. Ziel ist ein Erlebnis auf Weltklasse-Niveau, nicht „funktioniert“.
+
 Vor jedem Commit:
 
 - [ ] Mit `bh-webapp-skeleton` angelegt, alle Pflicht-Suiten grün
