@@ -1,34 +1,49 @@
 /* Bedienseite Beamer. Fingerfreundlich: am Handy ist die Seite die Fernbedienung. */
+[hidden] { display: none !important; }
 .bm-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; align-items: start; }
 .bm-main, .bm-side { display: grid; gap: 32px; min-width: 0; }
-.bm-section h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--bh-text); }
+.bm-section h2 { margin: 0; font-size: 16px; font-weight: 600; color: var(--bh-text); }
 .bm-head { display: flex; align-items: center; justify-content: space-between; min-height: 32px; margin-bottom: 12px; }
-.bm-moods { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.bm-mood { position: relative; display: block; padding: 0; overflow: hidden; aspect-ratio: 16 / 9; border: 1px solid var(--bh-border); border-radius: var(--bh-radius-lg); background: var(--bh-bg-subtle); cursor: pointer; }
-.bm-mood img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.bm-mood span { position: absolute; left: 0; right: 0; bottom: 0; padding: 24px 12px 10px; color: var(--bh-on-navbar); font: inherit; font-size: 14px; font-weight: 600; text-align: left; background: linear-gradient(transparent, rgba(0, 0, 0, .72)); }
+.bm-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; }
+.bm-state { padding: 3px 8px; border-radius: var(--bh-radius-sm); background: var(--bh-bg-subtle); color: var(--bh-muted); font-size: 12px; font-weight: 600; }
+.bm-state[data-tone="on"] { background: var(--bh-ok-bg); color: var(--bh-ok); }
+.bm-state[data-tone="off"] { background: var(--bh-warn-bg); color: var(--bh-warn); }
+#bm-now { font-size: 14px; font-weight: 600; color: var(--bh-text); }
+.bm-notice { margin-bottom: 24px; padding: 10px 12px; border-radius: var(--bh-radius); background: var(--bh-warn-bg); color: var(--bh-warn); font-size: 14px; }
+.bm-moods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bm-mood { display: flex; flex-direction: column; padding: 0; overflow: hidden; border: 1px solid var(--bh-input-border); border-radius: var(--bh-radius-lg); background: var(--bh-surface); color: var(--bh-text); font: inherit; text-align: left; cursor: pointer; }
+.bm-mood img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--bh-bg-subtle); }
+.bm-mood span { padding: 8px 12px; font-size: 14px; font-weight: 600; }
+.bm-mood.is-active { outline: 2px solid var(--bh-primary); outline-offset: -2px; }
+.bm-mood.is-active span::after, .bm-station.is-active::after { content: " · Läuft"; color: var(--bh-primary); }
 .bm-stations { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.bm-station, .bm-key { height: 48px; padding: 0 12px; border: 1px solid var(--bh-border); border-radius: var(--bh-radius); background: var(--bh-surface); color: var(--bh-text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.bm-station, .bm-key { height: 48px; padding: 0 12px; border: 1px solid var(--bh-input-border); border-radius: var(--bh-radius-sm); background: var(--bh-surface); color: var(--bh-text); font: inherit; font-size: 14px; font-weight: 600; line-height: 1.2; cursor: pointer; touch-action: manipulation; }
 .bm-station:hover, .bm-key:hover, .bm-mood:hover { border-color: var(--bh-primary); }
 .bm-mood:focus-visible, .bm-station:focus-visible, .bm-key:focus-visible { outline: 2px solid var(--bh-primary); outline-offset: 1px; }
-.bm-station.is-active, .bm-mood.is-active { border-color: var(--bh-primary); box-shadow: inset 0 0 0 2px var(--bh-primary); }
-.bm-station.is-active { color: var(--bh-primary); }
+.bm-station.is-active { border-color: var(--bh-primary); box-shadow: inset 0 0 0 1px var(--bh-primary); color: var(--bh-primary); }
 [aria-busy="true"] { opacity: .6; cursor: progress; }
 .bm-share { display: flex; flex-wrap: wrap; gap: 8px; }
 .bm-hint { margin: 8px 0 0; font-size: 13px; color: var(--bh-muted); }
 .bm-forms { display: grid; gap: 16px; }
 .bm-row { display: flex; gap: 8px; }
 .bm-row .bh-input { flex: 1; min-width: 0; }
+.bm-row .bh-btn { flex: 0 0 104px; }
 .bm-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.bm-key { height: 64px; font-size: 16px; }
+.bm-key { display: inline-flex; align-items: center; justify-content: center; height: 64px; font-size: 15px; }
+.bm-key:active { background: var(--bh-bg-subtle); }
 .bm-key[data-key="KEY_ENTER"] { background: var(--bh-primary); border-color: var(--bh-primary); color: var(--bh-on-primary); }
-.bm-extra { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.bm-key[data-key="KEY_ENTER"]:active { background: var(--bh-primary-hover); }
+.bm-extra { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 8px; }
+.bm-extra > * { grid-column: span 2; }
+.bm-extra > :nth-child(n+4) { grid-column: span 3; }
 .bm-apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 @media (max-width: 960px) {
   .bm-layout { grid-template-columns: minmax(0, 1fr); }
-  /* Am Handy: Stimmung, Radio, Fernbedienung, Apps, zuletzt die Eingabefelder. */
+  /* Am Handy: Fernbedienung, Stimmung, Radio, Apps, Laptop, Eingabefelder. */
   .bm-main, .bm-side { display: contents; }
-  .bm-main > :nth-child(4) { order: 2; }
-  .bm-moods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bm-stations { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bm-side > :nth-child(1) { order: -1; }
+  .bm-main > :nth-child(3), .bm-main > :nth-child(4) { order: 2; }
+  .bm-moods, .bm-stations { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bm-extra .bh-btn, .bm-apps .bh-btn, .bm-share .bh-btn, .bm-head .bh-btn, .bm-row .bh-btn, .bm-row .bh-input { height: 48px; }
+  .bm-row .bh-input { font-size: 16px; }
 }

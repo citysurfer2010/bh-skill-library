@@ -79,11 +79,18 @@ function buildRouter() {
     now = { kind: 'app', label: app };
   }));
 
-  router.post('/share/start', action(async ({ offer }) => {
+  router.post('/share/start', action(async ({ offer, kind }) => {
     if (typeof offer !== 'string' || !offer.startsWith('v=0') || offer.length > 24000) return bad('Angebot ungültig');
     const session = await gateway.call('beamer_share_start', { offer });
-    now = { kind: 'share', label: 'Bildschirmfreigabe' };
+    now = { kind: 'share', label: kind === 'camera' ? 'Kamera' : 'Bildschirmfreigabe' };
     return { session };
+  }));
+
+  // Stoppen je nach Inhalt: Radio in BH Screen beenden, alles andere endet mit dem Sprung auf die Startseite.
+  router.post('/stop', action(async () => {
+    if (now?.kind === 'radio' || now?.kind === 'text' || now?.kind === 'share') await gateway.call('beamer_stop_radio');
+    else await gateway.call('beamer_press', { key: 'KEY_HOME' });
+    now = null;
   }));
 
   router.post('/share/answer', action(async ({ session }) => {
