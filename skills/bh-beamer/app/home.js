@@ -14,6 +14,7 @@ window.BHHome = (function () {
     var d = new Date();
     document.getElementById('clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
     document.getElementById('date').textContent = DAYS[d.getDay()] + ', ' + d.getDate() + '. ' + MONTHS[d.getMonth()];
+    if (iso(d) !== lastDay) { lastDay = iso(d); if (lastPlan) setSchedule(lastPlan); }
   }
 
   function sky(code) {
@@ -60,17 +61,31 @@ window.BHHome = (function () {
     });
   }
 
+  var lastPlan = null; var lastDay = '';
+  var iso = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  // Das Wort haengt am Datum, nicht am Zeitpunkt des Abrufs: Nach Mitternacht wird aus Morgen Heute.
+  function dayLabel(date) {
+    var n = new Date(); var t = iso(n); n.setDate(n.getDate() + 1);
+    return date === t ? 'Heute' : date === iso(n) ? 'Morgen' : DAYS[new Date(date + 'T12:00:00').getDay()];
+  }
+  function merged(lessons) {
+    var out = [];
+    lessons.forEach(function (l) { var p = out[out.length - 1]; if (!p || p.subject !== l.subject || p.state !== l.state || p.exam !== l.exam) out.push(l); });
+    return out;
+  }
+
   function setSchedule(plan) {
+    lastPlan = plan;
     var el = document.getElementById('today');
     var kids = plan && plan.kids ? plan.kids.filter(function (k) { return k.lessons.length; }) : [];
-    if (!plan || !plan.kids) { el.className = ''; return; }
+    if (!plan || !plan.kids || (plan.date && plan.date < iso(new Date()))) { el.className = ''; return; }
     el.className = 'on';
-    el.innerHTML = '<h3>' + esc(plan.label) + '</h3>' + (kids.length ? kids.map(function (k) {
+    el.innerHTML = '<h3>' + esc(plan.date ? dayLabel(plan.date) : plan.label) + '</h3>' + (kids.length ? kids.map(function (k) {
       var live = k.lessons.filter(function (l) { return l.state !== 'cancelled'; });
       var time = live.length ? live[0].from + ' – ' + live[live.length - 1].to : 'alles fällt aus';
       return '<div class="kid"><div class="kid-head">' + esc(k.name) + ' <span>' + esc(time) + '</span></div><div class="kid-plan">' + k.lessons.map(function (l) {
         var cls = l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state;
-        return '<span class="' + cls + '">' + esc(l.subject) + (l.exam ? ' (Klausur)' : '') + '</span>';
+        return '<span class="' + cls + '">' + esc(l.subject) + (l.exam ? ' (Klausur)' : l.state === 'changed' ? ' (geändert)' : '') + '</span>';
       }).join(' · ') + '</div></div>';
     }).join('') : '<div class="kid"><div class="kid-head">Schulfrei</div></div>');
   }

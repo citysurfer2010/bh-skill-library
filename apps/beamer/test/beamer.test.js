@@ -168,6 +168,10 @@ test('Stundenplan: beim Öffnen frisch, aber höchstens alle 2 Minuten', async (
   gateway.setCaller(async (name) => { if (name === 'webuntis_day') { fetched++; return JSON.stringify({ label: 'Heute', kids: [] }); } return 'ok'; });
   const first = await bridge.refreshIfStale(true); assert.equal(first.label, 'Heute'); assert.equal(fetched, 1);
   await bridge.refreshIfStale(); assert.equal(fetched, 1);
+  gateway.setCaller(async () => { fetched++; throw new Error('gestört'); });
+  await assert.rejects(bridge.refreshIfStale(true)); fetched = 1;
+  await bridge.refreshIfStale(); assert.equal(fetched, 1, 'nach Fehler keine sofortige neue Anmeldung');
+  gateway.setCaller(async (name) => { if (name === 'webuntis_day') { fetched++; return JSON.stringify({ label: 'Heute', kids: [] }); } return 'ok'; });
   await bridge.refreshIfStale(true); assert.equal(fetched, 2);
   const r = await t.call('/api/schedule', { as: 'u@beispiel.de' });
   assert.equal(r.status, 200); assert.equal((await r.json()).label, 'Heute');

@@ -47,7 +47,11 @@ body.video #ambient { display: block; }
 .kid { margin-top: 10px; }
 .kid-head { font-size: 36px; font-weight: 700; line-height: 1.15; }
 .kid-head span { font-weight: 400; color: #3f4f6e; font-size: 32px; }
-.kid-plan { margin-top: 2px; font-size: 32px; color: #0f1f3d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kid-plan .cancelled { color: #b91c1c; text-decoration: line-through; }
+.kid-plan { margin-top: 2px; font-size: 32px; line-height: 1.2; color: #0f1f3d; }
+.kid-plan .cancelled { color: #b91c1c; font-weight: 700; text-decoration: line-through; }
 .kid-plan .changed { color: #c2410c; font-weight: 700; }
 .kid-plan .exam { color: #1e3a8a; font-weight: 700; }
+#playing { max-width: 980px; box-sizing: border-box; }
+.now { min-width: 0; }
+#station { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#station.long { font-size: 60px; }

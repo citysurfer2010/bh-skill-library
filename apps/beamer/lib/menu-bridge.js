@@ -20,7 +20,7 @@ async function refreshSchedule() {
 let lastFetch = 0; let running = null;
 function refreshIfStale(force = false) {
   if (running) return running;
-  if (!force && schedule && Date.now() - lastFetch < MIN_GAP_MS) return Promise.resolve(schedule);
+  if (!force && Date.now() - lastFetch < MIN_GAP_MS) return Promise.resolve(schedule);
   lastFetch = Date.now();
   running = refreshSchedule().then(() => schedule).finally(() => { running = null; });
   return running;
