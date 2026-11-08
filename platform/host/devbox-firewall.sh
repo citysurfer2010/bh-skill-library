@@ -25,7 +25,7 @@ if [ -n "$nas" ] && [ -n "$gw_net" ]; then
 fi
 beamer=$(sed -n 's/^BH_BEAMER_IP=//p' /srv/bh-platform/.env 2>/dev/null | tail -1)
 if [ -n "$beamer" ] && [ -n "$gw_net" ]; then
-  iptables -A DEVBOX-FORWARD -s "$gw_net" -d "$beamer/32" -o wg-fritz -p tcp --dport 8002 -j ACCEPT
+  iptables -A DEVBOX-FORWARD -s "$gw_net" -d "$beamer/32" -o wg-fritz -p tcp -m multiport --dports 8002,9197 -j ACCEPT
 fi
 iptables -A DEVBOX-FORWARD -s "$NETS" -d "$PRIVATE" -j DROP
 # Kein Mailversand direkt aus User-Containern (Spam-Schutz der IP).

@@ -1,0 +1,4 @@
+html, body { margin: 0; height: 100%; background: #0b1730; color: #e6eefc; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6vh 6vw; box-sizing: border-box; text-align: center; }
+h1 { margin: 0; font-size: 14vh; font-weight: 700; line-height: 1.1; overflow-wrap: anywhere; }
+p { margin: 3vh 0 0; font-size: 5vh; color: #9fb2d1; white-space: pre-line; overflow-wrap: anywhere; }

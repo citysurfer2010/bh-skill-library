@@ -72,8 +72,8 @@ function realOpen(urlPath, onText) {
 let opener = realOpen;
 const setOpener = (fn) => { opener = fn; };
 
-async function press(key) {
-  if (!KEYS.includes(key)) throw new Error(`Unbekannte Taste: ${key}`);
+/** Oeffnet die Fernbedienungs-Verbindung, wartet auf die Freigabe am Beamer und fuehrt work aus. */
+async function withChannel(work, onEvent = () => {}) {
   const token = readToken();
   let ready; let refuse;
   const connected = new Promise((res, rej) => { ready = res; refuse = rej; });
@@ -81,13 +81,39 @@ async function press(key) {
     let m; try { m = JSON.parse(text); } catch { return; }
     if (m.event === 'ms.channel.connect') { if (m.data?.token) saveToken(m.data.token); ready(); }
     if (m.event === 'ms.channel.unauthorized' || m.event === 'ms.channel.timeOut') refuse(new Error('Zugriff am Beamer nicht erlaubt'));
+    onEvent(m);
   });
   const timer = setTimeout(() => refuse(new Error('Bitte die Abfrage am Beamer mit der Fernbedienung erlauben und erneut versuchen')), CONFIRM_MS);
   try {
     await connected;
-    socket.send(JSON.stringify({ method: 'ms.remote.control', params: { Cmd: 'Click', DataOfCmd: key, Option: 'false', TypeOfRemote: 'SendRemoteKey' } }));
-    await new Promise((r) => setTimeout(r, 300));
+    clearTimeout(timer);
+    return await work(socket);
   } finally { clearTimeout(timer); socket.close(); }
+}
+
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function press(key) {
+  if (!KEYS.includes(key)) throw new Error(`Unbekannte Taste: ${key}`);
+  await withChannel(async (socket) => {
+    socket.send(JSON.stringify({ method: 'ms.remote.control', params: { Cmd: 'Click', DataOfCmd: key, Option: 'false', TypeOfRemote: 'SendRemoteKey' } }));
+    await pause(300);
+  });
+}
+
+// Je nach Softwarestand heisst der Browser anders; der Beamer meldet, ob der Start geklappt hat.
+const BROWSERS = ['org.tizen.browser', '3201907018807'];
+
+async function launchBrowser(url, waitMs = 4000) {
+  let answer = () => {};
+  await withChannel(async (socket) => {
+    for (const appId of BROWSERS) {
+      const result = new Promise((res) => { answer = res; setTimeout(() => res(null), waitMs); });
+      socket.send(JSON.stringify({ method: 'ms.channel.emit', params: { event: 'ed.apps.launch', to: 'host', data: { appId, action_type: 'NATIVE_LAUNCH', metaTag: url } } }));
+      if ((await result) === 200) return;
+    }
+    throw new Error('Der Browser des Beamers liess sich nicht starten');
+  }, (m) => { if (m.event === 'ed.apps.launch') answer(m.data); });
 }
 
 function status() {
@@ -103,4 +129,4 @@ function status() {
 const ok = (v) => ({ content: [{ type: 'text', text: typeof v === 'string' ? v : JSON.stringify(v, null, 2) }] });
 const guarded = (fn) => async (args) => { try { return ok(await fn(args || {})); } catch (e) { return { content: [{ type: 'text', text: e.message }], isError: true }; } };
 
-module.exports = { KEYS, press, status, encodeText, decodeFrames, setOpener, tlsOptions, guarded, tokenFile };
+module.exports = { KEYS, press, launchBrowser, status, encodeText, decodeFrames, setOpener, tlsOptions, guarded, tokenFile };

@@ -14,6 +14,7 @@ import { googleRoutes } from "./routes/google.js";
 import { adminRoutes } from "./routes/admin.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { profileRoutes } from "./routes/profile.js";
+import { screenRoutes } from "./routes/screen.js";
 import { verifyRoutes } from "./routes/verify.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -51,6 +52,7 @@ export function createApp({ config = loadConfig(), db = openDb(config.dataDir), 
   const apps = appsStore(db);
   const avatars = avatarStore(config, users);
   const deps = { config, users, apps, avatars, sessions, limiter, requireLogin, requireAdmin };
+  app.use(screenRoutes(deps));
   app.use(verifyRoutes(deps));
   app.use(googleRoutes(deps));
   app.use(dashboardRoutes(deps));

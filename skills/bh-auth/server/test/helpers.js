@@ -11,7 +11,7 @@ export const PW = "ein-langes-passwort";
 
 export async function start({ google = false, fetchImpl, limiter } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "auth-"));
-  const config = loadConfig({ DATA_DIR: dir, ...(google ? { GOOGLE_CLIENT_ID: "cid", GOOGLE_CLIENT_SECRET: "sec" } : {}) });
+  const config = loadConfig({ DATA_DIR: dir, SCREEN_READ: "lesen", SCREEN_WRITE: "schreiben", ...(google ? { GOOGLE_CLIENT_ID: "cid", GOOGLE_CLIENT_SECRET: "sec" } : {}) });
   if (fetchImpl) config.fetch = fetchImpl;
   const db = openDb(":memory:");
   const users = usersStore(db);
