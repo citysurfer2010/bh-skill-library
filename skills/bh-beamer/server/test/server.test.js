@@ -14,7 +14,7 @@ function fake(events) {
   return { sent, paths, closed: () => closed };
 }
 
-test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'open_app', 'play_media', 'press', 'show_text', 'show_url', 'status', 'stop_media']));
+test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'open_app', 'play_media', 'play_youtube', 'press', 'show_text', 'show_url', 'status', 'stop_media']));
 
 test('Frames: verschluesselt gesendet, Nachrichten werden erkannt', () => {
   const f = r.encodeText('hi');
@@ -64,6 +64,39 @@ test('App starten: echter Name wird vorher geprueft, fremde App wird nie gestart
   await assert.rejects(r.openApp('YouTube', { tries: 1, delayMs: 1 }), /nicht installiert/);
   assert.equal(calls.filter((c) => c[0] === 'POST').length, 0);
   await assert.rejects(r.openApp('Tetris'), /Unbekannte App/);
+});
+
+test('Entwickler-App: Start gilt mit Antwort true oder Timeout als Erfolg, Ausfall bleibt Fehler', async () => {
+  const dev = (postResult) => { const calls = []; r.setRest(async (m, id) => { calls.push([m, id]); if (m === 'POST') return postResult(); return { status: 200, json: { name: 'BH Screen', running: false, visible: false } }; }); return calls; };
+  let calls = dev(() => ({ status: 200, json: true }));
+  assert.equal(await r.openApp('BH Screen', { tries: 1, delayMs: 1 }), 'started');
+  assert.ok(calls.filter((c) => c[0] === 'GET').length <= 3);
+  dev(() => { throw new Error('timeout'); });
+  assert.equal(await r.openApp('BH Screen', { tries: 1, delayMs: 1 }), 'running');
+  dev(() => { throw new Error('Beamer ist aus oder nicht erreichbar'); });
+  await assert.rejects(r.openApp('BH Screen', { tries: 1, delayMs: 1 }), /nicht erreichbar/);
+  dev(() => ({ status: 200, json: {} }));
+  await assert.rejects(r.openApp('BH Screen', { tries: 1, delayMs: 1 }), /liess sich nicht starten/);
+  calls = dev(() => ({ status: 200, json: true }));
+  await r.openApp('BH Screen', { tries: 1, delayMs: 1, restart: true });
+  assert.deepEqual(calls.slice(1, 3).map((c) => c[0]), ['DELETE', 'POST']);
+});
+
+test('YouTube per DIAL: Kennung aus Adresse, Origin-Kopf, Fehler gemeldet', async () => {
+  process.env.BH_BEAMER_IP = '10.0.0.5';
+  const d = require('../lib/dial.js');
+  for (const u of ['jNQXAC9IVRw', 'https://www.youtube.com/watch?v=jNQXAC9IVRw&t=3s', 'https://youtu.be/jNQXAC9IVRw?si=x', 'https://m.youtube.com/shorts/jNQXAC9IVRw', 'https://www.youtube-nocookie.com/embed/jNQXAC9IVRw']) assert.equal(d.videoId(u), 'jNQXAC9IVRw');
+  for (const u of ['https://vimeo.com/123', 'https://www.youtube.com/', 'javascript:alert(1)', 'abc', '']) assert.throws(() => d.videoId(u), /YouTube/);
+  const calls = [];
+  d.setFetch(async (u, o = {}) => { calls.push([u, o]); return { status: 201, text: async () => '<state>running</state>' }; });
+  assert.equal(await d.playYoutube('https://youtu.be/jNQXAC9IVRw'), 'jNQXAC9IVRw');
+  assert.equal(calls[0][0], 'http://10.0.0.5:8080/ws/apps/YouTube');
+  assert.equal(calls[0][1].headers.origin, 'https://www.youtube.com'); assert.equal(calls[0][1].body, 'v=jNQXAC9IVRw');
+  assert.equal(await d.youtubeState(), 'running');
+  d.setFetch(async () => ({ status: 403, text: async () => '' }));
+  await assert.rejects(d.playYoutube('jNQXAC9IVRw'), /403/);
+  d.setFetch(async () => { throw new Error('ECONNREFUSED'); });
+  await assert.rejects(d.playYoutube('jNQXAC9IVRw'), /nicht erreichbar/);
 });
 
 test('Browser: Start ueber die App, Adresse wird nachgereicht, fremde App nie', async () => {
@@ -128,6 +161,8 @@ test('Stream: Steueradresse wird gefunden, Adresse maskiert, Fehler gemeldet', a
   assert.match(posts[0][1].body, /a=1&amp;b=2/); assert.doesNotMatch(posts[0][1].body, /T<i>/);
   assert.match(posts[1][1].headers.soapaction, /#Play/);
   assert.equal(await d.state(), 'PLAYING');
+  await d.play('https://radio.example/stream.mp3', 'Radio', 'audio');
+  assert.match(calls.filter((c) => c[1].method === 'POST').at(-2)[1].body, /audioBroadcast/);
   await assert.rejects(d.play('file:///etc/passwd'), /http/);
   d.setFetch(async (u) => (u.endsWith('/dmr') ? { ok: true, text: async () => '' } : { ok: true }));
   await assert.rejects(d.stop(), /keine Medienwiedergabe/);

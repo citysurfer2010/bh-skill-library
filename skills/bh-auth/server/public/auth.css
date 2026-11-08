@@ -16,7 +16,7 @@ a { color: var(--bh-primary); }
 .card { background: var(--bh-surface); border: 1px solid var(--bh-border); border-radius: 12px; padding: 24px; }
 .narrow { width: 100%; max-width: 400px; }
 .notice { background: var(--bh-info-bg); }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.brand { display: flex; align-items: center; font-weight: 600; } .brand .mark { margin-right: 12px; }
 .mark { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: var(--bh-primary); color: var(--bh-on-primary); font-size: 14px; font-weight: 700; }
 .muted, .hint { color: var(--bh-muted); margin: 0 0 16px; } .hint { font-size: 14px; margin: 12px 0 0; }
 form { display: grid; gap: 14px; }
@@ -25,8 +25,8 @@ input:not([type=checkbox]) { width: 100%; height: 42px; padding: 0 12px; border:
 :focus-visible { outline: 2px solid var(--bh-primary); outline-offset: 1px; }
 button, .button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 42px; padding: 0 16px; border: 0; border-radius: 6px; background: var(--bh-primary); color: var(--bh-on-primary); font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
 button:hover { background: var(--bh-primary-hover); }
-.button.secondary { width: 100%; background: var(--bh-surface); color: var(--bh-text); border: 1px solid var(--bh-border); }
-.divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--bh-muted); font-size: 14px; }
+.button.secondary { width: 100%; gap: 0; background: var(--bh-surface); color: var(--bh-text); border: 1px solid var(--bh-border); } .button.secondary svg { flex: none; margin-right: 12px; }
+.divider { display: flex; align-items: center; margin: 16px 0; color: var(--bh-muted); font-size: 14px; } .divider span { margin: 0 12px; }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--bh-border); }
 .alert { margin: 0 0 16px; padding: 10px 12px; border-radius: 6px; font-size: 14px; } .alert.error { background: var(--bh-danger-bg); color: var(--bh-danger); } .alert.ok { background: var(--bh-ok-bg); color: var(--bh-ok); }
 button.link { height: auto; padding: 0; background: none; color: var(--bh-primary); font-weight: 400; }

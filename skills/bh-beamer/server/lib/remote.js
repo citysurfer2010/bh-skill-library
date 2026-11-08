@@ -111,7 +111,7 @@ function realRest(method, id) {
       res.on('end', () => { let json = {}; try { json = JSON.parse(t); } catch { /* leere Antwort */ } resolve({ status: res.statusCode, json }); });
     });
     req.on('timeout', () => req.destroy(new Error('timeout')));
-    req.on('error', () => reject(new Error('Beamer ist aus oder nicht erreichbar')));
+    req.on('error', (e) => reject(new Error(e.message === 'timeout' ? 'timeout' : 'Beamer ist aus oder nicht erreichbar')));
     req.end();
   });
 }
@@ -136,11 +136,18 @@ async function waitVisible(id, tries, delayMs) {
 
 async function isInstalled(app) { try { await appInfo(app); return true; } catch { return false; } }
 
+// Per sdb installierte Entwickler-Apps (BH Screen) melden dem REST-Endpunkt nie `running`/`visible`.
+// Dort gilt die Antwort `true` auf den Start als Erfolg; laeuft die App schon im Vordergrund, antwortet
+// der Beamer auf den Start gar nicht (Timeout) - auch das ist dann kein Fehler, erreichbar war er eben noch.
 async function openApp(app, { tries = 8, delayMs = 750, restart = false } = {}) {
   const { id } = await appInfo(app);
   if (restart) { await rest('DELETE', id).catch(() => {}); await pause(1500); }
-  await rest('POST', id);
-  if (!(await waitVisible(id, tries, delayMs))) throw new Error(`${app} liess sich nicht starten`);
+  let started = false; let busy = false;
+  try { started = (await rest('POST', id)).json === true; } catch (e) { if (e.message !== 'timeout') throw e; busy = true; }
+  if (await waitVisible(id, started || busy ? 2 : tries, delayMs)) return 'visible';
+  if (started) return 'started';
+  if (busy) return 'running';
+  throw new Error(`${app} liess sich nicht starten`);
 }
 
 /** Startet den Browser und uebergibt die Adresse. Ob der Beamer sie laedt, meldet er nicht. */
