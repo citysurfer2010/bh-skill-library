@@ -2,7 +2,8 @@
 /** Ruft die Beamer-Werkzeuge über das zentrale MCP-Gateway auf. Die App spricht den Beamer nie selbst an. */
 const fs = require('fs');
 
-const TIMEOUT_MS = 45_000;
+// Einschalten wartet bis zu 48 s auf die Bestaetigung des Beamers.
+const TIMEOUT_MS = 60_000;
 
 async function realCall(name, args) {
   const url = process.env.BH_MCP_URL;

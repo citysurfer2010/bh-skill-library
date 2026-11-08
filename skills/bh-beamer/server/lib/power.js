@@ -42,13 +42,14 @@ async function powerOff({ remote = require('./remote.js'), tries = 10, delayMs =
   throw new Error('Der Beamer ist trotz Ausschalt-Befehl noch an');
 }
 
-async function powerOn({ remote = require('./remote.js'), wake = sendWake, tries = 15, delayMs = 2000 } = {}) {
+// Jeder Versuch dauert bis zu 8 s (Pause + Zeitlimit der Abfrage); zusammen unter dem Zeitlimit der App bleiben.
+async function powerOn({ remote = require('./remote.js'), wake = sendWake, tries = 6, delayMs = 2000 } = {}) {
   const before = await state(remote);
   if (before === 'on') return 'Der Beamer ist bereits an.';
   await wake();
   if (before === 'standby') await remote.press('KEY_POWER').catch(() => {});
   if (await waitFor(remote, (s) => s === 'on', tries, delayMs)) return 'Der Beamer ist an.';
-  throw new Error('Der Beamer reagiert nicht aufs Einschalten; aus dem tiefen Standby ist er nur per Fernbedienung zu wecken');
+  throw new Error('Der Beamer reagiert nicht aufs Einschalten. Bitte mit der Fernbedienung einschalten; das Wecken übers Netz muss am Beamer erlaubt sein (Einschalten über Mobilgerät).');
 }
 
 module.exports = { magicPacket, sendWake, powerOff, powerOn };
