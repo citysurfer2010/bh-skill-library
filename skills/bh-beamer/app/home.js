@@ -5,7 +5,7 @@ window.BHHome = (function () {
   var DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
   var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
   var menuEl = document.getElementById('menu');
-  var rows = []; var r = 0; var c = 0; var signature = ''; var playingId = null; var tuneTimer = null;
+  var rows = []; var r = 0; var c = 0; var signature = ''; var playingId = null; var tuneTimer = null; var audio = 'load';
   var api = { onTune: function () {}, onMood: function () {}, isRadioOn: function () { return false; } };
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); };
@@ -47,8 +47,9 @@ window.BHHome = (function () {
         if (i === r && k === c) tiles[k].className += ' focus';
         if (row.kind === 'radio') {
           var on = row.items[k].id === playingId;
-          if (on) tiles[k].className += ' playing';
-          tiles[k].querySelector('small').textContent = (on ? 'Läuft · ' : '') + (row.items[k].sub || '');
+          if (on && audio === 'ok') tiles[k].className += ' playing';
+          var sub = row.items[k].sub || '';
+          tiles[k].querySelector('small').textContent = !on ? sub : audio === 'fail' ? 'Nicht erreichbar' : (audio === 'ok' ? 'Läuft · ' : 'Verbinde · ') + sub;
         }
       }
       var first = tiles[0];
@@ -87,6 +88,7 @@ window.BHHome = (function () {
   }
 
   function choose() {
+    clearTimeout(tuneTimer); tuneTimer = null;
     var row = rows[r]; if (!row) return;
     if (row.kind === 'radio') api.onTune(row.items[c]); else api.onMood(row.items[c]);
   }
@@ -108,7 +110,8 @@ window.BHHome = (function () {
     paint();
     if (dc && rows[r].kind === 'radio' && api.isRadioOn()) {
       clearTimeout(tuneTimer);
-      tuneTimer = setTimeout(function () { tuneTimer = null; choose(); }, 500);
+      var target = rows[r].items[c];
+      tuneTimer = setTimeout(function () { tuneTimer = null; if (api.isRadioOn()) api.onTune(target); }, 500);
     }
   }
 
@@ -131,6 +134,7 @@ window.BHHome = (function () {
     playingId = row.items[next].id; r = 0; c = next; paint();
     return row.items[next];
   };
+  api.setState = function (state) { audio = state; paint(); };
   api.setMenu = setMenu; api.setPlaying = setPlaying;
   return api;
 })();

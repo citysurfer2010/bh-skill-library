@@ -1,6 +1,6 @@
 html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #2563eb; color: #0f1f3d; font-family: "Samsung One", "SamsungOne", sans-serif; }
 #home, #screen, #share { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
-body.home #home { display: block; background: linear-gradient(180deg, #1e40af 0%, #2563eb 24%, #60a5fa 36%, #bfdbfe 48%, #fdf3e3 78%); }
+body.home #home { display: block; background: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); }
 body.text #screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 45%, #fdf3e3 100%); color: #fff; }
 body.share #share { display: block; background: #000; object-fit: contain; }
 .hills { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
@@ -13,7 +13,7 @@ h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap:
 .weather { text-align: right; }
 #temp { font-size: 96px; font-weight: 700; line-height: 1; }
 #sky { margin-top: 12px; font-size: 40px; }
-#playing { display: none; position: absolute; left: 90px; top: 290px; align-items: center; color: #0f1f3d; background: #fdf3e3; padding: 28px 44px; border-radius: 24px; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
+#playing { display: none; position: absolute; left: 90px; top: 266px; align-items: center; color: #0f1f3d; background: #fdf3e3; padding: 24px 44px; border-radius: 24px; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
 #playing[data-s="load"] .bar { animation-play-state: paused; opacity: .45; }
 #playing[data-s="fail"] #radio { display: none; }
 body.audio #playing { display: flex; }

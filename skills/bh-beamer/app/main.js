@@ -16,9 +16,9 @@
   var stationEl = document.getElementById('station');
   var frame = document.getElementById('player-frame');
   var vbar = document.getElementById('vbar');
-  var shownVideo = null; var vbarTimer = null; var localAt = 0; var failed = false;
+  var shownVideo = null; var vbarTimer = null; var localAt = 0; var failed = false; var lateTimer = null;
   var playingEl = document.getElementById('playing');
-  function audioState(state) { failed = state === 'fail'; playingEl.setAttribute('data-s', state); }
+  function audioState(state) { failed = state === 'fail'; playingEl.setAttribute('data-s', state); BHHome.setState(state); }
 
   function ytCommand(func, args) {
     try { frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), '*'); } catch (e) { /* noch nicht geladen */ }
@@ -76,8 +76,9 @@
   }
   // Sofort umschalten, die App erfaehrt es parallel und zeigt denselben Stand.
   BHHome.onTune = function (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
-  BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); sendRequest('mood', m.id); };
+  BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); showBar('◀ ▶ Radio · Zurück beendet'); sendRequest('mood', m.id); };
   document.addEventListener('keydown', function (e) {
+    if (e.defaultPrevented) return; // Das Menue hat die Taste schon behandelt
     var back = e.keyCode === 10009 || e.keyCode === 8;
     if (back && view === 'video') { localAt = Date.now(); stopVideo(); homeView(); sendRequest('back', 'x'); e.preventDefault(); return; }
     if (back && (playingUrl || view.indexOf('home') < 0)) { stopShare(); stopAudio(); homeView(); sendRequest('stop', 'x'); e.preventDefault(); return; }
@@ -88,7 +89,7 @@
 
   player.addEventListener('playing', function () { audioState('ok'); noteEl.textContent = '◀ ▶ Sender wechseln · Zurück beendet'; });
   player.addEventListener('waiting', function () { audioState('load'); noteEl.textContent = 'Puffert …'; });
-  player.addEventListener('error', function () { if (playingUrl) { audioState('fail'); noteEl.textContent = 'Stream nicht erreichbar'; } });
+  player.addEventListener('error', function () { if (playingUrl) { audioState('fail'); noteEl.textContent = 'Stream nicht erreichbar'; if (view === 'video') showBar('Stream nicht erreichbar'); } });
 
   function stopShare() {
     if (!shareSession) return;
@@ -149,8 +150,10 @@
 
   function render(c) {
     BHHome.setMenu(c.menu);
-    // Ein Echo der eigenen Auswahl darf eine neuere Wahl nicht ueberschreiben.
-    if (Date.now() - localAt < 4000) return;
+    // Ein Echo der eigenen Auswahl darf eine neuere Wahl nicht ueberschreiben; der neueste Stand gilt danach.
+    clearTimeout(lateTimer);
+    var wait = 4000 - (Date.now() - localAt);
+    if (wait > 0) { lateTimer = setTimeout(function () { render(c); }, wait + 50); return; }
     if (c.mode === 'share' && c.offer) {
       if (c.session !== shareSession) { stopShare(); startShare(c); }
       return;
