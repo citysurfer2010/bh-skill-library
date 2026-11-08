@@ -55,6 +55,12 @@ async function showHome({ remote = require('./remote.js') } = {}) {
   bringToFront(remote, await setContent({ mode: 'text', title: '', text: '' }));
 }
 
+// Stimmung in BH Screen, optional mit Radio dazu: Die App behaelt so die Fernbedienung.
+async function playAmbient({ video, title, radioUrl, station }, { remote = require('./remote.js') } = {}) {
+  if (radioUrl) httpsUrl(radioUrl);
+  bringToFront(remote, await setContent({ mode: 'video', video, title, ...(radioUrl ? { url: radioUrl, station } : {}) }));
+}
+
 const authed = () => ({ authorization: `Bearer ${process.env.BH_SCREEN_WRITE}` });
 async function setMenu(menu, http = fetch) {
   const r = await http(`${process.env.BH_AUTH_INTERNAL}/screen-menu`, { method: 'POST', headers: { ...authed(), 'content-type': 'application/json' }, body: JSON.stringify(menu) });
@@ -87,4 +93,4 @@ async function shareAnswer(session, http = fetch) {
   return (await r.json()).answer || '';
 }
 
-module.exports = { httpsUrl, setContent, showText, showUrl, playRadio, stopRadio, shareStart, shareAnswer, showHome, setMenu, menuRequests };
+module.exports = { httpsUrl, setContent, showText, showUrl, playRadio, stopRadio, shareStart, shareAnswer, showHome, setMenu, menuRequests, playAmbient };

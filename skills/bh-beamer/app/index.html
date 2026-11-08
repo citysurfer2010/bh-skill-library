@@ -8,7 +8,7 @@
 </head>
 <body class="home">
 <div id="home">
-  <svg class="hills" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true"><path fill="#f8ecd9" d="M0 640 C 380 540 820 700 1220 610 S 1720 540 1920 600 V1080 H0Z"/><path fill="#f1dfc2" d="M0 800 C 500 710 930 860 1410 770 S 1790 730 1920 770 V1080 H0Z"/></svg>
+  <svg class="hills" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true"><path fill="#f8ecd9" d="M0 500 C 380 440 820 560 1220 490 S 1720 440 1920 490 V1080 H0Z"/><path fill="#f1dfc2" d="M0 720 C 500 680 930 750 1410 705 S 1790 690 1920 715 V1080 H0Z"/></svg>
   <header class="top">
     <div><div id="clock">--:--</div><div id="date"></div></div>
     <div class="weather"><div id="temp"></div><div id="sky"></div></div>
@@ -22,6 +22,7 @@
 <main id="screen"><h1 id="title"></h1><p id="text"></p></main>
 <audio id="player" preload="none"></audio>
 <video id="share" autoplay playsinline></video>
+<div id="ambient"><iframe id="player-frame" allow="autoplay; encrypted-media" tabindex="-1"></iframe><div id="vbar"></div></div>
 <script src="config.js"></script>
 <script src="home.js"></script>
 <script src="main.js"></script>

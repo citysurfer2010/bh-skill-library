@@ -53,11 +53,20 @@ export function screenRoutes({ config }) {
     writeFileSync(file, JSON.stringify({ ...c, answer }), { mode: 0o600 });
     res.status(204).end();
   });
+  // Eigene Seite fuer den YouTube-Player: Aus der App heraus hat er keine Herkunft und verweigert das Abspielen.
+  r.get("/screen/:token/player", (req, res, next) => {
+    const v = String(req.query.v || "");
+    if (!same(req.params.token, config.screenRead) || !/^[A-Za-z0-9_-]{11}$/.test(v)) return next();
+    res.removeHeader("X-Frame-Options");
+    res.set({ "Referrer-Policy": "strict-origin-when-cross-origin", "Content-Security-Policy": "default-src 'none'; frame-src https://www.youtube-nocookie.com; script-src 'unsafe-inline'; style-src 'unsafe-inline'" });
+    const params = `autoplay=1&controls=0&rel=0&loop=1&playlist=${v}&enablejsapi=1&iv_load_policy=3&origin=${encodeURIComponent(config.publicUrl)}`;
+    res.type("html").send(`<!doctype html><meta charset="utf-8"><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;background:#000;overflow:hidden}</style><iframe id="y" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/${v}?${params}"></iframe><script>var y=document.getElementById("y");y.onload=function(){y.contentWindow.postMessage('{"event":"listening","id":1,"channel":"widget"}',"*")};addEventListener("message",function(e){if(e.source===parent)y.contentWindow.postMessage(e.data,"*");else parent.postMessage(e.data,"*")});</script>`);
+  });
   // Auswahl mit der Fernbedienung; die App Beamer holt sie ab und fuehrt sie aus.
   r.post("/screen/:token/request", express.text({ type: "*/*", limit: "2kb" }), (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
     let body; try { body = JSON.parse(req.body); } catch { return res.status(400).json({ error: "unlesbar" }); }
-    if (!["radio", "mood"].includes(body?.kind) || !/^[a-z0-9]{1,40}$/.test(String(body?.id))) return res.status(400).json({ error: "ungueltig" });
+    if (!["radio", "mood", "back", "radiooff", "stop"].includes(body?.kind) || !/^[a-z0-9]{1,40}$/.test(String(body?.id))) return res.status(400).json({ error: "ungueltig" });
     if (requests.length < 10) requests.push({ kind: body.kind, id: body.id });
     res.status(204).end();
   });
@@ -81,14 +90,17 @@ export function screenRoutes({ config }) {
     if (!auth || !same(auth[1], config.screenWrite)) return res.status(401).json({ error: "unauthorized" });
     // text: Anzeige in der App; url: Webseite im Vollbild; audio: Radio/Musik-Stream, den die App selbst abspielt.
     // share: Der Laptop bietet seinen Bildschirm an, die App antwortet unter /answer (WebRTC ohne Trickle-ICE).
-    const mode = ["url", "audio", "share"].includes(req.body?.mode) ? req.body.mode : "text";
-    const url = mode === "url" || mode === "audio" ? httpsUrl(req.body?.url) : null;
-    if ((mode === "url" || mode === "audio") && !url) return res.status(400).json({ error: "Nur https-Adressen" });
+    const mode = ["url", "audio", "share", "video"].includes(req.body?.mode) ? req.body.mode : "text";
+    // video: Stimmung im eingebetteten Player, url ist dann das optionale Radio dazu.
+    const video = mode === "video" && /^[A-Za-z0-9_-]{11}$/.test(String(req.body?.video)) ? req.body.video : null;
+    if (mode === "video" && !video) return res.status(400).json({ error: "Video ungueltig" });
+    const url = mode === "url" || mode === "audio" || (mode === "video" && req.body?.url) ? httpsUrl(req.body?.url) : null;
+    if ((mode === "url" || mode === "audio" || (mode === "video" && req.body?.url)) && !url) return res.status(400).json({ error: "Nur https-Adressen" });
     const offer = mode === "share" ? sdp(req.body?.offer) : null;
     if (mode === "share" && !offer) return res.status(400).json({ error: "Angebot ungueltig" });
     const previous = load().mode;
     const session = mode === "share" ? randomBytes(9).toString("hex") : null;
-    writeFileSync(file, JSON.stringify({ mode, title: clip(req.body?.title, 200), text: clip(req.body?.text, 1000), url, offer, session, answer: null }), { mode: 0o600 });
+    writeFileSync(file, JSON.stringify({ mode, title: clip(req.body?.title, 200), text: clip(req.body?.text, 1000), url, offer, session, answer: null, video, station: clip(req.body?.station, 100) }), { mode: 0o600 });
     changed();
     res.json({ ok: true, previous, session });
   });

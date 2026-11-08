@@ -14,7 +14,7 @@ test("Anzeige: nur mit geheimem Link lesbar, nur mit Schreib-Schluessel aenderba
     assert.notEqual((await fetch(`${g.base}/screen/schreiben`, { redirect: "manual" })).status, 200);
     const html = await (await fetch(`${g.base}/screen/lesen`)).text();
     assert.match(html, /Hallo/); assert.match(html, /Welt/);
-    assert.deepEqual(await (await fetch(`${g.base}/screen/lesen/content`)).json(), { mode: "text", title: "Hallo", text: "Welt", url: null, offer: null, session: null, answer: null });
+    assert.deepEqual(await (await fetch(`${g.base}/screen/lesen/content`)).json(), { mode: "text", title: "Hallo", text: "Welt", url: null, offer: null, session: null, answer: null, video: null, station: "" });
   } finally { await g.stop(); }
 });
 
@@ -118,5 +118,21 @@ test("Menue: nur mit Schreib-Schluessel, Auswahl des Beamers wird einmal abgehol
     assert.equal((await take("lesen")).status, 401);
     assert.deepEqual((await (await take("schreiben")).json()).requests, [{ kind: "radio", id: "ndr2" }]);
     assert.deepEqual((await (await take("schreiben")).json()).requests, []);
+  } finally { await g.stop(); }
+});
+
+test("Video: Kennung wird geprueft, Player-Seite nur mit geheimem Link und ohne Rahmen-Sperre", async () => {
+  const g = await start();
+  try {
+    assert.equal((await post(g, "schreiben", { mode: "video", video: "kurz" })).status, 400);
+    assert.equal((await post(g, "schreiben", { mode: "video", video: "6VB4bgiB0yA", url: "http://a.de/x.mp3" })).status, 400);
+    assert.equal((await post(g, "schreiben", { mode: "video", video: "6VB4bgiB0yA", url: "https://a.de/x.mp3", station: "NDR 2" })).status, 200);
+    const c = await (await fetch(`${g.base}/screen/lesen/content`)).json();
+    assert.equal(c.video, "6VB4bgiB0yA"); assert.equal(c.url, "https://a.de/x.mp3"); assert.equal(c.station, "NDR 2");
+    const p = await fetch(`${g.base}/screen/lesen/player?v=6VB4bgiB0yA`);
+    assert.equal(p.status, 200); assert.equal(p.headers.get("x-frame-options"), null);
+    assert.match(await p.text(), /youtube-nocookie\.com\/embed\/6VB4bgiB0yA/);
+    assert.notEqual((await fetch(`${g.base}/screen/falsch/player?v=6VB4bgiB0yA`, { redirect: "manual" })).status, 200);
+    assert.notEqual((await fetch(`${g.base}/screen/lesen/player?v=%22%3E%3Cb`, { redirect: "manual" })).status, 200);
   } finally { await g.stop(); }
 });

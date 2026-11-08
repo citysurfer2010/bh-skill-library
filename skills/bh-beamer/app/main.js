@@ -14,6 +14,37 @@
   var caps = '';
 
   var stationEl = document.getElementById('station');
+  var frame = document.getElementById('player-frame');
+  var vbar = document.getElementById('vbar');
+  var shownVideo = null; var vbarTimer = null; var localAt = 0; var failed = false;
+  var playingEl = document.getElementById('playing');
+  function audioState(state) { failed = state === 'fail'; playingEl.setAttribute('data-s', state); }
+
+  function ytCommand(func, args) {
+    try { frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), '*'); } catch (e) { /* noch nicht geladen */ }
+  }
+  function showBar(text) {
+    vbar.textContent = text; vbar.className = 'on';
+    clearTimeout(vbarTimer); vbarTimer = setTimeout(function () { vbar.className = ''; }, 3500);
+  }
+  function showVideo(id) {
+    setView('video');
+    if (id === shownVideo) return;
+    shownVideo = id;
+    frame.src = window.BH_SCREEN_URL + '/player?v=' + id;
+  }
+  function stopVideo() {
+    if (!shownVideo) return;
+    shownVideo = null; frame.src = 'about:blank';
+  }
+  // Mit Radio laeuft das Video leise weiter, das Knistern bleibt zu hoeren.
+  function videoVolume() { ytCommand('setVolume', [playingUrl ? 25 : 100]); }
+  window.addEventListener('message', function (e) {
+    var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+    if (d.event === 'onError') caps = 'yt-error-' + d.info;
+    if (d.event === 'onReady' || d.event === 'initialDelivery') videoVolume();
+    if (d.event === 'infoDelivery' && d.info && d.info.playerState !== undefined) { caps = 'yt-state-' + d.info.playerState; videoVolume(); }
+  });
   var view = 'home';
   function setView(name) { view = name; document.body.className = name; }
   function homeView() { setView(playingUrl ? 'home audio' : 'home'); }
@@ -28,12 +59,13 @@
   function playAudio(url, title, id) {
     stationEl.textContent = title || '';
     BHHome.setPlaying(id || null);
-    if (url === playingUrl) return;
+    if (url === playingUrl && !failed) return;
     playingUrl = url;
+    audioState('load');
     noteEl.textContent = 'Verbinde …';
     player.src = url;
     var p = player.play();
-    if (p && p.catch) p.catch(function () { noteEl.textContent = 'Wiedergabe nicht möglich'; });
+    if (p && p.catch) p.catch(function () { audioState('fail'); noteEl.textContent = 'Wiedergabe nicht möglich'; });
   }
 
   function sendRequest(kind, id) {
@@ -43,13 +75,20 @@
     x.send(JSON.stringify({ kind: kind, id: id }));
   }
   // Sofort umschalten, die App erfaehrt es parallel und zeigt denselben Stand.
-  BHHome.onTune = function (st) { playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
-  BHHome.onMood = function (m) { sendRequest('mood', m.id); };
-  BHHome.isRadioOn = function () { return !!playingUrl; };
+  BHHome.onTune = function (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
+  BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); sendRequest('mood', m.id); };
+  document.addEventListener('keydown', function (e) {
+    var back = e.keyCode === 10009 || e.keyCode === 8;
+    if (back && view === 'video') { localAt = Date.now(); stopVideo(); homeView(); sendRequest('back', 'x'); e.preventDefault(); return; }
+    if (back && (playingUrl || view.indexOf('home') < 0)) { stopShare(); stopAudio(); homeView(); sendRequest('stop', 'x'); e.preventDefault(); return; }
+    if (view !== 'video') return;
+    if (e.keyCode === 37 || e.keyCode === 39) { var st = BHHome.step(e.keyCode === 39 ? 1 : -1); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); showBar(st.name); sendRequest('radio', st.id); } }
+    else if (e.keyCode === 13 && playingUrl) { localAt = Date.now(); stopAudio(); videoVolume(); showBar('Radio aus'); sendRequest('radiooff', 'x'); }
+  });
 
-  player.addEventListener('playing', function () { noteEl.textContent = '◀ ▶ Sender wechseln'; });
-  player.addEventListener('waiting', function () { noteEl.textContent = 'Puffert …'; });
-  player.addEventListener('error', function () { if (playingUrl) noteEl.textContent = 'Stream nicht erreichbar'; });
+  player.addEventListener('playing', function () { audioState('ok'); noteEl.textContent = '◀ ▶ Sender wechseln · Zurück beendet'; });
+  player.addEventListener('waiting', function () { audioState('load'); noteEl.textContent = 'Puffert …'; });
+  player.addEventListener('error', function () { if (playingUrl) { audioState('fail'); noteEl.textContent = 'Stream nicht erreichbar'; } });
 
   function stopShare() {
     if (!shareSession) return;
@@ -110,6 +149,8 @@
 
   function render(c) {
     BHHome.setMenu(c.menu);
+    // Ein Echo der eigenen Auswahl darf eine neuere Wahl nicht ueberschreiben.
+    if (Date.now() - localAt < 4000) return;
     if (c.mode === 'share' && c.offer) {
       if (c.session !== shareSession) { stopShare(); startShare(c); }
       return;
@@ -121,6 +162,12 @@
       window.location.replace(c.url);
       return;
     }
+    if (c.mode === 'video' && c.video) {
+      if (c.url) { playAudio(c.url, c.station, stationIdFor(c)); } else stopAudio();
+      showVideo(c.video); videoVolume();
+      return;
+    }
+    stopVideo();
     if (c.mode === 'audio' && c.url) { playAudio(c.url, c.title, stationIdFor(c)); homeView(); return; }
     stopAudio();
     titleEl.textContent = c.title || '';
