@@ -76,7 +76,7 @@ function buildRouter() {
     if (!APPS.includes(app)) return bad('Unbekannte App');
     await stopRadioFirst();
     await gateway.call('beamer_open_app', { app });
-    now = { kind: 'app', label: app };
+    now = { kind: 'app', id: app, label: app };
   }));
 
   router.post('/share/start', action(async ({ offer, kind }) => {
@@ -106,6 +106,7 @@ function buildRouter() {
   router.post('/key', action(async ({ key }) => {
     if (!KEYS.includes(key)) return bad('Unbekannte Taste');
     await gateway.call('beamer_press', { key });
+    if (key === 'KEY_HOME') now = null;
   }));
 
   router.post('/power', action(async ({ state }) => {

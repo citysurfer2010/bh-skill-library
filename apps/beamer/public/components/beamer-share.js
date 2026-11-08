@@ -4,7 +4,7 @@
  * und Antwort, das Bild läuft direkt. Bewusst ohne STUN/TURN: Es funktioniert nur im selben Heimnetz.
  */
 window.BeamerShare = (() => {
-  const ANSWER_TRIES = 40; const ANSWER_MS = 1000;
+  const ANSWER_TRIES = 80; const ANSWER_MS = 500;
   let pc = null; let stream = null; let run = 0;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const canScreen = () => !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
@@ -14,7 +14,7 @@ window.BeamerShare = (() => {
     return new Promise((resolve) => {
       const done = () => { if (conn.iceGatheringState === 'complete') resolve(); };
       conn.addEventListener('icegatheringstatechange', done);
-      setTimeout(resolve, 3000);
+      setTimeout(resolve, 1200);
     });
   }
 

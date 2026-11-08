@@ -3,6 +3,7 @@ window.Toast = {
   show(msg, kind = 'info') {
     const el = document.createElement('div');
     el.className = 'toast ' + (kind === 'error' ? 'error' : kind === 'success' ? 'success' : '');
+    el.setAttribute('role', kind === 'error' ? 'alert' : 'status');
     el.textContent = msg;
     document.body.appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));

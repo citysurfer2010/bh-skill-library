@@ -94,6 +94,11 @@ test('Stoppen: Radio endet in BH Screen, Video über die Startseite', async () =
   assert.deepEqual(calls, [['beamer_press', { key: 'KEY_HOME' }]]);
 });
 
+test('Home beendet die Anzeige, laufende App wird gemerkt', async () => {
+  assert.equal((await (await post('/app', { app: 'Netflix' })).json()).now.id, 'Netflix');
+  assert.equal((await (await post('/key', { key: 'KEY_HOME' })).json()).now, null);
+});
+
 test('Ein/Aus: nur on und off, Aus räumt die Anzeige, Fehler kommt an', async () => {
   assert.equal((await post('/power', { state: 'reboot' })).status, 400);
   await post('/mood', { id: 'kamin' });

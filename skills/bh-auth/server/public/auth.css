@@ -2,12 +2,12 @@
   --bh-primary: #1d4ed8; --bh-primary-hover: #1e40af; --bh-on-primary: #fff; --bh-bg: #f1f5fd; --bh-surface: #fff;
   --bh-text: #0f1f3d; --bh-muted: #566583; --bh-border: #d6e0f2; --bh-danger: #b91c1c; --bh-danger-bg: #fee2e2;
   --bh-ok: #166534; --bh-ok-bg: #dcfce7; --bh-wait: #92400e; --bh-wait-bg: #fef3c7; --bh-info-bg: #dbeafe;
-  --bh-input-border: #b4c3de; --bh-navbar: #1d4ed8; --bh-navbar-gradient: linear-gradient(100deg, #172554 0%, #1d4ed8 48%, #6d28d9 78%, #c2410c 100%); --bh-navbar-accent: #bfdbfe; --bh-on-navbar: #fff; --bh-on-navbar-muted: rgba(255, 255, 255, .78); --bh-bg-subtle: #ecf2fc; --bh-shadow: 0 8px 24px rgba(15, 31, 61, .14); --bh-focus-ring: rgba(29, 78, 216, .16);
+  --bh-input-border: #b4c3de; --bh-navbar: #1d4ed8; --bh-action: #1d4ed8; --bh-action-hover: #1e40af; --bh-on-action: #fff; --bh-navbar-accent: #bfdbfe; --bh-on-navbar: #fff; --bh-on-navbar-muted: rgba(255, 255, 255, .78); --bh-bg-subtle: #ecf2fc; --bh-shadow: 0 8px 24px rgba(15, 31, 61, .14); --bh-focus-ring: rgba(29, 78, 216, .16);
 }
 :root[data-theme="dark"] { --bh-primary: #60a5fa; --bh-primary-hover: #93c5fd; --bh-on-primary: #0b1730; --bh-bg: #0b1730; --bh-surface: #12233f;
     --bh-text: #e6eefc; --bh-muted: #9fb2d1; --bh-border: #27406a; --bh-danger: #fca5a5; --bh-danger-bg: #450a0a;
     --bh-ok: #86efac; --bh-ok-bg: #052e16; --bh-wait: #fcd34d; --bh-wait-bg: #451a03; --bh-info-bg: #1e3a8a;
-  --bh-input-border: #3b5a8d; --bh-navbar: #1e40af; --bh-navbar-gradient: linear-gradient(100deg, #0f1f4d 0%, #1e40af 50%, #5b21b6 80%, #9a3412 100%); --bh-navbar-accent: #bfdbfe; --bh-on-navbar: #fff; --bh-on-navbar-muted: rgba(255, 255, 255, .78); --bh-bg-subtle: #172c4d; --bh-shadow: 0 8px 24px rgba(0, 0, 0, .45); --bh-focus-ring: rgba(96, 165, 250, .25); }
+  --bh-input-border: #3b5a8d; --bh-navbar: #1e40af; --bh-action: #2563eb; --bh-action-hover: #1d4ed8; --bh-on-action: #fff; --bh-navbar-accent: #bfdbfe; --bh-on-navbar: #fff; --bh-on-navbar-muted: rgba(255, 255, 255, .78); --bh-bg-subtle: #172c4d; --bh-shadow: 0 8px 24px rgba(0, 0, 0, .45); --bh-focus-ring: rgba(96, 165, 250, .25); }
 * { box-sizing: border-box; }
 body { margin: 0; min-height: 100vh; background: var(--bh-bg); color: var(--bh-text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 h1 { margin: 16px 0 4px; font-size: 24px; } h2 { margin: 0 0 8px; font-size: 16px; }
@@ -23,8 +23,8 @@ form { display: grid; gap: 14px; }
 label { display: grid; gap: 4px; font-size: 14px; color: var(--bh-muted); }
 input:not([type=checkbox]) { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--bh-input-border); border-radius: 6px; background: var(--bh-bg); color: var(--bh-text); font: inherit; }
 :focus-visible { outline: 2px solid var(--bh-primary); outline-offset: 1px; }
-button, .button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 42px; padding: 0 16px; border: 0; border-radius: 6px; background: var(--bh-primary); color: var(--bh-on-primary); font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
-button:hover { background: var(--bh-primary-hover); }
+button, .button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 42px; padding: 0 16px; border: 0; border-radius: 6px; background: var(--bh-action); color: var(--bh-on-action); font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
+button:hover { background: var(--bh-action-hover); }
 .button.secondary { width: 100%; gap: 0; background: var(--bh-surface); color: var(--bh-text); border: 1px solid var(--bh-border); } .button.secondary svg { flex: none; margin-right: 12px; }
 .divider { display: flex; align-items: center; margin: 16px 0; color: var(--bh-muted); font-size: 14px; } .divider span { margin: 0 12px; }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--bh-border); }
