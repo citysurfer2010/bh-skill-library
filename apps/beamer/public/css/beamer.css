@@ -101,3 +101,5 @@
 .bm-l.cancelled { color: var(--bh-danger); text-decoration: line-through; }
 .bm-l.changed { color: var(--bh-warm); font-weight: 600; }
 .bm-l.exam { color: var(--bh-primary); font-weight: 600; }
+#bm-schedule { min-height: 112px; }
+.bm-l.cancelled { font-weight: 600; }

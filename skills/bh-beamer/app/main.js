@@ -58,6 +58,7 @@
 
   function playAudio(url, title, id) {
     stationEl.textContent = title || '';
+    stationEl.className = (title || '').length > 15 ? 'long' : '';
     BHHome.setPlaying(id || null);
     if (url === playingUrl && !failed) return;
     playingUrl = url;
