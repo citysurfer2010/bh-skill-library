@@ -77,3 +77,8 @@ kommt die App nicht hoch, bleibt der vorherige Stand aktiv. Erreichbar ist sie u
 
 `home-link/setup-home-link.sh` verbindet den Host per WireGuard mit dem Heimnetz. Geroutet wird nur `BH_NAS_IP` aus der `.env`, nie der
 gesamte Verkehr; die User-Container bleiben getrennt. Die Verbindung laesst sich in der Fritzbox jederzeit loeschen.
+
+## Beamer-Entwicklung
+
+`beamer-dev/` enthält die Hilfen für Samsung-Zertifikat und App-Installation (virtueller Bildschirm, Browser-Wrapper, `bh-screen-deploy`).
+Der Weg ist in `skills/bh-beamer/BUSINESS_LOGIC.md` beschrieben; nach der Einrichtung werden Bildschirm und Browser wieder entfernt.
