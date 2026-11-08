@@ -42,9 +42,27 @@
     textEl.textContent = c.text || '';
   }
 
+  // Meldet einmalig, was das Geraet kann; landet nur im Zugriffsprotokoll des Servers.
+  var caps = '';
+  function probe() {
+    var PC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+    var chrome = (navigator.userAgent.match(/Chrome\/[\d.]+/) || ['?'])[0];
+    var base = chrome + '_rtc' + (PC ? 1 : 0) + '_mse' + (window.MediaSource ? 1 : 0);
+    caps = base;
+    if (!PC) return;
+    try {
+      new PC().createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: true }).then(function (d) {
+        var seen = {};
+        (d.sdp.match(/a=rtpmap:\d+ (H264|VP8|VP9|opus)/g) || []).forEach(function (l) { seen[l.split(' ')[1]] = 1; });
+        caps = base + '_' + Object.keys(seen).join('+');
+      }, function (e) { caps = base + '_offerfail-' + e.name; });
+    } catch (e) { caps = base + '_ex-' + e.name; }
+  }
+  probe();
+
   function poll() {
     var x = new XMLHttpRequest();
-    x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now());
+    x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now() + '&caps=' + encodeURIComponent(caps));
     x.onload = function () {
       if (x.status !== 200) { textEl.textContent = 'Server antwortet nicht (' + x.status + ')'; return; }
       try { render(JSON.parse(x.responseText)); } catch (e) { textEl.textContent = 'Antwort unlesbar'; }
