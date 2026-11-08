@@ -9,18 +9,24 @@ description: Arbeiten mit Git und GitHub, Pull Requests erstellen, pruefen und m
 
 Git-Ablauf mit `git` und `gh` im Container, Pull-Request-Werkzeuge ueber das zentrale MCP-Gateway.
 
-## Einrichtung (einmalig je User)
+## GitHub verknuepfen (schaltet den Skill frei)
+
+Einmalig je User, im eigenen Terminal oder durch den Agenten:
 
 ```bash
-gh auth login      # GitHub.com, HTTPS, Login with a web browser
-gh auth setup-git
-git config --global user.name "Vorname Nachname"
-git config --global user.email "adresse@beispiel.de"
-/etc/devbox/skills/bh-github/scripts/bh-github-connect
+bh-github-connect
 ```
 
-Fehlt die Anmeldung, bitte den User, sie selbst auszufuehren. Nie nach Tokens fragen und keine Tokens in
-Dateien, Remotes oder Befehlszeilen schreiben.
+Der Befehl zeigt einen Link und einen Code. Nach der Bestaetigung im Browser sind `git`, `gh` und die
+Gateway-Werkzeuge mit dem eigenen GitHub-Konto verbunden.
+
+**Als Agent**, sobald ein Werkzeug `GitHub noch nicht verknuepft` meldet oder der User GitHub verbinden moechte:
+
+1. `bh-github-connect` ausfuehren und dem User **Link und Code woertlich** zeigen.
+2. Warten, bis der User die Bestaetigung meldet.
+3. `bh-github-connect --status` ausfuehren und die urspruengliche Aufgabe fortsetzen.
+
+Nie nach Tokens fragen und keine Tokens in Dateien, Remotes oder Befehlszeilen schreiben.
 
 ## Werkzeuge (Gateway)
 
@@ -63,7 +69,7 @@ Dateien, Remotes oder Befehlszeilen schreiben.
 
 | Fehler | Ursache | Loesung |
 |---|---|---|
-| `GitHub nicht verbunden` | Gateway kennt das Konto nicht | `bh-github-connect` ausfuehren lassen |
+| `GitHub noch nicht verknuepft` | Konto nicht verbunden | `bh-github-connect` ausfuehren |
 | `404` | Repo oder PR-Nummer falsch, oder kein Zugriff | Angaben pruefen |
 | `422` | Branch existiert nicht | Branch zuerst pushen |
 | Nicht mergebar | Konflikte | Lokal loesen, dann pushen |

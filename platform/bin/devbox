@@ -81,6 +81,7 @@ cmd_add() {
 
   run_container "$n"
   echo "Angelegt: ssh -p $(cat "$d/port") dev@$PUBLIC_IP"
+  echo "GitHub verknuepfen, im Container: bh-github-connect"
 }
 
 cmd_list() {
@@ -144,6 +145,7 @@ cmd_remove() {
     umount "$d/home" 2>/dev/null || true
     sed -i "\#^$d/home.img #d" /etc/fstab
     rm -rf --one-file-system "$d"
+    rm -rf --one-file-system "/srv/mcp-gateway/users/$n"
     echo "$n samt Daten geloescht"
   else
     echo "$n gestoppt, Daten liegen weiter unter $d (endgueltig: --purge)"

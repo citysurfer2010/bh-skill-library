@@ -21,7 +21,7 @@ test('alle Werkzeuge laden', () => {
 });
 
 test('ohne Verbindung klare Meldung', async () => {
-  await assert.rejects(require('../lib/github.js').gh('GET', '/user'), /nicht verbunden/);
+  await assert.rejects(require('../lib/github.js').gh('GET', '/user'), /noch nicht verknuepft/);
 });
 
 test('merge wartet auf Merge-Faehigkeit und bindet an den geprueften Stand', async () => {

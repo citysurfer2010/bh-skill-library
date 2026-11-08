@@ -13,7 +13,7 @@ function token() {
 
 async function gh(method, url, body, fetchImpl = fetch) {
   const t = token();
-  if (!t) throw new Error('GitHub nicht verbunden: im Container einmal bh-github-connect ausfuehren (siehe Skill bh-github).');
+  if (!t) throw new Error('GitHub noch nicht verknuepft: im Container bh-github-connect ausfuehren und dem User Link und Code zeigen (Skill bh-github).');
   const r = await fetchImpl(`https://api.github.com${url}`, {
     method,
     headers: { authorization: `Bearer ${t}`, accept: 'application/vnd.github+json', 'user-agent': 'bh-github', ...(body ? { 'content-type': 'application/json' } : {}) },

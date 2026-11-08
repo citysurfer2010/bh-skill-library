@@ -1,7 +1,62 @@
 #!/usr/bin/env bash
-# Verbindet das GitHub-Konto des Users mit dem zentralen Gateway. Das Token laeuft nicht durch das Modell.
+# Verknuepft das GitHub-Konto eines Users und schaltet damit den Skill bh-github frei.
+#   bh-github-connect            Link und Code anzeigen; im Terminal bis zur Bestaetigung warten
+#   bh-github-connect --status   Stand abfragen
+# Das Token laeuft nie durch ein Modell.
 set -euo pipefail
-token=$(gh auth token) || { echo "Zuerst anmelden: gh auth login" >&2; exit 1; }
-curl -fsS -H "authorization: Bearer $(cat /etc/devbox/llm/token)" -H "content-type: application/json" \
-  -d "$(jq -n --arg t "$token" '{token: $t}')" http://mcp-gateway:18800/connect/github
-echo
+GATEWAY=${BH_GATEWAY_URL:-http://mcp-gateway:18800}
+TOKEN_FILE=${BH_TOKEN_FILE:-/etc/devbox/llm/token}
+STATE=$HOME/.cache/bh-github-connect
+LOG=$STATE/login.log
+SELF=$(readlink -f "$0")
+mkdir -p "$STATE"
+
+code() { grep -oE '[A-Z0-9]{4}-[A-Z0-9]{4}' "$LOG" 2>/dev/null | head -1 || true; }
+running() { [ -s "$STATE/pid" ] && kill -0 "$(cat "$STATE/pid")" 2>/dev/null; }
+
+show_code() {
+  echo "Bitte https://github.com/login/device oeffnen und diesen Code eingeben: $(code)"
+}
+
+finish() {
+  gh auth setup-git
+  local login; login=$(gh api user --jq .login)
+  [ -n "$(git config --global user.name || true)" ] || git config --global user.name "$(gh api user --jq '.name // .login')"
+  [ -n "$(git config --global user.email || true)" ] || git config --global user.email "$(gh api user --jq .id)+$login@users.noreply.github.com"
+  jq -n --arg t "$(gh auth token)" '{token: $t}' | curl -fsS -o /dev/null -H "authorization: Bearer $(cat "$TOKEN_FILE")" \
+    -H 'content-type: application/json' -d @- "$GATEWAY/connect/github"
+  echo "$login" >"$STATE/connected"
+  rm -f "$STATE/failed"
+}
+
+status() {
+  if [ -s "$STATE/connected" ]; then echo "Verknuepft mit GitHub-Konto $(cat "$STATE/connected"). Der Skill bh-github ist aktiv."
+  elif running; then show_code; echo "Warte auf die Bestaetigung."
+  elif [ -e "$STATE/failed" ]; then echo "Verknuepfung fehlgeschlagen. Bitte erneut starten." >&2; return 1
+  else echo "Noch nicht verknuepft."; return 1
+  fi
+}
+
+case "${1:-}" in
+  --status) status; exit ;;
+  --finish) finish; exit ;;
+esac
+
+if gh auth status >/dev/null 2>&1; then finish; status; exit; fi
+if running; then status; exit; fi
+
+rm -f "$STATE/connected" "$STATE/failed" "$LOG"
+BROWSER=true setsid nohup bash -c \
+  'gh auth login -h github.com -p https -w && "$1" --finish || touch "$2/failed"' _ "$SELF" "$STATE" \
+  >"$LOG" 2>&1 </dev/null &
+echo $! >"$STATE/pid"
+
+for _ in $(seq 1 30); do [ -n "$(code)" ] && break; sleep 0.5; done
+[ -n "$(code)" ] || { echo "GitHub hat keinen Code geliefert." >&2; exit 1; }
+show_code
+
+# Im Terminal warten; ein Agent ruft stattdessen spaeter --status auf.
+if [ -t 1 ]; then
+  while running; do sleep 2; done
+  status
+fi
