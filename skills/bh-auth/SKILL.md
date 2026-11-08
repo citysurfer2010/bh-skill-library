@@ -8,7 +8,9 @@ description: Zentraler Anmeldedienst der BH Platform mit Login-Seite, Google-Log
 ## Zweck
 
 Eigener Anmeldedienst fuer alle BH-Apps: Passwort und Google (auch private Konten), Benutzerverwaltung,
-Einladungen per Einmal-Link. Zugang haben ausschliesslich eingeladene Adressen.
+Einladungen per Einmal-Link, App-Uebersicht und Profilseite je User. Zugang haben ausschliesslich eingeladene Adressen.
+
+Neue Apps tragen Admins unter `/admin/apps` ein; sie erscheinen dann in der Uebersicht auf `/`.
 
 ## Anbindung einer App
 

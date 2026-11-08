@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { safeNext } from "../lib/session.js";
-import { loginView, homeView, messageView, setPasswordView, changePasswordView } from "../lib/views.js";
+import { loginView, messageView, setPasswordView, changePasswordView } from "../lib/views.js";
 import { MIN_PASSWORD } from "../lib/users.js";
 
 export function loginRoutes({ config, users, sessions, limiter, requireLogin }) {
@@ -44,17 +44,16 @@ export function loginRoutes({ config, users, sessions, limiter, requireLogin }) 
     res.redirect("/login?notice=saved");
   });
 
-  r.get("/", requireLogin, (req, res) => html(res, homeView(req.user, config.returnOrigins[0])));
-  r.get("/change-password", requireLogin, (_req, res) => html(res, changePasswordView({ min: MIN_PASSWORD })));
+  r.get("/change-password", requireLogin, (_req, res) => html(res, changePasswordView({ min: MIN_PASSWORD, hasPassword: !!req.user.passwordHash })));
 
   r.post("/change-password", requireLogin, async (req, res) => {
-    const view = (error, status) => html(res, changePasswordView({ error, min: MIN_PASSWORD }), status);
+    const view = (error, status) => html(res, changePasswordView({ error, min: MIN_PASSWORD, hasPassword: !!req.user.passwordHash }), status);
     if (req.user.passwordHash && !(await users.checkPassword(req.user.email, req.body.current))) return view("Das aktuelle Passwort ist falsch.", 400);
     const error = badPassword(req.body.password, req.body.confirm);
     if (error) return view(error, 400);
     await users.setPassword(req.user.id, req.body.password);
     await sessions.start(res, users.byId(req.user.id));
-    res.redirect("/");
+    res.redirect("/profile?saved=1");
   });
 
   return r;

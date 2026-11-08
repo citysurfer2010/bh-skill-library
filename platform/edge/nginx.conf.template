@@ -31,6 +31,10 @@ server {
     proxy_set_header Content-Length "";
   }
 
+  location = / {
+    return 302 https://auth.__DOMAIN__/;
+  }
+
   location / {
     auth_request /_auth;
     error_page 401 = @login;

@@ -1,6 +1,5 @@
-import { esc, shell } from "./views.js";
+import { esc, shell, when } from "./views.js";
 
-const when = (s) => (s ? new Date(s * 1000).toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" }) : "–");
 const action = (id, name, label, cls = "") => `<form method="post" action="/admin/users/${esc(id)}/${name}"><button class="small ${cls}">${label}</button></form>`;
 
 function row(u, me) {

@@ -1,3 +1,4 @@
+export const when = (s) => (s ? new Date(s * 1000).toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" }) : "–");
 export const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const brand = `<div class="brand"><span class="mark" aria-hidden="true">BH</span><span>BH Platform</span></div>`;
@@ -31,22 +32,19 @@ export function setPasswordView({ error, token, email, min }) {
 <p class="hint">Mindestens ${min} Zeichen.</p><button type="submit">Speichern</button></form>`);
 }
 
-export function changePasswordView({ error, min }) {
+export function changePasswordView({ error, min, hasPassword }) {
   return center("Passwort ändern", `<h1>Passwort ändern</h1>${alert(error)}
 <form method="post" action="/change-password">
-<label>Aktuelles Passwort<input type="password" name="current" autocomplete="current-password" required autofocus></label>
+${hasPassword ? `<label>Aktuelles Passwort<input type="password" name="current" autocomplete="current-password" required autofocus></label>` : ""}
 <label>Neues Passwort<input type="password" name="password" minlength="${min}" autocomplete="new-password" required></label>
 <label>Wiederholen<input type="password" name="confirm" minlength="${min}" autocomplete="new-password" required></label>
-<button type="submit">Speichern</button></form><p class="hint"><a href="/">Zurück</a></p>`);
+<button type="submit">Speichern</button></form><p class="hint"><a href="/profile">Zurück zum Profil</a></p>`);
 }
 
 export const messageView = (title, text) => center(title, `<h1>${esc(title)}</h1><p class="muted">${esc(text)}</p><a class="button secondary" href="/login">Zur Anmeldung</a>`);
 
 export function shell(user, title, content) {
-  const nav = user.isAdmin ? `<a href="/admin">Benutzer</a>` : "";
-  return page(title, `<header class="topbar">${brand}<nav>${nav}<a href="/change-password">Passwort</a>
-<span class="who">${esc(user.name)}</span><form method="post" action="/logout"><button class="link">Abmelden</button></form></nav></header>
+  const nav = `<a href="/">Apps</a>${user.isAdmin ? `<a href="/admin">Benutzer</a><a href="/admin/apps">Apps verwalten</a>` : ""}`;
+  return page(title, `<header class="topbar">${brand}<nav>${nav}<a class="who" href="/profile">${esc(user.name)}</a><form method="post" action="/logout"><button class="link">Abmelden</button></form></nav></header>
 <main class="page">${content}</main>`);
 }
-
-export const homeView = (user, appsUrl) => shell(user, "Start", `<h1>Hallo ${esc(user.name)}</h1><section class="card"><p class="muted">Du bist angemeldet als ${esc(user.email)}.</p>${appsUrl ? `<a class="button" href="${esc(appsUrl)}/">Zu den Apps</a>` : ""}</section>`);

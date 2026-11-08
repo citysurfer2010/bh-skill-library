@@ -43,8 +43,21 @@ button.small:hover { background: var(--bh-bg); } button.danger, summary.danger {
 summary.small { display: inline-flex; align-items: center; cursor: pointer; list-style: none; } .confirm[open] { display: inline-flex; gap: 6px; }
 .tag { padding: 2px 8px; border-radius: 99px; font-size: 12px; } .on { background: var(--bh-ok-bg); color: var(--bh-ok); } .off { background: var(--bh-danger-bg); color: var(--bh-danger); } .wait { background: var(--bh-wait-bg); color: var(--bh-wait); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.lead, .muted-line { color: var(--bh-muted); margin: 0; font-size: 14px; } .lead { font-size: 16px; }
+.who { color: var(--bh-muted); text-decoration: none; }
+.inline-form { justify-items: start; margin-top: 12px; }
+.app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.app-card { display: flex; align-items: center; gap: 14px; padding: 18px; background: var(--bh-surface); border: 1px solid var(--bh-border); border-radius: 12px; color: var(--bh-text); text-decoration: none; }
+.app-card:hover { border-color: var(--bh-primary); }
+.app-icon, .avatar { flex: none; display: inline-grid; place-items: center; background: var(--bh-primary); color: var(--bh-on-primary); font-weight: 700; }
+.app-icon { width: 44px; height: 44px; border-radius: 10px; font-size: 18px; }
+.app-text { display: grid; gap: 2px; min-width: 0; }
+.profile-head { display: flex; align-items: center; gap: 16px; }
+.avatar { width: 64px; height: 64px; border-radius: 50%; font-size: 26px; }
+.facts { display: grid; grid-template-columns: 160px 1fr; gap: 10px 16px; margin: 0; font-size: 14px; } dt { color: var(--bh-muted); } dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 720px) {
   thead { display: none; } tr { display: block; padding: 8px 0; border-bottom: 1px solid var(--bh-border); }
   td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 4px 0; } td[data-label]::before { content: attr(data-label); color: var(--bh-muted); }
+  .facts { grid-template-columns: 1fr; gap: 2px 0; } dd { margin-bottom: 8px; }
   .actions { flex-wrap: wrap; justify-content: flex-start; white-space: normal; gap: 6px; padding-top: 8px; } .actions form, .confirm { margin-left: 0; }
 }

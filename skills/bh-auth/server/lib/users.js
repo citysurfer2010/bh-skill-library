@@ -53,6 +53,7 @@ export function usersStore(db) {
 
     touchLogin: (id) => db.prepare("UPDATE users SET lastLogin = ? WHERE id = ?").run(now(), id),
     bindGoogle: (id, sub) => db.prepare("UPDATE users SET googleSub = ? WHERE id = ?").run(sub, id),
+    setName: (id, name) => db.prepare("UPDATE users SET name = ? WHERE id = ?").run(name, id),
     setAdmin: (id, on) => db.prepare("UPDATE users SET isAdmin = ? WHERE id = ?").run(on ? 1 : 0, id),
     setDisabled: (id, on) => db.prepare("UPDATE users SET disabled = ?, tokenInvalidatedAt = ? WHERE id = ?").run(on ? 1 : 0, now(), id),
     invalidateSessions: (id) => db.prepare("UPDATE users SET tokenInvalidatedAt = ? WHERE id = ?").run(now(), id),
