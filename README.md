@@ -13,6 +13,7 @@ Kanonische Skills und Server-Einrichtung der BH Platform. Dieses Repo ist oeffen
 
 | Skill | Zweck |
 |---|---|
+| `bh-auth` | Anmeldedienst mit Login-Seite und Benutzerverwaltung |
 | `bh-mcp-gateway` | Zentrales MCP-Gateway, ueber das alle Werkzeuge laufen |
 | `bh-github` | Git, GitHub und Pull Requests |
 | `bh-google-workspace` | Gmail, Drive, Docs, Sheets, Slides, Kalender und Chat |

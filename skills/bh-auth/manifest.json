@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-auth",
+  "name": "bh-auth",
+  "version": "1.0.0",
+  "description": "Zentraler Anmeldedienst der BH Platform",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}
