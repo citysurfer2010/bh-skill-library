@@ -30,14 +30,14 @@ button:hover { background: var(--bh-primary-hover); }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--bh-border); }
 .alert { margin: 0 0 16px; padding: 10px 12px; border-radius: 8px; font-size: 14px; } .alert.error { background: var(--bh-danger-bg); color: var(--bh-danger); }
 .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 24px; background: var(--bh-surface); border-bottom: 1px solid var(--bh-border); }
-nav { display: flex; align-items: center; gap: 16px; font-size: 14px; flex-wrap: wrap; } nav form { display: inline; } .who { color: var(--bh-muted); }
+nav { display: flex; align-items: center; gap: 16px; font-size: 14px; flex-wrap: wrap; } nav a { text-decoration: none; } nav form { display: inline; } .who { color: var(--bh-muted); }
 button.link { height: auto; padding: 0; background: none; color: var(--bh-primary); font-weight: 400; }
 .page { padding: 24px; display: grid; gap: 16px; }
 .row { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; } .row label:not(.check) { flex: 1 1 200px; }
 .check { display: flex; align-items: center; gap: 6px; height: 42px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--bh-border); vertical-align: middle; } th { color: var(--bh-muted); font-weight: 500; }
-.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; } .actions form { display: inline; }
+.actions { text-align: right; white-space: nowrap; } .actions form, .confirm { display: inline-block; margin-left: 6px; }
 button.small, summary.small { height: 32px; padding: 0 10px; font-size: 13px; font-weight: 500; background: var(--bh-surface); color: var(--bh-text); border: 1px solid var(--bh-border); border-radius: 6px; }
 button.small:hover { background: var(--bh-bg); } button.danger, summary.danger { color: var(--bh-danger); }
 summary.small { display: inline-flex; align-items: center; cursor: pointer; list-style: none; } .confirm[open] { display: inline-flex; gap: 6px; }
@@ -46,5 +46,5 @@ summary.small { display: inline-flex; align-items: center; cursor: pointer; list
 @media (max-width: 720px) {
   thead { display: none; } tr { display: block; padding: 8px 0; border-bottom: 1px solid var(--bh-border); }
   td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 4px 0; } td[data-label]::before { content: attr(data-label); color: var(--bh-muted); }
-  .actions { justify-content: flex-start; padding-top: 8px; }
+  .actions { flex-wrap: wrap; justify-content: flex-start; white-space: normal; gap: 6px; padding-top: 8px; } .actions form, .confirm { margin-left: 0; }
 }
