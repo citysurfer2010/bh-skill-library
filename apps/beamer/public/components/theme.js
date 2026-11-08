@@ -5,6 +5,7 @@ window.Theme = {
     const next = this.get() === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem('bh-theme', next); } catch {}
+    document.dispatchEvent(new Event('bh-theme-change'));
     return next;
   },
 };
