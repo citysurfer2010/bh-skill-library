@@ -14,7 +14,7 @@ function fake(events) {
   return { sent, paths, closed: () => closed };
 }
 
-test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'play_media', 'press', 'show_text', 'show_url', 'status', 'stop_media']));
+test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'open_app', 'play_media', 'press', 'show_text', 'show_url', 'status', 'stop_media']));
 
 test('Frames: verschluesselt gesendet, Nachrichten werden erkannt', () => {
   const f = r.encodeText('hi');
@@ -50,14 +50,36 @@ test('TLS bleibt pruefpflichtig, Zertifikat wird verglichen', () => {
   assert.ok(o.checkServerIdentity('x', { fingerprint256: 'BB' }) instanceof Error);
 });
 
-test('Browser: startet nie eine fremde App und meldet den Fehlschlag', async () => {
+function restFake(name, visibleAfter = 1) {
+  const calls = []; let gets = 0;
+  r.setRest(async (method, id) => { calls.push([method, id]); if (method === 'POST') return { status: 200, json: {} }; gets++; return { status: 200, json: { name, visible: gets > visibleAfter } }; });
+  return calls;
+}
+
+test('App starten: echter Name wird vorher geprueft, fremde App wird nie gestartet', async () => {
+  let calls = restFake('YouTube');
+  await r.openApp('YouTube', { tries: 2, delayMs: 1 });
+  assert.deepEqual(calls[1], ['POST', '111299001912']);
+  calls = restFake('Netflix');
+  await assert.rejects(r.openApp('YouTube', { tries: 1, delayMs: 1 }), /nicht installiert/);
+  assert.equal(calls.filter((c) => c[0] === 'POST').length, 0);
+  await assert.rejects(r.openApp('Tetris'), /Unbekannte App/);
+});
+
+test('Browser: Adresse geht an die App Internet, Fehlschlag wird gemeldet', async () => {
+  restFake('Internet', 1);
   const sent = [];
-  r.setOpener(async (_p, onText) => {
-    setImmediate(() => onText(JSON.stringify({ event: 'ms.channel.connect', data: {} })));
-    return { send: (t) => { sent.push(JSON.parse(t).params.data.appId); setImmediate(() => onText(JSON.stringify({ event: 'ed.apps.launch', data: 404 }))); }, close() {} };
-  });
-  await assert.rejects(r.launchBrowser('https://a.de/', 50), /nicht starten/);
-  assert.deepEqual(sent, ['org.tizen.browser']);
+  r.setOpener(async (_p, onText) => { setImmediate(() => onText(JSON.stringify({ event: 'ms.channel.connect', data: {} }))); return { send: (t) => sent.push(JSON.parse(t).params.data), close() {} }; });
+  await r.launchBrowser('https://a.de/', { tries: 2, delayMs: 1 });
+  assert.equal(sent[0].appId, '3201907018784'); assert.equal(sent[0].metaTag, 'https://a.de/'); assert.equal(sent[0].action_type, 'DEEP_LINK');
+  r.setRest(async () => ({ status: 200, json: { name: 'Internet', visible: false } }));
+  sent.length = 0;
+  await assert.rejects(r.launchBrowser('https://a.de/', { tries: 1, delayMs: 1 }), /nicht starten/);
+  assert.deepEqual(sent.map((x) => x.action_type), ['DEEP_LINK', 'NATIVE_LAUNCH']);
+  r.setRest(async () => ({ status: 200, json: { name: 'Netflix' } }));
+  sent.length = 0;
+  await assert.rejects(r.launchBrowser('https://a.de/', { tries: 1, delayMs: 1 }), /nicht installiert/);
+  assert.equal(sent.length, 0);
 });
 
 test('Anzeige: nur https, Inhalt geht mit Schreib-Schluessel an den Dienst', async () => {

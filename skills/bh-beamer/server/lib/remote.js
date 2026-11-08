@@ -101,19 +101,54 @@ async function press(key) {
   });
 }
 
-// Je nach Softwarestand heisst der Browser anders; der Beamer meldet, ob der Start geklappt hat.
-const BROWSERS = ['org.tizen.browser'];
+// Auf diesem Beamer per Abfrage bestaetigt. Vor jedem Start wird der echte Name erneut geprueft.
+const APPS = { YouTube: '111299001912', 'Prime Video': '3201910019365', Netflix: '3201907018807', 'Disney+': '3201901017640', 'Apple TV': '3201807016597', Spotify: '3201606009684', WOW: '3201411000562', Internet: '3201907018784' };
 
-async function launchBrowser(url, waitMs = 4000) {
-  let answer = () => {};
+function realRest(method, id) {
+  return new Promise((resolve, reject) => {
+    const req = https.request({ ...tlsOptions(), host: process.env.BH_BEAMER_IP, port: PORT, path: `/api/v2/applications/${id}`, method, timeout: 6000 }, (res) => {
+      let t = ''; res.on('data', (c) => { t += c; });
+      res.on('end', () => { let json = {}; try { json = JSON.parse(t); } catch { /* leere Antwort */ } resolve({ status: res.statusCode, json }); });
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', () => reject(new Error('Beamer ist aus oder nicht erreichbar')));
+    req.end();
+  });
+}
+let rest = realRest;
+const setRest = (fn) => { rest = fn; };
+
+async function appInfo(app) {
+  const id = APPS[app];
+  if (!id) throw new Error(`Unbekannte App: ${app}`);
+  const r = await rest('GET', id);
+  if (r.status !== 200 || !String(r.json.name || '').startsWith(app.split(' ')[0])) throw new Error(`${app} ist auf dem Beamer nicht installiert`);
+  return { id, ...r.json };
+}
+
+async function waitVisible(id, tries, delayMs) {
+  for (let i = 0; i < tries; i++) {
+    await pause(delayMs);
+    if ((await rest('GET', id)).json.visible === true) return true;
+  }
+  return false;
+}
+
+async function openApp(app, { tries = 8, delayMs = 750 } = {}) {
+  const { id } = await appInfo(app);
+  await rest('POST', id);
+  if (!(await waitVisible(id, tries, delayMs))) throw new Error(`${app} liess sich nicht starten`);
+}
+
+async function launchBrowser(url, { tries = 6, delayMs = 750 } = {}) {
+  const { id } = await appInfo('Internet');
+  const send = (socket, type) => socket.send(JSON.stringify({ method: 'ms.channel.emit', params: { event: 'ed.apps.launch', to: 'host', data: { appId: id, action_type: type, metaTag: url } } }));
   await withChannel(async (socket) => {
-    for (const appId of BROWSERS) {
-      const result = new Promise((res) => { answer = res; setTimeout(() => res(null), waitMs); });
-      socket.send(JSON.stringify({ method: 'ms.channel.emit', params: { event: 'ed.apps.launch', to: 'host', data: { appId, action_type: 'NATIVE_LAUNCH', metaTag: url } } }));
-      if ((await result) === 200) return;
-    }
-    throw new Error('Der Browser des Beamers liess sich nicht starten');
-  }, (m) => { if (m.event === 'ed.apps.launch') answer(m.data); });
+    send(socket, 'DEEP_LINK');
+    if (await waitVisible(id, tries, delayMs)) return;
+    send(socket, 'NATIVE_LAUNCH');
+    if (!(await waitVisible(id, tries, delayMs))) throw new Error('Der Browser des Beamers liess sich nicht starten');
+  });
 }
 
 function status() {
@@ -129,4 +164,4 @@ function status() {
 const ok = (v) => ({ content: [{ type: 'text', text: typeof v === 'string' ? v : JSON.stringify(v, null, 2) }] });
 const guarded = (fn) => async (args) => { try { return ok(await fn(args || {})); } catch (e) { return { content: [{ type: 'text', text: e.message }], isError: true }; } };
 
-module.exports = { KEYS, press, launchBrowser, status, encodeText, decodeFrames, setOpener, tlsOptions, guarded, tokenFile };
+module.exports = { KEYS, APPS, press, launchBrowser, openApp, setRest, status, encodeText, decodeFrames, setOpener, tlsOptions, guarded, tokenFile };

@@ -15,6 +15,7 @@ Bedient den Samsung The Premiere über das zentrale MCP-Gateway und den WireGuar
 |---|---|
 | `beamer_status` | Erreichbarkeit, Name, Modell, Zustand |
 | `beamer_press` | Taste drücken: `KEY_POWER`, `KEY_VOLUP`, `KEY_VOLDOWN`, `KEY_MUTE`, `KEY_HOME`, `KEY_RETURN`, Pfeile, `KEY_ENTER`, `KEY_PLAY`, `KEY_PAUSE`, `KEY_SOURCE` |
+| `beamer_open_app` | App starten: YouTube, Prime Video, Netflix, Disney+, Apple TV, Spotify, WOW, Internet |
 | `beamer_show_text` | Text groß anzeigen: setzt die Anzeigeseite und öffnet sie im Browser des Beamers |
 | `beamer_show_url` | Beliebige https-Seite im Browser des Beamers öffnen |
 | `beamer_play_media` | Video oder Bild per DLNA abspielen, Adresse muss für den Beamer erreichbar sein |
