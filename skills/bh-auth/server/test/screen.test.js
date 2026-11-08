@@ -9,7 +9,7 @@ test("Anzeige: nur mit geheimem Link lesbar, nur mit Schreib-Schluessel aenderba
   try {
     assert.equal((await post(g, null, { title: "x" })).status, 401);
     assert.equal((await post(g, "lesen", { title: "x" })).status, 401);
-    assert.equal((await post(g, "schreiben", { title: "Hallo", text: "Welt" })).status, 204);
+    assert.equal((await post(g, "schreiben", { title: "Hallo", text: "Welt" })).status, 200);
     assert.notEqual((await fetch(`${g.base}/screen/falsch`, { redirect: "manual" })).status, 200);
     assert.notEqual((await fetch(`${g.base}/screen/schreiben`, { redirect: "manual" })).status, 200);
     const html = await (await fetch(`${g.base}/screen/lesen`)).text();
@@ -48,7 +48,14 @@ test("Anzeige: Webseiten-Modus nur mit https", async () => {
   try {
     assert.equal((await post(g, "schreiben", { mode: "url", url: "javascript:alert(1)" })).status, 400);
     assert.equal((await post(g, "schreiben", { mode: "url", url: "http://a.de" })).status, 400);
-    assert.equal((await post(g, "schreiben", { mode: "url", url: "https://de.wikipedia.org/" })).status, 204);
+    const r = await post(g, "schreiben", { mode: "url", url: "https://de.wikipedia.org/" });
+    assert.equal(r.status, 200); assert.equal((await r.json()).previous, "text");
+    assert.equal((await post(g, "schreiben", { mode: "audio", url: "http://radio.de/x.mp3" })).status, 400);
+    const a = await post(g, "schreiben", { mode: "audio", url: "https://radio.de/x.mp3", title: "Radio" });
+    assert.equal(a.status, 200); assert.equal((await a.json()).previous, "url");
+    const audio = await (await fetch(`${g.base}/screen/lesen/content`)).json();
+    assert.equal(audio.mode, "audio"); assert.equal(audio.url, "https://radio.de/x.mp3"); assert.equal(audio.title, "Radio");
+    assert.equal((await post(g, "schreiben", { mode: "url", url: "https://de.wikipedia.org/" })).status, 200);
     const c = await (await fetch(`${g.base}/screen/lesen/content`)).json();
     assert.equal(c.mode, "url"); assert.equal(c.url, "https://de.wikipedia.org/");
   } finally { await g.stop(); }

@@ -15,7 +15,7 @@ function start(slug, meta, delay = 1000) {
   const startedAt = Date.now();
   const child = spawn(process.execPath, ["--disable-warning=ExperimentalWarning", "server.js"], {
     cwd: path.join(ROOT, slug, "code"),
-    env: { PATH: process.env.PATH, HOME: "/tmp", NODE_ENV: "production", PORT: String(meta.port), HOST: "0.0.0.0", DATA_DIR: path.join(ROOT, slug, "data"), TRUST_PROXY_AUTH: "1" },
+    env: { PATH: process.env.PATH, HOME: "/tmp", NODE_ENV: "production", PORT: String(meta.port), HOST: "0.0.0.0", DATA_DIR: path.join(ROOT, slug, "data"), TRUST_PROXY_AUTH: "1", BH_MCP_URL: "http://mcp-gateway:18800/mcp", BH_GATEWAY_TOKEN_FILE: "/etc/devbox/llm/token" },
     stdio: ["ignore", "pipe", "pipe"],
   });
   children.set(slug, child);

@@ -1,0 +1,4 @@
+const { guarded } = require('../../lib/remote.js');
+const { stopRadio } = require('../../lib/screen.js');
+module.exports = { name: 'stop_radio', description: 'Beendet das Radio in der App BH Screen.', inputSchema: { type: 'object', properties: {} },
+  handler: guarded(async () => { await stopRadio(); return 'Radio beendet.'; }) };

@@ -20,4 +20,5 @@ docker run -d --name bh-apps --network bh-apps-net --restart unless-stopped \
   --memory 1500m --memory-swap 2g --cpus 0.9 --pids-limit 512 \
   -v "$D:/apps" -v "$L/llm:/etc/devbox/llm:ro" bh-apps:current >/dev/null
 docker network connect bh-apps-net llm-gateway 2>/dev/null || true
+docker network connect bh-apps-net mcp-gateway 2>/dev/null || true
 echo "bh-apps laeuft"
