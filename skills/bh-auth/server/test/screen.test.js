@@ -64,7 +64,7 @@ test("Anzeige: Webseiten-Modus nur mit https", async () => {
 
 test("Freigabe: Angebot, Antwort nur zur laufenden Sitzung und nur mit den richtigen Schluesseln", async () => {
   const g = await start();
-  const answer = (token, body) => fetch(`${g.base}/screen/${token}/answer`, { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify(body) });
+  const answer = (token, body) => fetch(`${g.base}/screen/${token}/answer`, { method: "POST", headers: { "content-type": "text/plain", origin: "file://" }, body: JSON.stringify(body) });
   const read = (token, s) => fetch(`${g.base}/screen-answer?session=${s}`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
   try {
     assert.equal((await post(g, "schreiben", { mode: "share", offer: "kaputt" })).status, 400);

@@ -6,7 +6,7 @@ const MOODS = [
   { id: 'regen', label: 'Regen am Fenster', video: 'cjrZwn7JQvc' },
   { id: 'strand', label: 'Strand bei Sonnenuntergang', video: 'dh4KtUdVuYc' },
   { id: 'schnee', label: 'Schneefall im Wald', video: 'VYUAqNCt0Lo' },
-  { id: 'aquarium', label: 'Aquarium', video: 'H_swbFgSROs' },
+  { id: 'aquarium', label: 'Aquarium', video: 'H_swbFgSROs', frame: 2 },
 ];
 
 const rndfnk = (p) => `https://dispatcher.rndfnk.com/${p}/live/mp3/mid`;
@@ -30,7 +30,7 @@ const APPS = ['YouTube', 'Prime Video', 'Netflix', 'Disney+', 'Apple TV', 'Spoti
 const KEYS = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_ENTER', 'KEY_RETURN', 'KEY_HOME', 'KEY_VOLUP', 'KEY_VOLDOWN', 'KEY_MUTE', 'KEY_PLAY', 'KEY_PAUSE'];
 
 const publicCatalog = () => ({
-  moods: MOODS.map(({ id, label, video }) => ({ id, label, thumb: `https://i.ytimg.com/vi/${video}/hq1.jpg` })),
+  moods: MOODS.map(({ id, label, video, frame }) => ({ id, label, thumb: `https://i.ytimg.com/vi/${video}/hq${frame || 1}.jpg` })),
   stations: STATIONS.map(({ id, label }) => ({ id, label })),
   apps: APPS,
 });

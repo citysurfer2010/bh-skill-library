@@ -7,7 +7,7 @@
   const arrow = (d) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
   const PAD = [[], ['KEY_UP', arrow('M6 15l6-6 6 6'), 'Hoch'], [], ['KEY_LEFT', arrow('M15 6l-6 6 6 6'), 'Links'], ['KEY_ENTER', 'OK', 'Bestätigen'], ['KEY_RIGHT', arrow('M9 6l6 6-6 6'), 'Rechts'], ['KEY_RETURN', 'Zurück', 'Zurück'], ['KEY_DOWN', arrow('M6 9l6 6 6-6'), 'Runter'], ['KEY_HOME', 'Home', 'Startseite']];
   const EXTRA = [['KEY_VOLDOWN', 'Leiser'], ['KEY_MUTE', 'Stumm'], ['KEY_VOLUP', 'Lauter'], ['KEY_PLAY', 'Play'], ['KEY_PAUSE', 'Pause']];
-  let now = null; let zustand = null; let statusFailed = false;
+  let now = null; let zustand = null; let statusFailed = false; let poweringOn = false; let shareLive = false;
 
   const section = (title, body, extra = '', id = '') => `<section class="bm-section" ${id ? `id="${id}"` : ''}><div class="bm-head"><h2>${title}</h2>${extra}</div>${body}</section>`;
   const data = (o) => esc(JSON.stringify(o));
@@ -35,12 +35,12 @@
   function paint() {
     const stateEl = document.getElementById('bm-state');
     if (!stateEl) return;
-    const [label, tone] = statusFailed ? ['Status nicht abrufbar', 'off'] : STATE[zustand] || [zustand || 'Wird geprüft', ''];
+    const [label, tone] = poweringOn ? ['Wird eingeschaltet …', ''] : statusFailed ? ['Status nicht abrufbar', 'off'] : STATE[zustand] || [zustand || 'Wird geprüft', ''];
     setText(stateEl, label); stateEl.dataset.tone = tone;
     const on = zustand === 'on';
     setText(document.getElementById('bm-now'), on && now ? `Läuft: ${now.label}` : '');
-    document.getElementById('bm-notice').hidden = !zustand || on || statusFailed;
-    host.querySelector('[data-stop]').hidden = !on || !now || now.kind === 'share';
+    document.getElementById('bm-notice').hidden = !zustand || on || statusFailed || poweringOn;
+    host.querySelector('[data-stop]').hidden = !on || !now || (now.kind === 'share' && shareLive);
     host.querySelector('[data-radio-stop]').hidden = now?.kind !== 'radio';
     host.querySelector('[data-power="on"]').hidden = !zustand || on;
     host.querySelector('[data-power="off"]').hidden = !on;
@@ -71,6 +71,7 @@
   const SHARE_TEXT = { connecting: 'Verbinde mit dem Beamer …', live: 'Wird auf dem Beamer gezeigt.', ended: 'Freigabe beendet.', failed: 'Keine Verbindung zum Beamer. Ist der Laptop im Heimnetz?' };
   function shareState(s) {
     setText(document.getElementById('bm-share-state'), SHARE_TEXT[s]);
+    shareLive = s !== 'ended' && s !== 'failed';
     host.querySelector('[data-share="stop"]').hidden = s === 'ended' || s === 'failed';
     if (s === 'ended' || s === 'failed') { now = null; paint(); }
   }
@@ -87,7 +88,7 @@
     // Tasten ohne Sperre: Schnelle Pfeilfolgen dürfen nicht verloren gehen.
     if (b.dataset.key) return BeamerApi.send('/key', { key: b.dataset.key }).catch((err) => Toast.error(err.message));
     if ('stop' in b.dataset) return send(b, '/stop', {}, 'Gestoppt');
-    if (b.dataset.power) { const on = b.dataset.power === 'on'; if (on) setText(document.getElementById('bm-state'), 'Wird eingeschaltet …'); await send(b, '/power', { state: b.dataset.power }, on ? 'Beamer ist an' : 'Beamer ist aus'); refresh(); return; }
+    if (b.dataset.power) { const on = b.dataset.power === 'on'; poweringOn = on; paint(); await send(b, '/power', { state: b.dataset.power }, on ? 'Beamer ist an' : 'Beamer ist aus'); await refresh(); poweringOn = false; paint(); return; }
     if (b.dataset.send) return send(b, b.dataset.send, JSON.parse(b.dataset.body), b.textContent.trim().slice(0, 40));
   });
   host.addEventListener('submit', async (e) => {
