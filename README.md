@@ -19,6 +19,7 @@ Kanonische Skills und Server-Einrichtung der BH Platform. Dieses Repo ist oeffen
 | `bh-google-workspace` | Gmail, Drive, Docs, Sheets, Slides, Kalender und Chat |
 | `bh-webapp-skeleton` | Neue Web-App im BH-Standard anlegen |
 | `bh-nas` | Eigene Daten auf der Synology lesen, je User mit eigenem Konto (noch nicht nutzbar, siehe `LIMITATIONS.md`) |
+| `bh-beamer` | Samsung-Beamer im Heimnetz bedienen |
 | `bh-styleguide` | Verbindlicher Style Guide: Farben, Ecken, Schrift, Komponenten |
 
 Auf dem Server liegt das Repo unter `/opt/bh-skill-library`. Die Anleitungen (`SKILL.md`) sind schreibgeschuetzt

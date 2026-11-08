@@ -1,5 +1,6 @@
 [
-  { "id": "google", "command": ["node", "/opt/skills/bh-google-workspace/server/server.js"], "env": { "GOOGLE_CLIENT_SECRET_FILE": "/etc/mcp-gateway/google/client_secret.json" } },
-  { "id": "github", "command": ["node", "/opt/skills/bh-github/server/server.js"] },
-  { "id": "nas", "command": ["node", "/opt/skills/bh-nas/server/server.js"], "envFrom": ["BH_NAS_URL", "BH_NAS_CA_B64", "BH_NAS_FP"] }
+  {"id": "google", "command": ["node", "/opt/skills/bh-google-workspace/server/server.js"], "env": {"GOOGLE_CLIENT_SECRET_FILE": "/etc/mcp-gateway/google/client_secret.json"}},
+  {"id": "github", "command": ["node", "/opt/skills/bh-github/server/server.js"]},
+  {"id": "nas", "command": ["node", "/opt/skills/bh-nas/server/server.js"], "envFrom": ["BH_NAS_URL", "BH_NAS_CA_B64", "BH_NAS_FP"]},
+  {"id": "beamer", "command": ["node", "/opt/skills/bh-beamer/server/server.js"], "users": ["matti"], "envFrom": ["BH_BEAMER_IP", "BH_BEAMER_CA_B64", "BH_BEAMER_FP"]}
 ]

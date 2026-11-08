@@ -1,6 +1,8 @@
 // Fuehrt die Werkzeuge aller Server zusammen. Oeffentlicher Name: <server>_<werkzeug>,
 // Sonderzeichen werden zu "_", weil Modell-APIs Punkte in Namen ablehnen.
 const clean = (name) => name.replace(/[^a-zA-Z0-9_-]/g, "_");
+// Ohne users-Liste steht ein Server allen offen; mit Liste nur den Genannten.
+const allowed = (server, user) => !server.users || server.users.includes(user);
 
 export class Registry {
   constructor(servers, pool) {
@@ -21,14 +23,15 @@ export class Registry {
   }
 
   async list(user) {
-    await Promise.all(this.servers.map((s) => this.load(user, s).catch((e) => console.error(`[registry] ${s.id}: ${e.message}`))));
-    return this.servers.flatMap((s) => this.schemas.get(s.id) || []);
+    const mine = this.servers.filter((s) => allowed(s, user));
+    await Promise.all(mine.map((s) => this.load(user, s).catch((e) => console.error(`[registry] ${s.id}: ${e.message}`))));
+    return mine.flatMap((s) => this.schemas.get(s.id) || []);
   }
 
   async call(user, name, args) {
     if (!this.routes.has(name)) await this.list(user);
     const route = this.routes.get(name);
-    if (!route) throw Object.assign(new Error(`Unbekanntes Werkzeug: ${name}`), { code: -32601 });
+    if (!route || !allowed(route.server, user)) throw Object.assign(new Error(`Unbekanntes Werkzeug: ${name}`), { code: -32601 });
     return this.pool.get(user, route.server).request("tools/call", { name: route.tool, arguments: args });
   }
 }

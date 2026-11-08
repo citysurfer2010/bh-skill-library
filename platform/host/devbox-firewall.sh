@@ -23,6 +23,10 @@ gw_net=$(docker network inspect mcp-gateway-net -f '{{(index .IPAM.Config 0).Sub
 if [ -n "$nas" ] && [ -n "$gw_net" ]; then
   iptables -A DEVBOX-FORWARD -s "$gw_net" -d "$nas/32" -o wg-fritz -p tcp --dport 5001 -j ACCEPT
 fi
+beamer=$(sed -n 's/^BH_BEAMER_IP=//p' /srv/bh-platform/.env 2>/dev/null | tail -1)
+if [ -n "$beamer" ] && [ -n "$gw_net" ]; then
+  iptables -A DEVBOX-FORWARD -s "$gw_net" -d "$beamer/32" -o wg-fritz -p tcp --dport 8002 -j ACCEPT
+fi
 iptables -A DEVBOX-FORWARD -s "$NETS" -d "$PRIVATE" -j DROP
 # Kein Mailversand direkt aus User-Containern (Spam-Schutz der IP).
 iptables -A DEVBOX-FORWARD -s "$NETS" -p tcp -m multiport --dports 25,465,587 -j DROP

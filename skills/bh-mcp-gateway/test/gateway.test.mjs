@@ -8,11 +8,11 @@ import { storeGithubToken } from "../server/lib/connect.mjs";
 
 const stub = path.join(import.meta.dirname, "stub-server.mjs");
 
-async function start({ loginNas } = {}) {
+async function start({ loginNas, servers = [{ id: "demo", command: [process.execPath, stub] }] } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "gw-"));
   const tokensFile = path.join(dir, "t.json");
   writeFileSync(tokensFile, JSON.stringify({ tokA: "devbox/anna", tokB: "devbox/ben", bad: "fremd/xx" }));
-  const server = createGateway({ servers: [{ id: "demo", command: [process.execPath, stub] }], tokensFile, usersDir: path.join(dir, "u"), loginNas });
+  const server = createGateway({ servers, tokensFile, usersDir: path.join(dir, "u"), loginNas });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${server.address().port}`;
   const rpc = async (token, method, params) => {
@@ -102,6 +102,16 @@ test("Synology verbinden: Versuche sind begrenzt, Zeilenumbrueche verboten", asy
     assert.equal((await connectNas(g, "tokB", { user: "a\nb", password: "x" })).status, 400);
     for (let i = 0; i < 5; i++) assert.equal((await connectNas(g, "tokB", { user: "ben", password: "x" })).status, 400);
     assert.equal((await connectNas(g, "tokB", { user: "ben", password: "x" })).status, 429);
+  } finally { await g.stop(); }
+});
+
+test("Server mit users-Liste: andere sehen ihn nicht und koennen ihn nicht aufrufen", async () => {
+  const g = await start({ servers: [{ id: "demo", command: [process.execPath, stub] }, { id: "privat", command: [process.execPath, stub], users: ["anna"] }] });
+  try {
+    const names = async (t) => (await g.rpc(t, "tools/list")).body.result.tools.map((x) => x.name);
+    assert.deepEqual(await names("tokA"), ["demo_a_who", "privat_a_who"]);
+    assert.deepEqual(await names("tokB"), ["demo_a_who"]);
+    assert.match((await g.rpc("tokB", "tools/call", { name: "privat_a_who", arguments: {} })).body.error.message, /Unbekanntes/);
   } finally { await g.stop(); }
 });
 

@@ -8,7 +8,8 @@ install -d -m 711 "$D"
 install -d -m 700 -o "$U" -g "$U" "$D/users"
 install -d -m 750 -o "$U" -g "$U" "$D/google"
 ENV=/srv/bh-platform/.env; val() { sed -n "s/^$1=//p" "$ENV" | tail -1; }
-(umask 077; printf 'BH_NAS_URL=https://%s:5001\nBH_NAS_CA_B64=%s\nBH_NAS_FP=%s\n' "$(val BH_NAS_IP)" "$(val BH_NAS_CA_B64)" "$(val BH_NAS_FP)" >"$D/nas.env")
+(umask 077; printf 'BH_NAS_URL=https://%s:5001\nBH_NAS_CA_B64=%s\nBH_NAS_FP=%s\n' "$(val BH_NAS_IP)" "$(val BH_NAS_CA_B64)" "$(val BH_NAS_FP)" >"$D/nas.env"
+  printf 'BH_BEAMER_IP=%s\nBH_BEAMER_CA_B64=%s\nBH_BEAMER_FP=%s\n' "$(val BH_BEAMER_IP)" "$(val BH_BEAMER_CA_B64)" "$(val BH_BEAMER_FP)" >>"$D/nas.env")
 docker build -q -t mcp-gateway:current "$S/bh-mcp-gateway"
 docker network inspect mcp-gateway-net >/dev/null 2>&1 || docker network create mcp-gateway-net >/dev/null
 docker rm -f mcp-gateway >/dev/null 2>&1 || true
