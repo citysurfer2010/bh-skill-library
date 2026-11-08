@@ -22,7 +22,8 @@ Was wir über den Samsung-Beamer (The Premiere SP-LSP7TFAX, Tizen 5.5) gelernt h
 | YouTube-Videos | Über DIAL: `POST http://<ip>:8080/ws/apps/YouTube` mit `Origin: https://www.youtube.com` und Body `v=<id>` → 201, Video läuft. Ohne Origin 403; Port 8001 lehnt mit 401 ab. Firewall erlaubt 8080 nur vom Gateway-Netz. |
 | Radio / Musik | **Nicht per DLNA:** der Beamer lehnt Live-Streams mit Fehler 716 ab (DLF und NDR 2 getestet, auch als Video). Weg: App BH Screen spielt den Stream selbst (`beamer_play_radio`, Modus `audio`). |
 | Entwickler-App im REST-Status | Eine per `sdb` installierte App meldet immer `running:false, visible:false`, auch wenn sie läuft; ein Start der bereits laufenden App bekommt keine Antwort (Timeout). `openApp` wertet darum `true` oder Timeout nach erfolgreicher Abfrage als Erfolg. |
-| Einschalten | Aus dem Standby über das Netzwerk nicht verlässlich. |
+| Ausschalten | Kurzer Klick auf `KEY_POWER` wirkt nicht; die Taste 3 s halten (Press/Release). Bestätigt 08.11. |
+| Einschalten | Nach etwa 15 s Standby ist der Beamer nicht mehr im Netz, Wake-on-LAN durch den Tunnel kam nicht an (getestet 08.11.). Erst testen, wenn am Beamer das Einschalten über Mobilgerät erlaubt ist. |
 
 ## App „BH Screen“
 

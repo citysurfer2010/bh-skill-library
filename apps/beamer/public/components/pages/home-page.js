@@ -3,7 +3,7 @@
 (async () => {
   const esc = AppShell.esc;
   const host = document.getElementById('page-host');
-  const STATE = { on: 'An', standby: 'Aus (Standby)', 'nicht erreichbar': 'Nicht erreichbar' };
+  const STATE = { on: 'An', standby: 'Aus (Standby)', 'nicht erreichbar': 'Aus oder nicht erreichbar' };
   const PAD = [['', ''], ['KEY_UP', '▲', 'Hoch'], ['', ''], ['KEY_LEFT', '◀', 'Links'], ['KEY_ENTER', 'OK', 'Bestätigen'], ['KEY_RIGHT', '▶', 'Rechts'], ['KEY_RETURN', 'Zurück', 'Zurück'], ['KEY_DOWN', '▼', 'Runter'], ['KEY_HOME', 'Home', 'Startseite']];
   const EXTRA = [['KEY_VOLDOWN', 'Leiser'], ['KEY_MUTE', 'Stumm'], ['KEY_VOLUP', 'Lauter'], ['KEY_PLAY', 'Play'], ['KEY_PAUSE', 'Pause']];
   let now = null; let zustand = null;
