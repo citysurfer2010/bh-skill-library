@@ -44,7 +44,7 @@ Die App lauscht nur intern und setzt `TRUST_PROXY_AUTH=1` (Skill `bh-webapp-skel
 |---|---|
 | Einrichten | `platform/auth/setup-auth.sh` |
 | Ersten Admin anlegen | `docker exec bh-auth node bin/invite-admin.js <email> <name>` |
-| Konfiguration | `/srv/bh-auth/env` |
+| Konfiguration | `BH_PUBLIC_URL`, `BH_COOKIE_DOMAIN`, `GOOGLE_*` in `/srv/bh-platform/.env` |
 
 Google-Login: OAuth-Client vom Typ Webanwendung, Weiterleitung `<PUBLIC_URL>/oauth/google/callback`,
 Bereiche nur `openid email profile`, Nutzertyp Extern. Dann `GOOGLE_CLIENT_ID` und `GOOGLE_CLIENT_SECRET` in die

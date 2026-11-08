@@ -1,0 +1,43 @@
+# Einziger Web-Eingang. Erreichbar nur ueber den Cloudflare-Tunnel, daher gilt CF-Connecting-IP.
+resolver 127.0.0.11 valid=30s;
+
+server {
+  listen 8080 default_server;
+  return 404;
+}
+
+server {
+  listen 8080;
+  server_name auth.__DOMAIN__;
+  location / {
+    set $auth http://bh-auth:3337;
+    proxy_pass $auth;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
+    proxy_set_header X-Forwarded-Proto https;
+  }
+}
+
+server {
+  listen 8080;
+  server_name apps.__DOMAIN__;
+  root /usr/share/nginx/apps;
+
+  location = /_auth {
+    internal;
+    set $check http://bh-auth:3337/auth-headers;
+    proxy_pass $check;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+
+  location / {
+    auth_request /_auth;
+    error_page 401 = @login;
+    try_files /index.html =404;
+  }
+
+  location @login {
+    return 302 https://auth.__DOMAIN__/login;
+  }
+}

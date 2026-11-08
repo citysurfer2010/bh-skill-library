@@ -54,3 +54,8 @@ Beide haben keine veroeffentlichten Ports. Jeder User bekommt beim Anlegen ein T
 Tokens und Passwoerter stehen ausschliesslich in `/srv/bh-platform/.env` (root, Rechte 600), nie in Einzeldateien
 oder im Repo. Setup-Skripte erzeugen daraus je Dienst nur die Werte, die er braucht. Enthalten sind
 `CLOUDFLARE_API_TOKEN`, `MELIOUS_API_KEY`, `LLM_PROXY_TOKEN`.
+
+## Web-Eingang
+
+`edge/setup-cloudflare.py` setzt DNS und Tunnel, `edge/setup-edge.sh` startet nginx und `cloudflared`. Der Server oeffnet dafuer
+keine Ports. Domain und DKIM stehen als `EDGE_DOMAIN` und `BH_DKIM` in der `.env`.
