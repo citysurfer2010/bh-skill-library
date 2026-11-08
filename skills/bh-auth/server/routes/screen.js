@@ -11,8 +11,9 @@ const same = (a, b) => { const x = Buffer.from(String(a)); const y = Buffer.from
 export function screenRoutes({ config }) {
   const r = Router();
   const file = path.join(config.dataDir, "screen.json");
-  const load = () => { try { return JSON.parse(readFileSync(file, "utf8")); } catch { return { title: "", text: "" }; } };
+  const load = () => { try { return { mode: "text", url: null, ...JSON.parse(readFileSync(file, "utf8")) }; } catch { return { mode: "text", title: "", text: "", url: null }; } };
   const clip = (v, n) => String(v ?? "").slice(0, n);
+  const httpsUrl = (u) => { try { const p = new URL(String(u)); return p.protocol === "https:" && !/[\s"'<>\\]/.test(p.href) ? p.href : null; } catch { return null; } };
 
   r.get("/screen/:token", (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
@@ -27,7 +28,10 @@ export function screenRoutes({ config }) {
   r.post("/screen-update", express.json({ limit: "32kb" }), (req, res) => {
     const auth = /^Bearer (.+)$/.exec(req.get("authorization") || "");
     if (!auth || !same(auth[1], config.screenWrite)) return res.status(401).json({ error: "unauthorized" });
-    writeFileSync(file, JSON.stringify({ title: clip(req.body?.title, 200), text: clip(req.body?.text, 1000) }), { mode: 0o600 });
+    const mode = req.body?.mode === "url" ? "url" : "text";
+    const url = mode === "url" ? httpsUrl(req.body?.url) : null;
+    if (mode === "url" && !url) return res.status(400).json({ error: "Nur https-Adressen" });
+    writeFileSync(file, JSON.stringify({ mode, title: clip(req.body?.title, 200), text: clip(req.body?.text, 1000), url }), { mode: 0o600 });
     res.status(204).end();
   });
   return r;

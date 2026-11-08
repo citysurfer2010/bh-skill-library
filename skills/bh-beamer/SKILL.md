@@ -16,8 +16,8 @@ Bedient den Samsung The Premiere über das zentrale MCP-Gateway und den WireGuar
 | `beamer_status` | Erreichbarkeit, Name, Modell, Zustand |
 | `beamer_press` | Taste drücken: `KEY_POWER`, `KEY_VOLUP`, `KEY_VOLDOWN`, `KEY_MUTE`, `KEY_HOME`, `KEY_RETURN`, Pfeile, `KEY_ENTER`, `KEY_PLAY`, `KEY_PAUSE`, `KEY_SOURCE` |
 | `beamer_open_app` | App starten: YouTube, Prime Video, Netflix, Disney+, Apple TV, Spotify, WOW, Internet |
-| `beamer_show_text` | Text groß als Bild per Stream anzeigen |
-| `beamer_show_url` | Browser starten und Adresse übergeben; dieser Beamer lädt sie bisher nicht von selbst |
+| `beamer_show_text` | Text groß anzeigen: in der App BH Screen, sonst als Bild per Stream |
+| `beamer_show_url` | Webseite im Vollbild öffnen (braucht die App BH Screen) |
 | `beamer_play_media` | Video oder Bild per DLNA abspielen, Adresse muss für den Beamer erreichbar sein |
 | `beamer_stop_media` | Wiedergabe beenden |
 | `beamer_media_state` | Zustand der Wiedergabe |
@@ -32,3 +32,15 @@ Beim ersten Tastendruck erscheint am Beamer eine Abfrage. Der User erlaubt sie m
 - Inhalte auf dem Bildschirm sieht jeder im Raum: nichts Privates anzeigen, was der User nicht genannt hat.
 - Der Link der Anzeigeseite ist geheim und bleibt in der `.env`, er wird nie ausgegeben.
 - `KEY_POWER` schaltet aus. Einschalten aus dem Standby klappt darüber meist nicht.
+
+## App „BH Screen“ (einmalig vom Mac installieren)
+
+Quellcode in `app/`. Die App fragt alle 3 Sekunden den Server, was sie zeigen soll: Text oder eine Webseite im Vollbild.
+Samsung stellt Zertifikate nur über Tizen Studio aus, deshalb läuft das Paketieren auf dem Mac:
+
+1. Tizen Studio installieren, Certificate Manager → Samsung-Profil `BH` (Distributor Public, DUID des Beamers, Samsung-Konto).
+2. Am Beamer: Apps → 1 2 3 4 5 → Developer mode, Host-IP = IP des Macs; Beamer neu starten.
+3. `app/build.sh <BH_SCREEN_URL> <Beamer-IP>`; die Adresse steht in `/srv/mcp-gateway/nas.env` auf dem Server (`BH_SCREEN_URL`).
+
+Danach erkennt der Skill die App und nutzt sie automatisch.
+

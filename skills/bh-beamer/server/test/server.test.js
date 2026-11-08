@@ -79,17 +79,26 @@ test('Browser: Start ueber die App, Adresse wird nachgereicht, fremde App nie', 
   assert.equal(sent.length, 0);
 });
 
-test('Text als Bild: erst https, sonst http, sonst Fehlermeldung', async () => {
+test('Text: mit App BH Screen direkt, sonst als Bild (erst https, dann http)', async () => {
   process.env.BH_SCREEN_URL = 'https://x/screen/t'; process.env.BH_AUTH_INTERNAL = 'http://x'; process.env.BH_SCREEN_WRITE = 'W';
-  const realFetch = global.fetch; global.fetch = async () => ({ ok: true });
-  const { showText } = require('../lib/screen.js');
+  const realFetch = global.fetch; const sent = []; global.fetch = async (_u, o) => { sent.push(JSON.parse(o.body)); return { ok: true }; };
+  const { showText, showUrl } = require('../lib/screen.js');
   try {
+    const opened = [];
+    const withApp = { isInstalled: async () => true, openApp: async (a, o) => opened.push([a, o]), launchBrowser: async () => assert.fail('kein Browser') };
+    assert.equal(await showText('Hallo', '', { remote: withApp, waitMs: 1 }), 'app');
+    assert.deepEqual(sent.at(-1), { mode: 'text', title: 'Hallo', text: '' }); assert.deepEqual(opened.at(-1), ['BH Screen', undefined]);
+    assert.equal(await showUrl('https://a.de/x', { remote: withApp }), 'app');
+    assert.deepEqual(sent.at(-1), { mode: 'url', url: 'https://a.de/x' }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
+    await assert.rejects(showUrl('http://a.de', { remote: withApp }), /https/);
     const urls = []; let states = ['STOPPED', 'PLAYING'];
+    const noApp = { isInstalled: async () => false, launchBrowser: async (u) => urls.push('browser:' + u) };
     const dlna = { play: async (u, _t, kind) => { assert.equal(kind, 'image'); urls.push(u); }, state: async () => states.shift() };
-    await showText('Hallo', '', { dlna, waitMs: 1 });
+    assert.equal(await showText('Hallo', '', { remote: noApp, dlna, waitMs: 1 }), 'stream');
     assert.match(urls[0], /^https:.*image\.jpg\?v=/); assert.match(urls[1], /^http:/);
+    assert.equal(await showUrl('https://a.de/', { remote: noApp }), 'browser'); assert.equal(urls.at(-1), 'browser:https://a.de/');
     states = ['STOPPED', 'STOPPED'];
-    await assert.rejects(showText('Hallo', '', { dlna, waitMs: 1 }), /nicht angenommen/);
+    await assert.rejects(showText('Hallo', '', { remote: noApp, dlna, waitMs: 1 }), /nicht angenommen/);
   } finally { global.fetch = realFetch; }
 });
 
@@ -99,9 +108,9 @@ test('Anzeige: nur https, Inhalt geht mit Schreib-Schluessel an den Dienst', asy
   assert.throws(() => s.httpsUrl('http://a.de'), /https/);
   assert.throws(() => s.httpsUrl('javascript:alert(1)'), /https/);
   let seen;
-  await s.setContent('Hallo', 'Text', async (u, o) => { seen = [u, o]; return { ok: true }; });
+  await s.setContent({ mode: 'text', title: 'Hallo', text: 'Text' }, async (u, o) => { seen = [u, o]; return { ok: true }; });
   assert.equal(seen[0], 'http://x/screen-update'); assert.equal(seen[1].headers.authorization, 'Bearer W');
-  await assert.rejects(s.setContent('a', 'b', async () => ({ ok: false, status: 401 })), /401/);
+  await assert.rejects(s.setContent({ title: 'a' }, async () => ({ ok: false, status: 401 })), /401/);
 });
 
 test('Stream: Steueradresse wird gefunden, Adresse maskiert, Fehler gemeldet', async () => {
