@@ -1,0 +1,51 @@
+'use strict';
+/**
+ * Fehler einheitlich: unter /api/ als JSON { error, code }, sonst als eigenständige Seite (401/403/404/500).
+ * Nie Stacktraces an den Client; bei 500 steht eine Vorgangsnummer in Antwort und Log.
+ */
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
+const APP_NAME = 'Beamer';
+const APP_BASE = '/beamer';
+const TOKENS = fs.readFileSync(path.join(__dirname, '..', 'public', 'css', 'tokens.css'), 'utf8');
+const TITLES = { 400: 'Ungültige Anfrage', 401: 'Nicht angemeldet', 403: 'Kein Zugriff', 404: 'Seite nicht gefunden', 413: 'Datei zu groß', 500: 'Interner Fehler' };
+
+const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isApi = (req) => req.originalUrl.split('?')[0].startsWith('/api/');
+
+function html({ status, message, incident }) {
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(status)} · ${esc(APP_NAME)}</title>
+<script>(function(){var s;try{s=localStorage.getItem('bh-theme');}catch(e){}document.documentElement.dataset.theme=s||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');})();</script>
+<style>${TOKENS}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bh-bg);color:var(--bh-text);font-family:var(--bh-font)}
+.box{max-width:420px;width:100%;padding:32px;background:var(--bh-surface);border:1px solid var(--bh-border);border-radius:var(--bh-radius-lg);box-shadow:var(--bh-shadow-sm)}
+.mark{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--bh-radius-sm);background:var(--bh-navbar);color:var(--bh-on-navbar);font-weight:800;font-size:14px}
+h1{margin:20px 0 8px;font-size:22px}p{margin:0 0 12px;color:var(--bh-muted);font-size:14px}a{color:var(--bh-primary);font-size:14px;font-weight:600}</style></head>
+<body><main class="box"><span class="mark" aria-hidden="true">BH</span><h1>${esc(TITLES[status] || 'Fehler')}</h1><p>${esc(message)}</p>
+${incident ? `<p>Vorgangsnummer: ${esc(incident)}</p>` : ''}<a href="${esc(APP_BASE)}/">Zur Startseite von ${esc(APP_NAME)}</a></main></body></html>`;
+}
+
+function sendError(req, res, { status, message, incident }) {
+  const text = message || TITLES[status] || 'Fehler';
+  if (isApi(req)) return res.status(status).json({ error: text, code: status, ...(incident ? { incident } : {}) });
+  res.set('Cache-Control', 'no-store');
+  return res.status(status).type('html').send(html({ status, message: text, incident }));
+}
+
+function notFound(req, res) {
+  return sendError(req, res, { status: 404, message: 'Diese Adresse gibt es hier nicht.' });
+}
+
+// eslint-disable-next-line no-unused-vars -- Express erkennt Fehler-Middleware an den vier Parametern
+function errorHandler(err, req, res, _next) {
+  if (err.code === 'LIMIT_FILE_SIZE') return sendError(req, res, { status: 413 });
+  if (err.status >= 400 && err.status < 500) return sendError(req, res, { status: err.status, message: TITLES[err.status] || 'Ungültige Anfrage' });
+  const incident = crypto.randomBytes(4).toString('hex');
+  console.error(`[${incident}]`, err);
+  return sendError(req, res, { status: 500, message: 'Etwas ist schiefgelaufen.', incident });
+}
+
+module.exports = { sendError, notFound, errorHandler };
