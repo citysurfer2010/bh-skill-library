@@ -12,6 +12,18 @@ Einladungen per Einmal-Link, App-Uebersicht und Profilseite je User. Zugang habe
 
 Neue Apps tragen Admins unter `/admin/apps` ein; sie erscheinen dann in der Uebersicht auf `/`.
 
+## Standard: App-Übersicht (verbindlich)
+
+Die Startseite `/` ist die App-Übersicht unter `apps.<domain>`:
+
+- Begrüßung „Hallo <Vorname>“ und „Ihre Anwendungen“, darunter das zentrale Suchfeld.
+- Suche beim Laden fokussiert (nicht auf Touch-Geräten), `/` fokussiert, Tippen filtert die Kacheln live.
+- Enter öffnet den besten Treffer, Pfeiltasten wählen in der Modulliste, Esc leert. Umlaute gelten in beiden Schreibweisen (`mull`, `muell`).
+- Kacheln in Abschnitten („Anwendungen“, für Admins „Verwaltung“), nur freigegebene Apps. Admin-Apps tragen ein Admin-Schild.
+- Untermodule erscheinen in der Trefferliste, sobald eine App sie liefert (Feld `modules` der Suchdaten).
+
+Navbar und Benutzermenü folgen dem Standard im Skill `bh-webapp-skeleton`.
+
 ## Anbindung einer App
 
 Apps pruefen keine Sitzungen selbst. Der Proxy fragt den Dienst und reicht die Kopfzeilen weiter:

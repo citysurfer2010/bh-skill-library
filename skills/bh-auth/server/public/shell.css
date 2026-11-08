@@ -1,0 +1,38 @@
+/* Standard-Navbar der BH Platform: gleicher Rahmen wie im Skeleton (bh-webapp-skeleton). */
+.bhs-navbar { position: sticky; top: 0; z-index: 50; height: 52px; display: flex; align-items: center; gap: 4px; padding: 0 16px; background: var(--bh-navbar); color: var(--bh-on-navbar); }
+.bhs-logo { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px 0 4px; color: var(--bh-on-navbar); font-weight: 700; font-size: 15px; text-decoration: none; white-space: nowrap; }
+.bhs-mark { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex-shrink: 0; border-radius: 6px; background: var(--bh-on-navbar); color: var(--bh-navbar); font-size: 11px; font-weight: 800; }
+.bhs-tabs { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.bhs-tab { display: flex; align-items: center; height: 52px; padding: 0 14px; border-bottom: 2px solid transparent; color: var(--bh-on-navbar-muted); font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.bhs-tab:hover { color: var(--bh-on-navbar); }
+.bhs-tab.active { color: var(--bh-on-navbar); border-bottom-color: var(--bh-navbar-accent); }
+.bhs-right { margin-left: auto; display: flex; align-items: center; }
+.bh-um { position: relative; }
+.bh-um-btn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px; border: 0; border-radius: 6px; background: none; color: var(--bh-on-navbar); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.bh-um-btn:hover { background: rgba(255, 255, 255, .15); }
+.bh-um-btn:focus-visible { outline: 2px solid var(--bh-on-navbar); outline-offset: 1px; }
+.bh-um-avatar { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--bh-on-navbar); color: var(--bh-navbar); font-size: 11px; font-weight: 700; }
+.bh-um-name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bh-um-chevron { display: inline-flex; }
+.bh-um-pop { position: absolute; top: 100%; right: 0; z-index: 70; width: 260px; margin-top: 4px; padding: 8px; background: var(--bh-surface); color: var(--bh-text); border: 1px solid var(--bh-border); border-radius: 10px; box-shadow: var(--bh-shadow); }
+.bh-um-pop[hidden] { display: none; }
+.bh-um-head { padding: 8px 10px 10px; border-bottom: 1px solid var(--bh-border); margin-bottom: 6px; }
+.bh-um-who { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.bh-um-mail { font-size: 12px; color: var(--bh-muted); overflow: hidden; text-overflow: ellipsis; }
+.bh-um-role { display: inline-block; margin-top: 6px; padding: 1px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--bh-info-bg); color: var(--bh-primary); }
+.bh-um-item, .bh-um-pop form button.bh-um-item { display: flex; align-items: center; justify-content: flex-start; gap: 8px; width: 100%; height: auto; padding: 8px 10px; border: 0; border-radius: 6px; background: none; color: var(--bh-text); font: inherit; font-size: 13px; font-weight: 400; text-align: left; text-decoration: none; cursor: pointer; }
+.bh-um-item:hover, .bh-um-pop form button.bh-um-item:hover { background: var(--bh-bg-subtle); }
+.bh-um-pop form { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--bh-border); }
+.bh-um-pop form button.bh-um-logout { color: var(--bh-danger); }
+.bh-um-mobile { display: none; }
+.bh-um-theme { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; font-size: 13px; }
+.bh-um-seg { display: inline-flex; padding: 2px; border-radius: 6px; background: var(--bh-bg-subtle); }
+.bh-um-seg button { height: 26px; padding: 0 10px; border: 0; border-radius: 4px; background: none; color: var(--bh-muted); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }
+.bh-um-seg button:hover { background: none; }
+.bh-um-seg button.is-active { background: var(--bh-surface); color: var(--bh-text); }
+@media (max-width: 720px) {
+  .bhs-navbar { padding: 0 8px; }
+  .bhs-tabs, .bh-um-name { display: none; }
+  .bh-um-mobile { display: flex; }
+  .bh-um-pop { width: min(280px, calc(100vw - 16px)); }
+}

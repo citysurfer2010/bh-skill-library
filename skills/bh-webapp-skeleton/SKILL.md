@@ -103,3 +103,21 @@ Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
 Änderungen an Vorlagen passieren hier in `templates/`, nicht in einzelnen Apps. Platzhalter und Aufbau: `templates/README.md`.
 
 Commit und Pull Request: Skill `bh-github`.
+
+## Standard: Navbar und Benutzermenü (verbindlich)
+
+Gilt für jede Oberfläche der BH Platform, auch den Anmeldedienst `bh-auth`. Nicht pro App neu erfinden.
+
+| Element | Vorgabe |
+|---|---|
+| Navbar | 52 px hoch, volle Breite, Farbe `--bh-navbar`, links BH-Kachel und Name, daneben die Tabs |
+| Aktiver Tab | Linie an der Unterkante in `--bh-navbar-accent` |
+| Rechts oben | Ausschließlich das Benutzermenü, Seitenknöpfe gehören in den Seitenkopf |
+| Menü-Knopf | Avatar mit Initialen, Name, Pfeil; Schmal: nur Avatar und Pfeil |
+| Menü-Kopf | Name, E-Mail, Rolle |
+| Einträge, in dieser Reihenfolge | App-Übersicht (`/`), Mein Profil (`/profile`), Design Hell/Dunkel, Abmelden (`POST /logout`, rot, durch Linie getrennt) |
+| Rollen | Admin-Einträge nur für Admins anzeigen, nie ausgegraut |
+| Bedienung | Esc und Klick daneben schließen; Design wird unter `bh-theme` gespeichert |
+
+Quelle sind `components/bh-user-menu.js` und `css/bh-user-menu.css`. Änderungen an diesem Standard immer zugleich hier und in `bh-auth` (`lib/views.js`, `public/shell.css`) vornehmen.
+

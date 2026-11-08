@@ -77,3 +77,51 @@ test("Auf anderen Geraeten abmelden: diese Sitzung bleibt, andere enden", async 
     assert.equal((await other("/validate")).status, 401);
   } finally { await g.stop(); }
 });
+
+test("Navbar: Benutzermenue mit Profil, Abmelden und Design auf jeder angemeldeten Seite", async () => {
+  const g = await start();
+  try {
+    const u = await logged(g, "u@b.de");
+    for (const p of ["/", "/profile"]) {
+      const html = await (await u(p)).text();
+      assert.match(html, /class="bhs-navbar"/, p);
+      for (const needle of ['class="bh-um-btn"', 'href="/profile"', 'action="/logout"', 'data-um-theme="dark"']) assert.ok(html.includes(needle), `${p}: ${needle}`);
+      assert.doesNotMatch(html, /href="\/admin"/, p);
+    }
+    const admin = await (await (await logged(g, "a@b.de", { admin: true }))("/")).text();
+    assert.match(admin, /href="\/admin"/);
+  } finally { await g.stop(); }
+});
+
+test("Uebersicht: Suchfeld, Suchdaten nur mit erlaubten Apps, Script-Block sicher maskiert", async () => {
+  const g = await start();
+  try {
+    const a = await logged(g, "a@b.de", { admin: true });
+    await a("/admin/apps", { form: { name: "</script><b>x", url: "https://a.de" } });
+    await a("/admin/apps", { form: { name: "Nur Admin", url: "https://b.de", adminOnly: "1" } });
+    const adminHtml = await (await a("/")).text();
+    assert.match(adminHtml, /id="appSearch"/);
+    assert.doesNotMatch(adminHtml, /"label":"<\/script>/);
+    const data = (html) => JSON.parse(/id="dashData">(.*?)<\/script>/s.exec(html)[1]);
+    assert.ok(data(adminHtml).apps.some((x) => x.label === "Nur Admin"));
+    const userHtml = await (await (await logged(g, "u@b.de"))("/")).text();
+    const labels = data(userHtml).apps.map((x) => x.label);
+    assert.ok(!labels.includes("Nur Admin") && !labels.includes("Benutzerverwaltung"));
+    assert.ok(labels.includes("</script><b>x"));
+  } finally { await g.stop(); }
+});
+
+test("Suche: Umlaute in beiden Schreibweisen, App schlaegt schwaecheren Treffer", async () => {
+  globalThis.window = {};
+  await import("../public/dashboard-modules.js");
+  const S = globalThis.window.BHModuleSearch;
+  const apps = [{ id: "m", label: "Müllabfuhr", url: "https://m.de" }, { id: "f", label: "Finanzen", url: "https://f.de" }];
+  assert.equal(S.rank([], apps, "mull", 6).top.id, "m");
+  assert.equal(S.rank([], apps, "muell", 6).top.id, "m");
+  assert.equal(S.rank([], apps, "fin", 6).top.url, "https://f.de");
+  assert.equal(S.rank([], apps, "f", 6).top, null);
+  assert.equal(S.rank([], apps, "xyz", 6).top, null);
+  const html = S.html({ modules: [{ id: "x", label: "<b>", url: "javascript:alert(1)", appLabel: "A" }], top: null });
+  assert.doesNotMatch(html, /<b>|javascript:/);
+});
+

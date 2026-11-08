@@ -31,3 +31,10 @@
   background: none; color: var(--bh-text); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
 }
 .bh-um-item:hover { background: var(--bh-bg-subtle); }
+a.bh-um-item { text-decoration: none; }
+.bh-um-theme { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; font-size: 13px; }
+.bh-um-seg { display: inline-flex; padding: 2px; border-radius: var(--bh-radius-sm); background: var(--bh-bg-subtle); }
+.bh-um-seg button { height: 26px; padding: 0 10px; border: 0; border-radius: 4px; background: none; color: var(--bh-muted); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }
+.bh-um-seg button.is-active { background: var(--bh-surface); color: var(--bh-text); }
+.bh-um-logout { margin: 6px 0 0; padding-top: 6px; border-top: 1px solid var(--bh-border); }
+.bh-um-danger { color: var(--bh-danger, #b91c1c); }

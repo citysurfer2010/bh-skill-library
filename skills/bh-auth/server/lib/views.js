@@ -3,9 +3,11 @@ export const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&a
 
 const brand = `<div class="brand"><span class="mark" aria-hidden="true">BH</span><span>BH Platform</span></div>`;
 
-function page(title, body, cls = "") {
+function page(title, body, { css = [], js = [] } = {}) {
+  const links = ["/auth.css", ...css].map((h) => `<link rel="stylesheet" href="${h}">`).join("");
+  const scripts = js.map((h) => `<script src="${h}" defer></script>`).join("");
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(title)} · BH Platform</title><link rel="stylesheet" href="/auth.css"></head><body class="${cls}">${body}</body></html>`;
+<title>${esc(title)} · BH Platform</title><script src="/theme.js"></script>${links}${scripts}</head><body>${body}</body></html>`;
 }
 
 const center = (title, inner) => page(title, `<main class="center"><section class="card narrow">${brand}${inner}</section></main>`);
@@ -43,8 +45,28 @@ ${hasPassword ? `<label>Aktuelles Passwort<input type="password" name="current" 
 
 export const messageView = (title, text) => center(title, `<h1>${esc(title)}</h1><p class="muted">${esc(text)}</p><a class="button secondary" href="/login">Zur Anmeldung</a>`);
 
-export function shell(user, title, content) {
-  const nav = `<a href="/">Apps</a>${user.isAdmin ? `<a href="/admin">Benutzer</a><a href="/admin/apps">Apps verwalten</a>` : ""}`;
-  return page(title, `<header class="topbar">${brand}<nav>${nav}<a class="who" href="/profile">${esc(user.name)}</a><form method="post" action="/logout"><button class="link">Abmelden</button></form></nav></header>
-<main class="page">${content}</main>`);
+const CHEVRON = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
+const initials = (u) => esc(String(u.name || u.email || "?").split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join(""));
+
+function navTabs(user, active) {
+  const tabs = [["apps", "/", "Apps"], ...(user.isAdmin ? [["users", "/admin", "Benutzer"], ["manage", "/admin/apps", "Apps verwalten"]] : [])];
+  return tabs.map(([id, href, label]) => `<a class="bhs-tab${id === active ? " active" : ""}" href="${href}">${label}</a>`).join("");
+}
+
+// Standard-Benutzermenue: oben rechts, wie im Skeleton (siehe Skill bh-webapp-skeleton).
+function userMenu(user) {
+  const adminLinks = user.isAdmin ? `<a class="bh-um-item bh-um-mobile" role="menuitem" href="/admin">Benutzer</a><a class="bh-um-item bh-um-mobile" role="menuitem" href="/admin/apps">Apps verwalten</a>` : "";
+  return `<div class="bh-um"><button type="button" class="bh-um-btn" aria-haspopup="menu" aria-expanded="false"><span class="bh-um-avatar" aria-hidden="true">${initials(user)}</span><span class="bh-um-name">${esc(user.name)}</span><span class="bh-um-chevron">${CHEVRON}</span></button>
+<div class="bh-um-pop" role="menu" hidden><div class="bh-um-head"><div class="bh-um-who">${esc(user.name)}</div><div class="bh-um-mail">${esc(user.email)}</div><span class="bh-um-role">${user.isAdmin ? "Admin" : "Benutzer"}</span></div>
+<a class="bh-um-item" role="menuitem" href="/">App-Übersicht</a><a class="bh-um-item" role="menuitem" href="/profile">Mein Profil</a>${adminLinks}
+<div class="bh-um-theme"><span>Design</span><div class="bh-um-seg"><button type="button" data-um-theme="light">Hell</button><button type="button" data-um-theme="dark">Dunkel</button></div></div>
+<form method="post" action="/logout"><button class="bh-um-item bh-um-logout" role="menuitem">Abmelden</button></form></div></div>`;
+}
+
+const ACTIVE = { Apps: "apps", Benutzer: "users", "Apps verwalten": "manage" };
+
+export function shell(user, title, content, { css = [], js = [], bare = false } = {}) {
+  const main = bare ? content : `<main class="page">${content}</main>`;
+  return page(title, `<header class="bhs-navbar"><a class="bhs-logo" href="/"><span class="bhs-mark" aria-hidden="true">BH</span><span>BH Platform</span></a>
+<nav class="bhs-tabs" aria-label="Hauptnavigation">${navTabs(user, ACTIVE[title])}</nav><div class="bhs-right">${userMenu(user)}</div></header>${main}`, { css: ["/shell.css", ...css], js: ["/shell.js", ...js] });
 }
