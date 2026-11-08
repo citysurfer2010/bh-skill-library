@@ -93,3 +93,11 @@
   .bm-hero:has(~ .bm-layout[data-view="remote"]) .bm-state { display: none; }
   .bm-hero:has(~ .bm-layout[data-view="remote"]) h1 { margin: 0; font-size: 18px; }
 }
+.bm-kids { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.bm-kid { padding: 12px 16px; border: 1px solid var(--bh-border-light); border-radius: var(--bh-radius); background: var(--bh-surface); box-shadow: var(--bh-shadow-sm); font-size: 14px; color: var(--bh-text); }
+.bm-kid b { font-size: 16px; font-weight: 600; }
+.bm-kid small { margin-left: 8px; color: var(--bh-muted); font-size: 13px; }
+.bm-kid div { margin-top: 4px; }
+.bm-l.cancelled { color: var(--bh-danger); text-decoration: line-through; }
+.bm-l.changed { color: var(--bh-warm); font-weight: 600; }
+.bm-l.exam { color: var(--bh-primary); font-weight: 600; }

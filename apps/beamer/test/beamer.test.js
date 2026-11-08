@@ -156,8 +156,20 @@ test('Menü: Auswahl am Beamer wird ausgeführt, unbekanntes ignoriert, Menü wi
 
 test('Stundenplan: erster Abruf nach Eintragung des Vertretungsplans, wandert ins Menü', async () => {
   const bridge = require('../lib/menu-bridge');
-  assert.equal(bridge.SCHEDULE_AT[0], '07:05');
+  assert.deepEqual(bridge.SCHEDULE_AT.slice(0, 3), ['06:30', '06:45', '07:00']);
   gateway.setCaller(async (name, args) => { calls.push([name, args]); return name === 'webuntis_day' ? JSON.stringify({ label: 'Heute', kids: [{ name: 'Anna', lessons: [] }] }) : 'ok'; });
   await bridge.refreshSchedule();
   assert.equal(calls.find((c) => c[0] === 'beamer_menu_set')[1].menu.schedule.kids[0].name, 'Anna');
+});
+
+test('Stundenplan: beim Öffnen frisch, aber höchstens alle 2 Minuten', async () => {
+  const bridge = require('../lib/menu-bridge');
+  let fetched = 0;
+  gateway.setCaller(async (name) => { if (name === 'webuntis_day') { fetched++; return JSON.stringify({ label: 'Heute', kids: [] }); } return 'ok'; });
+  const first = await bridge.refreshIfStale(true); assert.equal(first.label, 'Heute'); assert.equal(fetched, 1);
+  await bridge.refreshIfStale(); assert.equal(fetched, 1);
+  await bridge.refreshIfStale(true); assert.equal(fetched, 2);
+  const r = await t.call('/api/schedule', { as: 'u@beispiel.de' });
+  assert.equal(r.status, 200); assert.equal((await r.json()).label, 'Heute');
+  assert.equal((await t.call('/api/schedule')).status, 401);
 });

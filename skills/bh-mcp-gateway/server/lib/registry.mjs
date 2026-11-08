@@ -2,7 +2,9 @@
 // Sonderzeichen werden zu "_", weil Modell-APIs Punkte in Namen ablehnen.
 const clean = (name) => name.replace(/[^a-zA-Z0-9_-]/g, "_");
 // Ohne users-Liste steht ein Server allen offen; mit Liste nur den Genannten.
-const allowed = (server, user) => !server.users || server.users.includes(user);
+// Dienst-Konten (bh-*) bekommen nur ausdruecklich freigegebene Server: Jeder andere waere ein unnoetiger Prozess.
+const isService = (user) => user.startsWith("bh-");
+const allowed = (server, user) => (server.users ? server.users.includes(user) : !isService(user));
 
 export class Registry {
   constructor(servers, pool) {

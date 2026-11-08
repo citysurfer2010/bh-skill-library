@@ -18,6 +18,13 @@ window.BeamerView = (() => {
   const appTile = (a) => `<button type="button" class="bm-app" data-send="/app" data-label="${esc(a)}" data-body="${data({ app: a })}" data-now="app:${esc(a)}"><span class="bm-mono" aria-hidden="true">${esc(a[0])}</span><span>${esc(a)}</span></button>`;
   const form = (id, label, name, placeholder, cta, type = 'text') => `<form class="bm-form" data-form="${id}"><label class="bh-label" for="f-${id}">${label}</label><input id="f-${id}" class="bh-input" name="${name}" type="${type}" placeholder="${placeholder}" required autocomplete="off"><button class="bh-btn">${cta}</button></form>`;
 
+  function schedule(plan) {
+    const kids = (plan.kids || []).filter((k) => k.lessons.length);
+    const tag = (l) => `<span class="bm-l ${l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state}" title="${esc(l.title || '')}">${esc(l.subject)}${l.exam ? ' (Klausur)' : ''}</span>`;
+    const kid = (k) => { const live = k.lessons.filter((l) => l.state !== 'cancelled'); return `<div class="bm-kid"><b>${esc(k.name)}</b><small>${live.length ? `${esc(live[0].from)} – ${esc(live[live.length - 1].to)}` : 'alles fällt aus'}</small><div>${k.lessons.map(tag).join(' · ')}</div></div>`; };
+    return `<h2>Schultag · ${esc(plan.label)}</h2><div class="bm-kids">${kids.length ? kids.map(kid).join('') : '<div class="bm-kid"><b>Schulfrei</b></div>'}</div>`;
+  }
+
   function hero() {
     return `<section class="bm-hero" id="bm-hero"><img id="bm-hero-img" alt="" hidden><div class="bm-hero-body" aria-live="polite" aria-atomic="true"><span class="bm-state" id="bm-state">Wird geprüft</span><h1 id="bm-title">Beamer</h1><p id="bm-sub"></p></div>
       <div class="bm-hero-actions"><button type="button" class="bh-btn bh-btn-primary" data-stop hidden>${I.stop}Stoppen</button><button type="button" class="bh-btn bh-btn-primary" data-power="on" hidden>Einschalten</button><button type="button" class="bh-btn bm-off" data-power="off" hidden>Ausschalten</button><button type="button" class="bh-btn bh-btn-danger" data-power-confirm hidden>Ja, ausschalten</button><button type="button" class="bh-btn" data-power-cancel hidden>Abbrechen</button></div></section>`;
@@ -36,6 +43,7 @@ window.BeamerView = (() => {
       <div class="bm-nowbar" id="bm-nowbar" hidden><span id="bm-nowbar-text"></span><button type="button" class="bh-btn bh-btn-primary" data-stop hidden>${I.stop}Stoppen</button><button type="button" class="bh-btn" data-goto-remote aria-label="Fernbedienung">${I.remote}</button></div>
       <div class="bm-view" role="tablist" aria-label="Ansicht"><button type="button" role="tab" data-view="start" aria-selected="true">Starten</button><button type="button" role="tab" data-view="remote" aria-selected="false">Fernbedienung</button></div>
       <div class="bm-layout" id="bm-layout" data-view="start"><div class="bm-main">
+        <section class="bm-section" id="bm-schedule" hidden></section>
         ${section('Stimmung', `<div class="bm-moods">${c.moods.map(moodTile).join('')}</div>`)}
         ${section('Radio', `<div class="bm-stations">${c.stations.map(stationTile).join('')}</div>`)}
         ${section('Apps', `<div class="bm-apps">${c.apps.map(appTile).join('')}</div>`)}
@@ -44,5 +52,5 @@ window.BeamerView = (() => {
       </div><aside class="bm-side">${section('Fernbedienung', remote())}</aside></div>`;
   }
 
-  return { page };
+  return { page, schedule };
 })();

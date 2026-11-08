@@ -3,7 +3,8 @@
 const gateway = require('./gateway');
 const { beamerMenu } = require('./catalog');
 
-const POLL_MS = 800; const IDLE_MS = 5000; const MENU_MS = 300_000;
+// Eine einzige wartende Anfrage statt Dauerabfragen: Das Gateway antwortet, sobald jemand etwas wählt.
+const WAIT_S = 20; const IDLE_MS = 5000;
 
 let schedule = null;
 const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule } });
@@ -27,7 +28,7 @@ function refreshIfStale(force = false) {
 const berlinTime = (d = new Date()) => new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
 
 async function tick(commands) {
-  const list = JSON.parse(await gateway.call('beamer_menu_requests') || '[]');
+  const list = JSON.parse(await gateway.call('beamer_menu_requests', { wait: WAIT_S }) || '[]');
   for (const { kind, id } of list) {
     if (commands[kind]) await commands[kind](id);
   }
@@ -35,12 +36,12 @@ async function tick(commands) {
 
 function start(commands) {
   const loop = async () => {
-    let wait = POLL_MS;
+    let wait = 50;
     try { await tick(commands); } catch (e) { wait = IDLE_MS; console.error(`[menu] ${e.message}`); }
     setTimeout(loop, wait);
   };
   const menu = () => pushMenu().catch((e) => console.error(`[menu] ${e.message}`));
-  menu(); setInterval(menu, MENU_MS);
+  menu();
   const fetchPlan = () => refreshIfStale(true).catch((e) => console.error(`[stundenplan] ${e.message}`));
   fetchPlan();
   let last = '';

@@ -15,6 +15,7 @@ export function screenRoutes({ config }) {
   const menuFile = path.join(config.dataDir, "screen-menu.json");
   const loadMenu = () => { try { return JSON.parse(readFileSync(menuFile, "utf8")); } catch { return null; } };
   const requests = [];
+  const requestWaiters = new Set();
   const waiters = new Set();
   let version = String(Date.now());
   const changed = () => { version = String(Number(version) + 1); [...waiters].forEach((w) => w()); };
@@ -68,10 +69,23 @@ export function screenRoutes({ config }) {
     let body; try { body = JSON.parse(req.body); } catch { return res.status(400).json({ error: "unlesbar" }); }
     if (!["radio", "mood", "back", "radiooff", "stop", "refresh"].includes(body?.kind) || !/^[a-z0-9]{1,40}$/.test(String(body?.id))) return res.status(400).json({ error: "ungueltig" });
     if (requests.length < 10) requests.push({ kind: body.kind, id: body.id });
+    [...requestWaiters].forEach((w) => w());
     res.status(204).end();
   });
   const writer = (req) => { const a = /^Bearer (.+)$/.exec(req.get("authorization") || ""); return a && same(a[1], config.screenWrite); };
-  r.get("/screen-requests", (req, res) => (writer(req) ? res.json({ requests: requests.splice(0) }) : res.status(401).json({ error: "unauthorized" })));
+  // Lange Abfrage: Die App wartet auf eine Auswahl, statt staendig nachzufragen.
+  r.get("/screen-requests", (req, res) => {
+    if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
+    const wait = Math.min(Number(req.query.wait) || 0, 25);
+    const reply = () => res.json({ requests: requests.splice(0) });
+    if (requests.length || !wait) return reply();
+    let finished = false;
+    const finish = (send) => { if (finished) return; finished = true; clearTimeout(timer); requestWaiters.delete(done); if (send) reply(); };
+    const done = () => finish(true);
+    const timer = setTimeout(done, wait * 1000);
+    requestWaiters.add(done);
+    res.on("close", () => finish(false));
+  });
   r.post("/screen-menu", express.json({ limit: "32kb" }), (req, res) => {
     if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
     if (!Array.isArray(req.body?.radio) || !Array.isArray(req.body?.mood)) return res.status(400).json({ error: "ungueltig" });
