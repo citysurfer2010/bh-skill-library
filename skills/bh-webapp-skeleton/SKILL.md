@@ -104,6 +104,10 @@ Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
 
 Commit und Pull Request: Skill `bh-github`.
 
+## Ausrollen
+
+Apps laufen im Container `bh-apps` unter `apps.<domain>/<slug>/`, nur nach Anmeldung, und erscheinen automatisch in der App-Übersicht. Dafür die App mit `--base /<slug>` anlegen. Das Ausrollen erledigt ein Admin auf dem Server mit `bhapp deploy <slug> <pfad>`; rote Tests rollen nichts aus.
+
 ## Style Guide
 
 Farben, Ecken, Schrift und Komponenten stehen im Skill `bh-styleguide`; er gilt für jede Oberfläche.

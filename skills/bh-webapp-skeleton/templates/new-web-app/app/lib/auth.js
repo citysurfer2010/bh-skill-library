@@ -1,4 +1,7 @@
 'use strict';
+
+// Der Anmeldedienst schickt Namen URL-kodiert, damit Umlaute in Kopfzeilen ueberleben.
+function decodeName(v) { try { return v ? decodeURIComponent(v) : v; } catch { return v; } }
 /**
  * Wer angemeldet ist, sagt der BH-Auth-Proxy per Kopfzeilen. Vertraut wird ihnen nur mit TRUST_PROXY_AUTH=1,
  * also nur, wenn die App ausschließlich hinter dem Proxy erreichbar ist. Sonst zählen nur DEV_USER_EMAIL und DEV_USER_ROLE.
@@ -23,7 +26,7 @@ function currentUser(req, _res, next) {
     return next();
   }
   const role = trusted ? req.get('x-user-role') : process.env.DEV_USER_ROLE;
-  const name = trusted ? String(req.get('x-user-name') || '').trim() : '';
+  const name = trusted ? String(decodeName(req.get('x-user-name')) || '').trim() : '';
   req.user = { email, name: name || email, role: normalRole(role) };
   return next();
 }

@@ -26,6 +26,12 @@ server {
     proxy_set_header Content-Length "";
   }
 
+  location @login {
+    return 302 /login?next=$request_uri;
+  }
+
+  include /etc/nginx/conf.d/apps/*.inc;
+
   location / {
     set $auth http://bh-auth:3337;
     proxy_pass $auth;

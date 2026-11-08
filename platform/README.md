@@ -59,3 +59,16 @@ oder im Repo. Setup-Skripte erzeugen daraus je Dienst nur die Werte, die er brau
 
 `edge/setup-cloudflare.py` setzt DNS und Tunnel, `edge/setup-edge.sh` startet nginx und `cloudflared`. Der Server oeffnet dafuer
 keine Ports. Domain und DKIM stehen als `EDGE_DOMAIN` und `BH_DKIM` in der `.env`.
+
+## Apps
+
+`apps/setup-apps.sh` startet den Container `bh-apps`. Danach als root:
+
+    bhapp deploy <slug> <pfad> ["Beschreibung"] [--admin]
+    bhapp list
+    bhapp logs <slug>
+    bhapp remove <slug> [--purge]
+
+Die App entsteht mit `init.sh <slug> "<Titel>" --base /<slug>` und liegt danach zum Beispiel unter
+`/srv/devbox/users/<user>/home/projects/<slug>`. `deploy` faehrt zuerst die Tests. Rote Tests rollen nichts aus,
+kommt die App nicht hoch, bleibt der vorherige Stand aktiv. Erreichbar ist sie unter `apps.<domain>/<slug>/`, nur nach Anmeldung.

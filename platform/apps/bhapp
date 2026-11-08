@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# Rollt Apps in den Container bh-apps aus. Nur root auf dem VPS.
+#   bhapp deploy <slug> <pfad-zur-app> ["Beschreibung"] [--admin]    Tests muessen gruen sein
+#   bhapp list | logs <slug> | remove <slug> [--purge]
+set -euo pipefail
+ROOT=/srv/bh-apps; EDGE=/srv/edge/conf/apps; U=101000; BASE_PORT=3300
+RESERVED=" login logout admin profile oauth avatar set-password change-password validate auth-headers health theme.js shell.js _auth "
+die() { echo "Fehler: $*" >&2; exit 1; }
+check_slug() { [[ $1 =~ ^[a-z][a-z0-9-]{1,40}$ ]] || die "ungueltiger Name: $1"; [[ $RESERVED != *" $1 "* ]] || die "$1 ist reserviert"; }
+next_port() { local p=$BASE_PORT; while grep -qs "\"port\": *$p\b" "$ROOT"/*/app.json; do p=$((p + 1)); done; echo "$p"; }
+reload_edge() { docker exec bh-edge nginx -t >/dev/null 2>&1 || die "nginx-Pruefung fehlgeschlagen"; docker exec bh-edge nginx -s reload >/dev/null 2>&1; }
+
+write_route() {   # slug port
+  cat >"$EDGE/$1.inc" <<C
+location = /$1 { return 302 /$1/; }
+location /$1/ {
+  auth_request /_auth;
+  auth_request_set \$u_email \$upstream_http_x_auth_email;
+  auth_request_set \$u_name \$upstream_http_x_auth_name;
+  auth_request_set \$u_role \$upstream_http_x_auth_role;
+  error_page 401 = @login;
+  set \$app http://bh-apps:$2;
+  proxy_pass \$app;
+  proxy_set_header Host \$host;
+  proxy_set_header X-User-Email \$u_email;
+  proxy_set_header X-User-Name \$u_name;
+  proxy_set_header X-User-Role \$u_role;
+  proxy_set_header X-Forwarded-For \$http_cf_connecting_ip;
+  proxy_set_header X-Forwarded-Proto https;
+  client_max_body_size 25m;
+}
+C
+  chmod 644 "$EDGE/$1.inc"
+}
+
+deploy() {
+  local slug=${1:-} src=${2:-} desc="" admin=""
+  shift 2 || die "Aufruf: bhapp deploy <slug> <pfad>"
+  for a in "$@"; do if [ "$a" = --admin ]; then admin=--admin; else desc=$a; fi; done
+  check_slug "$slug"; [ -f "$src/server.js" ] && [ -f "$src/package.json" ] || die "$src ist keine App"
+  grep -q "APP_BASE = '/$slug'" "$src/server.js" || die "Die App muss mit --base /$slug angelegt sein (init.sh)"
+  local title; title=$(jq -r '.description // .name' "$src/package.json")
+  local d=$ROOT/$slug build=$ROOT/.build-$slug port
+  rm -rf "$build"; install -d -m 755 -o "$U" -g "$U" "$build"
+  tar -C "$src" --exclude=./node_modules --exclude=./data --exclude=./.git --exclude=./coverage --exclude=./.test-tmp -cf - . | tar -C "$build" --no-same-owner -xf -
+  chown -R "$U:$U" "$build"
+  echo "Tests laufen ..."
+  docker run --rm --network bh-apps-net -u 1000:1000 -e HOME=/tmp -e NODE_NO_WARNINGS=1 -v "$build:/w" -w /w --entrypoint bash devbox:current -c \
+    'npm install --silent --no-audit --no-fund && npm test >/tmp/t 2>&1; rc=$?; tail -3 /tmp/t; [ $rc = 0 ] && npm prune --omit=dev --silent --no-audit --no-fund; exit $rc' </dev/null \
+    || { rm -rf "$build"; die "Tests rot, nichts ausgerollt"; }
+  rm -rf "$build/.test-tmp" "$build/coverage"
+  if [ -f "$d/app.json" ]; then port=$(jq -r .port "$d/app.json"); else port=$(next_port); fi
+  install -d -m 711 "$d"; install -d -m 700 -o "$U" -g "$U" "$d/data"
+  jq -n --arg s "$slug" --argjson p "$port" '{slug: $s, port: $p}' >"$d/app.json"; chmod 644 "$d/app.json"
+  rm -rf "$d/code.old"; [ -d "$d/code" ] && mv "$d/code" "$d/code.old"
+  mv "$build" "$d/code"
+  docker restart -t 3 bh-apps >/dev/null
+  local ok=""
+  for _ in $(seq 1 30); do
+    if docker run --rm --network bh-apps-net --entrypoint curl devbox:current -fsS -m 2 "http://bh-apps:$port/$slug/health" >/dev/null 2>&1 || docker run --rm --network bh-apps-net --entrypoint curl devbox:current -fsS -m 2 "http://bh-apps:$port/health" >/dev/null 2>&1; then ok=1; break; fi
+    sleep 1
+  done
+  if [ -z "$ok" ]; then
+    echo "App kommt nicht hoch, stelle vorherigen Stand wieder her" >&2
+    rm -rf "$d/code"; [ -d "$d/code.old" ] && mv "$d/code.old" "$d/code"
+    docker restart -t 3 bh-apps >/dev/null
+    die "Ausrollen fehlgeschlagen: bhapp logs $slug"
+  fi
+  rm -rf "$d/code.old"
+  write_route "$slug" "$port"; reload_edge
+  docker exec bh-auth node bin/register-app.js add "$title" "/$slug/" "$desc" $admin </dev/null
+  echo "Ausgerollt: /$slug/ (Port $port)"
+}
+
+remove() {
+  local slug=${1:-} purge=${2:-} d; check_slug "$slug"; d=$ROOT/$slug; [ -d "$d" ] || die "$slug gibt es nicht"
+  rm -f "$EDGE/$slug.inc"; reload_edge
+  docker exec bh-auth node bin/register-app.js remove "/$slug/" </dev/null
+  if [ "$purge" = --purge ]; then rm -rf --one-file-system "$d"; else rm -f "$d/app.json"; fi
+  docker restart -t 3 bh-apps >/dev/null
+  echo "$slug entfernt${purge:+ samt Daten}"
+}
+
+[ "$(id -u)" = 0 ] || die "nur als root"
+c=${1:-}; shift || true
+case "$c" in
+  deploy) deploy "$@" ;;
+  remove) remove "$@" ;;
+  list) for f in "$ROOT"/*/app.json; do [ -f "$f" ] && jq -r '"\(.slug)\t\(.port)"' "$f"; done ;;
+  logs) docker logs --tail 80 bh-apps 2>&1 | grep -F "[${1:-}]" ;;
+  *) sed -n '2,4p' "$0"; exit 1 ;;
+esac

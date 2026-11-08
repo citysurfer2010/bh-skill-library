@@ -23,6 +23,11 @@ window.BHUserMenu = (() => {
       + (themeToggle ? '<div class="bh-um-theme"><span>Design</span><div class="bh-um-seg"><button type="button" data-um-theme="light">Hell</button><button type="button" data-um-theme="dark">Dunkel</button></div></div>' : '')
       + '<form class="bh-um-logout" method="post" action="/logout"><button class="bh-um-item bh-um-danger" role="menuitem">Abmelden</button></form>'
       + '</div></div>';
+    const avatar = host.querySelector('.bh-um-avatar');
+    const photo = new Image();
+    photo.alt = '';
+    photo.onload = () => { avatar.textContent = ''; avatar.appendChild(photo); };
+    photo.src = '/avatar/me';
     const btn = host.querySelector('.bh-um-btn');
     const pop = host.querySelector('.bh-um-pop');
     const set = (open) => { pop.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
