@@ -28,11 +28,13 @@ export function screenRoutes({ config }) {
   r.post("/screen-update", express.json({ limit: "32kb" }), (req, res) => {
     const auth = /^Bearer (.+)$/.exec(req.get("authorization") || "");
     if (!auth || !same(auth[1], config.screenWrite)) return res.status(401).json({ error: "unauthorized" });
-    const mode = req.body?.mode === "url" ? "url" : "text";
-    const url = mode === "url" ? httpsUrl(req.body?.url) : null;
-    if (mode === "url" && !url) return res.status(400).json({ error: "Nur https-Adressen" });
+    // text: Anzeige in der App; url: Webseite im Vollbild; audio: Radio/Musik-Stream, den die App selbst abspielt.
+    const mode = ["url", "audio"].includes(req.body?.mode) ? req.body.mode : "text";
+    const url = mode === "text" ? null : httpsUrl(req.body?.url);
+    if (mode !== "text" && !url) return res.status(400).json({ error: "Nur https-Adressen" });
+    const previous = load().mode;
     writeFileSync(file, JSON.stringify({ mode, title: clip(req.body?.title, 200), text: clip(req.body?.text, 1000), url }), { mode: 0o600 });
-    res.status(204).end();
+    res.json({ ok: true, previous });
   });
   return r;
 }

@@ -14,7 +14,7 @@ function fake(events) {
   return { sent, paths, closed: () => closed };
 }
 
-test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'open_app', 'play_media', 'play_youtube', 'press', 'show_text', 'show_url', 'status', 'stop_media']));
+test('Werkzeuge', () => assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['media_state', 'open_app', 'play_media', 'play_radio', 'play_youtube', 'power', 'press', 'show_text', 'show_url', 'status', 'stop_media', 'stop_radio']));
 
 test('Frames: verschluesselt gesendet, Nachrichten werden erkannt', () => {
   const f = r.encodeText('hi');
@@ -133,6 +133,46 @@ test('Text: mit App BH Screen direkt, sonst als Bild (erst https, dann http)', a
     states = ['STOPPED', 'STOPPED'];
     await assert.rejects(showText('Hallo', '', { remote: noApp, dlna, waitMs: 1 }), /nicht angenommen/);
   } finally { global.fetch = realFetch; }
+});
+
+test('Radio: nur https, App wird gestartet, nach Webseite neu gestartet', async () => {
+  process.env.BH_AUTH_INTERNAL = 'http://x'; process.env.BH_SCREEN_WRITE = 'W';
+  const { playRadio, showText } = require('../lib/screen.js');
+  const realFetch = global.fetch; let previous = 'text'; const sent = [];
+  global.fetch = async (_u, o) => { sent.push(JSON.parse(o.body)); return { ok: true, json: async () => ({ previous }) }; };
+  try {
+    const opened = []; const remote = { isInstalled: async () => true, openApp: async (a, o) => opened.push([a, o]) };
+    await playRadio('https://r.de/s.mp3', 'NDR 2', { remote });
+    assert.deepEqual(sent.at(-1), { mode: 'audio', url: 'https://r.de/s.mp3', title: 'NDR 2' }); assert.deepEqual(opened.at(-1), ['BH Screen', undefined]);
+    previous = 'url';
+    await playRadio('https://r.de/s.mp3', 'NDR 2', { remote }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
+    await showText('Hallo', '', { remote }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
+    await assert.rejects(playRadio('http://r.de/s.mp3', 'x', { remote }), /https/);
+    await assert.rejects(playRadio('https://r.de/s.mp3', 'x', { remote: { isInstalled: async () => false } }), /BH Screen/);
+  } finally { global.fetch = realFetch; }
+});
+
+test('Power: Erfolg nur mit bestaetigtem Zustand, Wecken mit Magic Packet', async () => {
+  const p = require('../lib/power.js');
+  const pkt = p.magicPacket('04:B9:E3:60:B7:18');
+  assert.equal(pkt.length, 102); assert.equal(pkt.subarray(0, 6).toString('hex'), 'ffffffffffff'); assert.equal(pkt.subarray(96).toString('hex'), '04b9e360b718');
+  assert.throws(() => p.magicPacket(''), /MAC/);
+  const fake = (states) => { const held = []; return { held, hold: async (k) => held.push(k), press: async (k) => held.push('press:' + k), status: async () => { const s = states.length > 1 ? states.shift() : states[0]; if (s === 'down') throw new Error('x'); return { device: { PowerState: s } }; } }; };
+  let remote = fake(['on', 'standby']);
+  assert.match(await p.powerOff({ remote, tries: 2, delayMs: 1 }), /ist aus/); assert.deepEqual(remote.held, ['KEY_POWER']);
+  remote = fake(['on']);
+  await assert.rejects(p.powerOff({ remote, tries: 2, delayMs: 1 }), /noch an/);
+  remote = fake(['standby']);
+  assert.match(await p.powerOff({ remote, tries: 1, delayMs: 1 }), /bereits aus/); assert.deepEqual(remote.held, []);
+  let woken = 0;
+  remote = fake(['down', 'on']);
+  assert.match(await p.powerOn({ remote, wake: async () => { woken++; }, tries: 2, delayMs: 1 }), /ist an/); assert.equal(woken, 1); assert.deepEqual(remote.held, []);
+  remote = fake(['standby', 'on']);
+  await p.powerOn({ remote, wake: async () => {}, tries: 2, delayMs: 1 }); assert.deepEqual(remote.held, ['press:KEY_POWER']);
+  remote = fake(['down']);
+  await assert.rejects(p.powerOn({ remote, wake: async () => {}, tries: 2, delayMs: 1 }), /Fernbedienung/);
+  remote = fake(['on']);
+  assert.match(await p.powerOn({ remote, wake: async () => assert.fail('nicht wecken'), tries: 1, delayMs: 1 }), /bereits an/);
 });
 
 test('Anzeige: nur https, Inhalt geht mit Schreib-Schluessel an den Dienst', async () => {

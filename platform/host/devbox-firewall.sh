@@ -26,6 +26,8 @@ fi
 beamer=$(sed -n 's/^BH_BEAMER_IP=//p' /srv/bh-platform/.env 2>/dev/null | tail -1)
 if [ -n "$beamer" ] && [ -n "$gw_net" ]; then
   iptables -A DEVBOX-FORWARD -s "$gw_net" -d "$beamer/32" -o wg-fritz -p tcp -m multiport --dports 8002,8080,9197 -j ACCEPT
+  # Wecken aus dem Netzwerk-Standby (Wake-on-LAN, UDP 9 direkt an den Beamer).
+  iptables -A DEVBOX-FORWARD -s "$gw_net" -d "$beamer/32" -o wg-fritz -p udp --dport 9 -j ACCEPT
 fi
 iptables -A DEVBOX-FORWARD -s "$NETS" -d "$PRIVATE" -j DROP
 # Kein Mailversand direkt aus User-Containern (Spam-Schutz der IP).

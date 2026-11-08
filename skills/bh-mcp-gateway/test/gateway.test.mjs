@@ -11,7 +11,7 @@ const stub = path.join(import.meta.dirname, "stub-server.mjs");
 async function start({ loginNas, servers = [{ id: "demo", command: [process.execPath, stub] }] } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "gw-"));
   const tokensFile = path.join(dir, "t.json");
-  writeFileSync(tokensFile, JSON.stringify({ tokA: "devbox/anna", tokB: "devbox/ben", bad: "fremd/xx" }));
+  writeFileSync(tokensFile, JSON.stringify({ tokA: "devbox/anna", tokB: "devbox/ben", tokApp: "app/bh-apps", bad: "fremd/xx" }));
   const server = createGateway({ servers, tokensFile, usersDir: path.join(dir, "u"), loginNas });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${server.address().port}`;

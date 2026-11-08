@@ -1,4 +1,4 @@
-// Token je User, dieselbe Datei wie beim LLM-Gateway: { "<token>": "devbox/<name>" }.
+// Token je User, dieselbe Datei wie beim LLM-Gateway: { "<token>": "devbox/<name>" }; Apps der Plattform als "app/<name>".
 import { readFileSync, statSync } from "node:fs";
 
 let cached = { mtimeMs: -1, map: new Map() };
@@ -19,6 +19,6 @@ export function userFromRequest(req, file) {
   const m = /^Bearer (\S+)$/.exec(req.headers.authorization || "");
   if (!m) return null;
   const caller = tokens(file).get(m[1]);
-  const name = /^devbox\/([a-z][a-z0-9-]{1,30})$/.exec(caller || "");
+  const name = /^(?:devbox|app)\/([a-z][a-z0-9-]{1,30})$/.exec(caller || "");
   return name ? name[1] : null;
 }

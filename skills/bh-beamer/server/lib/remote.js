@@ -150,6 +150,13 @@ async function openApp(app, { tries = 8, delayMs = 750, restart = false } = {}) 
   throw new Error(`${app} liess sich nicht starten`);
 }
 
+/** Haelt eine Taste gedrueckt (Ausschalten geht bei diesem Modell nur so). */
+async function hold(key, ms = 3000) {
+  if (!KEYS.includes(key)) throw new Error(`Unbekannte Taste: ${key}`);
+  const send = (socket, Cmd) => socket.send(JSON.stringify({ method: 'ms.remote.control', params: { Cmd, DataOfCmd: key, Option: 'false', TypeOfRemote: 'SendRemoteKey' } }));
+  await withChannel(async (socket) => { send(socket, 'Press'); await pause(ms); send(socket, 'Release'); await pause(300); });
+}
+
 /** Startet den Browser und uebergibt die Adresse. Ob der Beamer sie laedt, meldet er nicht. */
 async function launchBrowser(url, { tries = 6, delayMs = 750 } = {}) {
   await openApp('Internet', { tries, delayMs });
@@ -173,4 +180,4 @@ function status() {
 const ok = (v) => ({ content: [{ type: 'text', text: typeof v === 'string' ? v : JSON.stringify(v, null, 2) }] });
 const guarded = (fn) => async (args) => { try { return ok(await fn(args || {})); } catch (e) { return { content: [{ type: 'text', text: e.message }], isError: true }; } };
 
-module.exports = { KEYS, APPS, press, launchBrowser, openApp, isInstalled, setRest, status, encodeText, decodeFrames, setOpener, tlsOptions, guarded, tokenFile };
+module.exports = { KEYS, APPS, press, hold, launchBrowser, openApp, isInstalled, setRest, status, encodeText, decodeFrames, setOpener, tlsOptions, guarded, tokenFile };

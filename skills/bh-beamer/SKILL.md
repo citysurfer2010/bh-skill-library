@@ -20,6 +20,9 @@ Bedient den Samsung The Premiere über das zentrale MCP-Gateway und den WireGuar
 | `beamer_show_url` | Webseite im Vollbild öffnen (braucht die App BH Screen) |
 | `beamer_play_media` | Video, Radio/Musik (`kind: audio`) oder Bild per DLNA abspielen, Adresse muss eine direkte Medienadresse sein |
 | `beamer_play_youtube` | YouTube-Video abspielen (Link oder Video-Kennung), startet die YouTube-App mit dem Video |
+| `beamer_play_radio` | Radiosender/Musik-Stream (https, mp3/aac) in der App BH Screen abspielen |
+| `beamer_stop_radio` | Radio beenden |
+| `beamer_power` | Ein-/Ausschalten (`state: on\|off`), meldet Erfolg nur bei bestätigtem Zustand |
 | `beamer_stop_media` | Wiedergabe beenden |
 | `beamer_media_state` | Zustand der Wiedergabe |
 
