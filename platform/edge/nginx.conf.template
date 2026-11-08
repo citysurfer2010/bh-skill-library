@@ -2,6 +2,8 @@
 # apps.<domain> ist die Hauptadresse; eine neue App bekommt dort ihren eigenen location-Block
 # mit auth_request /_auth (siehe Skill bh-auth).
 resolver 127.0.0.11 valid=30s;
+# Weiterleitungen relativ: Sonst haengt nginx seinen internen Port 8080 an die Adresse.
+absolute_redirect off;
 
 server {
   listen 8080 default_server;
