@@ -41,3 +41,13 @@ body.video #ambient { display: block; }
 #player-frame { width: 1920px; height: 1080px; border: 0; pointer-events: none; }
 #vbar { position: absolute; left: 90px; bottom: 70px; padding: 18px 30px; border-radius: 16px; background: rgba(11, 23, 48, .72); color: #fff; font-size: 40px; font-weight: 700; opacity: 0; transition: opacity 200ms; }
 #vbar.on { opacity: 1; }
+#today { display: none; position: absolute; right: 90px; top: 266px; width: 690px; box-sizing: border-box; padding: 22px 30px; border-radius: 24px; background: #fdf3e3; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
+#today.on { display: block; }
+#today h3 { margin: 0 0 6px; font-size: 30px; font-weight: 700; color: #1e3a8a; }
+.kid { margin-top: 10px; }
+.kid-head { font-size: 36px; font-weight: 700; line-height: 1.15; }
+.kid-head span { font-weight: 400; color: #3f4f6e; font-size: 32px; }
+.kid-plan { margin-top: 2px; font-size: 32px; color: #0f1f3d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kid-plan .cancelled { color: #b91c1c; text-decoration: line-through; }
+.kid-plan .changed { color: #c2410c; font-weight: 700; }
+.kid-plan .exam { color: #1e3a8a; font-weight: 700; }
