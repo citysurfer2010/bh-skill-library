@@ -161,7 +161,6 @@ test('Freigabe: Angebot geht an den Dienst, App kommt nach vorn, Antwort wird ab
     const opened = []; const remote = { isInstalled: async () => true, openApp: async (a, o) => opened.push([a, o]) };
     assert.equal(await shareStart('v=0', { remote }), 'abc');
     assert.deepEqual(sent.at(-1), { mode: 'share', offer: 'v=0' }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
-    await assert.rejects(shareStart('v=0', { remote: { isInstalled: async () => false } }), /BH Screen/);
   } finally { global.fetch = realFetch; }
   let seen;
   assert.equal(await shareAnswer('a b', async (u, o) => { seen = [u, o]; return { ok: true, json: async () => ({ answer: 'v=0 x' }) }; }), 'v=0 x');

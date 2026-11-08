@@ -85,3 +85,18 @@ test("Freigabe: Angebot, Antwort nur zur laufenden Sitzung und nur mit den richt
     assert.equal((await answer("lesen", { session, sdp: "v=0 spaet" })).status, 409);
   } finally { await g.stop(); }
 });
+
+test("Anzeige: Beamer wartet auf Aenderungen und bekommt sie sofort", async () => {
+  const g = await start();
+  const content = (since) => fetch(`${g.base}/screen/lesen/content?since=${since}`).then((r) => r.json());
+  try {
+    const { v } = await content("");
+    assert.ok(v);
+    const t0 = Date.now(); const waiting = content(v);
+    await new Promise((r) => setTimeout(r, 100));
+    await post(g, "schreiben", { title: "Neu" });
+    const c = await waiting;
+    assert.equal(c.title, "Neu"); assert.notEqual(c.v, v); assert.ok(Date.now() - t0 < 2000);
+    assert.equal((await fetch(`${g.base}/screen/falsch/content?since=1`, { redirect: "manual" })).status === 200, false);
+  } finally { await g.stop(); }
+});

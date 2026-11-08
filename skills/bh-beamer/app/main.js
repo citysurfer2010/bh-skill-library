@@ -119,17 +119,22 @@
   }
   probe();
 
+  // Der Server antwortet, sobald sich etwas aendert; danach sofort wieder fragen.
+  var version = '';
   function poll() {
     var x = new XMLHttpRequest();
-    x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now() + '&caps=' + encodeURIComponent(caps));
+    var again = function (ms) { setTimeout(poll, ms); };
+    x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now() + '&since=' + encodeURIComponent(version) + '&caps=' + encodeURIComponent(caps));
+    x.timeout = 35000;
     x.onload = function () {
-      if (x.status !== 200) { textEl.textContent = 'Server antwortet nicht (' + x.status + ')'; return; }
-      try { render(JSON.parse(x.responseText)); } catch (e) { textEl.textContent = 'Antwort unlesbar'; }
+      if (x.status !== 200) { textEl.textContent = 'Server antwortet nicht (' + x.status + ')'; again(3000); return; }
+      try { var c = JSON.parse(x.responseText); version = c.v || ''; render(c); } catch (e) { textEl.textContent = 'Antwort unlesbar'; }
+      again(30);
     };
-    x.onerror = function () { textEl.textContent = 'Keine Verbindung zum Server'; };
+    x.onerror = function () { textEl.textContent = 'Keine Verbindung zum Server'; again(3000); };
+    x.ontimeout = function () { again(100); };
     x.send();
   }
 
   poll();
-  setInterval(poll, 1500);
 })();

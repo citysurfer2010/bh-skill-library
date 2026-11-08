@@ -12,6 +12,9 @@ export function screenRoutes({ config }) {
   const r = Router();
   const file = path.join(config.dataDir, "screen.json");
   const load = () => { try { return { mode: "text", url: null, ...JSON.parse(readFileSync(file, "utf8")) }; } catch { return { mode: "text", title: "", text: "", url: null }; } };
+  const waiters = new Set();
+  let version = String(Date.now());
+  const changed = () => { version = String(Number(version) + 1); [...waiters].forEach((w) => w()); };
   const clip = (v, n) => String(v ?? "").slice(0, n);
   const sdp = (v) => (typeof v === "string" && v.startsWith("v=0") && v.length <= 24000 ? v : null);
   const httpsUrl = (u) => { try { const p = new URL(String(u)); return p.protocol === "https:" && !/[\s"'<>\\]/.test(p.href) ? p.href : null; } catch { return null; } };
@@ -21,7 +24,19 @@ export function screenRoutes({ config }) {
     const c = load();
     res.type("html").send(`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BH Platform</title><link rel="stylesheet" href="/screen.css"></head><body><main><h1 id="t">${esc(c.title)}</h1><p id="s">${esc(c.text)}</p></main><script src="/screen.js"></script></body></html>`);
   });
-  r.get("/screen/:token/content", (req, res, next) => (same(req.params.token, config.screenRead) ? res.json(load()) : next()));
+  // Der Beamer fragt mit ?since=<Stand>: Die Antwort kommt sofort bei einer Aenderung, spaetestens nach 25 s.
+  r.get("/screen/:token/content", (req, res, next) => {
+    if (!same(req.params.token, config.screenRead)) return next();
+    if (req.query.since === undefined) return res.json(load());
+    const send = () => res.json({ ...load(), v: version });
+    if (req.query.since !== version) return send();
+    let finished = false;
+    const finish = (reply) => { if (finished) return; finished = true; clearTimeout(timer); waiters.delete(done); if (reply) send(); };
+    const done = () => finish(true);
+    const timer = setTimeout(done, 25_000);
+    waiters.add(done);
+    res.on("close", () => finish(false));
+  });
   r.get("/screen/:token/image.jpg", async (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
     res.set("Cache-Control", "no-store").type("image/jpeg").send(await screenJpeg(load()));
@@ -54,6 +69,7 @@ export function screenRoutes({ config }) {
     const previous = load().mode;
     const session = mode === "share" ? randomBytes(9).toString("hex") : null;
     writeFileSync(file, JSON.stringify({ mode, title: clip(req.body?.title, 200), text: clip(req.body?.text, 1000), url, offer, session, answer: null }), { mode: 0o600 });
+    changed();
     res.json({ ok: true, previous, session });
   });
   return r;

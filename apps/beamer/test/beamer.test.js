@@ -73,6 +73,7 @@ test('Tasten und Apps nur aus der Liste, Ausschalten nie als Taste', async () =>
 });
 
 test('Freigabe: nur gültiges Angebot, Sitzung kommt zurück, Antwort wird durchgereicht', async () => {
+  await post('/radio/stop'); calls.length = 0; // Die App merkt sich, was läuft; hier ohne vorherigen Inhalt
   assert.equal((await post('/share/start', { offer: 'quatsch' })).status, 400);
   assert.equal((await post('/share/start', { offer: `v=0${'x'.repeat(24001)}` })).status, 400);
   assert.equal((await post('/share/answer', { session: '../etc' })).status, 400);
@@ -83,6 +84,20 @@ test('Freigabe: nur gültiges Angebot, Sitzung kommt zurück, Antwort wird durch
   assert.equal((await (await post('/share/answer', { session: start.session })).json()).answer, 'v=0 antwort');
   assert.equal((await (await post('/share/stop')).json()).now, null);
   assert.deepEqual(calls, ['beamer_share_start', 'beamer_share_answer', 'beamer_stop_radio']);
+
+});
+
+test('Nach der Freigabe läuft wieder der vorherige Inhalt', async () => {
+  gateway.setCaller(async (name, args) => { calls.push([name, args]); return name === 'beamer_share_start' ? 'aabbccddeeff001122' : 'ok'; });
+  await post('/radio', { id: 'ndr2' });
+  await post('/share/start', { offer: 'v=0 a' });
+  calls.length = 0;
+  const r = await (await post('/share/stop')).json();
+  assert.equal(r.now.id, 'ndr2'); assert.equal(calls[0][0], 'beamer_play_radio'); assert.match(calls[0][1].url, /ndr/);
+  await post('/radio/stop');
+  await post('/share/start', { offer: 'v=0 a' }); calls.length = 0;
+  assert.equal((await (await post('/share/stop')).json()).now, null);
+  assert.deepEqual(calls.map((c) => c[0]), ['beamer_stop_radio']);
 });
 
 test('Stoppen: Radio endet in BH Screen, Video über die Startseite', async () => {
