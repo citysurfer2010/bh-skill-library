@@ -60,8 +60,24 @@ window.BHHome = (function () {
     });
   }
 
+  function setSchedule(plan) {
+    var el = document.getElementById('today');
+    var kids = plan && plan.kids ? plan.kids.filter(function (k) { return k.lessons.length; }) : [];
+    if (!plan || !plan.kids) { el.className = ''; return; }
+    el.className = 'on';
+    el.innerHTML = '<h3>' + esc(plan.label) + '</h3>' + (kids.length ? kids.map(function (k) {
+      var live = k.lessons.filter(function (l) { return l.state !== 'cancelled'; });
+      var time = live.length ? live[0].from + ' – ' + live[live.length - 1].to : 'alles fällt aus';
+      return '<div class="kid"><div class="kid-head">' + esc(k.name) + ' <span>' + esc(time) + '</span></div><div class="kid-plan">' + k.lessons.map(function (l) {
+        var cls = l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state;
+        return '<span class="' + cls + '">' + esc(l.subject) + (l.exam ? ' (Klausur)' : '') + '</span>';
+      }).join(' · ') + '</div></div>';
+    }).join('') : '<div class="kid"><div class="kid-head">Schulfrei</div></div>');
+  }
+
   function setMenu(menu) {
-    var next = JSON.stringify(menu || {});
+    if (menu) setSchedule(menu.schedule);
+    var next = menu ? JSON.stringify([menu.radio, menu.mood]) : '';
     if (!menu || next === signature) return;
     signature = next; rows = [];
     menuEl.innerHTML = '';

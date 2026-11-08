@@ -2,6 +2,7 @@
 /** Bedienung des Beamers. Jeder Schreibweg verlangt JSON: ein fremdes Formular kann so nichts auslösen. */
 const express = require('express');
 const gateway = require('../lib/gateway');
+const bridge = require('../lib/menu-bridge');
 const { MOODS, STATIONS, APPS, KEYS, publicCatalog } = require('../lib/catalog');
 
 const clip = (v, n) => String(v ?? '').trim().slice(0, n);
@@ -24,6 +25,10 @@ function buildRouter() {
   const bad = (error) => ({ status: 400, error });
   const play = async (tool, args, next) => { await gateway.call(tool, args); now = next; replay = { tool, args }; };
   const stopRadioFirst = async () => { if (now?.kind === 'radio') await gateway.call('beamer_stop_radio').catch(() => {}); };
+
+  router.get('/schedule', async (_req, res) => {
+    try { res.json(await bridge.refreshIfStale()); } catch (e) { res.status(502).json({ error: e.message }); }
+  });
 
   router.get('/catalog', (_req, res) => res.json(publicCatalog()));
 
@@ -138,6 +143,7 @@ function buildRouter() {
     mood: (id) => { const m = byId(MOODS, id); return m ? playMood(m) : null; },
     back: () => (now?.kind === 'mood' ? leaveMood() : null),
     stop: stopAll,
+    refresh: () => bridge.refreshIfStale(),
     radiooff: () => (now?.kind === 'mood' ? ambient(byId(MOODS, now.id), null) : null),
   };
   return router;

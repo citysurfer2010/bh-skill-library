@@ -153,3 +153,11 @@ test('Menü: Auswahl am Beamer wird ausgeführt, unbekanntes ignoriert, Menü wi
   const set = calls.find((c) => c[0] === 'beamer_menu_set');
   assert.match(set[1].menu.radio[0].url, /^https:/); assert.ok(set[1].menu.mood[0].thumb);
 });
+
+test('Stundenplan: erster Abruf nach Eintragung des Vertretungsplans, wandert ins Menü', async () => {
+  const bridge = require('../lib/menu-bridge');
+  assert.equal(bridge.SCHEDULE_AT[0], '07:05');
+  gateway.setCaller(async (name, args) => { calls.push([name, args]); return name === 'webuntis_day' ? JSON.stringify({ label: 'Heute', kids: [{ name: 'Anna', lessons: [] }] }) : 'ok'; });
+  await bridge.refreshSchedule();
+  assert.equal(calls.find((c) => c[0] === 'beamer_menu_set')[1].menu.schedule.kids[0].name, 'Anna');
+});

@@ -213,4 +213,5 @@
   }
 
   poll();
+  sendRequest('refresh', 'x'); // Beim Start den Stundenplan frisch holen
 })();

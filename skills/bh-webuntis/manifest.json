@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-webuntis",
+  "name": "bh-webuntis",
+  "version": "1.0.0",
+  "description": "Stundenpläne der Kinder aus WebUntis lesen",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}
