@@ -17,6 +17,12 @@ hook INPUT DEVBOX-INPUT
 chain DEVBOX-FORWARD
 # Verkehr innerhalb eines Netzes (User <-> Gateway) bleibt erlaubt; routen zwischen Netzen nicht.
 iptables -A DEVBOX-FORWARD -m physdev --physdev-is-bridged -j RETURN
+# Einzige Ausnahme: das MCP-Gateway darf die Web-API der Synology durch den Tunnel erreichen.
+nas=$(sed -n 's/^BH_NAS_IP=//p' /srv/bh-platform/.env 2>/dev/null | tail -1)
+gw_net=$(docker network inspect mcp-gateway-net -f '{{(index .IPAM.Config 0).Subnet}}' 2>/dev/null || true)
+if [ -n "$nas" ] && [ -n "$gw_net" ]; then
+  iptables -A DEVBOX-FORWARD -s "$gw_net" -d "$nas/32" -o wg-fritz -p tcp --dport 5001 -j ACCEPT
+fi
 iptables -A DEVBOX-FORWARD -s "$NETS" -d "$PRIVATE" -j DROP
 # Kein Mailversand direkt aus User-Containern (Spam-Schutz der IP).
 iptables -A DEVBOX-FORWARD -s "$NETS" -p tcp -m multiport --dports 25,465,587 -j DROP

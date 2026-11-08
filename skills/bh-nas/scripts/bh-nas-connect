@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Verbindet das eigene Synology-Konto mit dem zentralen Gateway. Das Passwort laeuft nicht durch das Modell.
+set -euo pipefail
+[ -t 0 ] || { echo "Bitte selbst im eigenen Terminal ausfuehren." >&2; exit 1; }
+read -r -p "Synology-Benutzer: " user
+read -rs -p "Passwort: " password; echo
+code=$(jq -n --arg u "$user" --arg p "$password" '{user: $u, password: $p}' | curl -s -o /tmp/bh-nas.$$ -w '%{http_code}' -H "authorization: Bearer $(cat /etc/devbox/llm/token)" -H 'content-type: application/json' -d @- http://mcp-gateway:18800/connect/nas)
+unset password
+msg=$(jq -r '.error // empty' /tmp/bh-nas.$$ 2>/dev/null || true); rm -f /tmp/bh-nas.$$
+if [ "$code" = 200 ]; then echo "Verbunden. Der Skill bh-nas ist für dein Konto aktiv."; else echo "Nicht verbunden: ${msg:-Fehler $code}" >&2; exit 1; fi

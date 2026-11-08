@@ -6,6 +6,7 @@ import { userFromRequest } from "./lib/auth.mjs";
 import { BackendPool } from "./lib/backend.mjs";
 import { Registry } from "./lib/registry.mjs";
 import { storeGithubToken } from "./lib/connect.mjs";
+import { storeNasLogin, nasLogin } from "./lib/connect-nas.mjs";
 
 const MAX_BODY = 16 * 1024 * 1024;
 
@@ -40,7 +41,7 @@ async function handleRpc(registry, user, msg) {
   }
 }
 
-export function createGateway({ servers, tokensFile, usersDir }) {
+export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLogin }) {
   const pool = new BackendPool(usersDir);
   const registry = new Registry(servers, pool);
   const server = http.createServer(async (req, res) => {
@@ -50,6 +51,10 @@ export function createGateway({ servers, tokensFile, usersDir }) {
       if (!user) return send(res, 401, { error: "unauthorized" });
       if (req.method === "POST" && req.url === "/connect/github") {
         const { status, ...rest } = await storeGithubToken(pool.homeOf(user), JSON.parse(await readBody(req)).token);
+        return send(res, status, rest);
+      }
+      if (req.method === "POST" && req.url === "/connect/nas") {
+        const { status, ...rest } = await storeNasLogin(user, pool.homeOf(user), JSON.parse(await readBody(req)), loginNas);
         return send(res, status, rest);
       }
       if (req.url !== "/mcp") return send(res, 404, { error: "not found" });
@@ -71,7 +76,7 @@ export function createGateway({ servers, tokensFile, usersDir }) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const servers = JSON.parse(readFileSync(process.env.MCP_SERVERS_FILE || "/opt/skills/bh-mcp-gateway/servers.json", "utf8"))
-    .map((s) => ({ ...s, env: { GOOGLE_CLIENT_SECRET_FILE: "/etc/mcp-gateway/google/client_secret.json" } }));
+    .map((s) => ({ ...s, env: { ...s.env, ...Object.fromEntries((s.envFrom || []).map((k) => [k, process.env[k]])) } }));
   createGateway({
     servers,
     tokensFile: process.env.MCP_TOKENS_FILE || "/etc/mcp-gateway/tokens/user-tokens.json",

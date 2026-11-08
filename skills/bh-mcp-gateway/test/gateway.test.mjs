@@ -8,11 +8,11 @@ import { storeGithubToken } from "../server/lib/connect.mjs";
 
 const stub = path.join(import.meta.dirname, "stub-server.mjs");
 
-async function start() {
+async function start({ loginNas } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "gw-"));
   const tokensFile = path.join(dir, "t.json");
   writeFileSync(tokensFile, JSON.stringify({ tokA: "devbox/anna", tokB: "devbox/ben", bad: "fremd/xx" }));
-  const server = createGateway({ servers: [{ id: "demo", command: [process.execPath, stub] }], tokensFile, usersDir: path.join(dir, "u") });
+  const server = createGateway({ servers: [{ id: "demo", command: [process.execPath, stub] }], tokensFile, usersDir: path.join(dir, "u"), loginNas });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${server.address().port}`;
   const rpc = async (token, method, params) => {
@@ -77,3 +77,31 @@ test("GitHub-Token: nur gueltige werden gespeichert, mit Rechten 600", async () 
   assert.equal(statSync(file).mode & 0o777, 0o600);
   assert.equal(readFileSync(file, "utf8"), "a".repeat(40));
 });
+
+async function connectNas(g, token, body) {
+  return fetch(`${g.base}/connect/nas`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify(body) });
+}
+
+test("Synology verbinden: geprueft, je User getrennt, Rechte 600", async () => {
+  const g = await start({ loginNas: async (u, p) => u === "anna" && p === "gut" });
+  try {
+    assert.equal((await fetch(`${g.base}/connect/nas`, { method: "POST", body: "{}" })).status, 401);
+    assert.equal((await connectNas(g, "tokA", { user: "anna", password: "falsch" })).status, 400);
+    assert.equal(existsSync(path.join(g.dir, "u/anna/.config/bh-nas/.env")), false);
+    assert.equal((await connectNas(g, "tokA", { user: "anna", password: "gut" })).status, 200);
+    const file = path.join(g.dir, "u/anna/.config/bh-nas/.env");
+    assert.equal(readFileSync(file, "utf8"), "BH_NAS_USER=anna\nBH_NAS_PASSWORD=gut\n");
+    assert.equal(statSync(file).mode & 0o777, 0o600);
+    assert.equal(existsSync(path.join(g.dir, "u/ben/.config/bh-nas/.env")), false);
+  } finally { await g.stop(); }
+});
+
+test("Synology verbinden: Versuche sind begrenzt, Zeilenumbrueche verboten", async () => {
+  const g = await start({ loginNas: async () => false });
+  try {
+    assert.equal((await connectNas(g, "tokB", { user: "a\nb", password: "x" })).status, 400);
+    for (let i = 0; i < 5; i++) assert.equal((await connectNas(g, "tokB", { user: "ben", password: "x" })).status, 400);
+    assert.equal((await connectNas(g, "tokB", { user: "ben", password: "x" })).status, 429);
+  } finally { await g.stop(); }
+});
+
