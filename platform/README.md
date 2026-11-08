@@ -72,3 +72,8 @@ keine Ports. Domain und DKIM stehen als `EDGE_DOMAIN` und `BH_DKIM` in der `.env
 Die App entsteht mit `init.sh <slug> "<Titel>" --base /<slug>` und liegt danach zum Beispiel unter
 `/srv/devbox/users/<user>/home/projects/<slug>`. `deploy` faehrt zuerst die Tests. Rote Tests rollen nichts aus,
 kommt die App nicht hoch, bleibt der vorherige Stand aktiv. Erreichbar ist sie unter `apps.<domain>/<slug>/`, nur nach Anmeldung.
+
+## Heimnetz
+
+`home-link/setup-home-link.sh` verbindet den Host per WireGuard mit dem Heimnetz. Geroutet wird nur `BH_NAS_IP` aus der `.env`, nie der
+gesamte Verkehr; die User-Container bleiben getrennt. Die Verbindung laesst sich in der Fritzbox jederzeit loeschen.
