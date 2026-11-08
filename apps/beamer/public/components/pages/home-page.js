@@ -70,7 +70,7 @@
   function shareState(s) {
     setText($('bm-share-state'), SHARE_TEXT[s]);
     shareLive = s !== 'ended' && s !== 'failed';
-    if (!shareLive) { now = null; paint(); }
+    if (!shareLive) refresh();
   }
   async function share(b) {
     if (zustand !== 'on' && !(await powerOn())) return;
