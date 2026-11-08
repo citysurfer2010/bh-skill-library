@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import express, { Router } from "express";
 import { esc } from "../lib/views.js";
+import { screenJpeg } from "../lib/screen-image.js";
 
 const same = (a, b) => { const x = Buffer.from(String(a)); const y = Buffer.from(String(b)); return b !== "" && x.length === y.length && timingSafeEqual(x, y); };
 
@@ -19,6 +20,10 @@ export function screenRoutes({ config }) {
     res.type("html").send(`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BH Platform</title><link rel="stylesheet" href="/screen.css"></head><body><main><h1 id="t">${esc(c.title)}</h1><p id="s">${esc(c.text)}</p></main><script src="/screen.js"></script></body></html>`);
   });
   r.get("/screen/:token/content", (req, res, next) => (same(req.params.token, config.screenRead) ? res.json(load()) : next()));
+  r.get("/screen/:token/image.jpg", async (req, res, next) => {
+    if (!same(req.params.token, config.screenRead)) return next();
+    res.set("Cache-Control", "no-store").type("image/jpeg").send(await screenJpeg(load()));
+  });
   r.post("/screen-update", express.json({ limit: "32kb" }), (req, res) => {
     const auth = /^Bearer (.+)$/.exec(req.get("authorization") || "");
     if (!auth || !same(auth[1], config.screenWrite)) return res.status(401).json({ error: "unauthorized" });

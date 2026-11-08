@@ -140,14 +140,13 @@ async function openApp(app, { tries = 8, delayMs = 750 } = {}) {
   if (!(await waitVisible(id, tries, delayMs))) throw new Error(`${app} liess sich nicht starten`);
 }
 
+/** Startet den Browser und uebergibt die Adresse. Ob der Beamer sie laedt, meldet er nicht. */
 async function launchBrowser(url, { tries = 6, delayMs = 750 } = {}) {
+  await openApp('Internet', { tries, delayMs });
   const { id } = await appInfo('Internet');
-  const send = (socket, type) => socket.send(JSON.stringify({ method: 'ms.channel.emit', params: { event: 'ed.apps.launch', to: 'host', data: { appId: id, action_type: type, metaTag: url } } }));
   await withChannel(async (socket) => {
-    send(socket, 'DEEP_LINK');
-    if (await waitVisible(id, tries, delayMs)) return;
-    send(socket, 'NATIVE_LAUNCH');
-    if (!(await waitVisible(id, tries, delayMs))) throw new Error('Der Browser des Beamers liess sich nicht starten');
+    socket.send(JSON.stringify({ method: 'ms.channel.emit', params: { event: 'ed.apps.launch', to: 'host', data: { appId: id, action_type: 'DEEP_LINK', metaTag: url } } }));
+    await pause(500);
   });
 }
 

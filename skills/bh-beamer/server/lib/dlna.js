@@ -32,9 +32,9 @@ function mediaUrl(u) {
   return parsed.href;
 }
 
-async function play(url, title = 'BH Platform') {
+async function play(url, title = 'BH Platform', kind = 'video') {
   const href = mediaUrl(url);
-  const didl = `<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"><item id="0" parentID="-1" restricted="1"><dc:title>${esc(title)}</dc:title><upnp:class>object.item.videoItem</upnp:class><res protocolInfo="http-get:*:*:*">${esc(href)}</res></item></DIDL-Lite>`;
+  const didl = `<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"><item id="0" parentID="-1" restricted="1"><dc:title>${esc(title)}</dc:title><upnp:class>${kind === 'image' ? 'object.item.imageItem.photo' : 'object.item.videoItem'}</upnp:class><res protocolInfo="http-get:*:${kind === 'image' ? 'image/jpeg' : '*'}:*">${esc(href)}</res></item></DIDL-Lite>`;
   await soap('SetAVTransportURI', `<CurrentURI>${esc(href)}</CurrentURI><CurrentURIMetaData>${esc(didl)}</CurrentURIMetaData>`);
   await soap('Play', '<Speed>1</Speed>');
 }

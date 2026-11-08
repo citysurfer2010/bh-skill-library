@@ -66,20 +66,31 @@ test('App starten: echter Name wird vorher geprueft, fremde App wird nie gestart
   await assert.rejects(r.openApp('Tetris'), /Unbekannte App/);
 });
 
-test('Browser: Adresse geht an die App Internet, Fehlschlag wird gemeldet', async () => {
-  restFake('Internet', 1);
+test('Browser: Start ueber die App, Adresse wird nachgereicht, fremde App nie', async () => {
+  const calls = restFake('Internet', 1);
   const sent = [];
   r.setOpener(async (_p, onText) => { setImmediate(() => onText(JSON.stringify({ event: 'ms.channel.connect', data: {} }))); return { send: (t) => sent.push(JSON.parse(t).params.data), close() {} }; });
   await r.launchBrowser('https://a.de/', { tries: 2, delayMs: 1 });
-  assert.equal(sent[0].appId, '3201907018784'); assert.equal(sent[0].metaTag, 'https://a.de/'); assert.equal(sent[0].action_type, 'DEEP_LINK');
-  r.setRest(async () => ({ status: 200, json: { name: 'Internet', visible: false } }));
-  sent.length = 0;
-  await assert.rejects(r.launchBrowser('https://a.de/', { tries: 1, delayMs: 1 }), /nicht starten/);
-  assert.deepEqual(sent.map((x) => x.action_type), ['DEEP_LINK', 'NATIVE_LAUNCH']);
+  assert.deepEqual(calls.find((c) => c[0] === 'POST'), ['POST', '3201907018784']);
+  assert.equal(sent[0].metaTag, 'https://a.de/');
   r.setRest(async () => ({ status: 200, json: { name: 'Netflix' } }));
   sent.length = 0;
   await assert.rejects(r.launchBrowser('https://a.de/', { tries: 1, delayMs: 1 }), /nicht installiert/);
   assert.equal(sent.length, 0);
+});
+
+test('Text als Bild: erst https, sonst http, sonst Fehlermeldung', async () => {
+  process.env.BH_SCREEN_URL = 'https://x/screen/t'; process.env.BH_AUTH_INTERNAL = 'http://x'; process.env.BH_SCREEN_WRITE = 'W';
+  const realFetch = global.fetch; global.fetch = async () => ({ ok: true });
+  const { showText } = require('../lib/screen.js');
+  try {
+    const urls = []; let states = ['STOPPED', 'PLAYING'];
+    const dlna = { play: async (u, _t, kind) => { assert.equal(kind, 'image'); urls.push(u); }, state: async () => states.shift() };
+    await showText('Hallo', '', { dlna, waitMs: 1 });
+    assert.match(urls[0], /^https:.*image\.jpg\?v=/); assert.match(urls[1], /^http:/);
+    states = ['STOPPED', 'STOPPED'];
+    await assert.rejects(showText('Hallo', '', { dlna, waitMs: 1 }), /nicht angenommen/);
+  } finally { global.fetch = realFetch; }
 });
 
 test('Anzeige: nur https, Inhalt geht mit Schreib-Schluessel an den Dienst', async () => {

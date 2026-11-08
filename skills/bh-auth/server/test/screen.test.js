@@ -27,3 +27,19 @@ test("Anzeige: Inhalt wird maskiert und gekuerzt", async () => {
     assert.equal((await (await fetch(`${g.base}/screen/lesen/content`)).json()).title.length, 200);
   } finally { await g.stop(); }
 });
+
+test("Anzeige als Bild: echtes JPEG, nur mit geheimem Link, Sonderzeichen sicher", async () => {
+  const { screenSvg, wrap } = await import("../lib/screen-image.js");
+  const g = await start();
+  try {
+    await post(g, "schreiben", { title: "Hallo", text: "Größe & Maß" });
+    const r = await fetch(`${g.base}/screen/lesen/image.jpg`);
+    assert.equal(r.headers.get("content-type"), "image/jpeg");
+    const b = new Uint8Array(await r.arrayBuffer());
+    assert.deepEqual([b[0], b[1], b[2]], [0xff, 0xd8, 0xff]);
+    assert.notEqual((await fetch(`${g.base}/screen/falsch/image.jpg`, { redirect: "manual" })).status, 200);
+  } finally { await g.stop(); }
+  assert.doesNotMatch(screenSvg({ title: "<b>&", text: "" }), /<b>&/);
+  assert.deepEqual(wrap("ein sehr langer satz mit vielen worten", 10, 2), ["ein sehr", "langer"]);
+});
+

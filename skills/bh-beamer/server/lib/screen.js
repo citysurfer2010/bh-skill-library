@@ -16,9 +16,19 @@ async function setContent(title, text, http = fetch) {
   if (!r.ok) throw new Error(`Anzeige konnte nicht gesetzt werden (${r.status})`);
 }
 
-async function showText(title, text) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const ACTIVE = ['PLAYING', 'TRANSITIONING', 'PAUSED_PLAYBACK'];
+
+// Viele Geraete koennen per Stream kein https: dann derselbe Abruf unverschluesselt.
+async function showText(title, text, { dlna = require('./dlna.js'), waitMs = 2500 } = {}) {
   await setContent(title, text);
-  await launchBrowser(process.env.BH_SCREEN_URL);
+  const image = `${process.env.BH_SCREEN_URL}/image.jpg?v=${Date.now()}`;
+  for (const url of [image, image.replace(/^https:/, 'http:')]) {
+    await dlna.play(url, title, 'image');
+    await sleep(waitMs);
+    if (ACTIVE.includes(await dlna.state())) return;
+  }
+  throw new Error('Der Beamer hat das Bild nicht angenommen');
 }
 
 module.exports = { httpsUrl, setContent, showText };
