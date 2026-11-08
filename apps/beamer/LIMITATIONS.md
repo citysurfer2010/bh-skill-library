@@ -19,7 +19,7 @@ Details zu einem Modul: `docs/limitations/<modul>.md`.
 ## Beamer-App
 
 - „Läuft gerade“ merkt sich nur die App; was jemand per Fernbedienung umschaltet, sieht sie nicht. Nach einem Neustart der App ist die Anzeige leer.
-- Einschalten klappt nur aus dem Netzwerk-Standby; aus tiefem Standby hilft nur die Fernbedienung.
+- Einschalten braucht am Beamer die Einstellungen „Einschalten über Mobilgerät“ und IP-Fernzugriff; nach einem Stromausfall nur per Fernbedienung erprobt.
 
 ## Backlog
 
