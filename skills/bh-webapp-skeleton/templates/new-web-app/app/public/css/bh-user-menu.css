@@ -37,4 +37,4 @@ a.bh-um-item { text-decoration: none; }
 .bh-um-seg button { height: 26px; padding: 0 10px; border: 0; border-radius: 4px; background: none; color: var(--bh-muted); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }
 .bh-um-seg button.is-active { background: var(--bh-surface); color: var(--bh-text); }
 .bh-um-logout { margin: 6px 0 0; padding-top: 6px; border-top: 1px solid var(--bh-border); }
-.bh-um-danger { color: var(--bh-danger, #b91c1c); }
+.bh-um-danger { color: var(--bh-danger); }
