@@ -4,5 +4,7 @@
   {"id": "nas", "command": ["node", "/opt/skills/bh-nas/server/server.js"], "envFrom": ["BH_NAS_URL", "BH_NAS_CA_B64", "BH_NAS_FP"]},
   {"id": "bvg", "command": ["node", "/opt/skills/bh-bvg/server/server.js"], "services": ["bh-apps"]},
   {"id": "webuntis", "command": ["node", "/opt/skills/bh-webuntis/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_WEBUNTIS_SERVER", "BH_WEBUNTIS_SCHOOL", "BH_WEBUNTIS_USER", "BH_WEBUNTIS_PASSWORD"]},
-  {"id": "beamer", "command": ["node", "/opt/skills/bh-beamer/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_BEAMER_IP", "BH_BEAMER_MAC", "BH_BEAMER_CA_B64", "BH_BEAMER_FP", "BH_SCREEN_URL", "BH_SCREEN_WRITE", "BH_AUTH_INTERNAL"]}
+  {"id": "beamer", "command": ["node", "/opt/skills/bh-beamer/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_BEAMER_IP", "BH_BEAMER_MAC", "BH_BEAMER_CA_B64", "BH_BEAMER_FP", "BH_SCREEN_URL", "BH_SCREEN_WRITE", "BH_AUTH_INTERNAL"]},
+  {"id": "birthdays", "command": ["node", "/opt/skills/bh-birthdays/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_FAMILY_DIR"]},
+  {"id": "netatmo", "command": ["node", "/opt/skills/bh-netatmo/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_NETATMO_USER", "BH_NETATMO_PASSWORD", "BH_FAMILY_DIR"]}
 ]

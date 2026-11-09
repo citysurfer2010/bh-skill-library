@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-netatmo",
+  "name": "bh-netatmo",
+  "version": "1.0.0",
+  "description": "Raumtemperaturen und Heizung aus Netatmo, nur lesend",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}

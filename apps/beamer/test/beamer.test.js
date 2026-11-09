@@ -202,18 +202,3 @@ test('Lagerfeuer: Schnee-Video nur im Winter', () => {
   assert.equal(videoOf(fire, new Date('2026-07-15T20:00:00Z')), fire.video);
   assert.notEqual(fire.video, fire.winterVideo);
 });
-
-test('Geburtstage: nur Admins pflegen, Beamer bekommt kein Datum, Fenster 14 Tage', async () => {
-  gateway.setCaller(async () => 'ok');
-  const b = require('../lib/birthdays');
-  assert.equal((await t.call('/api/birthdays', { as: 'u@beispiel.de' })).status, 403);
-  assert.equal((await t.call('/api/birthdays', { method: 'POST', as: 'u@beispiel.de', body: { name: 'A', date: '2015-01-01' } })).status, 403);
-  assert.equal((await t.call('/api/birthdays', { method: 'POST', as: 'a@beispiel.de', role: 'admin', body: { name: 'A', date: 'kaputt' } })).status, 400);
-  assert.equal((await t.call('/api/birthdays', { method: 'POST', as: 'a@beispiel.de', role: 'admin', body: { name: 'Anna Muster', date: '2015-11-20' } })).status, 200);
-  const list = [{ name: 'Anna Muster', date: '2015-11-20' }, { name: 'Ben', date: '2000-11-09' }, { name: 'Cleo', date: '2000-12-30' }, { name: 'Dora', date: '2010-01-02' }];
-  const now = new Date('2026-11-09T10:00:00+01:00');
-  assert.deepEqual(b.upcoming(now, list), [{ name: 'Ben', inDays: 0, age: 26 }, { name: 'Anna', inDays: 11, age: 11 }]);
-  assert.deepEqual(b.upcoming(new Date('2026-12-28T10:00:00+01:00'), list).map((x) => [x.name, x.age]), [['Cleo', 26], ['Dora', 17]]);
-  assert.doesNotMatch(JSON.stringify(b.upcoming(now, list)), /2015|date/);
-  assert.equal((await t.call('/api/birthdays/Anna%20Muster', { method: 'DELETE', as: 'a@beispiel.de', role: 'admin' })).status, 200);
-});

@@ -1,14 +1,14 @@
 'use strict';
-/** Geburtstage der Familie. Die Daten liegen nur in DATA_DIR, nie im Repo; zum Beamer gehen nur Name, Alter und Abstand. */
+/** Geburtstage der Familie. Die Daten liegen nur auf dem Server, nie im Repo; zum Beamer gehen nur Name, Alter und Abstand. */
 const fs = require('fs');
 const path = require('path');
-const { DATA_DIR } = require('./config');
 
-const FILE = () => path.join(DATA_DIR, 'birthdays.json');
-const WINDOW_DAYS = 14;
+const dir = () => process.env.BH_FAMILY_DIR || '/tmp/bh-family';
+const FILE = () => path.join(dir(), 'birthdays.json');
+const WINDOW_DAYS = 7;
 
 function load() { try { return JSON.parse(fs.readFileSync(FILE(), 'utf8')); } catch { return []; } }
-function save(list) { fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(FILE(), JSON.stringify(list), { mode: 0o600 }); }
+function save(list) { fs.mkdirSync(dir(), { recursive: true }); fs.writeFileSync(FILE(), JSON.stringify(list), { mode: 0o600 }); }
 
 const validDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(`${d}T12:00:00Z`));
 
@@ -24,7 +24,7 @@ function remove(name) { save(load().filter((b) => b.name !== name)); }
 
 function todayBerlin(now) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); }
 
-/** Wer in den nächsten zwei Wochen Geburtstag hat, am nächsten zuerst. */
+/** Wer in den nächsten sieben Tagen Geburtstag hat, am nächsten zuerst. */
 function upcoming(now = new Date(), list = load()) {
   const today = todayBerlin(now); const base = Date.parse(`${today}T12:00:00Z`); const year = Number(today.slice(0, 4));
   return list.map((b) => {

@@ -23,6 +23,9 @@ Details zu einem Modul: `docs/limitations/<modul>.md`.
 
 - Bildschirm und Kamera teilen geht nur im selben Heimnetz (WebRTC ohne STUN/TURN). Am Handy gibt es nur die Kamera, Browser dort können keinen Bildschirm teilen.
 
+- Die Radio-Pause merkt sich der Beamer nur, solange BH Screen läuft.
+- Am Geburtstag startet der Screen auf dem Reiter „Geburtstag“; Klausuren und Änderungen zeigt dort nur ein Punkt am Reiter „Heute“.
+
 ## Backlog
 
 - Ruhebild mit Uhr und Wetter, wenn nichts läuft.
