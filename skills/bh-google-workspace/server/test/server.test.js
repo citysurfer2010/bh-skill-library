@@ -36,3 +36,8 @@ test('Dateischutz: erlaubt Arbeitsordner, sperrt Schluessel', () => {
   assert.equal(guard.checkReadablePath(path.join(home, '.ssh', 'id_ed25519')).ok, false);
 });
 
+
+test('Kalender: Termin kennt ganztägig und Wiederholung', () => {
+  const props = require('../tools/calendar/create-event.js').inputSchema.properties;
+  for (const k of ['startDate', 'endDate', 'recurrence', 'transparency']) assert.ok(props[k], k);
+});

@@ -7,4 +7,3 @@
 - Einträge pflegen geht bisher nur über die Werkzeuge, nicht über eine Oberfläche.
 - Zugriff haben nur `matti` und die Beamer-App. Weitere Familienmitglieder müssen in `servers.json` ergänzt werden.
 - Ziel ist der Family-Kalender als Quelle (Matti, 09.11.2026). Bis der Google-Login von BH steht, liegen die Einträge nur im Skill.
-- `google_calendar_createEvent` kann noch keine jährliche Wiederholung; das muss vor dem Eintragen ergänzt werden.
