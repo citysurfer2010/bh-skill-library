@@ -41,10 +41,10 @@
     stopWeb();
     if (playingUrl) { player.src = playingUrl; var p = player.play(); if (p && p.catch) p.catch(function () {}); }
   }
-    // Mit Radio laeuft das Video leise weiter, das Knistern bleibt zu hoeren.
-  function videoVolume() { ytCommand('unMute'); ytCommand('setVolume', [playingUrl ? 30 : 100]); }
+    function videoVolume() { ytCommand('unMute'); ytCommand('setVolume', [100]); }
   // Der Beamer laesst nur einen Medien-Player zu. Neben dem Video laeuft das Radio deshalb ueber Web Audio.
   var web = null; var CHUNK = 64000;
+  var RADIO_OVER_VIDEO = 0.4; // Radio leiser, damit das Knistern des Feuers zu hoeren bleibt
   function stopWeb() {
     if (!web) return;
     web.stop = true;
@@ -57,7 +57,7 @@
       return new Promise(function (done) {
         w.ctx.decodeAudioData(bytes.buffer, function (buf) {
           if (!w.stop) {
-            var src = w.ctx.createBufferSource(); src.buffer = buf; src.connect(w.ctx.destination);
+            var src = w.ctx.createBufferSource(); src.buffer = buf; src.connect(w.gain);
             var at = Math.max(w.next, w.ctx.currentTime + 0.3);
             src.start(at); w.next = at + buf.duration; w.n++; caps = 'web-' + w.n;
           }
@@ -73,6 +73,7 @@
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) { caps = 'web-kein-audio'; return; }
     var w = { ctx: new AC(), next: 0, stop: false, n: 0, chain: Promise.resolve() };
+    w.gain = w.ctx.createGain(); w.gain.gain.value = RADIO_OVER_VIDEO; w.gain.connect(w.ctx.destination);
     web = w;
     if (w.ctx.resume) w.ctx.resume();
     var buf = new Uint8Array(CHUNK * 2); var size = 0;
