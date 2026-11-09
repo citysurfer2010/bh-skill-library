@@ -3,6 +3,7 @@ import { MIN_PASSWORD, passwordProblem } from "../lib/users.js";
 import { profileView } from "../lib/views-profile.js";
 import { servicesStatus, removeServices } from "../lib/google-services.js";
 import { storeIcloud, removeIcloud, icloudStatus } from "../lib/icloud-services.js";
+import { isPhotosOwner } from "./icloud-photos-login.js";
 
 const NOTICES = { "google-services": "Google-Dienste sind verbunden.", "google-services-off": "Google-Dienste wurden getrennt.",
   icloud: "iCloud ist verbunden. Deine Werkzeuge können jetzt Kalender, Kontakte und E-Mail lesen.", "icloud-off": "iCloud wurde getrennt.",
@@ -20,7 +21,7 @@ export function profileRoutes({ config, users, sessions, avatars, requireLogin }
   const r = Router();
   const page = async (req, res, extra = {}, status = 200) => {
     const [googleServices, icloud] = await Promise.all([servicesStatus(config, req.user), icloudStatus(config, req.user)]);
-    res.status(status).type("html").send(profileView({ user: req.user, googleEnabled: !!config.google, googleServices, icloud, min: MIN_PASSWORD, ...extra }));
+    res.status(status).type("html").send(profileView({ user: req.user, googleEnabled: !!config.google, googleServices, icloud, icloudPhotos: isPhotosOwner(req.user), min: MIN_PASSWORD, ...extra }));
   };
 
   r.get("/profile", requireLogin, (req, res) => page(req, res, {

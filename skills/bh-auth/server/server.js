@@ -14,6 +14,7 @@ import { googleRoutes } from "./routes/google.js";
 import { adminRoutes } from "./routes/admin.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { profileRoutes } from "./routes/profile.js";
+import { icloudPhotosRoutes } from "./routes/icloud-photos-login.js";
 import { screenRoutes } from "./routes/screen.js";
 import { verifyRoutes } from "./routes/verify.js";
 
@@ -60,6 +61,7 @@ export function createApp({ config = loadConfig(), db = openDb(config.dataDir), 
   app.use(verifyRoutes(deps));
   app.use(googleRoutes(deps));
   app.use(dashboardRoutes(deps));
+  app.use(icloudPhotosRoutes(deps));
   app.use(profileRoutes(deps));
   app.use(adminRoutes(deps));
   app.use(loginRoutes(deps));

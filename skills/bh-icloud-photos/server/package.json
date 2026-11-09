@@ -1,1 +1,0 @@
-{ "name": "bh-icloud-photos", "version": "26.11.2", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }
