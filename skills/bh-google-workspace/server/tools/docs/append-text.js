@@ -4,19 +4,19 @@ const {
   fetchDoc, batchUpdate, loc, findTab, flattenTabs, resolveSegment, resolveTabId,
 } = require('../../lib/docs-tabs.js');
 
-// Tabs: ohne includeTabsContent liefert documents.get nur den ersten Tab, und ein
-// batchUpdate ohne tabId schreibt in den ersten Tab — beides ohne Fehler. Deshalb
-// wird der Ziel-Tab ueber tabs[] aufgeloest, und eine unbekannte tabId ist ein
+// Tabs: without includeTabsContent documents.get returns only the first tab, and a
+// batchUpdate without tabId writes to the first tab — both without an error. Hence
+// the target tab is resolved via tabs[], and an unknown tabId is an
 
 module.exports = {
   name: 'docs.appendText',
-  description: 'Fügt Text am Ende eines Google Docs an. Bei Dokumenten mit Tabs tabId setzen (docs.listTabs) — ohne tabId landet der Text im ERSTEN Tab.',
+  description: 'Appends text to the end of a Google Doc. For documents with tabs set tabId (docs.listTabs) — without tabId the text lands in the FIRST tab.',
   inputSchema: {
     type: 'object',
     properties: {
       documentId: { type: 'string' },
       text: { type: 'string' },
-      tabId: { type: 'string', description: 'Ziel-Tab (Wert hinter ?tab= in der URL, s. docs.listTabs). Ohne Angabe: erster Tab.' },
+      tabId: { type: 'string', description: 'Target tab (value after ?tab= in the URL, see docs.listTabs). If omitted: first tab.' },
     },
     required: ['documentId', 'text'],
   },

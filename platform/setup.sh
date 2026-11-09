@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Richtet den Host ein (idempotent). Voraussetzung: Docker ist installiert.
-# Aufruf als root aus dem ausgerollten Ordner: ./setup.sh
+# Sets up the host (idempotent). Requirement: Docker is installed.
+# Run as root from the deployed folder: ./setup.sh
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -17,7 +17,7 @@ install -d -m 711 /srv/devbox /srv/devbox/users
 install -m 755 bin/devbox /usr/local/sbin/devbox
 install -m 755 host/devbox-firewall.sh /usr/local/sbin/devbox-firewall
 
-# Admin-SSH erst haerten, wenn die Konfiguration nachweislich gueltig ist.
+# Harden admin SSH only once the configuration is proven valid.
 install -m 644 host/10-hardening.conf /etc/ssh/sshd_config.d/10-hardening.conf
 sshd -t
 systemctl reload ssh
@@ -34,7 +34,7 @@ systemctl daemon-reload
 systemctl enable devbox-firewall >/dev/null
 systemctl restart devbox-firewall
 
-# Skills: oeffentlicher Klon ohne Zugangsdaten, stuendlich aktualisiert.
+# Skills: public clone without credentials, updated hourly.
 BRANCH=${BH_SKILLS_BRANCH:-main}
 [ -d /opt/bh-skill-library/.git ] || git clone -q -b "$BRANCH" https://github.com/citysurfer2010/bh-skill-library.git /opt/bh-skill-library
 install -m 644 host/bh-skills-sync.service host/bh-skills-sync.timer /etc/systemd/system/

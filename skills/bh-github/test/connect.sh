@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prueft bh-github-connect mit Attrappen fuer gh und curl. Laeuft ohne Netz und ohne Konto.
+# Tests bh-github-connect with stubs for gh and curl. Runs without network and without an account.
 set -u
 here=$(cd "$(dirname "$0")/.." && pwd)
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT

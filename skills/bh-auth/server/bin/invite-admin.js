@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Legt den ersten Admin an und gibt den Einmal-Link aus: node bin/invite-admin.js <email> <name>
+// Creates the first admin and prints the one-time link: node bin/invite-admin.js <email> <name>
 import { loadConfig } from "../lib/config.js";
 import { openDb } from "../lib/db.js";
 import { usersStore, HOURS } from "../lib/users.js";

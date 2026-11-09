@@ -1,14 +1,14 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-// Zeilen in einen anderen Tab verschieben — in EINEM batchUpdate (atomar):
-// Ziel-Tab bekommt sie oben (unter der Kopfzeile, neueste zuerst), inkl.
-// Formaten, Checkboxen und Rich-Text-Links (copyPaste — die Values-API verliert
-// die Links aus sheets.setLinks). Danach werden sie im Quell-Tab geloescht.
-// keepRowCount fuellt unten gleich viele leere Zeilen nach und kopiert Format +
-// Validierung der letzten Zeile: Filteransichten und bedingte Formate, die bis
-// zur letzten Zeile reichen, behalten so ihre Groesse.
-// Erster Nutzer: Portfolio-Hub Quick-Tasks — erledigte Aufgaben nach „Erledigt".
+// Move rows to another tab — in ONE batchUpdate (atomic):
+// the target tab gets them on top (below the header row, newest first), incl.
+// formats, checkboxes and rich text links (copyPaste — the Values API loses
+// the links from sheets.setLinks). They are then deleted in the source tab.
+// keepRowCount refills as many empty rows at the bottom and copies format +
+// validation of the last row: filter views and conditional formats reaching
+// the last row thus keep their size.
+// First user: Portfolio Hub Quick-Tasks — completed tasks to "Erledigt".
 const MAX_ROWS = 200;
 const EPOCH = Date.UTC(1899, 11, 30);
 
@@ -54,18 +54,18 @@ function cellValue(v) {
 
 module.exports = {
   name: 'sheets.moveRows',
-  description: 'Verschiebt ganze Zeilen in einen anderen Tab (oben unter der Kopfzeile einfuegen, inkl. Format + Rich-Text-Links, dann im Quell-Tab loeschen) — atomar. Legt den Ziel-Tab mit Kopfzeile an, falls er fehlt. expect prueft vorher je Zeile den Zellinhalt (Schutz gegen verschobene Zeilen). keepRowCount fuellt im Quell-Tab leere, vorformatierte Zeilen nach.',
+  description: 'Moves whole rows to another tab (insert on top below the header row, incl. format + rich text links, then delete in the source tab) — atomic. Creates the target tab with a header row if missing. expect first checks the cell content per row (guard against shifted rows). keepRowCount refills empty, preformatted rows in the source tab.',
   inputSchema: { type: 'object', properties: {
     spreadsheetId: { type: 'string' },
-    fromSheet: { type: 'string', description: 'Quell-Tab, z. B. "Aufgaben"' },
-    toSheet: { type: 'string', description: 'Ziel-Tab, z. B. "Erledigt" (wird angelegt, falls fehlend)' },
-    rows: { type: 'array', items: { type: 'integer' }, description: 'Zeilennummern im Quell-Tab (1-basiert, nicht die Kopfzeile)' },
-    width: { type: 'integer', description: 'Anzahl Spalten ab A (Default: alle des Quell-Tabs)' },
-    expect: { type: 'object', description: '{ column: "B", values: { "<zeile>": "<erwarteter Text>" } } — Abweichung → nichts wird veraendert' },
-    stampDate: { type: 'string', description: 'JJJJ-MM-TT — in die Spalte rechts neben den kopierten Spalten des Ziels (z. B. "Archiviert am")' },
-    stampHeader: { type: 'string', description: 'Kopfzeilen-Titel dieser Spalte beim Anlegen des Ziel-Tabs' },
+    fromSheet: { type: 'string', description: 'Source tab, e.g. "Aufgaben"' },
+    toSheet: { type: 'string', description: 'Target tab, e.g. "Erledigt" (created if missing)' },
+    rows: { type: 'array', items: { type: 'integer' }, description: 'Row numbers in the source tab (1-based, not the header row)' },
+    width: { type: 'integer', description: 'Number of columns from A (default: all of the source tab)' },
+    expect: { type: 'object', description: '{ column: "B", values: { "<row>": "<expected text>" } } — mismatch → nothing is changed' },
+    stampDate: { type: 'string', description: 'YYYY-MM-DD — into the column right of the copied columns in the target (e.g. "Archiviert am")' },
+    stampHeader: { type: 'string', description: 'Header title of this column when creating the target tab' },
     keepRowCount: { type: 'boolean' },
-    blankValues: { type: 'array', description: 'Werte fuer die nachgefuellten Zeilen ab Spalte A, z. B. [false] fuer eine Checkbox' },
+    blankValues: { type: 'array', description: 'Values for the refilled rows from column A, e.g. [false] for a checkbox' },
   }, required: ['spreadsheetId', 'fromSheet', 'toSheet', 'rows'] },
   plan,
   handler: async (a) => {

@@ -1,4 +1,4 @@
-// Bewusst schlichtes JavaScript: Der Browser des Beamers ist nicht der neueste.
+// Deliberately plain JavaScript: the Beamer's browser is not the latest.
 (function () {
   var title = document.getElementById('t');
   var text = document.getElementById('s');

@@ -1,5 +1,5 @@
 'use strict';
-/** Bedienung des Beamers. Jeder Schreibweg verlangt JSON: ein fremdes Formular kann so nichts auslösen. */
+/** Beamer control. Every write path requires JSON: a foreign form cannot trigger anything this way. */
 const express = require('express');
 const gateway = require('../lib/gateway');
 const bridge = require('../lib/menu-bridge');
@@ -11,8 +11,8 @@ const byId = (list, id) => list.find((x) => x.id === id);
 function buildRouter() {
   const router = express.Router();
   let now = null;
-  let replay = null; // womit sich der aktuelle Inhalt erneut starten laesst
-  let resume = null; // was vor der Freigabe lief
+  let replay = null; // what lets the current content be restarted
+  let resume = null; // what was running before sharing
 
   const requireJson = (req, res, next) => (req.is('application/json') ? next() : res.status(415).json({ error: 'Nur JSON' }));
   const action = (fn) => [requireJson, async (req, res) => {
@@ -33,12 +33,12 @@ function buildRouter() {
   router.get('/catalog', (_req, res) => res.json(publicCatalog()));
 
   router.get('/status', async (_req, res) => {
-    let zustand = 'nicht erreichbar';
-    try { zustand = JSON.parse(await gateway.call('beamer_status')).zustand || zustand; } catch { /* bleibt nicht erreichbar */ }
-    res.json({ zustand, now });
+    let powerState = 'unreachable';
+    try { powerState = JSON.parse(await gateway.call('beamer_status')).powerState || powerState; } catch { /* stays unreachable */ }
+    res.json({ powerState, now });
   });
 
-  // Läuft schon Radio oder eine Stimmung, kommt das Neue dazu: Feuer knistert, Radio spielt.
+  // If radio or a mood is already running, the new one is added: fire crackles, radio plays.
   const currentRadio = () => (now?.kind === 'radio' ? byId(STATIONS, now.id) : now?.radio ? byId(STATIONS, now.radio.id) : null);
   function ambient(mood, station) {
     const args = { video: videoOf(mood), title: mood.label, ...(station ? { radio_url: station.url, station: station.label } : {}) };
@@ -104,7 +104,7 @@ function buildRouter() {
     return { session };
   }));
 
-  // Stoppen je nach Inhalt: Radio in BH Screen beenden, alles andere endet mit dem Sprung auf die Startseite.
+  // Stop depending on content: end radio in BH Screen, everything else ends by jumping to the home page.
   async function stopAll() {
     if (now?.kind === 'share') { await endShare(); return; }
     await gateway.call('beamer_home');
@@ -117,7 +117,7 @@ function buildRouter() {
     return { answer: await gateway.call('beamer_share_answer', { session }) };
   }));
 
-  // Nach der Freigabe läuft wieder, was vorher lief.
+  // After sharing, whatever ran before resumes.
   async function endShare() {
     const back = resume; resume = null;
     if (back) { await gateway.call(back.replay.tool, back.replay.args); now = back.now; replay = back.replay; return; }
@@ -150,7 +150,7 @@ function buildRouter() {
   return router;
 }
 
-// Soll-Änderung von der Fernbedienung: Raum-ID, dann halbe Grad oder p für zurück zum Plan.
+// Setpoint change from the remote: room ID, then half degrees or p for back to schedule.
 async function heatingCommand(id) {
   const m = /^(\d+)t(p|\d+)$/.exec(id);
   if (!m) return;

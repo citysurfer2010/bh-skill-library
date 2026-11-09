@@ -2,7 +2,7 @@
 const { apiErr, gapiJSON, ok, okJson } = require('../../lib/gapi.js');
 const { eventJson } = require('../../lib/calendar-json.js');
 
-module.exports = { name: 'calendar.listEvents', description: 'Listet Kalendereinträge auf.', inputSchema: { type: 'object', properties: { calendarId: { type: 'string', description: 'Kalender-ID (default: primary)' }, timeMin: { type: 'string', description: 'ISO 8601 Start' }, timeMax: { type: 'string', description: 'ISO 8601 Ende' }, maxResults: { type: 'number' }, query: { type: 'string' }, privateExtendedProperty: { type: 'array', items: { type: 'string' }, description: 'Filter "schluessel=wert" auf extendedProperties.private' }, format: { type: 'string', enum: ['text', 'json'] } } },
+module.exports = { name: 'calendar.listEvents', description: 'Lists calendar events.', inputSchema: { type: 'object', properties: { calendarId: { type: 'string', description: 'Calendar ID (default: primary)' }, timeMin: { type: 'string', description: 'ISO 8601 Start' }, timeMax: { type: 'string', description: 'ISO 8601 end' }, maxResults: { type: 'number' }, query: { type: 'string' }, privateExtendedProperty: { type: 'array', items: { type: 'string' }, description: 'Filter "key=value" on extendedProperties.private' }, format: { type: 'string', enum: ['text', 'json'] } } },
   handler: async ({ calendarId = 'primary', timeMin, timeMax, maxResults = 20, query, privateExtendedProperty = [], format = 'text' }) => {
   let url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?maxResults=${maxResults}&orderBy=startTime&singleEvents=true`;
   if (timeMin) url += `&timeMin=${encodeURIComponent(timeMin)}`;

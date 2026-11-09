@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hinterlegt das Zertifikat des Beamers in der .env. Nur ueber den Tunnel aufrufen.
+# Stores the Beamer's certificate in .env. Call only through the tunnel.
 set -euo pipefail
 ENV=/srv/bh-platform/.env; ip=$(sed -n 's/^BH_BEAMER_IP=//p' "$ENV" | tail -1); [ -n "$ip" ] || { echo "BH_BEAMER_IP fehlt" >&2; exit 1; }
 chain=$(timeout 15 openssl s_client -showcerts -connect "$ip:8002" </dev/null 2>/dev/null | sed -n '/BEGIN CERTIFICATE/,/END CERTIFICATE/p')

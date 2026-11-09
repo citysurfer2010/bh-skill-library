@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Verbindet den Host per WireGuard mit dem Heimnetz (idempotent). Werte aus /srv/bh-platform/.env:
-#   BH_WG_FRITZ_B64  komplette Fritzbox-Konfiguration, base64
-#   BH_NAS_IP, BH_BEAMER_IP  einzige Ziele im Tunnel; ohne Werte wird nichts geroutet
-# Nur der Host nutzt den Tunnel: die Firewall sperrt private Netze fuer alle Container.
+# Connects the host to the home network via WireGuard (idempotent). Values from /srv/bh-platform/.env:
+#   BH_WG_FRITZ_B64  complete Fritzbox configuration, base64
+#   BH_NAS_IP, BH_BEAMER_IP  only targets in the tunnel; without values nothing is routed
+# Only the host uses the tunnel: the firewall blocks private networks for all containers.
 set -euo pipefail
 ENV=/srv/bh-platform/.env; CONF=/etc/wireguard/wg-fritz.conf
 val() { sed -n "s/^$1=//p" "$ENV" | tail -1; }
@@ -15,7 +15,7 @@ for ip in $nas $beamer; do
 done
 command -v wg-quick >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=120 install -y -qq --no-install-recommends wireguard-tools >/dev/null
 umask 077
-# 0.0.0.0/0 aus der Fritzbox-Datei wuerde den gesamten Serververkehr umleiten, DNS die Namensaufloesung.
+# 0.0.0.0/0 from the Fritzbox file would redirect all server traffic, DNS the name resolution.
 base64 -d <<<"$b64" | tr -d '\r' | awk -v targets="$targets" '
   /^[[:space:]]*DNS[[:space:]]*=/ { next }
   /^[[:space:]]*AllowedIPs[[:space:]]*=/ { if (targets != "") print "AllowedIPs = " targets; next }
@@ -25,7 +25,7 @@ grep -q '^PrivateKey' "$CONF.new" && grep -q '^Endpoint' "$CONF.new" || { rm -f 
 mv "$CONF.new" "$CONF"
 cat >/usr/local/sbin/wg-fritz-reresolve <<'S'
 #!/usr/bin/env bash
-# Die Heim-IP wechselt: Gegenstelle regelmaessig neu aufloesen.
+# The home IP changes: re-resolve the peer regularly.
 conf=/etc/wireguard/wg-fritz.conf
 wg set wg-fritz peer "$(sed -n 's/^PublicKey = //p' "$conf")" endpoint "$(sed -n 's/^Endpoint = //p' "$conf")"
 S

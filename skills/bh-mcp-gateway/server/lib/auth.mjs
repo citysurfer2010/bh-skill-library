@@ -1,4 +1,4 @@
-// Token je User, dieselbe Datei wie beim LLM-Gateway: { "<token>": "devbox/<name>" }; Apps der Plattform als "app/<name>".
+// Token per user, same file as the LLM gateway: { "<token>": "devbox/<name>" }; platform apps as "app/<name>".
 import { readFileSync, statSync } from "node:fs";
 
 let cached = { mtimeMs: -1, map: new Map() };
@@ -14,7 +14,7 @@ function tokens(file) {
   }
 }
 
-/** Name des Users zum Bearer-Token, sonst null. */
+/** Name of the user for the bearer token, otherwise null. */
 export function userFromRequest(req, file) {
   const m = /^Bearer (\S+)$/.exec(req.headers.authorization || "");
   if (!m) return null;

@@ -1,4 +1,4 @@
-/** Ein- und Ausschalten. Meldet nur dann Erfolg, wenn der Beamer den neuen Zustand auch bestaetigt. */
+/** Power on and off. Reports success only when the Beamer actually confirms the new state. */
 'use strict';
 
 const dgram = require('dgram');
@@ -34,7 +34,7 @@ async function waitFor(remote, wanted, tries, delayMs) {
   return false;
 }
 
-// Ein kurzer Klick auf KEY_POWER schaltet dieses Modell nicht aus; die Taste muss gehalten werden.
+// A short click on KEY_POWER does not turn this model off; the key must be held down.
 async function powerOff({ remote = require('./remote.js'), tries = 10, delayMs = 2000 } = {}) {
   if ((await state(remote)) !== 'on') return 'Der Beamer ist bereits aus.';
   await remote.hold('KEY_POWER');
@@ -42,7 +42,7 @@ async function powerOff({ remote = require('./remote.js'), tries = 10, delayMs =
   throw new Error('Der Beamer ist trotz Ausschalt-Befehl noch an');
 }
 
-// Jeder Versuch dauert bis zu 8 s (Pause + Zeitlimit der Abfrage); zusammen unter dem Zeitlimit der App bleiben.
+// Each attempt takes up to 8 s (pause + query time limit); together they must stay under the app's time limit.
 async function powerOn({ remote = require('./remote.js'), wake = sendWake, tries = 6, delayMs = 2000 } = {}) {
   const before = await state(remote);
   if (before === 'on') return 'Der Beamer ist bereits an.';

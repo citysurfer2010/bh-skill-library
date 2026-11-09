@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 const now = () => Math.floor(Date.now() / 1000);
 
-/** Eigener Pfad oder https-Adresse, damit kein javascript:-Link in die Uebersicht kommt. */
+/** Own path or https address, so that no javascript: link gets into the overview. */
 export function validAppUrl(url) {
   const u = String(url || "").trim();
   if (u.length > 300 || /[\s<>"']/.test(u)) return null;

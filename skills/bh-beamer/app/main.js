@@ -1,5 +1,5 @@
-// Fragt den Server, was gezeigt werden soll. Bewusst altes JavaScript: Der Beamer nutzt Tizen 5.5.
-// Modi: text (Titel + Text), url (Webseite im Vollbild, verlaesst diese Seite), audio (Radio/Musik, die App spielt selbst).
+// Asks the server what to show. Deliberately old JavaScript: the Beamer runs Tizen 5.5.
+// Modes: text (title + text), url (full-screen web page, leaves this page), audio (radio/music, played by the app itself).
 (function () {
   'use strict';
   var titleEl = document.getElementById('title');
@@ -21,7 +21,7 @@
   function audioState(state) { failed = state === 'fail'; playingEl.setAttribute('data-s', state); BHHome.setState(state); }
 
   function ytCommand(func, args) {
-    try { frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), '*'); } catch (e) { /* noch nicht geladen */ }
+    try { frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), '*'); } catch (e) { /* not loaded yet */ }
   }
   function showBar(text) {
     vbar.textContent = text; vbar.className = 'on';
@@ -32,7 +32,7 @@
     if (id === shownVideo) return;
     var first = !shownVideo;
     shownVideo = id;
-    if (first && playingUrl) { try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* kein Player */ } startWeb(playingUrl); }
+    if (first && playingUrl) { try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* no player */ } startWeb(playingUrl); }
     frame.src = window.BH_SCREEN_URL + '/player?v=' + id;
   }
   function stopVideo() {
@@ -42,15 +42,15 @@
     if (playingUrl) { player.src = playingUrl; var p = player.play(); if (p && p.catch) p.catch(function () {}); }
   }
     function videoVolume() { ytCommand('unMute'); ytCommand('setVolume', [100]); }
-  // Der Beamer laesst nur einen Medien-Player zu. Neben dem Video laeuft das Radio deshalb ueber Web Audio.
+  // The Beamer allows only one media player. Alongside the video, the radio therefore runs through Web Audio.
   var web = null; var CHUNK = 64000;
-  var RADIO_OVER_VIDEO = 0.4; // Radio leiser, damit das Knistern des Feuers zu hoeren bleibt
+  var RADIO_OVER_VIDEO = 0.4; // Radio quieter, so that the crackling of the fire stays audible
   function stopWeb() {
     if (!web) return;
     web.stop = true;
-    try { if (web.abort) web.abort.abort(); } catch (e) { /* schon zu */ }
-    try { web.reader.cancel(); } catch (e) { /* schon zu */ }
-    try { web.ctx.close(); } catch (e) { /* schon zu */ }
+    try { if (web.abort) web.abort.abort(); } catch (e) { /* already closed */ }
+    try { web.reader.cancel(); } catch (e) { /* already closed */ }
+    try { web.ctx.close(); } catch (e) { /* already closed */ }
     web = null;
   }
   function playChunk(w, bytes) {
@@ -67,7 +67,7 @@
       });
     });
   }
-  // Schneidet an einer MP3-Rahmengrenze, damit zwischen den Stuecken nichts knackt.
+  // Cuts at an MP3 frame boundary, so that nothing crackles between the pieces.
   function cutAt(b) { for (var i = b.length - 2; i > b.length - 3000 && i > 0; i--) if (b[i] === 255 && (b[i + 1] & 224) === 224) return i; return b.length; }
   function webFailed(w) { if (w.stop) return; audioState('fail'); noteEl.textContent = 'Stream nicht erreichbar'; showBar('Radio nicht erreichbar'); }
   function startWeb(url) {
@@ -118,7 +118,7 @@
     playingUrl = null;
     stopWeb();
     stationEl.textContent = 'Radio'; stationEl.className = ''; noteEl.innerHTML = IDLE_NOTE;
-    try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* kein Player */ }
+    try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* no player */ }
     BHHome.setPlaying(null);
   }
 
@@ -143,12 +143,12 @@
     x.setRequestHeader('Content-Type', 'text/plain');
     x.send(JSON.stringify({ kind: kind, id: id }));
   }
-  // Sofort umschalten, die App erfaehrt es parallel und zeigt denselben Stand.
+  // Switch at once; the app learns of it in parallel and shows the same state.
   BHHome.onTune = function (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
   BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); showBar(playingUrl ? 'Radio: ' + stationEl.textContent + ' · CH wechselt' : 'CH ▲ ▼ Radio dazu · Zurück zum Start'); sendRequest('mood', m.id); };
-  // Kanal-Wippe der Fernbedienung wechselt den Sender. Die Tasten muessen eigens angemeldet werden.
+  // The channel rocker on the remote switches stations. The keys must be registered explicitly.
   try { tizen.tvinputdevice.registerKey('ChannelUp'); tizen.tvinputdevice.registerKey('ChannelDown'); } catch (e) { caps = 'ch-' + e.name; }
-  // Pause heisst: Stream wirklich anhalten und den Sender merken. OK oder die Pause-Taste spielen ihn wieder ab.
+  // Pause means: really stop the stream and remember the station. OK or the pause key plays it again.
   BHHome.onPause = function () {
     if (playingUrl) {
       var st = { url: playingUrl, name: stationEl.textContent, id: BHHome.currentId() };
@@ -158,7 +158,7 @@
     } else if (paused) { var p = paused; paused = null; BHHome.onTune(p); }
   };
   function clearPause() { paused = null; audioState('idle'); stationEl.textContent = 'Radio'; stationEl.className = ''; noteEl.innerHTML = IDLE_NOTE; BHHome.setPlaying(null); }
-  try { tizen.tvinputdevice.registerKey('MediaPlayPause'); } catch (e) { /* nicht jede Fernbedienung hat sie */ }
+  try { tizen.tvinputdevice.registerKey('MediaPlayPause'); } catch (e) { /* not every remote has them */ }
   document.addEventListener('keydown', function (e) {
     if (e.keyCode === 10252 && view.indexOf('home') === 0) { e.preventDefault(); BHHome.onPause(); }
   });
@@ -170,7 +170,7 @@
     else if (view.indexOf('home') === 0) BHHome.channel(dir);
   });
   document.addEventListener('keydown', function (e) {
-    if (e.defaultPrevented) return; // Das Menue hat die Taste schon behandelt
+    if (e.defaultPrevented) return; // The menu has already handled the key
     var back = e.keyCode === 10009 || e.keyCode === 8;
     if (back && view === 'video') { localAt = Date.now(); stopVideo(); homeView(); sendRequest('back', 'x'); e.preventDefault(); return; }
     if (back && view.indexOf('home') === 0 && BHHome.back()) { e.preventDefault(); return; }
@@ -192,7 +192,7 @@
   function stopShare() {
     if (!shareSession) return;
     shareSession = null;
-    try { pc.close(); } catch (e) { /* schon zu */ }
+    try { pc.close(); } catch (e) { /* already closed */ }
     pc = null;
     shareEl.srcObject = null;
     homeView();
@@ -214,13 +214,13 @@
     x.send(JSON.stringify({ session: session, sdp: pc.localDescription.sdp }));
   }
 
-  // Der Browser des Beamers ist aelter als die Laptops: unbekannte Zeilen lehnt er als Ganzes ab. mDNS-Kandidaten
-  // kann er nicht aufloesen; das schadet nicht, der Laptop meldet sich bei seiner echten Adresse.
+  // The Beamer's browser is older than the laptops: it rejects unknown lines as a whole. It cannot resolve
+  // mDNS candidates; that does no harm, the laptop reports in at its real address.
   function compatibleSdp(sdp) {
     return sdp.split('\r\n').filter(function (l) { return !/^a=extmap-allow-mixed/.test(l) && !/^a=candidate:.*\.local /.test(l); }).join('\r\n');
   }
 
-  // Ohne Trickle-ICE: Die Antwort geht erst raus, wenn alle Kandidaten drinstehen (spaetestens nach 0,8 s).
+  // Without trickle ICE: the answer only goes out once all candidates are in it (after 0.8 s at the latest).
   function startShare(c) {
     stopAudio();
     shareSession = c.session;
@@ -248,7 +248,7 @@
 
   function render(c) {
     BHHome.setMenu(c.menu);
-    // Ein Echo der eigenen Auswahl darf eine neuere Wahl nicht ueberschreiben; der neueste Stand gilt danach.
+    // An echo of our own selection must not overwrite a newer choice; the latest state applies afterwards.
     clearTimeout(lateTimer);
     var wait = 4000 - (Date.now() - localAt);
     if (wait > 0) { lateTimer = setTimeout(function () { render(c); }, wait + 50); return; }
@@ -278,7 +278,7 @@
     if (c.title || c.text) setView('text'); else homeView();
   }
 
-  // Meldet einmalig, was das Geraet kann, danach den Stand der Freigabe; landet nur im Zugriffsprotokoll des Servers.
+  // Reports once what the device can do, then the sharing state; ends up only in the server's access log.
   function probe() {
     var PC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
     var chrome = (navigator.userAgent.match(/Chrome\/[\d.]+/) || ['?'])[0];
@@ -295,7 +295,7 @@
   }
   probe();
 
-  // Der Server antwortet, sobald sich etwas aendert; danach sofort wieder fragen.
+  // The server answers as soon as something changes; then ask again immediately.
   var version = '';
   function poll() {
     var x = new XMLHttpRequest();
@@ -304,7 +304,7 @@
     x.timeout = 35000;
     x.onload = function () {
       if (x.status !== 200) { again(3000); return; }
-      try { var c = JSON.parse(x.responseText); version = c.v || ''; render(c); } catch (e) { /* naechste Antwort */ }
+      try { var c = JSON.parse(x.responseText); version = c.v || ''; render(c); } catch (e) { /* next answer */ }
       again(30);
     };
     x.onerror = function () { again(3000); };
@@ -313,5 +313,5 @@
   }
 
   poll();
-  sendRequest('refresh', 'x'); // Beim Start den Stundenplan frisch holen
+  sendRequest('refresh', 'x'); // Fetch a fresh timetable at startup
 })();

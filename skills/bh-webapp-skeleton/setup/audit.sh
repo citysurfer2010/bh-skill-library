@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prüft, ob eine App alle Pflicht-Artefakte hat: audit.sh <app-ordner>. Exit 1, wenn etwas fehlt.
+# Checks whether an app has all mandatory artifacts: audit.sh <app-folder>. Exit 1 if anything is missing.
 set -u
 APP=${1:-.}
 [ -d "$APP" ] || { echo "FEHLER: $APP ist kein Ordner" >&2; exit 2; }

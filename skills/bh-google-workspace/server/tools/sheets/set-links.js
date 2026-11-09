@@ -1,10 +1,10 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-// Mehrere klickbare Links in EINER Zelle. Per Values-API (updateRange) geht das
-// nicht: =HYPERLINK() traegt nur einen Link, und Text mit mehreren URLs wird von
-// Sheets NICHT verlinkt (gemessen 29.09.2026). Deshalb Rich-Text: jede Zeile der
-// Zelle ist ein Titel, der als eigener textFormatRun auf seine URL zeigt.
+// Several clickable links in ONE cell. The Values API (updateRange) cannot do
+// this: =HYPERLINK() carries only one link, and text with several URLs is
+// NOT linked by Sheets (measured 29.09.2026). Hence rich text: each line of the
+// cell is a title that points to its URL as its own textFormatRun.
 const MAX_LINKS = 20;
 
 function build(links) {
@@ -21,12 +21,12 @@ function build(links) {
 
 module.exports = {
   name: 'sheets.setLinks',
-  description: 'Schreibt eine oder mehrere klickbare Links in EINE Zelle (Rich-Text, je Link eine Zeile mit Titel). Ersetzt den bisherigen Zellinhalt; leere Liste leert die Zelle. Nur http(s)-URLs.',
+  description: 'Writes one or more clickable links into ONE cell (rich text, one titled line per link). Replaces the existing cell content; an empty list clears the cell. Only http(s) URLs.',
   inputSchema: { type: 'object', properties: {
     spreadsheetId: { type: 'string' },
-    sheetName: { type: 'string', description: 'Tab-Name, z. B. "Aufgaben"' },
-    cell: { type: 'string', description: 'A1-Zelle ohne Tab, z. B. "I7"' },
-    links: { type: 'array', description: '[{ url, label? }] — label = angezeigter Titel (Default: URL)', items: { type: 'object' } },
+    sheetName: { type: 'string', description: 'Tab name, e.g. "Aufgaben"' },
+    cell: { type: 'string', description: 'A1 cell without tab, e.g. "I7"' },
+    links: { type: 'array', description: '[{ url, label? }] — label = displayed title (default: URL)', items: { type: 'object' } },
   }, required: ['spreadsheetId', 'sheetName', 'cell', 'links'] },
   build,
   handler: async ({ spreadsheetId, sheetName, cell, links }) => {

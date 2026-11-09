@@ -1,15 +1,15 @@
 'use strict';
 /**
- * sheets.updateByKey — kollisionssicheres Schreiben in Google Sheets.
+ * sheets.updateByKey — collision-safe writing to Google Sheets.
  *
- * Statt in FESTE Zellbereiche zu schreiben (riskant: verschiebt jemand parallel
- * Zeilen, trifft der Range die falsche Zeile → Bestand überschrieben), matcht
- * dieses Tool jede Eingabe-Zeile per eindeutigem Schlüssel (z.B. Vorgangsnummer)
- * gegen eine Schlüsselspalte, die UNMITTELBAR vor dem Schreiben frisch gelesen
- * wird. Geschrieben wird dann zeilengenau per values:batchUpdate.
+ * Instead of writing to FIXED cell ranges (risky: if someone moves rows in parallel,
+ * the range hits the wrong row → existing data overwritten), this tool
+ * matches each input row by unique key (e.g. case number)
+ * against a key column that is freshly read IMMEDIATELY before
+ * writing. It then writes row-exact via values:batchUpdate.
  *
- * Vorfall-Referenz 2026-06-30: fester A2:M18-Write überschrieb PM-C0601/0600,
- * nachdem parallel 2 Zeilen gelöscht wurden. Dieses Tool verhindert das.
+ * Incident reference 2026-06-30: a fixed A2:M18 write overwrote PM-C0601/0600
+ * after 2 rows were deleted in parallel. This tool prevents that.
  */
 const { apiErr, gapiJSON, okJson } = require('../../lib/gapi.js');
 
@@ -28,18 +28,18 @@ const norm = (v) => String(v == null ? '' : v).replace(/\r/g, '').trim();
 
 module.exports = {
   name: 'sheets.updateByKey',
-  description: 'Kollisionssicheres Schreiben: matcht jede Zeile per Schlüssel (z.B. Vorgangsnummer) gegen eine frisch gelesene Schlüsselspalte und schreibt zeilengenau (values:batchUpdate) — robust gegen parallel verschobene Zeilen. rows=[{key, values:[...]}]; values beginnen bei startColumn. dryRun=true gibt nur die Zeilen-Zuordnung zurück (kein Schreiben). createIfMissing hängt unbekannte Schlüssel unten an.',
+  description: 'Collision-safe writing: matches each row by key (e.g. case number) against a freshly read key column and writes row-exact (values:batchUpdate) — robust against rows moved in parallel. rows=[{key, values:[...]}]; values start at startColumn. dryRun=true only returns the row mapping (no writing). createIfMissing appends unknown keys at the bottom.',
   inputSchema: {
     type: 'object',
     properties: {
       spreadsheetId:  { type: 'string' },
-      sheet:          { type: 'string', description: 'Tab-Titel, z.B. "Übersicht"' },
-      keyColumn:      { type: 'string', description: 'Spalte mit dem eindeutigen Schlüssel (Default "A")' },
-      startColumn:    { type: 'string', description: 'Spalte, ab der values geschrieben werden (Default "A")' },
-      rows:           { type: 'array', description: '[{key, values:[...]}] — values ab startColumn', items: { type: 'object', properties: { key: { type: 'string' }, values: { type: 'array' } }, required: ['key', 'values'] } },
-      createIfMissing:{ type: 'boolean', description: 'Unbekannte Schlüssel unten anhängen (Default false → übersprungen)' },
-      dryRun:         { type: 'boolean', description: 'Nur Zuordnung zurückgeben, nicht schreiben (Default false)' },
-      valueInputOption:{ type: 'string', description: 'RAW (Default) oder USER_ENTERED' },
+      sheet:          { type: 'string', description: 'Tab title, e.g. "Übersicht"' },
+      keyColumn:      { type: 'string', description: 'Column with the unique key (default "A")' },
+      startColumn:    { type: 'string', description: 'Column from which values are written (default "A")' },
+      rows:           { type: 'array', description: '[{key, values:[...]}] — values from startColumn', items: { type: 'object', properties: { key: { type: 'string' }, values: { type: 'array' } }, required: ['key', 'values'] } },
+      createIfMissing:{ type: 'boolean', description: 'Append unknown keys at the bottom (default false → skipped)' },
+      dryRun:         { type: 'boolean', description: 'Only return the mapping, do not write (default false)' },
+      valueInputOption:{ type: 'string', description: 'RAW (default) or USER_ENTERED' },
     },
     required: ['spreadsheetId', 'sheet', 'rows'],
   },
@@ -47,7 +47,7 @@ module.exports = {
     if (!Array.isArray(rows) || !rows.length) return apiErr('sheets.updateByKey', 400, { error: { message: 'rows leer' } });
     const qSheet = quoteSheet(sheet);
 
-    // 1. Schlüsselspalte FRISCH lesen → key → erste Zeilennummer.
+    // 1. Read the key column FRESH → key → first row number.
     const keyRange = `${qSheet}!${keyColumn}1:${keyColumn}`;
     const kr = await gapiJSON('GET', `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(keyRange)}`);
     if (kr.status !== 200) return apiErr('sheets.updateByKey(read keys)', kr.status, kr.data);
@@ -82,12 +82,12 @@ module.exports = {
 
     if (dryRun) return okJson({ dryRun: true, updated, notFound, willAppend: appendRows.map((a) => a.key), duplicateKeys: [...dupes] });
 
-    // 2. Gematchte Zeilen in EINEM batchUpdate schreiben.
+    // 2. Write matched rows in ONE batchUpdate.
     if (data.length) {
       const br = await gapiJSON('POST', `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`, { valueInputOption, data });
       if (br.status !== 200) return apiErr('sheets.updateByKey(batchUpdate)', br.status, br.data);
     }
-    // 3. Unbekannte Schlüssel unten anhängen (optional).
+    // 3. Append unknown keys at the bottom (optional).
     const appended = [];
     if (appendRows.length) {
       const startCol = numToCol(Math.min(startNum, colToNum(keyColumn)));

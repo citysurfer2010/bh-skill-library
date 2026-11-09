@@ -2,12 +2,12 @@
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
 /**
- * Entfernt alle Text-Hintergrundfarben (gelbe Vorlagen-Markierungen) aus
- * einem Google Doc — genutzt vom Property-OS-Writer nach dem Befüllen der
- * Briefvorlage. (Vorher Direkt-Call in der Web-App — Architektur-Regel
- * 2026-06-07: Web-Apps gehen IMMER über die MCP-Server.)
+ * Removes all text background colors (yellow template highlights) from
+ * a Google Doc — used by the Property OS writer after filling the
+ * letter template. (Previously a direct call in the web app — architecture rule
+ * 2026-06-07: web apps ALWAYS go through the MCP servers.)
  */
-module.exports = { name: 'docs.clearHighlights', description: 'Entfernt alle Text-Hintergrundfarben (Markierungen) aus einem Google Docs Dokument.', inputSchema: { type: 'object', properties: { documentId: { type: 'string' } }, required: ['documentId'] },
+module.exports = { name: 'docs.clearHighlights', description: 'Removes all text background colors (highlights) from a Google Docs document.', inputSchema: { type: 'object', properties: { documentId: { type: 'string' } }, required: ['documentId'] },
   handler: async ({ documentId }) => {
     const doc = await gapiJSON('GET', `https://docs.googleapis.com/v1/documents/${documentId}`);
     if (doc.status !== 200) return apiErr('docs.clearHighlights', doc.status, doc.data);

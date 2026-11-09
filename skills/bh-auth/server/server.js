@@ -32,10 +32,10 @@ export function createApp({ config = loadConfig(), db = openDb(config.dataDir), 
   app.use(express.static(path.join(here, "public")));
   app.use(cookieParser());
   app.use(express.urlencoded({ extended: false, limit: "32kb" }));
-  // Formulare nur von der eigenen Adresse.
+  // Forms only from our own origin.
   app.use((req, res, next) => {
     const origin = req.get("origin");
-    // Die App auf dem Beamer hat keine eigene Herkunft; ihre Antwort ist ueber den geheimen Link abgesichert, nicht ueber Cookies.
+    // The Beamer app has no origin of its own; its answer is secured by the secret link, not by cookies.
     const fromBeamer = /^\/screen\/[^/]+\/(answer|request)$/.test(req.path);
     if (req.method === "POST" && origin && origin !== config.publicUrl && !fromBeamer) return res.status(403).send("Ungültige Herkunft");
     next();

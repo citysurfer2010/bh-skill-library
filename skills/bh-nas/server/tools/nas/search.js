@@ -1,7 +1,7 @@
 const { call, checkPath, guarded } = require('../../lib/dsm.js');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-module.exports = { name: 'search', description: 'Sucht Dateien und Ordner per Namensmuster unterhalb eines Ordners, z. B. *.pdf.',
-  inputSchema: { type: 'object', required: ['path', 'pattern'], properties: { path: { type: 'string' }, pattern: { type: 'string' }, limit: { type: 'number', description: 'Standard 100' } } },
+module.exports = { name: 'search', description: 'Searches files and folders by name pattern below a folder, e.g. *.pdf.',
+  inputSchema: { type: 'object', required: ['path', 'pattern'], properties: { path: { type: 'string' }, pattern: { type: 'string' }, limit: { type: 'number', description: 'Default 100' } } },
   handler: guarded(async ({ path, pattern, limit = 100 }) => {
     const { taskid } = await call('SYNO.FileStation.Search', 2, 'start', { folder_path: JSON.stringify([checkPath(path)]), pattern: String(pattern), recursive: 'true' });
     try {

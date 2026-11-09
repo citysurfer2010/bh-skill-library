@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Richtet DNS und Tunnel bei Cloudflare ein (idempotent). Werte aus /srv/bh-platform/.env."""
+"""Sets up DNS and the tunnel at Cloudflare (idempotent). Values from /srv/bh-platform/.env."""
 import json
 import re
 import urllib.error
@@ -54,7 +54,7 @@ def ensure(rtype, name, content, proxied):
     print("gesetzt:", rtype, name)
 
 
-# Alles Bestehende bleibt, wie es ist: nur DNS, kein Cloudflare-Proxy (Mail, Autodiscover).
+# Everything existing stays as it is: DNS only, no Cloudflare proxy (mail, Autodiscover).
 for r in records:
     if r["proxied"] and r["name"] not in hosts:
         api("PATCH", f"/zones/{zid}/dns_records/{r['id']}", {"proxied": False})

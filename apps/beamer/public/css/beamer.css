@@ -1,4 +1,4 @@
-/* Bedienseite Beamer: Band oben, Inhalte links, Fernbedienung als eigenes Objekt rechts. */
+/* Beamer control page: band on top, content left, remote control as a separate object right. */
 [hidden] { display: none !important; }
 .bhs-main { background: var(--bh-bg); }
 .bm-hero { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; min-height: 150px; padding: 20px 24px; overflow: hidden; border-radius: var(--bh-radius-lg); background: var(--bh-hero-idle); color: var(--bh-text); box-shadow: var(--bh-shadow-sm); }

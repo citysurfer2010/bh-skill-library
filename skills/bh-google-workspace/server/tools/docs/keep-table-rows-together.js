@@ -2,29 +2,29 @@
 const { gapiJSON, ok, err } = require('../../lib/gapi.js');
 
 /**
- * docs.keepTableRowsTogether — verhindert, dass Tabellenzeilen am Seitenumbruch
- * zerschnitten werden (TableRowStyle.preventOverflow).
+ * docs.keepTableRowsTogether — prevents table rows from being split at a page
+ * break (TableRowStyle.preventOverflow).
  *
- * gerahmten Unterpunkte (`section_box`) technisch einzeilige Tabellen. Ohne
- * preventOverflow trennt Google Docs so einen Kasten mitten im Rahmen — die
- * Bildunterschrift landet allein und ohne Rahmenunterkante auf der Folgeseite.
- * Bei mehrzeiligen Tabellen bleibt jede Zeile ganz, die Tabelle darf weiter
- * zwischen Zeilen umbrechen.
+ * framed sub-items (`section_box`) are technically single-row tables. Without
+ * preventOverflow Google Docs splits such a box mid-frame — the
+ * caption lands alone and without the frame's bottom edge on the next page.
+ * In multi-row tables each row stays whole, the table may still
+ * break between rows.
  *
- * Nur Tabellen auf Body-Ebene: verschachtelte Tabellen liegen ohnehin in einer
- * Zelle, die bereits als Ganzes umbricht.
+ * Only body-level tables: nested tables sit inside a cell anyway,
+ * which already breaks as a whole.
  */
 module.exports = {
   name: 'docs.keepTableRowsTogether',
   description:
-    'Setzt preventOverflow auf alle Tabellenzeilen eines Google Docs, damit Kästen und Zeilen ' +
-    'nicht am Seitenumbruch zerschnitten werden. Nach dem HTML-Import aufrufen, wenn das Dokument ' +
-    'gerahmte Kästen enthält. prevent=false hebt es wieder auf.',
+    'Sets preventOverflow on all table rows of a Google Doc so boxes and rows ' +
+    'are not split at page breaks. Call after the HTML import if the document ' +
+    'contains framed boxes. prevent=false reverts it.',
   inputSchema: {
     type: 'object',
     properties: {
-      documentId: { type: 'string', description: 'Google-Doc-ID' },
-      prevent: { type: 'boolean', description: 'true (Default) = Zeilen zusammenhalten' },
+      documentId: { type: 'string', description: 'Google Doc ID' },
+      prevent: { type: 'boolean', description: 'true (default) = keep rows together' },
     },
     required: ['documentId'],
   },

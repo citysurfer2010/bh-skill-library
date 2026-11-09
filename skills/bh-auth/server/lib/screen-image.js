@@ -3,7 +3,7 @@ import sharp from "sharp";
 const WIDTH = 1920; const HEIGHT = 1080;
 const xml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[c]));
 
-/** Bricht an Wortgrenzen um und begrenzt die Zeilenzahl, damit nichts aus dem Bild laeuft. */
+/** Wraps at word boundaries and limits the line count, so that nothing runs off the image. */
 export function wrap(text, perLine, maxLines) {
   const lines = [];
   for (const para of String(text || "").split("\n")) {

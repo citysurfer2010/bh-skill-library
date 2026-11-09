@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-// Fuer andere Apps: nginx ruft /auth-headers per auth_request, kein weiterer Dienst braucht den Schluessel.
+// For other apps: nginx calls /auth-headers via auth_request, no other service needs the key.
 export function verifyRoutes({ sessions }) {
   const r = Router();
   r.get("/health", (_req, res) => res.json({ ok: true }));

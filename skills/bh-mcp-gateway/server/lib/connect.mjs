@@ -1,4 +1,4 @@
-// Nimmt das GitHub-Token eines Users entgegen, ohne dass es durch ein Modell laeuft.
+// Receives a user's GitHub token without it passing through a model.
 import { mkdirSync, writeFileSync, renameSync } from "node:fs";
 import path from "node:path";
 

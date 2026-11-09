@@ -1,4 +1,4 @@
-/** Startet YouTube-Videos ueber das DIAL-Protokoll der YouTube-App (Port 8080, nur durch den WireGuard-Tunnel). */
+/** Starts YouTube videos via the DIAL protocol of the YouTube app (port 8080, only through the WireGuard tunnel). */
 'use strict';
 
 let http = (...a) => fetch(...a);
@@ -6,7 +6,7 @@ const setFetch = (f) => { http = f; };
 const base = () => `http://${process.env.BH_BEAMER_IP}:8080/ws/apps/YouTube`;
 const ID = /^[A-Za-z0-9_-]{11}$/;
 
-/** Nimmt eine Video-Kennung oder eine YouTube-Adresse (watch, youtu.be, shorts, embed, live) und liefert die Kennung. */
+/** Takes a video ID or a YouTube address (watch, youtu.be, shorts, embed, live) and returns the ID. */
 function videoId(input) {
   const s = String(input || '').trim();
   if (ID.test(s)) return s;
@@ -19,7 +19,7 @@ function videoId(input) {
   return id;
 }
 
-// Ohne `Origin: https://www.youtube.com` antwortet der Beamer mit 403; Port 8001 lehnt DIAL-Starts mit 401 ab.
+// Without `Origin: https://www.youtube.com` the Beamer answers 403; port 8001 rejects DIAL starts with 401.
 async function playYoutube(input) {
   const id = videoId(input);
   let r;

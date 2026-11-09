@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, err, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'calendar.respondToEvent', description: 'Antwortet auf eine Kalender-Einladung.', inputSchema: { type: 'object', properties: { calendarId: { type: 'string' }, eventId: { type: 'string' }, response: { type: 'string', enum: ['accepted', 'declined', 'tentative'] } }, required: ['eventId', 'response'] },
+module.exports = { name: 'calendar.respondToEvent', description: 'Responds to a calendar invitation.', inputSchema: { type: 'object', properties: { calendarId: { type: 'string' }, eventId: { type: 'string' }, response: { type: 'string', enum: ['accepted', 'declined', 'tentative'] } }, required: ['eventId', 'response'] },
   handler: async ({ calendarId = 'primary', eventId, response }) => {
   // response: 'accepted' | 'declined' | 'tentative'
   const me = await gapiJSON('GET', 'https://people.googleapis.com/v1/people/me?personFields=emailAddresses');

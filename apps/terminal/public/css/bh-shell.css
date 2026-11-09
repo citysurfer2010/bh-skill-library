@@ -1,4 +1,4 @@
-/* Rahmen: Navbar 52 px, Breadcrumb 40 px, Sidebar 240 px (einklappbar, ziehbar), Hauptbereich. Nur Tokens. */
+/* Frame: navbar 52 px, breadcrumb 40 px, sidebar 240 px (collapsible, draggable), main area. Tokens only. */
 body.bhs-active{margin:0;height:100vh;overflow:hidden}
 .bhs-navbar,.bhs-navbar *,.bhs-crumbs,.bhs-sidebar,.bhs-sidebar *,.bhlp,.bhlp *,.bhdt-host,.bhdt-host *{box-sizing:border-box}
 .bhs-root{display:flex;flex-direction:column;height:100vh;font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--bh-text);background:var(--bh-surface)}

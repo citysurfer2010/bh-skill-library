@@ -1,11 +1,11 @@
 'use strict';
 /**
- * Seitenhelfer. Navbar, Breadcrumb und Sidebar zeichnet der Rahmen (bh-app-shell.js), Listenseiten BHListPage + BHDataTable.
- * Eine Seite = Seitenkopf (Titel links, Aktionen rechts) + Inhalt. Knöpfe gehören in den Seitenkopf, nie in die Breadcrumb.
- *   AppShell.crumbs([['App', href], ['Seite']]) · AppShell.render(host, html) · AppShell.actions(html)
- * Ladestandard: Rahmen sofort aus dem Bekannten zeichnen, Inhalt zeigt Platzhalter, bis die Daten da sind; nie eine weiße Seite.
- *   AppShell.loading(host, title, kind)  'table' | 'cards' | 'form'     AppShell.links(prefix, go)  Links im Modul ohne Reload
- * Listen sind randlos, nie in einer .card. Kleine statische Listen (bis 10 Zeilen):
+ * Page helpers. The frame (bh-app-shell.js) draws navbar, breadcrumb and sidebar; list pages use BHListPage + BHDataTable.
+ * A page = page header (title left, actions right) + content. Buttons belong in the page header, never in the breadcrumb.
+ *   AppShell.crumbs([['App', href], ['Page']]) · AppShell.render(host, html) · AppShell.actions(html)
+ * Loading standard: draw the frame at once from what is known, content shows placeholders until data arrives; never a white page.
+ *   AppShell.loading(host, title, kind)  'table' | 'cards' | 'form'     AppShell.links(prefix, go)  in-module links without reload
+ * Lists are borderless, never in a .card. Small static lists (up to 10 rows):
  *   AppShell.list({ columns: [{ key, label, html? }], rows, title?, empty?, rowHref? })
  *   AppShell.kpis([{ label, value, sub? }])   AppShell.listPage(host, { title, sub?, search?, count, countLabel?, toolbarLeft?, toolbarRight?, list })
  *   AppShell.chips(items: [[key, label, n?]], active, href(key))
@@ -13,7 +13,7 @@
 window.AppShell = (() => {
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  /** Breadcrumb des Rahmens. */
+  /** Breadcrumb of the frame. */
   function crumbs(items) {
     const shell = window.Navbar && Navbar.shell();
     if (shell) shell.setCrumbs(items);
@@ -65,7 +65,7 @@ window.AppShell = (() => {
   }
 
   /**
-   * Randlose Liste: sticky upper-case header, row hover, optional title and empty text.
+   * Borderless list: sticky upper-case header, row hover, optional title and empty text.
    * columns: [{ key, label, html? }] — html(row) returns trusted HTML for that cell, otherwise row[key] is escaped.
    * rowHref(row) makes the first cell a link (same-module links navigate without reload via AppShell.links).
    */
@@ -82,7 +82,7 @@ window.AppShell = (() => {
       + (rows.length ? `<table>${head}${body}</table>` : `<p class="muted">${esc(empty)}</p>`) + '</section>';
   }
 
-  /** Kennzahl-Kacheln: label in capitals, big value, optional small line. */
+  /** KPI tiles: label in capitals, big value, optional small line. */
   function kpis(items = []) {
     return `<div class="app-kpis">${items.map((k) => `<div class="card app-kpi"><div class="app-kpi-label">${esc(k.label)}</div>`
       + `<div class="app-kpi-value">${esc(k.value)}</div>${k.sub ? `<div class="app-kpi-sub">${esc(k.sub)}</div>` : ''}</div>`).join('')}</div>`;

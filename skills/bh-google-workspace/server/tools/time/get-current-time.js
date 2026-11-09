@@ -3,7 +3,7 @@ const { ok } = require('../../lib/gapi.js');
 
 module.exports = {
   name: 'time.getCurrentTime',
-  description: 'Gibt die aktuelle Uhrzeit zurück.',
+  description: 'Returns the current time.',
   inputSchema: {
     type: 'object',
     properties: {

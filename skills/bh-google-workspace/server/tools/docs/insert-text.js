@@ -2,20 +2,20 @@
 const { apiErr, err, ok } = require('../../lib/gapi.js');
 const { fetchDoc, batchUpdate, loc, findTab, flattenTabs } = require('../../lib/docs-tabs.js');
 
-// Mit tabId wird der Tab vorher geprueft: die API wuerde eine Location ohne gueltigen
-// Tab still in den ersten Tab schreiben. Ohne tabId bleibt es beim bisherigen Verhalten
-// (ein Aufruf, erster Tab).
+// With tabId the tab is checked first: the API would silently write a location without a
+// valid tab to the first tab. Without tabId the previous behavior remains
+// (one call, first tab).
 
 module.exports = {
   name: 'docs.insertText',
-  description: 'Fügt Text an einer bestimmten Position in ein Dokument ein. Bei Dokumenten mit Tabs tabId setzen (docs.listTabs) — der Index bezieht sich dann auf diesen Tab; ohne tabId auf den ERSTEN Tab.',
+  description: 'Inserts text at a given position in a document. For documents with tabs set tabId (docs.listTabs) — the index then refers to that tab; without tabId to the FIRST tab.',
   inputSchema: {
     type: 'object',
     properties: {
       documentId: { type: 'string' },
       text: { type: 'string' },
-      index: { type: 'number', description: 'Position (default: 1 = Anfang)' },
-      tabId: { type: 'string', description: 'Ziel-Tab (Wert hinter ?tab= in der URL, s. docs.listTabs). Ohne Angabe: erster Tab.' },
+      index: { type: 'number', description: 'Position (default: 1 = start)' },
+      tabId: { type: 'string', description: 'Target tab (value after ?tab= in the URL, see docs.listTabs). If omitted: first tab.' },
     },
     required: ['documentId', 'text'],
   },

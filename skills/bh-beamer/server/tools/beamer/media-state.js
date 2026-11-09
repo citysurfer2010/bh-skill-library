@@ -1,4 +1,4 @@
 const { guarded } = require('../../lib/remote.js');
 const { state } = require('../../lib/dlna.js');
-module.exports = { name: 'media_state', description: 'Zeigt den Zustand der Stream-Wiedergabe.', inputSchema: { type: 'object', properties: {} },
-  handler: guarded(async () => ({ zustand: await state() })) };
+module.exports = { name: 'media_state', description: 'Shows the state of stream playback.', inputSchema: { type: 'object', properties: {} },
+  handler: guarded(async () => ({ state: await state() })) };

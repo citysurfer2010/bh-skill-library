@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Installiert das Commit-Gate in eine App: install-precommit.sh <app-ordner>
-# Der Hook wird kopiert, nicht verlinkt, weil der Skill im Container read-only liegt und ein Link nach dem Umzug der App ins Leere zeigt.
+# Installs the commit gate into an app: install-precommit.sh <app-folder>
+# The hook is copied, not linked, because the skill is read-only in the container and a link dangles after the app moves.
 set -euo pipefail
 
 APP=${1:-.}

@@ -1,7 +1,7 @@
 'use strict';
 /**
- * API-Keys für die Bearer-API. Gespeichert wird nur der SHA-256-Hash; der Klartext kommt genau einmal bei der Erstellung zurück.
- * Das Präfix bhter_ macht einen Key dieser App in Logs erkennbar.
+ * API keys for the Bearer API. Only the SHA-256 hash is stored; the plain text is returned exactly once on creation.
+ * The prefix bhter_ makes a key of this app recognizable in logs.
  */
 const crypto = require('crypto');
 const { getDb, nowIso } = require('./db');

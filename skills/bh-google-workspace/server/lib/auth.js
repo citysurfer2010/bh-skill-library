@@ -1,13 +1,13 @@
 /**
- * OAuth-Credentials + Access-Token Management.
+ * OAuth credentials + access token management.
  *
- * Token-State ist Modul-privat (`_creds`). `getAccessToken()` refresht
- * automatisch wenn die Restlaufzeit unter 10 Min fällt, mit Single-Flight-
- * Schutz (`_refreshing`) damit parallele Tool-Aufrufe nicht mehrfach
- * refreshen.
+ * Token state is module-private (`_creds`). `getAccessToken()` refreshes
+ * automatically once the remaining lifetime drops below 10 min, with single-flight
+ * protection (`_refreshing`) so parallel tool calls do not refresh
+ * more than once.
  *
- * Refresh direkt gegen oauth2.googleapis.com mit dem eigenen OAuth-Client der Firma.
- * credentials.json entsteht ueber das BH-Profil (Verbundene Dienste) und liegt je User auf dem Gateway.
+ * Refresh goes directly to oauth2.googleapis.com with the company's own OAuth client.
+ * credentials.json is created via the BH profile (Verbundene Dienste) and stored per user on the gateway.
  */
 'use strict';
 
@@ -129,7 +129,7 @@ async function refreshViaSelf(rt, clientId, clientSecret) {
   return {
     access_token:  data.access_token,
     expiry_date:   Date.now() + ((data.expires_in || 3600) * 1000),
-    refresh_token: data.refresh_token,  // Google rotiert refresh_token in der Regel nicht
+    refresh_token: data.refresh_token,  // Google usually does not rotate the refresh_token
   };
 }
 
@@ -156,7 +156,7 @@ async function getAccessToken() {
   return _creds.access_token;
 }
 
-/** Löscht credentials.json (+ .lkg-Kopie) + setzt In-Memory-Cache zurück (für auth.clear-Tool). */
+/** Deletes credentials.json (+ .lkg copy) + resets the in-memory cache (for the auth.clear tool). */
 function clearCreds() {
   if (fs.existsSync(CREDS)) fs.unlinkSync(CREDS);
   if (fs.existsSync(LKG)) fs.unlinkSync(LKG);

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Traegt eine ausgerollte App in die Uebersicht ein: register-app.js add <titel> <url> [beschreibung] [--admin] | remove <url>
+// Adds a deployed app to the overview: register-app.js add <title> <url> [description] [--admin] | remove <url>
 import { loadConfig } from "../lib/config.js";
 import { openDb } from "../lib/db.js";
 import { appsStore, validAppUrl } from "../lib/apps.js";

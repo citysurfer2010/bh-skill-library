@@ -3,11 +3,11 @@ const { ok } = require('../../lib/gapi.js');
 
 module.exports = {
   name: 'time.getCurrentDate',
-  description: 'Gibt das aktuelle Datum zurück.',
+  description: 'Returns the current date.',
   inputSchema: {
     type: 'object',
     properties: {
-      timeZone: { type: 'string', description: 'Zeitzone (default: Europe/Berlin)' },
+      timeZone: { type: 'string', description: 'Time zone (default: Europe/Berlin)' },
     },
   },
   handler: async ({ timeZone }) => {

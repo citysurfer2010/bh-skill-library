@@ -1,9 +1,9 @@
 'use strict';
 const { apiErr, gapiJSON, okJson } = require('../../lib/gapi.js');
 
-// Google Docs Tabs: documents.get liefert `tabs[]` nur mit includeTabsContent=true.
-// Ohne den Parameter kommt ausschliesslich der erste Tab als legacy `body` zurueck —
-// deshalb liest docs.getText bei Tab-Dokumenten immer den falschen Abschnitt.
+// Google Docs tabs: documents.get returns `tabs[]` only with includeTabsContent=true.
+// Without the parameter only the first tab comes back, as legacy `body` —
+// which is why docs.getText always reads the wrong section in tabbed documents.
 function flatten(tabs, depth, out) {
   for (const t of tabs || []) {
     const props = t.tabProperties || {};
@@ -21,7 +21,7 @@ function flatten(tabs, depth, out) {
 
 module.exports = {
   name: 'docs.listTabs',
-  description: 'Listet alle Tabs eines Google Docs (tabId, Titel, Reihenfolge, Verschachtelung). Die tabId ist der Wert hinter ?tab= in der Doc-URL und wird von docs.insertSection als Ziel benoetigt.',
+  description: 'Lists all tabs of a Google Doc (tabId, title, order, nesting). The tabId is the value after ?tab= in the doc URL and is required by docs.insertSection as the target.',
   inputSchema: {
     type: 'object',
     properties: { documentId: { type: 'string' } },

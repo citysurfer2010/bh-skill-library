@@ -1,5 +1,5 @@
 'use strict';
-/** Admin-Bereich: Beispielseite, die Rollenprüfung passiert im Server (requireRole('admin')). */
+/** Admin area: example page, the role check happens on the server (requireRole('admin')). */
 (async () => {
   const host = document.getElementById('page-host');
   try {

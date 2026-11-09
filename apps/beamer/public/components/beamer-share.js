@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Bildschirm oder Kamera des Laptops auf den Beamer (WebRTC ohne Trickle-ICE). Der Server vermittelt nur Angebot
- * und Antwort, das Bild läuft direkt. Bewusst ohne STUN/TURN: Es funktioniert nur im selben Heimnetz.
+ * Laptop screen or camera to the Beamer (WebRTC without trickle ICE). The server only relays offer
+ * and answer, the picture flows directly. Deliberately without STUN/TURN: it only works on the same home network.
  */
 window.BeamerShare = (() => {
   const ANSWER_TRIES = 80; const ANSWER_MS = 500;
@@ -18,7 +18,7 @@ window.BeamerShare = (() => {
     });
   }
 
-  // Der Beamer dekodiert H264 in Hardware, VP9 eher nicht.
+  // The Beamer decodes H264 in hardware, VP9 hardly.
   function preferH264(conn) {
     if (!window.RTCRtpSender || !RTCRtpSender.getCapabilities) return;
     const codecs = RTCRtpSender.getCapabilities('video').codecs;
@@ -43,7 +43,7 @@ window.BeamerShare = (() => {
     if (active) await BeamerApi.send('/share/stop');
   }
 
-  /** onState: 'connecting' | 'live' | 'ended' | 'failed'. Wirft, wenn die Freigabe gar nicht erst zustande kommt. */
+  /** onState: 'connecting' | 'live' | 'ended' | 'failed'. Throws if sharing cannot be established at all. */
   async function start(kind, onState) {
     await stop().catch(() => {});
     const mine = ++run;

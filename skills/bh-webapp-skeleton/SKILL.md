@@ -91,7 +91,7 @@ Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
 
 - Rahmen: Navbar 52 px, Breadcrumb 40 px, Sidebar 240 px (einklappbar, ziehbar 180 bis 420 px), Hell/Dunkel-Umschalter, Benutzermenü, Admin-Zahnrad nur für Admins.
 - Listenseite `BHListPage` mit Suche, KPI-Filterboxen, Toolbar und `BHDataTable` (Sortieren über alle Zeilen, Spaltenbreiten, Blättern, Auswahl und Sammelaktionen).
-- Detailpanel `BHSideDrawer` mit echtem Pfad (`/eintraege/<id>`).
+- Detailpanel `BHSideDrawer` mit echtem Pfad (`/entries/<id>`).
 - `BHSelect` mit Tastaturbedienung und Bottom-Sheet auf dem Handy.
 - Bearer-API `/api/external/*` mit selbstverwalteten API-Keys (gespeichert wird nur der SHA-256-Hash), Datei-Upload mit Typ- und Größenprüfung.
 - Eigene Fehlerseiten für 401, 403, 404 und 500, unter `/api/` als JSON, nie mit Stacktrace.

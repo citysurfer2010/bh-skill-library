@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Prueft von aussen: Login, opencode, Datenerhalt und vor allem die Grenzen.
-# Legt zwei Wegwerf-User an und raeumt sie wieder ab.
-# Aufruf: smoke.sh <admin-ssh-key> <host>
+# Checks from outside: login, opencode, data retention and above all the boundaries.
+# Creates two throwaway users and removes them again.
+# Usage: smoke.sh <admin-ssh-key> <host>
 ADMIN_KEY=$1; HOST=${2:?Server-Adresse fehlt}
 T=$(mktemp -d); trap 'admin "docker rm -f gw-test; devbox remove smoke-a --purge; devbox remove smoke-b --purge" >/dev/null 2>&1; rm -rf "$T"' EXIT
 OPTS="-o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o IdentitiesOnly=yes"
@@ -9,7 +9,7 @@ admin() { ssh $OPTS -i "$ADMIN_KEY" "root@$HOST" "$@"; }
 PASS=0; FAIL=0
 ok() { echo "  ok    $1"; PASS=$((PASS + 1)); }
 bad() { echo "  FEHL  $1 ${2:+[$2]}"; FAIL=$((FAIL + 1)); }
-# expect <beschreibung> <erwarteter exit 0=erfolg/1=fehlschlag> <befehl...>
+# expect <description> <expected exit 0=success/1=failure> <command...>
 expect() { local d=$1 w=$2; shift 2; if "$@" >"$T/out" 2>&1; then r=0; else r=1; fi; [ $r = "$w" ] && ok "$d" || bad "$d" "$(head -c 200 "$T/out")"; }
 
 ssh-keygen -q -t ed25519 -N '' -f "$T/a"; ssh-keygen -q -t ed25519 -N '' -f "$T/b"; ssh-keygen -q -t ed25519 -N '' -f "$T/x"

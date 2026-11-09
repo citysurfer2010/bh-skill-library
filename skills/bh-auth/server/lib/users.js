@@ -7,7 +7,7 @@ const normal = (email) => String(email || "").trim().toLowerCase();
 export const MIN_PASSWORD = 12;
 export const HOURS = { invite: 72, reset: 1 };
 export const passwordProblem = (p, c) => (String(p).length < MIN_PASSWORD ? `Mindestens ${MIN_PASSWORD} Zeichen.` : p !== c ? "Die Passwörter stimmen nicht überein." : null);
-// Gleiche Rechenzeit auch fuer unbekannte Adressen.
+// Same computing time for unknown addresses as well.
 const DUMMY = bcrypt.hashSync("nicht-vorhanden", 12);
 
 export function usersStore(db) {
@@ -38,7 +38,7 @@ export function usersStore(db) {
                   tokenInvalidatedAt = ? WHERE id = ?`).run(hash, now(), id);
     },
 
-    /** Einmal-Link; gespeichert wird nur der Hash. */
+    /** One-time link; only the hash is stored. */
     issueLink(id, kind) {
       const token = randomBytes(32).toString("base64url");
       db.prepare("UPDATE users SET resetTokenHash = ?, resetTokenExpiry = ? WHERE id = ?")

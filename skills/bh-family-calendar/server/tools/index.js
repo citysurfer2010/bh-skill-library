@@ -1,14 +1,14 @@
 /**
- * Tool-Registry mit Auto-Discovery.
+ * Tool registry with auto-discovery.
  *
- * Sammelt alle `tools/<domain>/<tool>.js` (jede exportiert
- * { name, description, inputSchema, handler }) zu drei Maps:
+ * Collects all `tools/<domain>/<tool>.js` (each exports
+ * { name, description, inputSchema, handler }) into three maps:
  *   - TOOLS         { [name]: tool }                 ← Dispatcher-Lookup
  *   - TOOL_NAMES    [name, name, ...]
  *   - TOOL_SCHEMAS  [{ name, description, inputSchema }, ...] ← tools/list-Response
  *
- * Während der Migration kann `tools/` partiell gefüllt sein — server.js mergt
- * über die Bridge die alten Inline-Tools dazu.
+ * During a migration `tools/` may be only partly filled — server.js merges
+ * the old inline tools in through the bridge.
  */
 'use strict';
 

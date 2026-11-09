@@ -1,19 +1,19 @@
 'use strict';
 const { apiErr, gapiJSON, ok, err } = require('../../lib/gapi.js');
 
-// Aktualisiert eine BESTEHENDE Google-Sheets-Tabelle IN PLACE (kein neues File —
-// verhindert das Aufhäufen von Duplikaten bei wiederkehrenden Reports).
+// Updates an EXISTING Google Sheets spreadsheet IN PLACE (no new file —
+// prevents piling up duplicates for recurring reports).
 //
-// Zwei Modi:
+// Two modes:
 //   1) { spreadsheetId, range, values }  → values.update (valueInputOption=RAW)
-//      Überschreibt genau den angegebenen A1-Bereich.
-//   2) { spreadsheetId, csv, sheetName? } → values.clear des ganzen Tabs,
-//      danach values.update ab A1 mit dem geparsten CSV. Ersetzt den KOMPLETTEN
-//      Tab-Inhalt (Convenience für Reporting-Sheets: eine Datei, immer frisch).
-//      sheetName weglassen ⇒ erster Tab der Tabelle.
+//      Overwrites exactly the given A1 range.
+//   2) { spreadsheetId, csv, sheetName? } → values.clear of the whole tab,
+//      then values.update from A1 with the parsed CSV. Replaces the ENTIRE
+//      tab content (convenience for reporting sheets: one file, always fresh).
+//      omit sheetName ⇒ first tab of the spreadsheet.
 
-// Minimaler RFC4180-CSV-Parser: quotierte Felder, eingebettete Kommas/Zeilen-
-// umbrüche, "" als Escape. Kein externer Dep.
+// Minimal RFC4180 CSV parser: quoted fields, embedded commas/line
+// breaks, "" as escape. No external dependency.
 function parseCsv(text) {
   const s = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const rows = [];
@@ -33,7 +33,7 @@ function parseCsv(text) {
     field += c; i++;
   }
   row.push(field); rows.push(row);
-  // Abschließende Leerzeile entfernen (Datei endet auf \n)
+  // Remove the trailing empty line (file ends in \n)
   if (rows.length && rows[rows.length - 1].length === 1 && rows[rows.length - 1][0] === '') rows.pop();
   return rows;
 }
@@ -49,22 +49,22 @@ async function firstSheetTitle(spreadsheetId) {
 
 module.exports = {
   name: 'sheets.updateValues',
-  description: 'Aktualisiert eine bestehende Google-Sheets-Tabelle IN PLACE (kein neues File). Modus A: {spreadsheetId, range, values} überschreibt einen A1-Bereich (RAW). Modus B: {spreadsheetId, csv, sheetName?} leert den ganzen Tab und schreibt das CSV ab A1 neu (Convenience für Reporting-Sheets).',
+  description: 'Updates an existing Google Sheets spreadsheet IN PLACE (no new file). Mode A: {spreadsheetId, range, values} overwrites an A1 range (RAW). Mode B: {spreadsheetId, csv, sheetName?} clears the whole tab and rewrites the CSV from A1 (convenience for reporting sheets).',
   inputSchema: {
     type: 'object',
     properties: {
-      spreadsheetId: { type: 'string', description: 'ID der bestehenden Tabelle.' },
-      range:         { type: 'string', description: 'Modus A: A1-Bereich, z.B. "Sheet1!A1:D10".' },
-      values:        { type: 'array', items: { type: 'array' }, description: 'Modus A: 2D-Array der neuen Werte.' },
-      csv:           { type: 'string', description: 'Modus B: kompletter Tab-Inhalt als CSV (Tab wird geleert und neu geschrieben).' },
-      sheetName:     { type: 'string', description: 'Modus B: Ziel-Tab-Name. Weglassen ⇒ erster Tab.' },
+      spreadsheetId: { type: 'string', description: 'ID of the existing spreadsheet.' },
+      range:         { type: 'string', description: 'Mode A: A1 range, e.g. "Sheet1!A1:D10".' },
+      values:        { type: 'array', items: { type: 'array' }, description: 'Mode A: 2D array of the new values.' },
+      csv:           { type: 'string', description: 'Mode B: entire tab content as CSV (tab is cleared and rewritten).' },
+      sheetName:     { type: 'string', description: 'Mode B: target tab name. Omit ⇒ first tab.' },
     },
     required: ['spreadsheetId'],
   },
   handler: async ({ spreadsheetId, range, values, csv, sheetName } = {}) => {
     if (!spreadsheetId) return err('spreadsheetId ist Pflicht.');
 
-    // Modus B — CSV-Replace (ganzen Tab ersetzen)
+    // Mode B — CSV replace (replace the whole tab)
     if (csv != null) {
       let tab = sheetName;
       if (!tab) {
@@ -81,7 +81,7 @@ module.exports = {
       return ok(`Tab "${tab}" ersetzt (CSV): ${wr.data.updatedRows || 0} Zeilen × ${wr.data.updatedColumns || 0} Spalten. Bereich: ${wr.data.updatedRange}`);
     }
 
-    // Modus A — range + values
+    // Mode A — range + values
     if (!range || !Array.isArray(values)) {
       return err('Entweder {range, values} (2D-Array) ODER {csv, sheetName?} angeben.');
     }

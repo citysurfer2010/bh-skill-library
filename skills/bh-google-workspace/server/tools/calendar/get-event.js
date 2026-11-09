@@ -2,7 +2,7 @@
 const { apiErr, gapiJSON, ok, okJson } = require('../../lib/gapi.js');
 const { eventJson } = require('../../lib/calendar-json.js');
 
-module.exports = { name: 'calendar.getEvent', description: 'Gibt Details zu einem Kalender-Ereignis zurück. format "json" = strukturiert (Gäste, privateProperties, Link).', inputSchema: { type: 'object', properties: { calendarId: { type: 'string' }, eventId: { type: 'string' }, format: { type: 'string', enum: ['text', 'json'] } }, required: ['eventId'] },
+module.exports = { name: 'calendar.getEvent', description: 'Returns details of a calendar event. format "json" = structured (guests, privateProperties, link).', inputSchema: { type: 'object', properties: { calendarId: { type: 'string' }, eventId: { type: 'string' }, format: { type: 'string', enum: ['text', 'json'] } }, required: ['eventId'] },
   handler: async ({ calendarId = 'primary', eventId, format = 'text' }) => {
   const r = await gapiJSON('GET', `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`);
   if (r.status !== 200) return apiErr('calendar.getEvent', r.status, r.data);

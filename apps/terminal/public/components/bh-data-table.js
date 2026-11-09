@@ -1,8 +1,8 @@
 /**
- * BHDataTable — die Tabelle jeder BH-App. Volle Breite, nie in einer Karte, feste Kopfzeile, erste Spalte fett.
- * Sortiert über ALLE Zeilen vor dem Blättern, aria-sort und Enter/Leertaste im Kopf, Spaltenbreiten ziehbar und je Tabelle gemerkt,
- * Tooltip bei Abschnitt, Zeilen-Link, Ladeplatzhalter, Leerzustand, Suche, Fuß mit „X–Y von N“ und 50 | 100 | 500 je Seite.
- * Optional je Tabelle: selectable + bulkActions (Auswahl überlebt Blättern und Suche); sticky: n pinnt die ersten n Spalten.
+ * BHDataTable — the table of every BH app. Full width, never in a card, fixed header row, first column bold.
+ * Sorts ALL rows before paging, aria-sort and Enter/Space in the header, column widths draggable and remembered per table,
+ * tooltip on truncation, row link, loading placeholder, empty state, search, footer with "X–Y von N" and 50 | 100 | 500 per page.
+ * Optional per table: selectable + bulkActions (selection survives paging and search); sticky: n pins the first n columns.
  *   const t = new BHDataTable({ container, storageKey, columns: [{ key, label, width?, sortable?, render?(row), sortValue?(row), align? }],
  *     rowHref?(row), emptyMessage?, onChange?(n), selectable?, bulkActions?: [{ id, label, danger?, onClick(rows, table) }], rowId?(row), itemLabel? });
  *   t.setRows(rows); t.setFilter(text); t.setLoading(true); t.selectedRows(); t.clearSelection();

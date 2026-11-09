@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Virtueller Bildschirm fuer Tizen Studio, nur ueber SSH-Tunnel erreichbar (noVNC auf 127.0.0.1:6080).
-#   bh-desktop start|stop|status|run <programm...>
+# Virtual display for Tizen Studio, reachable only through an SSH tunnel (noVNC on 127.0.0.1:6080).
+#   bh-desktop start|stop|status|run <program...>
 set -u
 case "${1:-}" in
   start)

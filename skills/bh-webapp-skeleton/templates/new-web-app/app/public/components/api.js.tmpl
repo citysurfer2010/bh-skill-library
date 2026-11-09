@@ -1,7 +1,7 @@
 'use strict';
 /**
- * HTTP-Client für __APP_NAME__. Alle Pfade mit window.APP_BASE als Präfix.
- * me() ist 60 s gecacht, damit die Navbar bei Seitenwechseln sofort steht.
+ * HTTP client for __APP_NAME__. All paths prefixed with window.APP_BASE.
+ * me() is cached for 60 s so the navbar is ready immediately on page changes.
  */
 window.__NS__Api = (() => {
   const BASE = (typeof window !== 'undefined' && window.APP_BASE) || '';

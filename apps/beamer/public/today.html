@@ -8,18 +8,18 @@
   <link rel="apple-touch-icon" href="/beamer/branding/apple-touch-icon.png?v=1">
   <link rel="manifest" href="/beamer/today.webmanifest">
   <meta name="theme-color" content="#1d4ed8">
-  <!-- Theme vor den Stylesheets setzen, sonst blitzt die Seite weiß auf. -->
+  <!-- Set the theme before the stylesheets, otherwise the page flashes white. -->
   <script>(function(){var s;try{s=localStorage.getItem('bh-theme');}catch(e){}var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=s||(d?'dark':'light');})();</script>
-  <!-- Keine style=-Attribute: Hilfsklassen in css/utilities.css oder eine eigene Klasse in css/*.css. -->
+  <!-- No style= attributes: helper classes in css/utilities.css or a dedicated class in css/*.css. -->
   <link rel="stylesheet" href="/beamer/bh-styles.css">
   <link rel="stylesheet" href="/beamer/app.css">
 </head>
 <body>
-  <!-- Navbar.render() baut den Rahmen um #page-host. Jede Seite zeichnet ihren eigenen Seitenkopf. -->
+  <!-- Navbar.render() builds the frame around #page-host. Every page draws its own page header. -->
   <div id="page-host"></div>
 
   <script>window.APP_BASE = "/beamer";</script>
-  <!-- Alle Komponenten als ein Bündel: 1 Request statt N. -->
+  <!-- All components as one bundle: 1 request instead of N. -->
   <script src="/beamer/app.js"></script>
   <script src="/beamer/build-version-check.js"></script>
   <script src="/beamer/components/pages/today-page.js"></script>

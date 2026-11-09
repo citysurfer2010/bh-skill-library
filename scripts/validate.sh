@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prueft Skill-Koepfe und sucht nach versehentlich eingecheckten Geheimnissen.
+# Checks skill headers and searches for accidentally committed secrets.
 set -u
 cd "$(dirname "$0")/.."
 fail=0
@@ -10,7 +10,7 @@ for f in skills/*/SKILL.md; do
   [[ $name =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || { echo "FEHLER $f: ungueltiger Name"; fail=1; }
   grep -q '^description: *.' "$f" || { echo "FEHLER $f: description fehlt"; fail=1; }
 done
-# Versionen: JJ.M.N, siehe platform/image/CODING-RULES.md
+# Versions: YY.M.N, see platform/image/CODING-RULES.md
 vok='^[0-9]{2}\.([1-9]|1[0-2])\.[1-9][0-9]*$'
 ver() { grep -oE '"version": *"[^"]+"' "$1" | head -1 | sed -E 's/.*"([^"]+)"$/\1/'; }
 for m in skills/*/manifest.json apps/*/package.json; do

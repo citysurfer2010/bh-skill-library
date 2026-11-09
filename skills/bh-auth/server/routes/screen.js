@@ -7,7 +7,7 @@ import { screenJpeg } from "../lib/screen-image.js";
 
 const same = (a, b) => { const x = Buffer.from(String(a)); const y = Buffer.from(String(b)); return b !== "" && x.length === y.length && timingSafeEqual(x, y); };
 
-// Anzeige fuer den Beamer: Er kann sich nicht anmelden, der Link selbst ist das Geheimnis.
+// Display for the Beamer: it cannot log in, the link itself is the secret.
 export function screenRoutes({ config }) {
   const r = Router();
   const file = path.join(config.dataDir, "screen.json");
@@ -28,7 +28,7 @@ export function screenRoutes({ config }) {
     const c = load();
     res.type("html").send(`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BH Platform</title><link rel="stylesheet" href="/screen.css"></head><body><main><h1 id="t">${esc(c.title)}</h1><p id="s">${esc(c.text)}</p></main><script src="/screen.js"></script></body></html>`);
   });
-  // Der Beamer fragt mit ?since=<Stand>: Die Antwort kommt sofort bei einer Aenderung, spaetestens nach 25 s.
+  // The Beamer asks with ?since=<state>: the answer comes at once on a change, after 25 s at the latest.
   r.get("/screen/:token/content", (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
     if (req.query.since === undefined) return res.json(load());
@@ -45,7 +45,7 @@ export function screenRoutes({ config }) {
     if (!same(req.params.token, config.screenRead)) return next();
     res.set("Cache-Control", "no-store").type("image/jpeg").send(await screenJpeg(load()));
   });
-  // Der Beamer antwortet als Klartext: Ein JSON-POST aus der TV-App wuerde an der Vorabfrage scheitern.
+  // The Beamer answers as plain text: a JSON POST from the TV app would fail the preflight request.
   r.post("/screen/:token/answer", express.text({ type: "*/*", limit: "32kb" }), (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
     let body; try { body = JSON.parse(req.body); } catch { return res.status(400).json({ error: "unlesbar" }); }
@@ -54,7 +54,7 @@ export function screenRoutes({ config }) {
     writeFileSync(file, JSON.stringify({ ...c, answer }), { mode: 0o600 });
     res.status(204).end();
   });
-  // Eigene Seite fuer den YouTube-Player: Aus der App heraus hat er keine Herkunft und verweigert das Abspielen.
+  // Separate page for the YouTube player: inside the app it has no origin and refuses to play.
   r.get("/screen/:token/player", (req, res, next) => {
     const v = String(req.query.v || "");
     if (!same(req.params.token, config.screenRead) || !/^[A-Za-z0-9_-]{11}$/.test(v)) return next();
@@ -63,7 +63,7 @@ export function screenRoutes({ config }) {
     const params = `autoplay=1&controls=0&rel=0&loop=1&playlist=${v}&enablejsapi=1&iv_load_policy=3&origin=${encodeURIComponent(config.publicUrl)}`;
     res.type("html").send(`<!doctype html><meta charset="utf-8"><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;background:#000;overflow:hidden}</style><iframe id="y" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/${v}?${params}"></iframe><script>var y=document.getElementById("y");y.onload=function(){y.contentWindow.postMessage('{"event":"listening","id":1,"channel":"widget"}',"*")};addEventListener("message",function(e){if(e.source===parent)y.contentWindow.postMessage(e.data,"*");else parent.postMessage(e.data,"*")});</script>`);
   });
-  // Auswahl mit der Fernbedienung; die App Beamer holt sie ab und fuehrt sie aus.
+  // Selection with the remote control; the Beamer app fetches and executes it.
   r.post("/screen/:token/request", express.text({ type: "*/*", limit: "2kb" }), (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
     let body; try { body = JSON.parse(req.body); } catch { return res.status(400).json({ error: "unlesbar" }); }
@@ -73,7 +73,7 @@ export function screenRoutes({ config }) {
     res.status(204).end();
   });
   const writer = (req) => { const a = /^Bearer (.+)$/.exec(req.get("authorization") || ""); return a && same(a[1], config.screenWrite); };
-  // Lange Abfrage: Die App wartet auf eine Auswahl, statt staendig nachzufragen.
+  // Long polling: the app waits for a selection instead of asking constantly.
   r.get("/screen-requests", (req, res) => {
     if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
     const wait = Math.min(Number(req.query.wait) || 0, 25);
@@ -102,10 +102,10 @@ export function screenRoutes({ config }) {
   r.post("/screen-update", express.json({ limit: "32kb" }), (req, res) => {
     const auth = /^Bearer (.+)$/.exec(req.get("authorization") || "");
     if (!auth || !same(auth[1], config.screenWrite)) return res.status(401).json({ error: "unauthorized" });
-    // text: Anzeige in der App; url: Webseite im Vollbild; audio: Radio/Musik-Stream, den die App selbst abspielt.
-    // share: Der Laptop bietet seinen Bildschirm an, die App antwortet unter /answer (WebRTC ohne Trickle-ICE).
+    // text: display in the app; url: full-screen web page; audio: radio/music stream the app plays itself.
+    // share: the laptop offers its screen, the app answers under /answer (WebRTC without trickle ICE).
     const mode = ["url", "audio", "share", "video"].includes(req.body?.mode) ? req.body.mode : "text";
-    // video: Stimmung im eingebetteten Player, url ist dann das optionale Radio dazu.
+    // video: ambience in the embedded player, url is then the optional radio to go with it.
     const video = mode === "video" && /^[A-Za-z0-9_-]{11}$/.test(String(req.body?.video)) ? req.body.video : null;
     if (mode === "video" && !video) return res.status(400).json({ error: "Video ungueltig" });
     const url = mode === "url" || mode === "audio" || (mode === "video" && req.body?.url) ? httpsUrl(req.body?.url) : null;

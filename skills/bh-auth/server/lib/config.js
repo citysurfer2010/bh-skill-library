@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-// Der Signierschluessel gehoert nur diesem Dienst: Andere Apps fragen /auth-headers.
+// The signing key belongs to this service alone: other apps ask /auth-headers.
 function sessionKey(dataDir) {
   const file = path.join(dataDir, ".session-key");
   if (!existsSync(file)) writeFileSync(file, randomBytes(48), { mode: 0o600, flag: "wx" });

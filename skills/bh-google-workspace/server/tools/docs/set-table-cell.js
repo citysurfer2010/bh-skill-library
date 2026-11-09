@@ -6,47 +6,47 @@ const {
 } = require('../../lib/docs-tabs.js');
 
 /**
- * docs.setTableCell — ersetzt den Inhalt EINER Tabellenzelle (Zell-Reset).
+ * docs.setTableCell — replaces the content of ONE table cell (cell reset).
  *
- * Gegenstueck zu docs.appendToTableCell (haengt nur an) und docs.replaceText
- * (dokumentweit, kann keine Absatzumbrueche einfuegen). Der BP-Doc-Fall ist der
- * Re-Write der Antwortspalte aus der DB: answer_text ist fast immer mehrabsaetzig,
- * mit replaceText entsteht daraus eine Textwand (Uebertrag 300095/2025).
+ * Counterpart to docs.appendToTableCell (only appends) and docs.replaceText
+ * (document-wide, cannot insert paragraph breaks). The BP doc case is the
+ * rewrite of the answer column from the DB: answer_text is nearly always multi-paragraph,
+ * and replaceText turns it into a wall of text (transfer 300095/2025).
  *
- * Ablauf in EINEM batchUpdate (Requests wirken sequenziell):
- *   1. deleteContentRange [Start erster Absatz, Ende letzter Absatz - 1) — der
- *      letzte Absatzmarker einer Zelle ist nicht loeschbar, die API lehnt sonst ab.
- *   2. insertText am Zellanfang; "\n" im Text erzeugt echte Absaetze.
- *   3. Farbe/Link/Unterstreichung auf dem neuen Text zuruecksetzen — Docs erbt
- *      sonst den Stil des geloeschten Inhalts (z. B. AI-Pink auf Kollegentext).
- *   4. optional color + linkify wie bei appendToTableCell.
+ * Flow in ONE batchUpdate (requests apply sequentially):
+ *   1. deleteContentRange [start of first paragraph, end of last paragraph - 1) — the
+ *      last paragraph marker of a cell cannot be deleted, the API rejects it otherwise.
+ *   2. insertText at the cell start; "\n" in the text creates real paragraphs.
+ *   3. Reset color/link/underline on the new text — otherwise Docs inherits
+ *      the style of the deleted content (e.g. AI pink on a colleague's text).
+ *   4. optional color + linkify as in appendToTableCell.
  *
- * Schutz vor fremder Arbeit: expectContains bricht ab, wenn die Zelle den
- * erwarteten Alt-Stand nicht (mehr) enthaelt. skipIfEquals macht den Aufruf
- * idempotent. previousText in der Antwort haelt den ueberschriebenen Stand fest.
+ * Protects others' work: expectContains aborts if the cell no longer contains
+ * the expected old state. skipIfEquals makes the call
+ * idempotent. previousText in the response records the overwritten state.
  */
 
 module.exports = {
   name: 'docs.setTableCell',
-  description: 'Ersetzt den gesamten Inhalt einer bestehenden Tabellenzelle (Zelle leeren + neu setzen) — tab-faehig. "\\n" im Text erzeugt echte Absaetze. Zeile per rowIndex oder inhaltsbasiert per rowMatchColumn/rowMatchValue, Tabelle per tableIndex, tableStartIndex oder tableWithHeader. expectContains schuetzt vor dem Ueberschreiben fremder Aenderungen, skipIfEquals macht den Aufruf idempotent. Optional color und linkify. Antwort enthaelt previousText.',
+  description: 'Replaces the entire content of an existing table cell (clear cell + set anew) — tab-aware. "\\n" in the text creates real paragraphs. Row via rowIndex or content-based via rowMatchColumn/rowMatchValue, table via tableIndex, tableStartIndex or tableWithHeader. expectContains protects against overwriting changes by others, skipIfEquals makes the call idempotent. Optional color and linkify. Response contains previousText.',
   inputSchema: {
     type: 'object',
     properties: {
       documentId: { type: 'string' },
-      tabId: { type: 'string', description: 'Ziel-Tab (s. docs.listTabs). Ohne Angabe: erster Tab.' },
-      tabTitle: { type: 'string', description: 'Alternative zu tabId: Tab-Titel exakt.' },
-      tableIndex: { type: 'number', description: '0-basierter Index der Tabelle im Tab (default 0).' },
-      tableStartIndex: { type: 'number', description: 'Alternative zu tableIndex: startIndex der Tabelle aus documents.get.' },
-      tableWithHeader: { type: 'string', description: 'Alternative zu tableIndex: Text in der Kopfzeile.' },
-      rowIndex: { type: 'number', description: '0-basierte Zeile (0 = Kopfzeile).' },
-      rowMatchColumn: { type: 'number', description: 'Statt rowIndex: Spalte, in der gesucht wird (default 3 = Thema).' },
-      rowMatchValue: { type: 'string', description: 'Gesuchter Zellinhalt in rowMatchColumn (exakt, whitespace-tolerant).' },
-      columnIndex: { type: 'number', description: '0-basierte Zielspalte, z. B. 7 = Antwort.' },
-      text: { type: 'string', description: 'Neuer Zellinhalt. "\\n" = neuer Absatz. Leerer String leert die Zelle. Abschliessende Zeilenumbrueche werden entfernt.' },
-      expectContains: { type: 'string', description: 'Schutz: nur schreiben, wenn die Zelle diesen Text enthaelt (whitespace-tolerant) — sonst Abbruch ohne Schreibzugriff.' },
-      skipIfEquals: { type: 'boolean', description: 'Idempotenz: nichts tun, wenn die Zelle bereits genau diesen Text enthaelt (whitespace-tolerant).' },
-      color: { type: 'string', description: 'Hex-Farbe fuer den neuen Text, z. B. "#D63384". Ohne Angabe: Standardfarbe.' },
-      linkify: { type: 'boolean', description: 'URLs im neuen Text klickbar machen.' },
+      tabId: { type: 'string', description: 'Target tab (see docs.listTabs). If omitted: first tab.' },
+      tabTitle: { type: 'string', description: 'Alternative to tabId: exact tab title.' },
+      tableIndex: { type: 'number', description: '0-based index of the table in the tab (default 0).' },
+      tableStartIndex: { type: 'number', description: 'Alternative to tableIndex: startIndex of the table from documents.get.' },
+      tableWithHeader: { type: 'string', description: 'Alternative to tableIndex: text in the header row.' },
+      rowIndex: { type: 'number', description: '0-based row (0 = header row).' },
+      rowMatchColumn: { type: 'number', description: 'Instead of rowIndex: column to search in (default 3 = topic).' },
+      rowMatchValue: { type: 'string', description: 'Cell content to look for in rowMatchColumn (exact, whitespace-tolerant).' },
+      columnIndex: { type: 'number', description: '0-based target column, e.g. 7 = answer.' },
+      text: { type: 'string', description: 'New cell content. "\\n" = new paragraph. Empty string clears the cell. Trailing line breaks are removed.' },
+      expectContains: { type: 'string', description: 'Guard: write only if the cell contains this text (whitespace-tolerant) — otherwise abort without writing.' },
+      skipIfEquals: { type: 'boolean', description: 'Idempotence: do nothing if the cell already contains exactly this text (whitespace-tolerant).' },
+      color: { type: 'string', description: 'Hex color for the new text, e.g. "#D63384". If omitted: default color.' },
+      linkify: { type: 'boolean', description: 'Make URLs in the new text clickable.' },
     },
     required: ['documentId', 'columnIndex', 'text'],
   },
@@ -105,7 +105,7 @@ module.exports = {
     }
 
     const reqs = [];
-    // Letzter Absatzmarker der Zelle bleibt stehen (end - 1).
+    // The cell's last paragraph marker stays (end - 1).
     if (end - 1 > start) {
       reqs.push({ deleteContentRange: { range: range(start, end - 1, targetTabId) } });
     }

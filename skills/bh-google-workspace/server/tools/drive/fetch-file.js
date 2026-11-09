@@ -1,17 +1,17 @@
 'use strict';
 /**
- * drive_fetch_file — eine EINZELNE Datei aus einem Datenraum holen (Bytes als
- * base64) für die Modal-Vorschau bzw. den Einzel-Download der Datenraum-App.
+ * drive_fetch_file — fetches a SINGLE file from a data room (bytes as
+ * base64) for the data room app's modal preview or single download.
  *
- * SICHERHEIT: rootFolderId ist Pflicht-Guard. Die Datei wird nur geliefert, wenn
- * ihre Parent-Kette rootFolderId erreicht (sonst verweigert) — so kann über
- * diesen Weg nichts außerhalb des freigegebenen Datenraums exponiert werden.
+ * SECURITY: rootFolderId is a mandatory guard. The file is only returned if
+ * its parent chain reaches rootFolderId (else refused) — so nothing outside
+ * the shared data room can be exposed this way.
  *
  * format:
- *   'download' (Default) → Office-Formate (Docs→docx, Sheets→xlsx, Slides→pptx),
- *                          native Dateien unverändert.
- *   'pdf'                → Google-native + Drawings als PDF (für Inline-Vorschau);
- *                          native PDFs/Bilder unverändert.
+ *   'download' (default) → Office formats (Docs→docx, Sheets→xlsx, Slides→pptx),
+ *                          native files unchanged.
+ *   'pdf'                → Google-native + Drawings as PDF (for inline preview);
+ *                          native PDFs/images unchanged.
  */
 const https  = require('https');
 const fs     = require('fs');
@@ -30,9 +30,9 @@ const DL = {
 };
 const PDF = { mime: 'application/pdf', ext: '.pdf' };
 
-// Transiente Google-Fehler (Rate-Limit 403/429, 5xx, Netz-Resets) treten im
-// Burst-Betrieb des Datenraums sporadisch auf und wurden bis 2026-09-01 als
-// 502 an den Betrachter durchgereicht — kurz wiederholen statt sofort scheitern.
+// Transient Google errors (rate limit 403/429, 5xx, network resets) occur
+// sporadically under data room bursts and until 2026-09-01 were passed through
+// to the viewer as 502 — retry briefly instead of failing at once.
 const TRANSIENT = /HTTP (403|429|5\d\d)|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up/i;
 async function withRetry(fn) {
   let lastErr;
@@ -87,19 +87,19 @@ function fetchBytes(pathSeg, token) {
 
 module.exports = {
   name: 'drive_fetch_file',
-  description: 'Holt EINE Datei eines Datenraums als base64 (Modal-Vorschau / Einzel-Download). rootFolderId ist Pflicht-Guard (Datei muss im Subtree liegen). format: "download" (Office: Docs→docx/Sheets→xlsx/Slides→pptx, native unverändert) | "pdf" (Google-native als PDF für Inline-Vorschau).',
+  description: 'Fetches ONE file of a data room as base64 (modal preview / single download). rootFolderId is a mandatory guard (file must be in the subtree). format: "download" (Office: Docs→docx/Sheets→xlsx/Slides→pptx, native unchanged) | "pdf" (Google-native as PDF for inline preview).',
   inputSchema: {
     type: 'object',
     properties: {
-      rootFolderId: { type: 'string', description: 'Wurzel-Ordner des Datenraums (Sicherheits-Guard).' },
-      fileId:       { type: 'string', description: 'Datei-ID (muss im Subtree von rootFolderId liegen).' },
-      format:       { type: 'string', enum: ['download', 'pdf'], description: 'download (Office) oder pdf (Vorschau).' },
-      targetDir:    { type: 'string', description: 'Optional: Bytes in eine Datei unter diesem Verzeichnis schreiben; Antwort traegt dann "path" statt "base64". Empfohlen bei grossen Dateien.' },
+      rootFolderId: { type: 'string', description: 'Root folder of the data room (security guard).' },
+      fileId:       { type: 'string', description: 'File ID (must be in the subtree of rootFolderId).' },
+      format:       { type: 'string', enum: ['download', 'pdf'], description: 'download (Office) or pdf (preview).' },
+      targetDir:    { type: 'string', description: 'Optional: write the bytes to a file under this directory; the response then carries "path" instead of "base64". Recommended for large files.' },
     },
     required: ['rootFolderId', 'fileId'],
   },
   handler: async ({ rootFolderId, fileId, format = 'download', targetDir, _blockProtectedDrives }) => {
-    if (targetDir) { // Sicherheitspruefung 05.11.2026: Zielordner vor jedem Drive-Aufruf pruefen
+    if (targetDir) { // Security review 05.11.2026: check the target folder before every Drive call
       const g = require('../../lib/local-file-guard.cjs').checkWritablePath(path.join(String(targetDir), 'probe.bin'));
       if (!g.ok) return err(g.error);
     }
@@ -123,7 +123,7 @@ module.exports = {
       const buf = await withRetry(async () => fetchBytes(pathSeg, await getAccessToken()));
       if (targetDir) {
         const want = path.join(targetDir, crypto.randomBytes(8).toString('hex') + (path.extname(outName) || '.bin'));
-        let outPath; // Sicherheitspruefung 05.11.2026: nur erlaubte Ordner, keine Code-Dateien
+        let outPath; // Security review 05.11.2026: allowed folders only, no code files
         try { outPath = require('../../lib/local-file-guard.cjs').writeGuarded(want, buf); } catch (e) { return err(e.message); }
         return okJson({ fileId, name: outName, mimeType: outMime, bytes: buf.length, path: outPath });
       }

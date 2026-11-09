@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Paketiert und installiert BH Screen vom Mac aus. Voraussetzungen: Tizen Studio mit Zertifikatsprofil "BH",
-# Beamer im Entwicklermodus mit der IP dieses Macs als Entwickler-Rechner.
-#   build.sh <screen-url> <beamer-ip>      z. B. build.sh https://apps.example.de/screen/<token> 192.168.2.139
+# Packages and installs BH Screen from the Mac. Requirements: Tizen Studio with certificate profile "BH",
+# Beamer in developer mode with the IP of this Mac as the developer machine.
+#   build.sh <screen-url> <beamer-ip>      e.g. build.sh https://apps.example.de/screen/<token> 192.168.2.139
 set -euo pipefail
 cd "$(dirname "$0")"
 URL=${1:?screen-url fehlt}; IP=${2:?beamer-ip fehlt}; PROFILE=${PROFILE:-BH}

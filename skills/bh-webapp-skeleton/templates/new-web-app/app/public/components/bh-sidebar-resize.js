@@ -1,7 +1,7 @@
 'use strict';
 /**
- * BHSidebarResize — ziehbare Breite der linken Sidebar. attach(el, { key, min = 180, max = 420, side = 'left' }).
- * Ziehen mit Maus/Touch, Pfeiltasten ±16 px, Doppelklick = Standardbreite. Inaktiv bei .collapsed und bis 900 px. Idempotent.
+ * BHSidebarResize — draggable width of the left sidebar. attach(el, { key, min = 180, max = 420, side = 'left' }).
+ * Drag with mouse/touch, arrow keys ±16 px, double click = default width. Inactive when .collapsed and up to 900 px. Idempotent.
  */
 window.BHSidebarResize = (() => {
   const STEP = 16;
@@ -38,7 +38,7 @@ body.bh-sbr-dragging{cursor:col-resize;user-select:none}body.bh-sbr-dragging *{t
     handle.setAttribute('aria-label', 'Breite der Seitenleiste ändern');
     handle.title = 'Ziehen zum Ändern der Breite · Doppelklick: Standardbreite';
     el.appendChild(handle);
-    // Zuerst die zuletzt gesetzte Breite: die gerenderte Breite hinkt während der Transition hinterher.
+    // Last set width first: the rendered width lags behind during the transition.
     const current = () => parseFloat(el.style.getPropertyValue('--bh-sb-width')) || el.getBoundingClientRect().width;
     const done = () => { if (key) write(key, clamp(current())); };
 

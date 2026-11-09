@@ -1,4 +1,4 @@
-/* Benutzermenü oben rechts und die Textmarke im Rahmen. */
+/* User menu top right and the wordmark in the frame. */
 .bhs-brand { display: block; flex-shrink: 0; }
 .bhs-mark {
   display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex-shrink: 0;

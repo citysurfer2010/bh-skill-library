@@ -1,5 +1,5 @@
-// Je User und Server ein eigener Prozess, mit dem Home des Users als HOME.
-// So sieht ein Werkzeug nur die Anmeldung der Person, die es aufruft.
+// One separate process per user and server, with the user's home as HOME.
+// This way a tool sees only the login of the person calling it.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import path from "node:path";

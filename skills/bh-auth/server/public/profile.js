@@ -1,4 +1,4 @@
-// Klappt Formulare in der Zeile auf und raeumt Hinweise aus der Adresse.
+// Expands forms inside the row and clears notices from the address.
 (function () {
   'use strict';
   function show(panel, btn, open) {

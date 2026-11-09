@@ -4,7 +4,7 @@ import path from "node:path";
 const TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 2 * 1024 * 1024;
 
-/** Nur echte Google-Profilbilder, damit der Server keine beliebigen Adressen abruft. */
+/** Only real Google profile pictures, so that the server never fetches arbitrary addresses. */
 export function pictureUrl(url) {
   try {
     const u = new URL(url);
@@ -13,12 +13,12 @@ export function pictureUrl(url) {
   } catch { return null; }
 }
 
-// Das Bild liegt bei uns: Anzeigen verraet Google nicht, wer die Seite wann oeffnet.
+// The image is stored here: showing it does not tell Google who opens the page and when.
 export function avatarStore(config, users) {
   const dir = path.join(config.dataDir, "avatars");
   const file = (id) => path.join(dir, id);
   return {
-    /** Ein fehlendes Bild darf nie die Anmeldung stoeren. */
+    /** A missing image must never disrupt the login. */
     async fromGoogle(userId, url) {
       const href = pictureUrl(url);
       if (!href) return;

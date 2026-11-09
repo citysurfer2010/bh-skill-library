@@ -1,5 +1,5 @@
 'use strict';
-/** SQLite über node:sqlite (keine native Build-Stufe). Migrationen laufen idempotent beim Start. */
+/** SQLite via node:sqlite (no native build step). Migrations run idempotently at startup. */
 const fs = require('fs');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');

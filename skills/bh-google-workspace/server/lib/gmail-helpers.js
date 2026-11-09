@@ -1,6 +1,6 @@
 /**
- * Gmail-Payload-Helpers: Base64URL-Decoding, Body-Extraktion, Message-Formatter,
- * RFC822-Encoding für Send/Draft.
+ * Gmail payload helpers: Base64URL decoding, body extraction, message formatter,
+ * RFC822 encoding for send/draft.
  */
 'use strict';
 

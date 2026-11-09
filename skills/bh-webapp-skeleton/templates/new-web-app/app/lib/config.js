@@ -1,5 +1,5 @@
 'use strict';
-/** Pfade der App. Alles Veränderliche liegt unter DATA_DIR, damit Tests eine eigene Kopie bekommen. */
+/** App paths. Everything mutable lives under DATA_DIR so that tests get their own copy. */
 const path = require('path');
 
 const APP_ROOT = path.join(__dirname, '..');

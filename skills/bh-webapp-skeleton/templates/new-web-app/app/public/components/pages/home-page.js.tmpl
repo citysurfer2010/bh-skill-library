@@ -1,10 +1,10 @@
 'use strict';
 /**
- * Beispielseite, schlank. Zeigt die Muster, mit denen jede App startet; Beispieldaten durch __NS__Api-Aufrufe ersetzen.
- *   /                Übersicht: Kennzahlen (AppShell.kpis) + kleine randlose Liste (AppShell.list)
- *   /eintraege       Listenseite: BHListPage + BHDataTable (Sortieren, Spaltenbreiten, Blättern, Auswahl + Sammelaktionen)
- *   /eintraege/<id>  dieselbe Liste + Eintrag im Detailpanel rechts (BHSideDrawer)
- * Ladestandard: Navbar, Sidebar und Breadcrumb vor jedem Request, Platzhalter bis die Daten da sind, Links im Modul ohne Reload.
+ * Lean example page. Shows the patterns every app starts with; replace the example data with __NS__Api calls.
+ *   /                Overview: KPIs (AppShell.kpis) + small borderless list (AppShell.list)
+ *   /entries       List page: BHListPage + BHDataTable (sorting, column widths, paging, selection + bulk actions)
+ *   /entries/<id>  same list + entry in the detail panel on the right (BHSideDrawer)
+ * Loading standard: navbar, sidebar and breadcrumb before any request, placeholders until data arrives, in-module links without reload.
  */
 (async () => {
   const esc = AppShell.esc;
@@ -25,7 +25,7 @@
       title: '__SHORT_LABEL__', active, storageKey: '__SLUG__-sidebar-collapsed',
       items: [
         { id: 'overview', label: 'Übersicht', href: `${BASE}/`, icon: 'chart' },
-        { id: 'list', label: 'Einträge', href: `${BASE}/eintraege`, icon: 'list', count: DEMO.length },
+        { id: 'list', label: 'Einträge', href: `${BASE}/entries`, icon: 'list', count: DEMO.length },
       ],
     });
   }
@@ -43,26 +43,26 @@
       ${AppShell.list({
         title: 'Zuletzt geändert',
         columns: [{ key: 'name', label: 'Name' }, { key: 'status', label: 'Status' }, { key: 'updated', label: 'Geändert' }],
-        rows: DEMO.slice(0, 5), rowHref: (r) => `${BASE}/eintraege/${r.id}`,
+        rows: DEMO.slice(0, 5), rowHref: (r) => `${BASE}/entries/${r.id}`,
       })}
-      <section class="card"><!-- Karten nur für Formulare und Kennzahlen. Dropdown = BHSelect. -->
+      <section class="card"><!-- Cards only for forms and KPIs. Dropdown = BHSelect. -->
         <label class="bh-label" for="demo-status">Status</label>
         <div id="demo-status" class="demo-select" data-bh-select data-label="Status" data-value="" data-placeholder="Bitte wählen"
           data-options="${esc(JSON.stringify(STATUS.map((s) => ({ value: s, label: s }))))}"></div>
       </section>`);
     BHSelectCore.mountAll(host);
-    AppShell.actions(`<a class="bh-btn bh-btn-primary" href="${BASE}/eintraege">Alle Einträge</a>`);
+    AppShell.actions(`<a class="bh-btn bh-btn-primary" href="${BASE}/entries">Alle Einträge</a>`);
   }
 
   function toCsv(rows) {
     const cell = (v) => `"${String(v).replace(/"/g, '""')}"`;
     const lines = [['Nr', 'Name', 'Status', 'Verantwortlich', 'Geändert', 'Betrag'].map(cell).join(';')]
       .concat(rows.map((r) => [r.id, r.name, r.status, r.owner, r.updated, r.amount].map(cell).join(';')));
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' })), download: 'eintraege.csv' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv' })), download: 'entries.csv' });
     a.click(); URL.revokeObjectURL(a.href);
   }
 
-  // KPI-Filterboxen = Arbeitslisten: Klick filtert, aktive Box blau umrandet.
+  // KPI filter boxes = work lists: click filters, active box has a blue outline.
   const kpis = () => [{ key: 'all', label: 'Alle', value: DEMO.length }].concat(STATUS.map((st) => ({ key: st, label: st, value: DEMO.filter((r) => r.status === st).length })));
   function load() { // replace with __NS__Api
     table.setLoading(true);
@@ -72,7 +72,7 @@
   function list(id) {
     sidebar('list');
     const entry = id ? DEMO.find((r) => String(r.id) === String(id)) : null;
-    AppShell.crumbs([['__APP_NAME__', `${BASE}/`], ['Einträge', `${BASE}/eintraege`]].concat(entry ? [[entry.name]] : []));
+    AppShell.crumbs([['__APP_NAME__', `${BASE}/`], ['Einträge', `${BASE}/entries`]].concat(entry ? [[entry.name]] : []));
     if (!page || !host.contains(page.root)) {
       page = BHListPage.render(host, {
         title: 'Einträge', sub: 'Beispielliste — ersetzen.', search: { placeholder: 'Einträge suchen …' },
@@ -81,7 +81,7 @@
         toolbarActions: [{ label: 'Aktualisieren', onClick: load }],
         countLabel: ['Eintrag', 'Einträge'],
         table: {
-          storageKey: '__SLUG__-entries', rowHref: (r) => `${BASE}/eintraege/${r.id}`,
+          storageKey: '__SLUG__-entries', rowHref: (r) => `${BASE}/entries/${r.id}`,
           columns: [
             { key: 'name', label: 'Name', width: 280 }, { key: 'status', label: 'Status', width: 140 },
             { key: 'owner', label: 'Verantwortlich' }, { key: 'updated', label: 'Geändert', width: 140 },
@@ -108,15 +108,15 @@
       title: esc(r.name), storageKey: '__SLUG__-detail', position: `${i + 1} von ${DEMO.length}`,
       body: `<dl class="app-dl"><dt>Status</dt><dd>${esc(r.status)}</dd><dt>Verantwortlich</dt><dd>${esc(r.owner)}</dd>`
         + `<dt>Geändert</dt><dd>${esc(r.updated)}</dd><dt>Betrag</dt><dd>${esc(euro(r.amount))}</dd></dl>`,
-      prev: i > 0 ? () => go(`${BASE}/eintraege/${DEMO[i - 1].id}`) : null,
-      next: i < DEMO.length - 1 ? () => go(`${BASE}/eintraege/${DEMO[i + 1].id}`) : null,
-      onClose: () => { if (/^\/eintraege\/./.test(path())) go(`${BASE}/eintraege`); },
+      prev: i > 0 ? () => go(`${BASE}/entries/${DEMO[i - 1].id}`) : null,
+      next: i < DEMO.length - 1 ? () => go(`${BASE}/entries/${DEMO[i + 1].id}`) : null,
+      onClose: () => { if (/^\/entries\/./.test(path())) go(`${BASE}/entries`); },
     };
     if (BHSideDrawer.isOpen()) BHSideDrawer.update(o); else BHSideDrawer.open(o);
   }
 
   async function route() {
-    const m = path().match(/^\/eintraege(?:\/([^/]+))?\/?$/);
+    const m = path().match(/^\/entries(?:\/([^/]+))?\/?$/);
     if (m) return list(m[1]);
     page = null;
     if (BHSideDrawer.isOpen()) BHSideDrawer.close({ silent: true });

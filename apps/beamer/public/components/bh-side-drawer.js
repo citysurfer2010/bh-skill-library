@@ -1,11 +1,11 @@
 'use strict';
 /**
- * BHSideDrawer — ziehbares Detailpanel rechts. Die Liste bleibt sichtbar: ab 1100 px bekommt die Seite rechts Platz, bis 720 px ist
- * das Panel eine Vollbildseite mit „Zurück“. Breite am linken Rand ziehen (Pfeiltasten ±24 px, 400 px bis 75 %), je storageKey gemerkt.
- * Esc und der Schließen-Knopf schließen; der Fokus geht ins Panel und danach zurück.
+ * BHSideDrawer — draggable detail panel on the right. The list stays visible: from 1100 px the page makes room, up to 720 px
+ * the panel is a full-screen page with "Zurück". Drag width at the left edge (arrow keys ±24 px, 400 px to 75 %), remembered per storageKey.
+ * Esc and the close button close it; focus moves into the panel and back afterwards.
  *   BHSideDrawer.open({ title, body, label, storageKey, onClose, prev, next, position })
  *   BHSideDrawer.update({ title, body, prev, next, position }) · BHSideDrawer.close({ silent }) · BHSideDrawer.isOpen()
- * title und body sind HTML, der Aufrufer escaped seine Daten.
+ * title and body are HTML, the caller escapes its data.
  */
 var BHSideDrawerModul = (typeof window !== 'undefined' && window.BHSideDrawer) ? window.BHSideDrawer : (() => {
   const CSS = `

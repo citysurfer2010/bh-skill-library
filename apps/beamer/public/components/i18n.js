@@ -1,10 +1,10 @@
 'use strict';
 /**
- * i18n für Beamer (DE/EN). Ein Katalog je Sprache (public/i18n/<lang>.json).
- * Komponenten rufen BeamerI18n.t("namespace.key", { vars }) zur RENDER-Zeit auf, der Katalog ist erst nach load() da.
- *   t(key, vars)  übersetzter String, Plural über { one, other } + vars.count, Fallback: der Key selbst
- *   load(lang)    lädt den Katalog und setzt die Locale     lang()/locale()  aktuelle Sprache / Intl-Locale
- * Einbau: nach /api/me und vor dem ersten Render await BeamerI18n.load(sprache); alle sichtbaren Texte über t().
+ * i18n for Beamer (DE/EN). One catalog per language (public/i18n/<lang>.json).
+ * Components call BeamerI18n.t("namespace.key", { vars }) at RENDER time, the catalog is only there after load().
+ *   t(key, vars)  translated string, plural via { one, other } + vars.count, fallback: the key itself
+ *   load(lang)    loads the catalog and sets the locale     lang()/locale()  current language / Intl locale
+ * Integration: after /api/me and before the first render await BeamerI18n.load(lang); all visible texts via t().
  */
 window.BeamerI18n = (function () {
   var LOCALES = { de: 'de-DE', en: 'en-US' };

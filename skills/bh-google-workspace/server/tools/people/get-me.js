@@ -5,13 +5,13 @@ const PERSON_FIELDS = 'names,emailAddresses,phoneNumbers,organizations,photos';
 
 module.exports = {
   name: 'people.getMe',
-  description: "Gibt das eigene Google Profil zurück (Name, E-Mail, Telefon, Organisation, Foto-URL). " +
+  description: "Returns the own Google profile (name, email, phone, organization, photo URL). " +
     "format='text' (default) = human-readable; format='raw' = JSON-stringified Google-People-Response " +
-    "(needed by App-Aufrufer die photos[].url für Avatar-Loading brauchen).",
+    "(needed by app callers that use photos[].url for avatar loading).",
   inputSchema: {
     type: 'object',
     properties: {
-      format: { type: 'string', enum: ['text', 'raw'], description: "'text' (default) = formatted; 'raw' = JSON für App-Aufrufer" },
+      format: { type: 'string', enum: ['text', 'raw'], description: "'text' (default) = formatted; 'raw' = JSON for app callers" },
     },
   },
   handler: async (args) => {

@@ -18,7 +18,7 @@ label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; c
 .form-row { margin-bottom: 16px; }
 .help { color: var(--bh-muted); font-size: 12px; margin-top: 4px; }
 
-/* Formular-Erweiterungen. .bh-btn*, .bh-label*, .bh-field liegen in bh-controls.css. */
+/* Form extensions. .bh-btn*, .bh-label*, .bh-field live in bh-controls.css. */
 .bh-form-card {
   background: var(--bh-surface);
   border: 1px solid var(--bh-border);

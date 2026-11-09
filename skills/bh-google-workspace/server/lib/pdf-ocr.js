@@ -1,7 +1,7 @@
 /**
- * PDF-OCR-Fallback. pdftoppm rastert eine Seite zu PPM, tesseract liest stdin
- * und gibt Text zurück. Sequenziell pro Seite — bei Timeout/Fehler wissen wir
- * wo's klemmte.
+ * PDF OCR fallback. pdftoppm rasterizes one page to PPM, tesseract reads stdin
+ * and returns text. Sequential per page — on timeout/error we know
+ * where it got stuck.
  */
 'use strict';
 
@@ -9,16 +9,16 @@ const { spawn } = require('child_process');
 const { PDFTOPPM, TESSERACT } = require('./config.js');
 
 async function ocrPdfPage(pdfBuf, pageNum, lang = 'deu+eng') {
-  // Schritt 1: pdftoppm → PPM-Bild für diese Seite (Stdin → Stdout).
+  // Step 1: pdftoppm → PPM image for this page (stdin → stdout).
   const ppm = await new Promise((resolve, reject) => {
     const args = ['-f', String(pageNum), '-l', String(pageNum), '-r', '200', '-gray'];
-    // ⚠ HARTE GRENZE VOM BETRIEBSSYSTEM (19.08.2026): Der setTimeout unten ist
-    // ein NODE-Timer — stirbt dieser Prozess, stirbt der Timer mit und das Kind
-    // laeuft weiter. Genau hier entstanden an diesem Tag 16 verwaiste
-    // Tesseract-Prozesse (je ~30 Minuten, je eine CPU voll, Host-Load 79), weil
-    // laufende Aufrufe hart abgebrochen wurden. `timeout` aus coreutils ist ein
-    // eigener Prozess und setzt die Frist auch ohne uns durch; -k schickt
-    // danach SIGKILL nach.
+    // ⚠ HARD LIMIT FROM THE OS (19.08.2026): The setTimeout below is
+    // a NODE timer — if this process dies, the timer dies with it and the child
+    // keeps running. This exact spot produced 16 orphaned
+    // Tesseract processes that day (~30 minutes and one full CPU each, host load 79) because
+    // running calls were aborted hard. `timeout` from coreutils is a
+    // separate process and enforces the deadline without us; -k sends
+    // SIGKILL afterwards.
     const child  = spawn('timeout', ['-k', '5', '30', PDFTOPPM, ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
     const out    = [];
     const errOut = [];
@@ -35,9 +35,9 @@ async function ocrPdfPage(pdfBuf, pageNum, lang = 'deu+eng') {
     child.stdin.end();
   });
 
-  // Schritt 2: tesseract (Stdin → Stdout).
+  // Step 2: tesseract (stdin → stdout).
   return new Promise((resolve, reject) => {
-    // Harte Grenze wie oben — dieser Aufruf hinterliess die Waisen vom 19.08.2026.
+    // Hard limit as above — this call left behind the orphans of 19.08.2026.
     const child = spawn('timeout', ['-k', '5', '60', TESSERACT, '-l', lang, '-', '-', '--psm', '6'], { stdio: ['pipe', 'pipe', 'pipe'] });
     const out   = [];
     const timer = setTimeout(() => { child.kill('SIGKILL'); reject(new Error(`tesseract p${pageNum} timeout`)); }, 60_000);

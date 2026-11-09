@@ -1,10 +1,10 @@
 'use strict';
 /**
- * i18n für Terminal (DE/EN). Ein Katalog je Sprache (public/i18n/<lang>.json).
- * Komponenten rufen TerminalI18n.t("namespace.key", { vars }) zur RENDER-Zeit auf, der Katalog ist erst nach load() da.
- *   t(key, vars)  übersetzter String, Plural über { one, other } + vars.count, Fallback: der Key selbst
- *   load(lang)    lädt den Katalog und setzt die Locale     lang()/locale()  aktuelle Sprache / Intl-Locale
- * Einbau: nach /api/me und vor dem ersten Render await TerminalI18n.load(sprache); alle sichtbaren Texte über t().
+ * i18n for Terminal (DE/EN). One catalog per language (public/i18n/<lang>.json).
+ * Components call TerminalI18n.t("namespace.key", { vars }) at RENDER time, the catalog is only there after load().
+ *   t(key, vars)  translated string, plural via { one, other } + vars.count, fallback: the key itself
+ *   load(lang)    loads the catalog and sets the locale     lang()/locale()  current language / Intl locale
+ * Integration: after /api/me and before the first render await TerminalI18n.load(lang); all visible texts via t().
  */
 window.TerminalI18n = (function () {
   var LOCALES = { de: 'de-DE', en: 'en-US' };

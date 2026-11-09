@@ -1,13 +1,13 @@
 'use strict';
 /**
- * drive_search_subtree — globale Namens-Suche INNERHALB eines Datenraum-Ordners.
+ * drive_search_subtree — global name search WITHIN a data room folder.
  *
- * SICHERHEIT: rootFolderId ist Pflicht-Guard. Es wird ausschließlich der Subtree
- * dieses Ordners rekursiv durchsucht (keine globale Drive-Suche) — so kann nichts
- * außerhalb des freigegebenen Datenraums gefunden/exponiert werden.
+ * SECURITY: rootFolderId is a mandatory guard. Only the subtree of this
+ * folder is searched recursively (no global Drive search) — so nothing
+ * outside the shared data room can be found/exposed.
  *
- * Liefert Treffer (Dateien + Ordner), deren Name die Query enthält (case-insensitive),
- * inkl. relativem Ordnerpfad für die Anzeige.
+ * Returns hits (files + folders) whose name contains the query (case-insensitive),
+ * incl. the relative folder path for display.
  */
 const { gapiJSON, okJson, err } = require('../../lib/gapi.js');
 
@@ -32,14 +32,14 @@ async function listChildren(parentId) {
 
 module.exports = {
   name: 'drive_search_subtree',
-  description: 'Globale Namens-Suche INNERHALB eines Datenraum-Ordners (rekursiv, scope-sicher via rootFolderId-Guard). Liefert Treffer (Dateien+Ordner) mit relativem Pfad. Für die Datenraum-App-Suche.',
+  description: 'Global name search WITHIN a data room folder (recursive, scope-safe via rootFolderId guard). Returns hits (files+folders) with relative path. For the data room app search.',
   inputSchema: {
     type: 'object',
     properties: {
-      rootFolderId: { type: 'string', description: 'Wurzel-Ordner des Datenraums (Sicherheits-Guard).' },
-      query:        { type: 'string', description: 'Suchbegriff (Namens-Teilstring, case-insensitive).' },
-      maxResults:   { type: 'number', description: 'Max. Treffer (Default 100).' },
-      maxNodes:     { type: 'number', description: 'Max. besuchte Knoten (Default 4000).' },
+      rootFolderId: { type: 'string', description: 'Root folder of the data room (security guard).' },
+      query:        { type: 'string', description: 'Search term (name substring, case-insensitive).' },
+      maxResults:   { type: 'number', description: 'Max. hits (default 100).' },
+      maxNodes:     { type: 'number', description: 'Max. visited nodes (default 4000).' },
     },
     required: ['rootFolderId', 'query'],
   },

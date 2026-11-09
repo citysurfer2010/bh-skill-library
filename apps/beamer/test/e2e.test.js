@@ -1,7 +1,7 @@
 'use strict';
 /**
- * E2E über HTTP gegen die Testinstanz, ohne Browser: Wege eines Benutzers durch die echte App.
- * Prüft Seite, alle von ihr geladenen Assets und die API-Key-Strecke. Die JS-Syntax prüft validate.test.js.
+ * E2E over HTTP against the test instance, without a browser: a user's paths through the real app.
+ * Checks the page, all assets it loads and the API key flow. validate.test.js checks the JS syntax.
  */
 const { test, before } = require('node:test');
 const assert = require('node:assert/strict');

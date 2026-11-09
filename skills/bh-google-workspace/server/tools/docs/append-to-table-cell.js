@@ -6,42 +6,42 @@ const {
 } = require('../../lib/docs-tabs.js');
 
 /**
- * docs.appendToTableCell — haengt Text ans Ende EINER Tabellenzelle an.
+ * docs.appendToTableCell — appends text to the end of ONE table cell.
  *
- * Gegenstueck zu docs.appendTableRow: dort eine neue Zeile, hier ein Nachtrag in
- * eine bestehende. Der BP-Doc-Fall ist die Spalte "Verlauf/To" — ein laufendes
- * Protokoll, in das Coordinator-Entscheide und Nachweise nachgetragen werden,
- * ohne den Eintrag der Kollegen zu ueberschreiben.
+ * Counterpart to docs.appendTableRow: there a new row, here an addition to
+ * an existing one. The BP doc case is the "Verlauf/To" column — a running
+ * log to which coordinator decisions and evidence are added,
+ * without overwriting colleagues' entries.
  *
- * Drei Details, die sonst schiefgehen:
- *   1. TABS — ohne includeTabsContent=true (lib/docs-tabs.js) schreibt man still
- *      in den ersten Tab, also ins falsche Wirtschaftsjahr.
- *   2. EINFUEGEPUNKT — ans Zellenende gehoert der Insert auf endIndex-1 des
- *      letzten Absatzes: auf endIndex selbst liegt schon der Absatzmarker der
- *      naechsten Zelle, dort verweigert die API den Insert.
- *   3. ZEILE UEBER INHALT FINDEN — rowIndex verschiebt sich, sobald jemand eine
- *      Zeile einfuegt. rowMatchColumn/rowMatchValue trifft die Zeile am Inhalt.
+ * Three details that otherwise go wrong:
+ *   1. TABS — without includeTabsContent=true (lib/docs-tabs.js) you silently write
+ *      to the first tab, i.e. into the wrong fiscal year.
+ *   2. INSERTION POINT — at the cell end the insert belongs at endIndex-1 of the
+ *      last paragraph: endIndex itself already holds the paragraph marker of the
+ *      next cell, and the API refuses the insert there.
+ *   3. FIND THE ROW BY CONTENT — rowIndex shifts as soon as someone inserts a
+ *      row. rowMatchColumn/rowMatchValue hits the row by its content.
  */
 
 module.exports = {
   name: 'docs.appendToTableCell',
-  description: 'Haengt Text ans Ende einer bestehenden Tabellenzelle an (ohne den vorhandenen Inhalt zu ueberschreiben) — tab-faehig. Zeile per rowIndex oder inhaltsbasiert per rowMatchColumn/rowMatchValue. Optional Farbe (color, z. B. "#D63384" fuer AI-Eintraege) und linkify fuer klickbare URLs. Idempotent ueber skipIfContains.',
+  description: 'Appends text to the end of an existing table cell (without overwriting the existing content) — tab-aware. Row via rowIndex or content-based via rowMatchColumn/rowMatchValue. Optional color (color, e.g. "#D63384" for AI entries) and linkify for clickable URLs. Idempotent via skipIfContains.',
   inputSchema: {
     type: 'object',
     properties: {
       documentId: { type: 'string' },
-      tabId: { type: 'string', description: 'Ziel-Tab (s. docs.listTabs). Ohne Angabe: erster Tab.' },
-      tabTitle: { type: 'string', description: 'Alternative zu tabId: Tab-Titel exakt.' },
-      tableIndex: { type: 'number', description: '0-basierter Index der Tabelle im Tab (default 0).' },
-      tableWithHeader: { type: 'string', description: 'Alternative zu tableIndex: Text in der Kopfzeile.' },
-      rowIndex: { type: 'number', description: '0-basierte Zeile (0 = Kopfzeile).' },
-      rowMatchColumn: { type: 'number', description: 'Statt rowIndex: Spalte, in der gesucht wird (z. B. 3 = Thema).' },
-      rowMatchValue: { type: 'string', description: 'Gesuchter Zellinhalt in rowMatchColumn (exakt, whitespace-tolerant).' },
-      columnIndex: { type: 'number', description: 'Zielspalte, z. B. 6 = Verlauf/To.' },
-      text: { type: 'string', description: 'Anzuhaengender Text. Fuehrende Leerzeile selbst setzen, wenn gewuenscht.' },
-      color: { type: 'string', description: 'Hex-Farbe fuer den angehaengten Text, z. B. "#D63384".' },
-      linkify: { type: 'boolean', description: 'URLs im angehaengten Text klickbar machen.' },
-      skipIfContains: { type: 'string', description: 'Idempotenz: nichts tun, wenn die Zelle diesen Text schon enthaelt.' },
+      tabId: { type: 'string', description: 'Target tab (see docs.listTabs). If omitted: first tab.' },
+      tabTitle: { type: 'string', description: 'Alternative to tabId: exact tab title.' },
+      tableIndex: { type: 'number', description: '0-based index of the table in the tab (default 0).' },
+      tableWithHeader: { type: 'string', description: 'Alternative to tableIndex: text in the header row.' },
+      rowIndex: { type: 'number', description: '0-based row (0 = header row).' },
+      rowMatchColumn: { type: 'number', description: 'Instead of rowIndex: column to search in (e.g. 3 = topic).' },
+      rowMatchValue: { type: 'string', description: 'Cell content to look for in rowMatchColumn (exact, whitespace-tolerant).' },
+      columnIndex: { type: 'number', description: 'Target column, e.g. 6 = Verlauf/To.' },
+      text: { type: 'string', description: 'Text to append. Add a leading blank line yourself if desired.' },
+      color: { type: 'string', description: 'Hex color for the appended text, e.g. "#D63384".' },
+      linkify: { type: 'boolean', description: 'Make URLs in the appended text clickable.' },
+      skipIfContains: { type: 'string', description: 'Idempotence: do nothing if the cell already contains this text.' },
     },
     required: ['documentId', 'columnIndex', 'text'],
   },
@@ -81,13 +81,13 @@ module.exports = {
       return okJson({ skipped: true, reason: 'Zelle enthaelt den Text bereits', documentId, tabId: targetTabId, rowIndex: ri, columnIndex });
     }
 
-    // Ans Zellenende: endIndex des letzten Absatzes minus 1.
+    // To the cell end: endIndex of the last paragraph minus 1.
     const last = (cell.content || [])[(cell.content || []).length - 1];
     const at = last?.endIndex != null ? last.endIndex - 1 : cell.content?.[0]?.startIndex;
     if (at == null) return err('docs.appendToTableCell: Einfuegeposition nicht bestimmbar.');
 
-    // Insert + Styles in EINEM batchUpdate — die Requests wirken sequenziell,
-    // die Style-Ranges gelten also fuer den bereits eingefuegten Text.
+    // Insert + styles in ONE batchUpdate — the requests apply sequentially,
+    // so the style ranges refer to the already inserted text.
     const reqs = [{ insertText: { location: loc(at, targetTabId), text: String(text) } }];
     const len = String(text).length;
     reqs.push(...insertedTextStyleRequests(at, text, targetTabId, hexToRgb(color), linkify));

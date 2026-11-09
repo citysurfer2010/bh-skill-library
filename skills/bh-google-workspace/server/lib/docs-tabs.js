@@ -1,14 +1,14 @@
 /**
- * Google-Docs-Tabs — gemeinsame Helfer.
+ * Google Docs tabs — shared helpers.
  *
- * HINTERGRUND (der Klassiker, der still falsche Ergebnisse liefert):
- * `documents.get` liefert `tabs[]` NUR mit `?includeTabsContent=true`. Ohne den
- * Parameter kommt ausschliesslich der erste Tab als legacy `body` zurueck — ein
- * Lese-Tool meldet dann brav Erfolg, hat aber den falschen Abschnitt gelesen.
- * Bei den BP-Docs (ein Tab pro Wirtschaftsjahr) ist das garantiert der falsche.
+ * BACKGROUND (the classic that silently yields wrong results):
+ * `documents.get` returns `tabs[]` ONLY with `?includeTabsContent=true`. Without the
+ * parameter only the first tab comes back, as legacy `body` — a
+ * read tool then dutifully reports success but has read the wrong section.
+ * For BP docs (one tab per fiscal year) that is guaranteed to be the wrong one.
  *
- * Deshalb: JEDER Zugriff hier laeuft ueber fetchDoc() mit includeTabsContent,
- * und Schreib-Locations tragen die tabId mit (loc/range).
+ * Therefore: EVERY access here goes through fetchDoc() with includeTabsContent,
+ * and write locations carry the tabId (loc/range).
  */
 'use strict';
 
@@ -24,7 +24,7 @@ function batchUpdate(documentId, requests) {
   return gapiJSON('POST', DOC_URL(documentId, ':batchUpdate'), { requests });
 }
 
-// Schreib-Locations muessen die tabId tragen, sonst landet der Insert im ersten Tab.
+// Write locations must carry the tabId, otherwise the insert lands in the first tab.
 function loc(index, tabId) {
   return tabId ? { index, tabId } : { index };
 }
@@ -62,9 +62,9 @@ function flattenTabs(tabs, depth = 0, out = []) {
 }
 
 /**
- * Content-Elemente des Ziel-Tabs.
- * Ohne tabId: erster Tab aus tabs[] — NICHT der legacy `body`. Bei Tab-Docs sind
- * beide zwar identisch, aber tabs[0] ist die Quelle, die auch die tabId kennt.
+ * Content elements of the target tab.
+ * Without tabId: first tab from tabs[] — NOT the legacy `body`. In tab docs
+ * both are identical, but tabs[0] is the source that also knows the tabId.
  */
 function resolveSegment(doc, tabId) {
   if (tabId) return findTab(doc.tabs, tabId)?.documentTab?.body?.content || null;
@@ -72,8 +72,8 @@ function resolveSegment(doc, tabId) {
   return first?.documentTab?.body?.content || doc.body?.content || null;
 }
 
-// Ohne tabId muss beim Schreiben trotzdem die echte tabId mit — sonst zielt der
-// Insert auf den legacy body und die Indizes passen nicht zum gelesenen Segment.
+// Without tabId the real tabId must still be sent when writing — otherwise the
+// insert targets the legacy body and the indexes do not match the segment read.
 function resolveTabId(doc, tabId) {
   if (tabId) return tabId;
   return (doc.tabs || [])[0]?.tabProperties?.tabId || null;
@@ -83,7 +83,7 @@ function paragraphText(el) {
   return (el.paragraph?.elements || []).map((pe) => pe.textRun?.content || '').join('');
 }
 
-// Text eines Content-Baums, Tabellen als Pipe-Zeilen (rekursiv, auch Zellen).
+// Text of a content tree, tables as pipe rows (recursive, cells included).
 function contentText(content) {
   const out = [];
   for (const el of content || []) {
@@ -118,18 +118,18 @@ function hexToRgb(hex) {
   return { red: ((n >> 16) & 255) / 255, green: ((n >> 8) & 255) / 255, blue: (n & 255) / 255 };
 }
 
-// Satzzeichen am URL-Ende gehoeren nicht zum Link.
+// Punctuation at the end of a URL is not part of the link.
 const URL_RE = /https?:\/\/[^\s<>"]+/g;
 function trimUrl(u) {
   return u.replace(/[).,;:]+$/, '');
 }
 
 /**
- * Style-Requests fuer eine ganze Tabellenzeile: Textfarbe und klickbare URLs.
- * Beides braucht die Indizes NACH dem Befuellen — also immer auf einem frisch
- * gelesenen Dokument aufsetzen. Per API eingefuegter Text wird von Docs NICHT
- * automatisch verlinkt; ohne diesen Schritt steht der Quellen-Block als toter
- * Text im Dokument.
+ * Style requests for a whole table row: text color and clickable URLs.
+ * Both need the indexes AFTER filling — so always build on a freshly
+ * read document. Text inserted via the API is NOT auto-linked
+ * by Docs; without this step the sources block stays as dead
+ * text in the document.
  */
 function rowStyleRequests(row, tabId, rgb, linkify) {
   const reqs = [];
@@ -139,7 +139,7 @@ function rowStyleRequests(row, tabId, rgb, linkify) {
         const txt = pe.textRun?.content;
         if (!txt || pe.startIndex == null) continue;
         const end = pe.startIndex + txt.length;
-        // Abschliessendes \n nicht mitfaerben — sonst faerbt sich der Absatzmarker.
+        // Do not color the trailing \n — otherwise the paragraph marker gets colored.
         const stop = txt.endsWith('\n') ? end - 1 : end;
         if (rgb && stop > pe.startIndex) {
           reqs.push({
@@ -157,9 +157,9 @@ function rowStyleRequests(row, tabId, rgb, linkify) {
             const url = trimUrl(m[0]);
             if (!url) continue;
             const s = pe.startIndex + m.index;
-            // Docs faerbt verlinkten Text sonst auf sein Standard-Blau um. Die
-            // AI-Farbe muss erhalten bleiben, sonst ist der Quellen-Block nicht
-            // mehr als AI-Eintrag erkennbar — deshalb foregroundColor mitschreiben.
+            // Otherwise Docs recolors linked text to its default blue. The
+            // AI color must be kept, otherwise the sources block is no longer
+            // recognizable as an AI entry — hence foregroundColor is written too.
             reqs.push({
               updateTextStyle: {
                 range: range(s, s + url.length, tabId),
@@ -179,15 +179,15 @@ function rowStyleRequests(row, tabId, rgb, linkify) {
   return reqs;
 }
 
-// Whitespace-tolerant, case-insensitiv — fuer Zell-/Kopfzeilen-Vergleiche.
+// Whitespace-tolerant, case-insensitive — for cell/header comparisons.
 function norm(s) {
   return String(s == null ? '' : s).replace(/ /g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 /**
- * Tabelle im Content eines Tabs waehlen: tableWithHeader (Text in der Kopfzeile)
- * schlaegt tableStartIndex (exakter startIndex aus documents.get) schlaegt
- * tableIndex (0-basiert, default 0). Liefert { table, position } oder { error }.
+ * Pick a table in a tab's content: tableWithHeader (text in the header row)
+ * beats tableStartIndex (exact startIndex from documents.get) beats
+ * tableIndex (0-based, default 0). Returns { table, position } or { error }.
  */
 function resolveTable(content, { tableIndex, tableWithHeader, tableStartIndex } = {}) {
   const tables = tablesIn(content);
@@ -213,9 +213,9 @@ function resolveTable(content, { tableIndex, tableWithHeader, tableStartIndex } 
 }
 
 /**
- * Zeile bestimmen — inhaltsbasiert (rowMatchColumn/rowMatchValue) schlaegt
- * rowIndex, weil sich der Index verschiebt, sobald jemand eine Zeile einfuegt.
- * Liefert { rowIndex } oder { error }.
+ * Determine the row — content-based (rowMatchColumn/rowMatchValue) beats
+ * rowIndex, because the index shifts as soon as someone inserts a row.
+ * Returns { rowIndex } or { error }.
  */
 function resolveRow(rows, { rowIndex, rowMatchColumn, rowMatchValue } = {}) {
   let ri = rowIndex;
@@ -232,10 +232,10 @@ function resolveRow(rows, { rowIndex, rowMatchColumn, rowMatchValue } = {}) {
 }
 
 /**
- * Style-Requests fuer frisch eingefuegten Text ab Index `at`: Farbe ueber den
- * ganzen Text, klickbare URLs (Farbe bleibt am Link erhalten, sonst faerbt Docs
- * ihn blau um). Muss im SELBEN batchUpdate nach dem insertText stehen — die
- * Requests wirken sequenziell, die Ranges gelten also fuer den neuen Text.
+ * Style requests for freshly inserted text from index `at`: color across the
+ * whole text, clickable URLs (color stays on the link, otherwise Docs recolors
+ * it blue). Must be in the SAME batchUpdate after the insertText — the
+ * requests apply sequentially, so the ranges refer to the new text.
  */
 function insertedTextStyleRequests(at, text, tabId, rgb, linkify) {
   const reqs = [];

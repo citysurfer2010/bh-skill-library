@@ -1,9 +1,9 @@
 'use strict';
 /**
- * BHUserMenu — Benutzermenü oben rechts, bekommt den Benutzer aus /api/me.
+ * BHUserMenu — user menu top right, gets the user from /api/me.
  *   BHUserMenu.mount(elementId, { user: { name, email, role }, themeToggle })
- * Standard der BH Platform, gleiche Einträge wie im Anmeldedienst (Skill bh-webapp-skeleton).
- * Profil und Abmelden gehören zum BH-Anmeldedienst unter derselben Adresse, die App hat keine eigene Sitzung.
+ * BH Platform standard, same entries as in the login service (skill bh-webapp-skeleton).
+ * Profile and logout belong to the BH login service at the same address, the app has no session of its own.
  */
 window.BHUserMenu = (() => {
   const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

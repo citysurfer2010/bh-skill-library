@@ -14,7 +14,7 @@ export function sessions(config, users) {
       res.cookie(COOKIE, token, { ...options, maxAge: DAYS * 86400_000 });
     },
     end(res) { res.clearCookie(COOKIE, options); },
-    /** Angemeldeter User oder null. Jeder Fehler bedeutet: nicht angemeldet. */
+    /** Logged-in user or null. Any error means: not logged in. */
     async resolve(req) {
       try {
         const { payload } = await jwtVerify(req.cookies?.[COOKIE] || "", config.key, { algorithms: ["HS256"], issuer: ISSUER });
@@ -26,14 +26,14 @@ export function sessions(config, users) {
   };
 }
 
-/** Nur eigene Pfade oder ausdruecklich freigegebene Adressen, sonst die Startseite. */
+/** Only own paths or explicitly approved addresses, otherwise the start page. */
 export function safeNext(next, origins = []) {
   const n = String(next || "");
   if (/[\r\n]/.test(n)) return "/";
   if (n.startsWith("/") && !n.startsWith("//") && !n.startsWith("/\\")) return n;
   try {
     const u = new URL(n);
-    // "https://*.beispiel.de" erlaubt alle direkten Subdomains, nur für https.
+    // "https://*.example.com" allows all direct subdomains, for https only.
     const wild = origins.some((o) => o.startsWith("https://*.") && u.protocol === "https:" && u.hostname.endsWith(o.slice(9)) && !u.hostname.slice(0, -o.slice(9).length).includes("."));
     return origins.includes(u.origin) || wild ? u.href : "/";
   } catch { return "/"; }

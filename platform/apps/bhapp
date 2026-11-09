@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Rollt Apps in den Container bh-apps aus. Nur root auf dem VPS.
-#   bhapp deploy <slug> <pfad-zur-app> ["Beschreibung"] [--admin]    Tests muessen gruen sein
+# Deploys apps into the bh-apps container. Root on the VPS only.
+#   bhapp deploy <slug> <path-to-app> ["Description"] [--admin]    Tests must be green
 #   bhapp list | logs <slug> | remove <slug> [--purge]
 set -euo pipefail
 ROOT=/srv/bh-apps; EDGE=/srv/edge/conf/apps; U=101000; BASE_PORT=3300

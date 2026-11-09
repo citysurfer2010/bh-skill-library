@@ -1,5 +1,5 @@
 'use strict';
-/** Smoke: Jeder öffentliche Endpoint der laufenden Testinstanz antwortet wie erwartet. */
+/** Smoke: every public endpoint of the running test instance responds as expected. */
 const { test, before } = require('node:test');
 const assert = require('node:assert/strict');
 

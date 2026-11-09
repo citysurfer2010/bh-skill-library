@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * bh-netatmo MCP Server v26.11.6
+ * bh-netatmo MCP Server v26.11.7
  *
  *
- * Architektur:
- *   server.js          — MCP Protocol Handler (diese Datei, ~70 Z.)
- *   tools/<domain>/*   — Pro-Tool: { name, description, inputSchema, handler }
+ * Architecture:
+ *   server.js          — MCP protocol handler (this file, ~70 lines)
+ *   tools/<domain>/*   — Per tool: { name, description, inputSchema, handler }
  *   tools/index.js     — Auto-Discovery-Registry
  *
  */
@@ -33,7 +33,7 @@ rl.on('line', async (line) => {
       result: {
         protocolVersion: params?.protocolVersion || '2024-11-05',
         capabilities:    { tools: {} },
-        serverInfo:      { name: 'bh-netatmo', version: '26.11.6' },
+        serverInfo:      { name: 'bh-netatmo', version: '26.11.7' },
       },
     });
     return;
@@ -69,4 +69,4 @@ rl.on('line', async (line) => {
 rl.on('close', () => process.exit(0));
 process.stdin.on('error', () => {});
 
-process.stderr.write(`[bh-netatmo] v26.11.6 started — ${TOOL_NAMES.length} Tools registriert.\n`);
+process.stderr.write(`[bh-netatmo] v26.11.7 started — ${TOOL_NAMES.length} Tools registriert.\n`);

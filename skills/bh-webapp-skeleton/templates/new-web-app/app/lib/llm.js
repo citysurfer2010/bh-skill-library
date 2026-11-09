@@ -1,7 +1,7 @@
 'use strict';
 /**
- * KI-Aufrufe laufen ausschließlich über das zentrale Gateway (OpenAI-kompatibel). Nie direkt beim Anbieter:
- * Das Gateway verwaltet Kosten, Modelle und Zugänge. Modelle sind Stufen: tier:fast, tier:balanced, tier:quality.
+ * AI calls go exclusively through the central gateway (OpenAI-compatible). Never directly to the provider:
+ * The gateway manages costs, models and access. Models are tiers: tier:fast, tier:balanced, tier:quality.
  */
 const fs = require('fs');
 
@@ -17,7 +17,7 @@ function readToken(tokenFile) {
   }
 }
 
-/** Liefert den Antworttext. tokenFile und fetchImpl sind nur für Tests überschreibbar, die Gateway-Adresse nicht. */
+/** Returns the response text. tokenFile and fetchImpl can be overridden only for tests, the gateway address cannot. */
 async function chat({ messages, model = 'tier:balanced', ...options }, { tokenFile = TOKEN_FILE, fetchImpl = fetch } = {}) {
   if (!Array.isArray(messages) || !messages.length) throw new Error('messages required');
   const res = await fetchImpl(`${GATEWAY_URL}/chat/completions`, {

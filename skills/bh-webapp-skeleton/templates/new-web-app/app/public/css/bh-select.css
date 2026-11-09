@@ -1,4 +1,4 @@
-/* BH-Select — das Standard-Dropdown. Nur Tokens, hell und dunkel über deren Werte. */
+/* BH-Select — the standard dropdown. Tokens only, light and dark via their values. */
 .bhs{position:relative;display:block;min-width:0}
 .bhs__btn{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:36px;padding:0 10px;box-sizing:border-box;font:inherit;font-size:13px;text-align:left;cursor:pointer;color:var(--bh-text);background:var(--bh-surface);border:1px solid var(--bh-input-border);border-radius:6px;transition:border-color .12s,background .12s}
 .bhs__btn--sm{height:30px;font-size:12px;padding:0 8px}

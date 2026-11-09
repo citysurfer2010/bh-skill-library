@@ -8,7 +8,7 @@ export function adminRoutes({ config, users, sessions, requireAdmin }) {
   const r = Router();
   const render = (req, res, extra = {}, status = 200) => res.status(status).type("html").send(adminView({ me: req.user, users: users.list(), ...extra }));
   const linkFor = (u, kind) => ({ email: u.email, hours: HOURS[kind], url: `${config.publicUrl}/set-password?token=${users.issueLink(u.id, kind)}` });
-  // Der letzte aktive Admin bleibt immer erhalten.
+  // The last active admin is always kept.
   const target = (req, res) => {
     const u = users.byId(req.params.id);
     if (!u) { res.status(404); render(req, res, { error: "Benutzer nicht gefunden." }, 404); return null; }

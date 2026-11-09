@@ -1,8 +1,8 @@
 'use strict';
 /**
- * Linke Modul-Sidebar, gezeichnet vom Rahmen (bh-app-shell.js: einklappbar, ziehbar 180–420 px, Zähler).
+ * Left module sidebar, drawn by the frame (bh-app-shell.js: collapsible, draggable 180–420 px, counters).
  *   ModuleSidebar.show({ title, items: [{ id, label, href, icon, count? }], active, storageKey })
- * Icons: BHAppShell.ICONS oder iconSvg: '<svg…>' je Eintrag.
+ * Icons: BHAppShell.ICONS or iconSvg: '<svg…>' per entry.
  */
 window.ModuleSidebar = {
   show({ title, items, active, storageKey }) {

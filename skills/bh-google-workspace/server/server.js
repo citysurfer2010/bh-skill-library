@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * bh-google-workspace MCP Server v26.11.2
+ * bh-google-workspace MCP Server v26.11.3
  *
- * Direkte Google REST API.
+ * Direct Google REST API.
  *
- * Architektur:
- *   server.js          — MCP Protocol Handler (diese Datei, ~70 Z.)
- *   tools/<domain>/*   — Pro-Tool: { name, description, inputSchema, handler }
+ * Architecture:
+ *   server.js          — MCP protocol handler (this file, ~70 lines)
+ *   tools/<domain>/*   — Per tool: { name, description, inputSchema, handler }
  *   tools/index.js     — Auto-Discovery-Registry
  *   lib/{config,auth,gapi,gmail-helpers,drive-helpers,pdf-ocr}.js
  *
@@ -35,7 +35,7 @@ rl.on('line', async (line) => {
       result: {
         protocolVersion: params?.protocolVersion || '2024-11-05',
         capabilities:    { tools: {} },
-        serverInfo:      { name: 'bh-google-workspace', version: '26.11.2' },
+        serverInfo:      { name: 'bh-google-workspace', version: '26.11.3' },
       },
     });
     return;
@@ -71,4 +71,4 @@ rl.on('line', async (line) => {
 rl.on('close', () => process.exit(0));
 process.stdin.on('error', () => {});
 
-process.stderr.write(`[bh-google-workspace] v26.11.2 started — ${TOOL_NAMES.length} Tools registriert.\n`);
+process.stderr.write(`[bh-google-workspace] v26.11.3 started — ${TOOL_NAMES.length} Tools registriert.\n`);

@@ -1,4 +1,4 @@
-// Nimmt die Synology-Anmeldung eines Users entgegen und prueft sie vor dem Speichern.
+// Receives a user's Synology login and checks it before saving.
 import https from "node:https";
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";

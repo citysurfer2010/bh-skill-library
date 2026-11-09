@@ -3,7 +3,7 @@ const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
 const PERSON_FIELDS = 'names,emailAddresses,phoneNumbers,organizations,photos';
 
-module.exports = { name: 'people.getUserProfile', description: 'Gibt das Google Profil einer anderen Person zurück.', inputSchema: { type: 'object', properties: { resourceName: { type: 'string', description: 'Person-Ressourcenname, z.B. "people/c12345"' } }, required: ['resourceName'] },
+module.exports = { name: 'people.getUserProfile', description: 'Returns the Google profile of another person.', inputSchema: { type: 'object', properties: { resourceName: { type: 'string', description: 'Person resource name, e.g. "people/c12345"' } }, required: ['resourceName'] },
   handler: async ({ resourceName }) => {
   const r = await gapiJSON('GET', `https://people.googleapis.com/v1/${resourceName}?personFields=${PERSON_FIELDS}`);
   if (r.status !== 200) return apiErr('people.getUserProfile', r.status, r.data);

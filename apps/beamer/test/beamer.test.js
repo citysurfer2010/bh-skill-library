@@ -1,5 +1,5 @@
 'use strict';
-/** Bedienung: nur Katalog-Inhalte erreichen den Beamer, Fehler kommen beim Benutzer an, jeder Schreibweg verlangt eine Anmeldung. */
+/** Control: only catalog content reaches the Beamer, errors reach the user, every write path requires a login. */
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { startApp } = require('./helpers');
@@ -10,7 +10,7 @@ before(async () => { t = await startApp(); });
 after(() => { gateway.setCaller(null); return t.close(); });
 beforeEach(() => {
   calls = []; fail = null;
-  gateway.setCaller(async (name, args) => { calls.push([name, args]); if (fail) throw new Error(fail); return name === 'beamer_status' ? '{"zustand":"on"}' : 'ok'; });
+  gateway.setCaller(async (name, args) => { calls.push([name, args]); if (fail) throw new Error(fail); return name === 'beamer_status' ? '{"powerState":"on"}' : 'ok'; });
 });
 const post = (url, body, as = 'u@beispiel.de') => t.call(`/api${url}`, { method: 'POST', as, body: body || {} });
 
@@ -32,7 +32,7 @@ test('Stimmung spielt das hinterlegte Video, fremde Kennung nicht', async () => 
 });
 
 test('Radio: Adresse kommt aus dem Katalog, eigene Adresse wird ignoriert', async () => {
-  await post('/stop'); calls.length = 0; // ohne laufende Stimmung, sonst käme das Radio dazu
+  await post('/stop'); calls.length = 0; // without a running mood, otherwise the radio would be added
   await post('/radio', { id: 'ndr2', url: 'https://boese.example/x.mp3' });
   assert.equal(calls[0][0], 'beamer_play_radio'); assert.match(calls[0][1].url, /ndr\.de/); assert.equal(calls[0][1].title, 'NDR 2');
   assert.equal((await post('/radio', { id: 'nix' })).status, 400);
@@ -46,7 +46,7 @@ test('Stimmung und Radio laufen zusammen, Zurück lässt das Radio weiterlaufen'
   assert.equal(r.now.id, 'regen'); assert.equal(r.now.radio.id, 'ndr2');
   assert.match(r.now.label, /Regen am Fenster \+ NDR 2/);
   const s = await (await t.call('/api/status', { as: 'u@beispiel.de' })).json();
-  assert.equal(s.zustand, 'on'); assert.equal(s.now.id, 'regen');
+  assert.equal(s.powerState, 'on'); assert.equal(s.now.id, 'regen');
   calls.length = 0;
   const near = await (await post('/radio', { id: 'fritz' })).json();
   assert.equal(near.now.radio.id, 'fritz'); assert.equal(calls[0][1].station, 'Fritz');
@@ -55,7 +55,7 @@ test('Stimmung und Radio laufen zusammen, Zurück lässt das Radio weiterlaufen'
 test('Status: Ausfall des Gateways ist kein Fehler, sondern ein Zustand', async () => {
   fail = 'weg';
   const s = await t.call('/api/status', { as: 'u@beispiel.de' });
-  assert.equal(s.status, 200); assert.equal((await s.json()).zustand, 'nicht erreichbar');
+  assert.equal(s.status, 200); assert.equal((await s.json()).powerState, 'unreachable');
 });
 
 test('Eingaben: Text und https werden geprüft', async () => {
@@ -78,7 +78,7 @@ test('Tasten und Apps nur aus der Liste, Ausschalten nie als Taste', async () =>
 });
 
 test('Freigabe: nur gültiges Angebot, Sitzung kommt zurück, Antwort wird durchgereicht', async () => {
-  await post('/radio/stop'); calls.length = 0; // Die App merkt sich, was läuft; hier ohne vorherigen Inhalt
+  await post('/radio/stop'); calls.length = 0; // The app remembers what is running; here without prior content
   assert.equal((await post('/share/start', { offer: 'quatsch' })).status, 400);
   assert.equal((await post('/share/start', { offer: `v=0${'x'.repeat(24001)}` })).status, 400);
   assert.equal((await post('/share/answer', { session: '../etc' })).status, 400);

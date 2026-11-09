@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Fehler einheitlich: unter /api/ als JSON { error, code }, sonst als eigenständige Seite (401/403/404/500).
- * Nie Stacktraces an den Client; bei 500 steht eine Vorgangsnummer in Antwort und Log.
+ * Uniform errors: under /api/ as JSON { error, code }, otherwise as a standalone page (401/403/404/500).
+ * Never send stack traces to the client; on 500 a reference number appears in the response and log.
  */
 const crypto = require('crypto');
 const fs = require('fs');
@@ -39,7 +39,7 @@ function notFound(req, res) {
   return sendError(req, res, { status: 404, message: 'Diese Adresse gibt es hier nicht.' });
 }
 
-// eslint-disable-next-line no-unused-vars -- Express erkennt Fehler-Middleware an den vier Parametern
+// eslint-disable-next-line no-unused-vars -- Express recognizes error middleware by its four parameters
 function errorHandler(err, req, res, _next) {
   if (err.code === 'LIMIT_FILE_SIZE') return sendError(req, res, { status: 413 });
   if (err.status >= 400 && err.status < 500) return sendError(req, res, { status: err.status, message: TITLES[err.status] || 'Ungültige Anfrage' });

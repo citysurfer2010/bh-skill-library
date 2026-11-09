@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Baut und startet das zentrale MCP-Gateway (idempotent). Nicht veroeffentlicht,
-# erreichbar nur aus den User-Netzen. Den OAuth-Client legt der Admin nach
-# /srv/mcp-gateway/google/client_secret.json (Besitzer 101000, Rechte 400).
+# Builds and starts the central MCP gateway (idempotent). Not published,
+# reachable only from the user networks. The admin places the OAuth client at
+# /srv/mcp-gateway/google/client_secret.json (owner 101000, mode 400).
 set -euo pipefail
 D=/srv/mcp-gateway; U=101000; S=/opt/bh-skill-library/skills
 install -d -m 711 "$D"
@@ -20,8 +20,8 @@ ENV=/srv/bh-platform/.env; val() { sed -n "s/^$1=//p" "$ENV" | tail -1; }
 docker build -q -t mcp-gateway:current "$S/bh-mcp-gateway"
 docker network inspect mcp-gateway-net >/dev/null 2>&1 || docker network create mcp-gateway-net >/dev/null
 docker rm -f mcp-gateway >/dev/null 2>&1 || true
-# gw-priority: Ausgehender Verkehr verlaesst den Container ueber sein eigenes Netz, nur das hat die Firewall-Ausnahme.
-# Google-Zugang der Skills aus der .env ableiten; dieselbe OAuth-App wie der Login (Redirect http://localhost:8765/ eingetragen).
+# gw-priority: outgoing traffic leaves the container through its own network, only that has the firewall exception.
+# Derive the skills' Google access from .env; same OAuth app as the login (redirect http://localhost:8765/ registered).
 if [ -n "$(val GOOGLE_CLIENT_ID)" ]; then
   (umask 077; jq -n --arg i "$(val GOOGLE_CLIENT_ID)" --arg s "$(val GOOGLE_CLIENT_SECRET)" '{web: {client_id: $i, client_secret: $s}}' >"$D/google/client_secret.json.new")
   chown "$U:$U" "$D/google/client_secret.json.new"; chmod 400 "$D/google/client_secret.json.new"; mv "$D/google/client_secret.json.new" "$D/google/client_secret.json"
@@ -39,6 +39,6 @@ docker run -d --name mcp-gateway --network name=mcp-gateway-net,gw-priority=100 
 for net in $(docker network ls --format '{{.Name}}' | grep '^devbox-net-' || true); do
   docker network connect "$net" mcp-gateway
 done
-# Nur fuer die Anzeigeseite des Beamers im Anmeldedienst.
+# Only for the Beamer's display page in the login service.
 docker network connect bh-apps-net mcp-gateway 2>/dev/null || true
 echo "mcp-gateway laeuft"

@@ -1,5 +1,5 @@
 'use strict';
-/** Unit: Die App läuft IN diesem Prozess, damit c8 server.js, routes und lib misst. HTTP-Suiten laufen in einem fremden Prozess. */
+/** Unit: the app runs IN this process so that c8 measures server.js, routes and lib. HTTP suites run in a separate process. */
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
