@@ -24,21 +24,35 @@
 .p-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .p-tag.on { background: var(--bh-ok-bg); color: var(--bh-ok); }
 .p-tag.off { background: var(--bh-bg-subtle); color: var(--bh-muted); }
+.p-tag.warn { background: var(--bh-danger-bg); color: var(--bh-danger); }
 .p-action form { display: block; }
 button.p-btn, a.p-btn { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px; border: 1px solid var(--bh-border); border-radius: 6px; background: var(--bh-surface); color: var(--bh-text); font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap; }
 button.p-btn:hover, a.p-btn:hover { background: var(--bh-bg-subtle); }
-a.p-btn.p-primary { border-color: var(--bh-primary); color: var(--bh-primary); }
+a.p-btn.p-primary, button.p-btn.p-primary { border-color: var(--bh-primary); color: var(--bh-primary); }
 button.p-btn.p-danger { border-color: var(--bh-danger); background: none; color: var(--bh-danger); }
 .p-panel { grid-column: 2 / -1; display: grid; gap: 12px; max-width: 420px; margin-top: 14px; }
 .p-panel[hidden] { display: none; }
 .p-panel p { margin: 0; font-size: 14px; }
 .p-panel .alert { margin: 0; }
 .p-hint { color: var(--bh-muted); font-size: 13px; }
+.p-panel label { color: var(--bh-text); font-weight: 500; }
+.p-panel input::placeholder { color: var(--bh-muted); opacity: 1; font-style: italic; }
+.p-panel, .p-panel input { scroll-margin-top: 80px; }
+.p-guide { display: grid; gap: 8px; }
+.p-steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
+.p-field { display: grid; gap: 4px; }
+.p-secret { display: flex; gap: 8px; align-items: stretch; }
+.p-secret input { flex: 1; min-width: 0; }
+.p-secret .p-btn { height: auto; flex: none; }
+.p-more { font-size: 14px; }
+.p-more summary { cursor: pointer; color: var(--bh-primary); width: fit-content; }
+.p-more[open] { display: grid; gap: 6px; }
+.p-panel a:focus-visible, .p-more summary:focus-visible { outline: 2px solid var(--bh-primary); outline-offset: 2px; border-radius: 2px; }
 .p-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .p-buttons button[type=submit]:not(.p-btn) { height: 36px; padding: 0 14px; font-size: 13px; }
 .p-wrap > .alert { margin: 0; padding: 10px 25px; border-radius: 12px; }
 @media (max-width: 560px) {
-  button.p-btn, a.p-btn { height: 44px; }
+  button.p-btn, a.p-btn, .p-buttons button[type=submit]:not(.p-btn) { height: 44px; }
   .p-wrap > .alert { padding: 10px 17px; }
   .p-head { gap: 14px; } .p-avatar { width: 64px; height: 64px; font-size: 22px; } .p-who h1 { font-size: 20px; }
   .p-card-head { padding: 16px 16px 0; } .p-name { flex-direction: column; align-items: stretch; padding: 14px 16px 16px; }

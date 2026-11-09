@@ -2,8 +2,10 @@ import { Router } from "express";
 import { MIN_PASSWORD, passwordProblem } from "../lib/users.js";
 import { profileView } from "../lib/views-profile.js";
 import { servicesStatus, removeServices } from "../lib/google-services.js";
+import { storeIcloud, removeIcloud, icloudStatus } from "../lib/icloud-services.js";
 
 const NOTICES = { "google-services": "Google-Dienste sind verbunden.", "google-services-off": "Google-Dienste wurden getrennt.",
+  icloud: "iCloud ist verbunden. Deine Werkzeuge können jetzt Kalender, Kontakte und E-Mail lesen.", "icloud-off": "iCloud wurde getrennt.",
   name: "Dein Name wurde gespeichert.", password: "Dein Passwort wurde geändert.", google: "Dein Google-Konto ist verknüpft.",
   unlink: "Die Anmeldung mit Google wurde getrennt.", sessions: "Alle anderen Geräte wurden abgemeldet.",
 };
@@ -17,8 +19,8 @@ const SERVICE_ERRORS = {
 export function profileRoutes({ config, users, sessions, avatars, requireLogin }) {
   const r = Router();
   const page = async (req, res, extra = {}, status = 200) => {
-    const googleServices = await servicesStatus(config, req.user);
-    res.status(status).type("html").send(profileView({ user: req.user, googleEnabled: !!config.google, googleServices, min: MIN_PASSWORD, ...extra }));
+    const [googleServices, icloud] = await Promise.all([servicesStatus(config, req.user), icloudStatus(config, req.user)]);
+    res.status(status).type("html").send(profileView({ user: req.user, googleEnabled: !!config.google, googleServices, icloud, min: MIN_PASSWORD, ...extra }));
   };
 
   r.get("/profile", requireLogin, (req, res) => page(req, res, {
@@ -58,6 +60,18 @@ export function profileRoutes({ config, users, sessions, avatars, requireLogin }
   r.post("/profile/google/services/disconnect", requireLogin, async (req, res) => {
     const done = await removeServices(config, req.user);
     res.redirect(done ? "/profile?saved=google-services-off" : "/profile?google=services-off-failed");
+  });
+
+  r.post("/profile/icloud", requireLogin, async (req, res) => {
+    const result = await storeIcloud(config, req.user, req.body);
+    if (result.ok) return res.redirect("/profile?saved=icloud");
+    return page(req, res, { icloudError: result.error, icloudForm: { appleId: req.body.appleId, mailUser: req.body.mailUser } }, 400);
+  });
+
+  r.post("/profile/icloud/disconnect", requireLogin, async (req, res) => {
+    const done = await removeIcloud(config, req.user);
+    if (done) return res.redirect("/profile?saved=icloud-off");
+    return page(req, res, { error: "iCloud konnte nicht getrennt werden. Bitte versuche es noch einmal." }, 502);
   });
 
   r.post("/profile/google/unlink", requireLogin, (req, res) => {

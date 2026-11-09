@@ -8,6 +8,7 @@ import { Registry } from "./lib/registry.mjs";
 import { storeGithubToken } from "./lib/connect.mjs";
 import { storeNasLogin, nasLogin } from "./lib/connect-nas.mjs";
 import { secretOk, storeGoogle, googleStatus, removeGoogle } from "./lib/connect-google.mjs";
+import { storeIcloudLogin, icloudStatus, removeIcloud, icloudLogin } from "./lib/connect-icloud.mjs";
 
 const MAX_BODY = 16 * 1024 * 1024;
 
@@ -42,7 +43,7 @@ async function handleRpc(registry, user, msg) {
   }
 }
 
-export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLogin, connectSecret = "", fetchGoogle = fetch }) {
+export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLogin, connectSecret = "", fetchGoogle = fetch, loginIcloud = icloudLogin }) {
   const pool = new BackendPool(usersDir);
   const registry = new Registry(servers, pool);
   const server = http.createServer(async (req, res) => {
@@ -54,6 +55,15 @@ export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLog
         if (req.url === "/connect/google/status") { const { status, ...rest } = googleStatus(usersDir, body); return send(res, status, rest); }
         const { status, ...rest } = req.url === "/connect/google" ? storeGoogle(usersDir, body) : await removeGoogle(usersDir, body, fetchGoogle);
         // Running tools keep the old grant in memory.
+        if (status === 200) pool.stopUser(body.user);
+        return send(res, status, rest);
+      }
+      if (req.method === "POST" && ["/connect/icloud", "/connect/icloud/status", "/connect/icloud/remove"].includes(req.url)) {
+        if (!secretOk(connectSecret, req.headers["x-connect-secret"])) return send(res, 401, { error: "unauthorized" });
+        const body = JSON.parse(await readBody(req));
+        if (req.url === "/connect/icloud/status") { const { status, ...rest } = icloudStatus(usersDir, body); return send(res, status, rest); }
+        const { status, ...rest } = req.url === "/connect/icloud" ? await storeIcloudLogin(usersDir, body, loginIcloud) : removeIcloud(usersDir, body);
+        // Running tools keep the old session and cached data in memory.
         if (status === 200) pool.stopUser(body.user);
         return send(res, status, rest);
       }

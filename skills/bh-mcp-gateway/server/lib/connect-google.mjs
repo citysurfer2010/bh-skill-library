@@ -6,7 +6,7 @@ import path from "node:path";
 const hash = (s) => createHash("sha256").update(String(s)).digest();
 export const secretOk = (expected, given) => !!expected && !!given && timingSafeEqual(hash(expected), hash(given));
 
-const home = (usersDir, user) => (/^[a-z0-9][a-z0-9_-]{0,62}$/.test(String(user)) && existsSync(path.join(usersDir, user)) ? path.join(usersDir, user) : null);
+export const home = (usersDir, user) => (/^[a-z0-9][a-z0-9_-]{0,62}$/.test(String(user)) && existsSync(path.join(usersDir, user)) ? path.join(usersDir, user) : null);
 const dirOf = (h) => path.join(h, ".config", "bh-google-workspace");
 const credsOf = (h) => path.join(dirOf(h), "credentials.json");
 const accountOf = (h) => path.join(dirOf(h), "account.json");

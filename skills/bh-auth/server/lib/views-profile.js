@@ -2,6 +2,7 @@ import { avatarInner, esc, shell, when, googleIcon } from "./views.js";
 
 const svg = (body) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 const KEY = svg(`<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>`);
+const CLOUD = svg(`<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>`);
 const SHIELD = svg(`<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`);
 const tag = (on, yes, no) => `<span class="p-tag ${on ? "on" : "off"}">${on ? yes : no}</span>`;
 
@@ -34,21 +35,51 @@ function googleRow(user, enabled) {
   return row({ icon: googleIcon, title: "Google", status: tag(linked, "Verknüpft", "Nicht verknüpft"), sub, action, panel });
 }
 
-function servicesCard(state) {
+function icloudForm(user, state, error, form) {
+  const apple = esc(form.appleId ?? state.appleId ?? user.email);
+  const mail = esc(form.mailUser ?? "");
+  const invalid = error ? ` aria-invalid="true" aria-describedby="icloudError"` : "";
+  return `<form id="icloudForm" class="p-panel" method="post" action="/profile/icloud"${error ? "" : " hidden"}>${error ? `<p id="icloudError" class="alert error" role="alert">${esc(error)}</p>` : ""}
+<div class="p-guide"><p>Du brauchst ein app-spezifisches Passwort, dein normales Apple-Passwort funktioniert hier nicht. Das dauert etwa eine Minute:</p>
+<ol class="p-steps"><li><a href="https://account.apple.com/account/manage" target="_blank" rel="noopener">Apple-Konto öffnen (neuer Tab)</a></li><li>„Anmeldung und Sicherheit“, dann „App-spezifische Passwörter“</li><li>Neues Passwort erstellen, Name zum Beispiel „BH Platform“</li><li>Das angezeigte Passwort unten einfügen</li></ol>
+<p class="p-hint">Dafür muss bei Apple die Zwei-Faktor-Authentifizierung aktiv sein. Das Passwort gilt nur für diesen Zugriff und lässt sich bei Apple jederzeit widerrufen.</p></div>
+<label>Apple-ID<input type="email" name="appleId" value="${apple}" autocomplete="username" required></label>
+<div class="p-field"><label for="icloudPassword">App-spezifisches Passwort</label><div class="p-secret"><input id="icloudPassword" type="password" name="password" placeholder="abcd-efgh-ijkl-mnop" pattern="\\s*([a-zA-Z]{4}-?){3}[a-zA-Z]{4}\\s*" title="Vier Gruppen aus je vier Buchstaben" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" required${invalid}><button type="button" class="p-btn" data-reveal="icloudPassword">Anzeigen</button></div></div>
+<details class="p-more"${form.mailUser ? " open" : ""}><summary>Andere iCloud-Mail-Adresse angeben</summary><label>iCloud-Mail-Adresse<input type="email" name="mailUser" value="${mail}" autocomplete="off" aria-describedby="icloudMailHint"></label><p id="icloudMailHint" class="p-hint">Nur nötig, wenn deine Apple-ID keine @icloud.com-Adresse ist und du iCloud-Mail nutzt.</p></details>
+<div class="p-buttons"><button type="submit">iCloud verbinden</button><button type="button" class="p-btn" data-cancel="icloudForm">Abbrechen</button></div></form>`;
+}
+
+function icloudRow(state, user, error, form = {}) {
+  if (!state) return "";
+  const { connected, appleId, rejected } = state;
+  const toggle = `<button type="button" class="p-btn${!connected || rejected ? " p-primary" : ""}" data-toggle="icloudForm" aria-expanded="${!!error}" aria-controls="icloudForm">${connected ? "Neu verbinden" : "Verbinden"}</button>`;
+  const action = connected ? `<button type="button" class="p-btn" data-toggle="icloudConfirm" aria-expanded="false" aria-controls="icloudConfirm">Trennen</button> ${toggle}` : toggle;
+  const confirm = connected ? `<form id="icloudConfirm" class="p-panel p-confirm" method="post" action="/profile/icloud/disconnect" hidden><p>Deine Werkzeuge verlieren den Zugriff auf deine iCloud-Daten. Das Passwort wird hier gelöscht, bei Apple kannst du es zusätzlich widerrufen.</p><div class="p-buttons"><button type="submit" class="p-btn p-danger">Ja, trennen</button><button type="button" class="p-btn" data-cancel="icloudConfirm">Abbrechen</button></div></form>` : "";
+  const sub = rejected ? "Passwort abgelaufen oder bei Apple widerrufen." : connected ? `Verbunden als ${esc(appleId)}` : "Kalender, Kontakte und E-Mail, nur lesend";
+  const status = rejected ? `<span class="p-tag warn">Anmeldung abgelehnt</span>` : tag(connected, "Verbunden", "Nicht verbunden");
+  return row({ icon: CLOUD, title: "iCloud", status, sub, action, panel: icloudForm(user, state, error, form) + confirm });
+}
+
+function googleServicesRow(state) {
   if (!state) return "";
   const { connected, email } = state;
   const connect = `<a class="p-btn${connected ? "" : " p-primary"}" href="/oauth/google/services">${connected ? "Neu verbinden" : "Verbinden"}</a>`;
   const action = connected ? `<button type="button" class="p-btn" data-toggle="servicesConfirm" aria-expanded="false" aria-controls="servicesConfirm">Trennen</button> ${connect}` : connect;
   const panel = connected ? `<form id="servicesConfirm" class="p-panel p-confirm" method="post" action="/profile/google/services/disconnect" hidden><p>Buddy und Beamer verlieren den Zugriff auf deine Google-Daten.</p><div class="p-buttons"><button type="submit" class="p-btn p-danger">Ja, trennen</button><button type="button" class="p-btn" data-cancel="servicesConfirm">Abbrechen</button></div></form>` : "";
   const sub = connected && email ? `Verbunden als ${esc(email)}` : "Kalender, Drive, Gmail, Docs, Tabellen, Präsentationen und Aufgaben";
-  return `<section class="p-card"><div class="p-card-head"><h2>Verbundene Dienste</h2><p>Damit Buddy und Beamer deine Google-Daten nutzen können. Das ist unabhängig von der Anmeldung mit Google.</p></div><div class="p-list">${row({ icon: googleIcon, title: "Google-Dienste", status: tag(connected, "Verbunden", "Nicht verbunden"), sub, action, panel })}</div></section>`;
+  return row({ icon: googleIcon, title: "Google-Dienste", status: tag(connected, "Verbunden", "Nicht verbunden"), sub, action, panel });
 }
 
-export function profileView({ user, notice, error, passwordError, openPassword, googleEnabled, googleServices, min }) {
+function servicesCard(google, icloud, user, icloudError, icloudForm) {
+  if (!google && !icloud) return "";
+  return `<section class="p-card"><div class="p-card-head"><h2>Verbundene Dienste</h2><p>Damit Buddy, Beamer und deine Werkzeuge deine Daten nutzen können. Das ist unabhängig von der Anmeldung mit Google.</p></div><div class="p-list">${googleServicesRow(google)}${icloudRow(icloud, user, icloudError, icloudForm)}</div></section>`;
+}
+
+export function profileView({ user, notice, error, passwordError, openPassword, googleEnabled, googleServices, icloud, icloudError, icloudForm, min }) {
   const open = !!(openPassword || passwordError);
   return shell(user, "Profil", `<div class="p-wrap"><header class="p-head"><span class="p-avatar" aria-hidden="true">${avatarInner(user)}</span><div class="p-who"><h1>${esc(user.name)}</h1><div class="p-mail">${esc(user.email)}</div><div class="p-meta"><span class="p-role">${user.isAdmin ? "Admin" : "Benutzer"}</span><span>Letzte Anmeldung: ${when(user.lastLogin)}</span></div></div></header>
 ${notice ? `<p class="alert ok" role="status">${esc(notice)}</p>` : ""}${error ? `<p class="alert error" role="alert">${esc(error)}</p>` : ""}
 <section class="p-card"><div class="p-card-head"><h2>Persönliche Daten</h2><p>So erscheinst du in allen Apps.</p></div><form class="p-name" method="post" action="/profile"><label>Anzeigename<input name="name" value="${esc(user.name)}" maxlength="80" required></label><button type="submit">Speichern</button></form></section>
-<section class="p-card"><div class="p-card-head"><h2>Anmeldung</h2><p>Wege, mit denen du dich bei der BH Platform anmeldest.</p></div><div class="p-list">${passwordRow(user, min, open, passwordError)}${googleRow(user, googleEnabled)}</div></section>${servicesCard(googleServices)}
+<section class="p-card"><div class="p-card-head"><h2>Anmeldung</h2><p>Wege, mit denen du dich bei der BH Platform anmeldest.</p></div><div class="p-list">${passwordRow(user, min, open, passwordError)}${googleRow(user, googleEnabled)}</div></section>${servicesCard(googleServices, icloud, user, icloudError, icloudForm)}
 <section class="p-card"><div class="p-card-head"><h2>Sicherheit</h2></div><div class="p-list">${row({ icon: SHIELD, title: "Andere Geräte", sub: "Beendet deine Anmeldung überall außer auf diesem Gerät.", action: `<form method="post" action="/profile/sessions"><button type="submit" class="p-btn">Abmelden</button></form>` })}</div></section></div>`, { css: ["/profile.css"], js: ["/profile.js"] });
 }
