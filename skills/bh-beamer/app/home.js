@@ -8,7 +8,7 @@ window.BHHome = (function () {
   var PAGES = ['start', 'radio', 'mood', 'rooms'];
   var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
   var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = ''; var party = null; var partyView = true; var tight = false;
-  var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
+  var events = []; var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
   try { room = localStorage.getItem('bh-room') || room; } catch (e) { /* ohne Speicher bleibt das Wohnzimmer */ }
   var api = { onTune: function () {}, onMood: function () {}, isRadioOn: function () { return false; } };
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
@@ -113,7 +113,23 @@ window.BHHome = (function () {
 
   function notable(d) { return d.kids.some(function (k) { return k.lessons.some(function (l) { return l.state !== 'regular' || l.exam; }); }); }
 
-  function renderDay() {
+  var CAL = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM8 3v4M16 3v4M4 10h16"/></svg>';
+  // Nur wenn Platz ist: Stoerungen, Geburtstag und ein langer Plan gehen vor.
+  function renderEvents() {
+    var el = document.getElementById('events'); var today = document.getElementById('today');
+    var free = !tight && !(party && partyView) && today.offsetTop + today.offsetHeight <= 784;
+    var now = Date.now(); var open = events.filter(function (e) { return !e.endAt || e.endAt > now; });
+    if (!open.length || !free) { el.className = ''; return; }
+    el.className = 'on';
+    var html = CAL + open.slice(0, 3).map(function (e) {
+      var running = e.startAt && e.startAt <= now; var label = running ? 'Jetzt' : esc(dayLabel(e.date)) + (e.time ? ' ' + esc(e.time) : '');
+      return '<span class="ev"><b' + (running ? ' class="ev-now"' : e.date === iso(new Date()) ? ' class="ev-today"' : '') + '>' + label + '</b> ' + esc(e.title) + '</span>';
+    }).join('');
+    if (el.bhHtml !== html) { el.innerHTML = html; el.bhHtml = html; }
+  }
+  function renderDay() { paintDay(); renderEvents(); }
+
+  function paintDay() {
     var el = document.getElementById('today');
     var days = plan && plan.days ? plan.days.filter(function (d) { return d.date >= iso(new Date()); }) : [];
     var tabs = function (isParty) { return (party ? '<span class="' + (isParty ? 'on' : '') + '">Geburtstag</span>' : '') + days.map(function (d, i) { return '<span class="' + (!isParty && i === dayIndex ? 'on' : '') + '">' + esc(dayLabel(d.date)) + (isParty && i === 0 && notable(d) ? '<i class="tabdot"></i>' : '') + '</span>'; }).join('') + (days.length ? '<em>◀ ▶ ' + (isParty ? 'Stundenplan' : 'Tag wechseln') + '</em>' : ''); };
@@ -220,7 +236,7 @@ window.BHHome = (function () {
 
   function setMenu(menu) {
     if (!menu) return;
-    plan = menu.schedule || null; renderDay();
+    plan = menu.schedule || null; events = menu.events || []; renderDay();
     var alertsEl = document.getElementById('alerts'); var alerts = menu.alerts || []; tight = alerts.length > 1;
     alertsEl.className = alerts.length ? 'on' : '';
     alertsEl.innerHTML = alerts.slice(0, 2).map(function (a) { return '<div class="alert"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><b>' + esc(a.label) + '</b><span>' + esc(a.text) + '</span></div>'; }).join('');

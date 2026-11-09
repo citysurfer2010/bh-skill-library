@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-family-calendar",
+  "name": "bh-family-calendar",
+  "version": "1.0.0",
+  "description": "Einmalige Termine aus dem Family-Kalender, nur lesend",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}
