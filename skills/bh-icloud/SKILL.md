@@ -46,7 +46,7 @@ Bilder kommen auf zwei Wegen nach `/photo/iCloud-Matti` auf der Synology.
 | Weg | Wofür | Stand |
 |---|---|---|
 | Mac-Skript `platform/home-link/mac-icloud-photos.sh` | Altbestand und täglicher Abgleich, solange der Mac läuft | aktiv |
-| Container `bh-icloud-photos` auf dem VPS | Neue Fotos ohne Mac | Download aktiv, Hochladen noch nicht (siehe `LIMITATIONS.md`) |
+| Container `bh-icloud-photos` auf dem VPS | Neue Fotos ohne Mac | aktiv |
 
 ### Anleitung: Anmeldung auf dem VPS
 

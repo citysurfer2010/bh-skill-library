@@ -68,3 +68,15 @@ test('Index: dasselbe Bild zweimal ergibt keine doppelten Gesichter', async () =
   store.saveFaces('/Bilder/2010 A/a.jpg', [face, face]);
   assert.equal(store.counts().faces, 2);
 });
+
+test('Index: Synology offline laesst Bilder offen, Fehler zur Datei zaehlen', async () => {
+  reset();
+  nas({ '/Bilder': [{ name: '2011 A', isdir: true, additional: { time: { mtime: 1 } } }], '/Bilder/2011 A': [img('a.jpg', 500 * KB)] });
+  await indexer.step();
+  dsm.setTransport(async (p) => { if (p.method === 'login') return json({ success: true, data: { sid: 'S' } }); throw Object.assign(new Error('offline'), { code: 'ECONNREFUSED' }); });
+  await assert.rejects(indexer.step(), /offline/);
+  assert.equal(store.counts().photos.pending, 1);
+  dsm.setTransport(async (p) => (p.method === 'login' ? json({ success: true, data: { sid: 'S' } }) : json({ success: false, error: { code: 408 } })));
+  assert.deepEqual(await indexer.step(), { error: true });
+  assert.equal(store.counts().photos.error, 1);
+});
