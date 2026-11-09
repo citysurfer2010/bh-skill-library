@@ -1,8 +1,8 @@
 {
-  "markSha256": "34efd32fb1c910fbe87577c3e473fa3db3fca60028777453a2111554b03d766b",
+  "markSha256": "1d98aa4b8a73b41376262c376c5bb203e06ef141839434afed3b2c552efb0b84",
   "gradient": [
     "#172554",
     "#2563eb"
   ],
-  "generator": "bh-make-app-icons v2"
+  "generator": "bh-make-app-icons v3"
 }

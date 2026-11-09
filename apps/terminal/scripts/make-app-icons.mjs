@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Draws the Biskup Home logo into all app icons, without a browser and without dependencies.
+// Draws the app's own icon in the platform style: blue gradient tile with a white motif, without a browser or dependencies.
 //   node scripts/make-app-icons.mjs --out public
-// MARK_PATH is the B from skills/bh-styleguide/assets/logo/bh-logo.svg on a 64-unit grid; favicon.svg is that file.
+// The motif comes from scripts/app-icon.json: an SVG path on a 64-unit grid, centred on 32,32, about 32 to 38 units wide.
 // Output: favicon.svg, branding/nav-icon.svg, branding/icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png, icons.stamp.json
 // The export is used by test/branding.test.js.
 import fs from 'node:fs';
@@ -10,10 +10,11 @@ import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
-export const GENERATOR = 'bh-make-app-icons v2';
+export const GENERATOR = 'bh-make-app-icons v3';
 export const GRADIENT = ['#172554', '#2563eb'];
 export const NAV_FILL = 'rgba(255,255,255,.18)';
-export const MARK_PATH = 'M18 11h16.5c8 0 13 4.7 13 11.2 0 4.3-2.3 7.6-5.8 9.3 4.6 1.6 7.8 5.4 7.8 10.6C49.5 49 44 53 35.5 53H18zM27 19.5v8.6h6.7c2.9 0 4.7-1.7 4.7-4.3s-1.8-4.3-4.7-4.3zM27 36v8.5h7.7c3.1 0 5-1.6 5-4.2S37.8 36 34.7 36z';
+const ICON = JSON.parse(fs.readFileSync(new URL('./app-icon.json', import.meta.url), 'utf8'));
+export const MARK_PATH = ICON.path;
 const GRID = 64;
 const CURVE_STEPS = 16;
 
@@ -34,6 +35,7 @@ function flatten(d) {
     const rel = cmd === cmd.toLowerCase(), ox = rel ? x : 0, oy = rel ? y : 0;
     switch (cmd.toUpperCase()) {
       case 'M': x = ox + num(); y = oy + num(); ring = [[x, y]]; rings.push(ring); break;
+      case 'L': x = ox + num(); y = oy + num(); ring.push([x, y]); break;
       case 'H': x = ox + num(); ring.push([x, y]); break;
       case 'V': y = oy + num(); ring.push([x, y]); break;
       case 'C': { const a = [ox + num(), oy + num(), ox + num(), oy + num(), ox + num(), oy + num()]; curve(...a); break; }
@@ -57,8 +59,7 @@ export const TARGETS = [
 ];
 
 const markTag = `<path fill="#fff" fill-rule="evenodd" d="${MARK_PATH}"/>`;
-// Byte-identical to bh-logo.svg; scripts/validate.sh compares the two.
-export const buildFavicon = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Biskup Home"><defs><linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${GRADIENT[0]}"/><stop offset="1" stop-color="${GRADIENT[1]}"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#t)"/>${markTag}</svg>\n`;
+export const buildFavicon = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="${ICON.label}"><defs><linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${GRADIENT[0]}"/><stop offset="1" stop-color="${GRADIENT[1]}"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#t)"/>${markTag}</svg>\n`;
 export const buildNavIcon = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="${NAV_FILL}"/>${markTag}</svg>\n`;
 export const sha256 = (v) => crypto.createHash('sha256').update(v).digest('hex');
 export const stampFor = () => ({ markSha256: sha256(MARK_PATH), gradient: GRADIENT, generator: GENERATOR });

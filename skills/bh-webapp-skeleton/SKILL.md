@@ -100,7 +100,7 @@ Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
 
 ## Icons und Favicon (Pflicht)
 
-Jede Web-App hat genau diesen Satz. Quelle ist das Logo `bh-logo.svg` aus dem Skill `bh-styleguide`. Icons nie von Hand zeichnen oder einzeln tauschen, sondern immer erzeugen:
+Jede Web-App hat diesen Satz und **ein eigenes Motiv**: gleiche blaue Verlaufskachel wie das Logo, darauf ein weißes Motiv, das zur App passt. Das „B“ bleibt der Plattform vorbehalten. Das Motiv steht in `scripts/app-icon.json` als SVG-Pfad auf einem 64er Raster, mittig um 32,32 und etwa 32 bis 38 Einheiten breit, ohne Farben. Das Gerüst bringt ein Platzhalter-Motiv mit, das vor dem ersten Ausrollen ersetzt wird. Icons nie von Hand zeichnen oder einzeln tauschen, sondern immer erzeugen:
 
 ```bash
 node scripts/make-app-icons.mjs --out public
@@ -108,7 +108,7 @@ node scripts/make-app-icons.mjs --out public
 
 | Datei | Größe | Zweck |
 |---|---|---|
-| `public/favicon.svg` | Vektor | Browser-Tab, byte-gleich mit `bh-logo.svg` |
+| `public/favicon.svg` | Vektor | Browser-Tab |
 | `public/branding/apple-touch-icon.png` | 180 px, randlos | iPhone-Startbildschirm |
 | `public/branding/icon-192.png` | 192 px, runde Ecken | App-Icon (Manifest) |
 | `public/branding/icon-512.png` | 512 px, runde Ecken | App-Icon groß (Manifest) |

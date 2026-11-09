@@ -1,7 +1,7 @@
 {
   "skill_id": "bh-styleguide",
   "name": "bh-styleguide",
-  "version": "26.11.4",
+  "version": "26.11.5",
   "description": "Verbindlicher Style Guide der BH Platform",
   "author": "bh-platform",
   "schema_version": "2.0"

@@ -1,7 +1,7 @@
 'use strict';
 /**
  * Ratchet: app icon, favicon, navbar icon and user menu. Everything comes from scripts/make-app-icons.mjs,
- * the mark is the Biskup Home logo: white B on the blue gradient tile. The PNG decoder reads real pixels without dependencies.
+ * the mark is the app's own white motif from scripts/app-icon.json on the blue gradient tile. The PNG decoder reads real pixels without dependencies.
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
