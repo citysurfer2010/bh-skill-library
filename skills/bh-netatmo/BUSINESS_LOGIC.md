@@ -20,3 +20,10 @@
 - Auf der Seite „Räume“ im Menü stehen alle Räume; OK legt den Raum für das Startbild fest.
 - Offene Fenster und schwache Batterien erscheinen für die ganze Wohnung, nicht nur für den gewählten Raum.
 - Die große Zahl ist der gemessene Ist-Wert. Der Soll-Wert steht in Klammern dahinter, sobald er um mindestens 0,5 Grad abweicht. Quelle: Matti, 09.11.2026.
+
+## Raumsteuerung auf dem Beamer
+
+- Die Seite „Räume“ zeigt neben der Überschrift den aktiven Plan, etwa Arbeitswoche, oder einen Sondermodus wie Abwesend. Quelle: Matti, 09.11.2026.
+- OK öffnet die Einstellung: ▲▼ ändert das Soll um halbe Grad, OK speichert, Zurück bricht ab.
+- ▶ legt den Raum aufs Startbild, ◀ gibt einen manuell gesetzten Raum an den Plan zurück.
+- Eine Änderung gilt nur befristet, danach übernimmt wieder der Plan.

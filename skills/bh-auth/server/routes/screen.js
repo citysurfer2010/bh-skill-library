@@ -67,7 +67,7 @@ export function screenRoutes({ config }) {
   r.post("/screen/:token/request", express.text({ type: "*/*", limit: "2kb" }), (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
     let body; try { body = JSON.parse(req.body); } catch { return res.status(400).json({ error: "unlesbar" }); }
-    if (!["radio", "mood", "back", "radiooff", "stop", "refresh"].includes(body?.kind) || !/^[a-z0-9]{1,40}$/.test(String(body?.id))) return res.status(400).json({ error: "ungueltig" });
+    if (!["radio", "mood", "back", "radiooff", "stop", "refresh", "temp"].includes(body?.kind) || !/^[a-z0-9]{1,40}$/.test(String(body?.id))) return res.status(400).json({ error: "ungueltig" });
     if (requests.length < 10) requests.push({ kind: body.kind, id: body.id });
     [...requestWaiters].forEach((w) => w());
     res.status(204).end();
@@ -89,7 +89,7 @@ export function screenRoutes({ config }) {
   r.post("/screen-menu", express.json({ limit: "128kb" }), (req, res) => {
     if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
     if (!Array.isArray(req.body?.radio) || !Array.isArray(req.body?.mood)) return res.status(400).json({ error: "ungueltig" });
-    writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null, board: req.body.board || null, alerts: req.body.alerts || [], birthdays: req.body.birthdays || [], rooms: req.body.rooms || [], events: req.body.events || [], onThisDay: req.body.onThisDay || null }), { mode: 0o600 });
+    writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null, board: req.body.board || null, alerts: req.body.alerts || [], birthdays: req.body.birthdays || [], rooms: req.body.rooms || [], events: req.body.events || [], heating: req.body.heating || null, onThisDay: req.body.onThisDay || null }), { mode: 0o600 });
     changed();
     res.status(204).end();
   });

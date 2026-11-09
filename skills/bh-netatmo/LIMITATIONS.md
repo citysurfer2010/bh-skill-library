@@ -5,3 +5,4 @@
 - Es wird nur das erste Zuhause mit Räumen gelesen.
 - Das Sitzungstoken liegt auf dem Server in `/srv/mcp-gateway/family/netatmo.json`, nur für den Dienst lesbar.
 - Die Beamer-App fragt alle 10 Minuten ab, auch wenn der Beamer aus ist.
+- Der Heizplan wird nur angezeigt. Umschalten zwischen Arbeitswoche und Urlaub geht noch nicht.

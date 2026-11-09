@@ -63,7 +63,7 @@ function combine(home, status) {
   const mods = Object.fromEntries((status.modules || []).map((m) => [m.id, m]));
   return (home.rooms || []).filter((r) => live[r.id]).map((r) => {
     const l = live[r.id];
-    return { name: r.name, temp: l.therm_measured_temperature, target: l.therm_setpoint_temperature, mode: l.therm_setpoint_mode, heating: (l.heating_power_request || 0) > 0, windowOpen: !!l.open_window, reachable: !!l.reachable, batteryLow: (r.module_ids || []).some((id) => LOW.includes(mods[id]?.battery_state)) };
+    return { id: String(r.id), name: r.name, temp: l.therm_measured_temperature, target: l.therm_setpoint_temperature, mode: l.therm_setpoint_mode, heating: (l.heating_power_request || 0) > 0, windowOpen: !!l.open_window, reachable: !!l.reachable, batteryLow: (r.module_ids || []).some((id) => LOW.includes(mods[id]?.battery_state)) };
   });
 }
 const MODE = { away: 'Abwesend', hg: 'Frostschutz' };
@@ -71,7 +71,7 @@ function planOf(home, status) {
   const list = home.therm_schedules || home.schedules || [];
   const active = list.find((x) => x.selected);
   const modes = (status.rooms || []).map((r) => r.therm_setpoint_mode);
-  const special = modes.find((m) => MODE[m]);
+  const special = MODE[home.therm_mode] ? home.therm_mode : modes.find((m) => MODE[m]);
   return { plan: active?.name || null, plans: list.map((x) => x.name), mode: special ? MODE[special] : null };
 }
 async function homeData() {
@@ -95,18 +95,17 @@ const MIN_TEMP = 7; const MAX_TEMP = 30; const DEFAULT_MINUTES = 180;
 /** Setzt die Solltemperatur eines Raums für begrenzte Zeit oder gibt ihn an den Heizplan zurück. */
 async function setRoom({ room, temp, minutes, backToPlan }, now = Date.now()) {
   const home = await homeData();
-  const target = (home.rooms || []).find((r) => r.name === room);
+  const target = (home.rooms || []).find((r) => r.name === room || String(r.id) === String(room));
   if (!target) throw new Error(`Raum nicht gefunden: ${room}`);
-  let change = { id: target.id, therm_setpoint_mode: 'home' };
+  const change = { home_id: home.id, room_id: target.id, mode: 'home' };
   if (!backToPlan) {
     const t = Number(temp);
     if (!Number.isFinite(t) || t < MIN_TEMP || t > MAX_TEMP || (t * 2) % 1 !== 0) throw new Error(`Solltemperatur von ${MIN_TEMP} bis ${MAX_TEMP} Grad in halben Schritten angeben`);
     const span = Number(minutes) || home.therm_setpoint_default_duration || DEFAULT_MINUTES;
-    change = { id: target.id, therm_setpoint_mode: 'manual', therm_setpoint_temperature: t, therm_setpoint_end_time: Math.floor(now / 1000) + span * 60 };
+    Object.assign(change, { mode: 'manual', temp: t, endtime: Math.floor(now / 1000) + span * 60 });
   }
-  const body = await api('/syncapi/v1/setstate', { home: { id: home.id, rooms: [change] } });
-  if (body?.errors?.length) throw new Error('Netatmo lehnt die Änderung ab');
+  await api('/api/setroomthermpoint', change);
   write({ state: null });
-  return { room, ...(backToPlan ? { backToPlan: true } : { temp: change.therm_setpoint_temperature, until: change.therm_setpoint_end_time }) };
+  return { room: target.name, ...(backToPlan ? { backToPlan: true } : { temp: change.temp, until: change.endtime }) };
 }
 module.exports = { rooms, status, setRoom, combine, setFetch };
