@@ -148,3 +148,29 @@ test("Menue: Die App wartet auf eine Auswahl und bekommt sie sofort", async () =
     assert.ok(Date.now() - t0 < 2000);
   } finally { await g.stop(); }
 });
+
+test("Fotos: nur mit Schluessel einlieferbar, nur mit Link lesbar, nicht auf Vorrat", async () => {
+  const sharp = (await import("sharp")).default;
+  const g = await start();
+  try {
+    const data = (await sharp({ create: { width: 3000, height: 2000, channels: 3, background: "#123456" } }).jpeg().toBuffer()).toString("base64");
+    const push = (token, body) => fetch(`${g.base}/screen-photo`, { method: "POST", headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) });
+    assert.equal((await push(null, { data })).status, 401);
+    assert.equal((await push("lesen", { data })).status, 401);
+    assert.equal((await push("schreiben", { data: "kaputt" })).status, 422);
+    assert.equal((await push("schreiben", { data, caption: "Urlaub" })).status, 204);
+    assert.notEqual((await fetch(`${g.base}/screen/falsch/photo-wait`, { redirect: "manual" })).status, 200);
+    const p = await (await fetch(`${g.base}/screen/lesen/photo-wait`)).json();
+    assert.equal(p.caption, "Urlaub");
+    assert.notEqual((await fetch(`${g.base}/screen/falsch/photo/${p.id}`, { redirect: "manual" })).status, 200);
+    const img = await fetch(`${g.base}/screen/lesen/photo/${p.id}`);
+    assert.equal(img.headers.get("cache-control"), "no-store");
+    const meta = await sharp(Buffer.from(await img.arrayBuffer())).metadata();
+    assert.equal(meta.width, 1620); assert.equal(meta.height, 1080);
+    assert.equal((await fetch(`${g.base}/screen/lesen/photo/gibtsnicht`)).status, 404);
+    await fetch(`${g.base}/screen/lesen/request`, { method: "POST", body: JSON.stringify({ kind: "photos", id: "all" }) });
+    assert.equal((await fetch(`${g.base}/screen/lesen/photo/${p.id}`)).status, 404);
+    await push("schreiben", { done: true, empty: false });
+    assert.equal((await (await fetch(`${g.base}/screen/lesen/photo-wait`)).json()).done, true);
+  } finally { await g.stop(); }
+});

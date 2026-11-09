@@ -3,6 +3,7 @@
 const express = require('express');
 const gateway = require('../lib/gateway');
 const bridge = require('../lib/menu-bridge');
+const photoStream = require('../lib/photo-stream');
 const { MOODS, STATIONS, APPS, KEYS, publicCatalog, videoOf } = require('../lib/catalog');
 
 const clip = (v, n) => String(v ?? '').trim().slice(0, n);
@@ -145,6 +146,7 @@ function buildRouter() {
     stop: stopAll,
     refresh: () => bridge.refreshIfStale(),
     temp: heatingCommand,
+    photos: photoStream.handle,
     radiooff: () => (now?.kind === 'mood' ? ambient(byId(MOODS, now.id), null) : null),
   };
   return router;

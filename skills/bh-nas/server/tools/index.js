@@ -18,8 +18,11 @@ const path = require('path');
 const TOOLS_DIR = __dirname;
 const TOOL_LIST = [];
 
+// One server per purpose: the slideshow runs as its own server with its own tool set.
+const ONLY = process.env.BH_NAS_TOOLS || 'nas';
+
 for (const entry of fs.readdirSync(TOOLS_DIR, { withFileTypes: true })) {
-  if (!entry.isDirectory()) continue;
+  if (!entry.isDirectory() || entry.name !== ONLY) continue;
   const dir = path.join(TOOLS_DIR, entry.name);
   for (const f of fs.readdirSync(dir)) {
     if (!f.endsWith('.js')) continue;

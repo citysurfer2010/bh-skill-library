@@ -4,6 +4,7 @@ import path from "node:path";
 import express, { Router } from "express";
 import { esc } from "../lib/views.js";
 import { screenJpeg } from "../lib/screen-image.js";
+import { photoRoutes } from "./screen-photos.js";
 
 const same = (a, b) => { const x = Buffer.from(String(a)); const y = Buffer.from(String(b)); return b !== "" && x.length === y.length && timingSafeEqual(x, y); };
 
@@ -67,12 +68,14 @@ export function screenRoutes({ config }) {
   r.post("/screen/:token/request", express.text({ type: "*/*", limit: "2kb" }), (req, res, next) => {
     if (!same(req.params.token, config.screenRead)) return next();
     let body; try { body = JSON.parse(req.body); } catch { return res.status(400).json({ error: "unlesbar" }); }
-    if (!["radio", "mood", "back", "radiooff", "stop", "refresh", "temp"].includes(body?.kind) || !/^[a-z0-9]{1,40}$/.test(String(body?.id))) return res.status(400).json({ error: "ungueltig" });
+    if (!["radio", "mood", "back", "radiooff", "stop", "refresh", "temp", "photos"].includes(body?.kind) || !/^[a-z0-9]{1,40}$/.test(String(body?.id))) return res.status(400).json({ error: "ungueltig" });
+    if (body.kind === "photos" && body.id !== "next") photos.clear();
     if (requests.length < 10) requests.push({ kind: body.kind, id: body.id });
     [...requestWaiters].forEach((w) => w());
     res.status(204).end();
   });
   const writer = (req) => { const a = /^Bearer (.+)$/.exec(req.get("authorization") || ""); return a && same(a[1], config.screenWrite); };
+  const photos = photoRoutes(r, { reader: (t) => same(t, config.screenRead), writer });
   // Long polling: the app waits for a selection instead of asking constantly.
   r.get("/screen-requests", (req, res) => {
     if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
@@ -89,7 +92,7 @@ export function screenRoutes({ config }) {
   r.post("/screen-menu", express.json({ limit: "128kb" }), (req, res) => {
     if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
     if (!Array.isArray(req.body?.radio) || !Array.isArray(req.body?.mood)) return res.status(400).json({ error: "ungueltig" });
-    writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null, board: req.body.board || null, alerts: req.body.alerts || [], birthdays: req.body.birthdays || [], rooms: req.body.rooms || [], events: req.body.events || [], heating: req.body.heating || null, onThisDay: req.body.onThisDay || null }), { mode: 0o600 });
+    writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null, board: req.body.board || null, alerts: req.body.alerts || [], birthdays: req.body.birthdays || [], rooms: req.body.rooms || [], events: req.body.events || [], heating: req.body.heating || null, onThisDay: req.body.onThisDay || null, photoAlbums: req.body.photoAlbums || [] }), { mode: 0o600 });
     changed();
     res.status(204).end();
   });

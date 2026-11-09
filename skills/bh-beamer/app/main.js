@@ -145,6 +145,7 @@
   }
   // Switch at once; the app learns of it in parallel and shows the same state.
   BHHome.onTune = function (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
+  BHHome.onPhotos = function (album) { localAt = Date.now(); setView('photos'); BHPhotos.start(album.id, sendRequest, homeView); };
   BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); showBar(playingUrl ? 'Radio: ' + stationEl.textContent + ' · CH wechselt' : 'CH ▲ ▼ Radio dazu · Zurück zum Start'); sendRequest('mood', m.id); };
   // The channel rocker on the remote switches stations. The keys must be registered explicitly.
   try { tizen.tvinputdevice.registerKey('ChannelUp'); tizen.tvinputdevice.registerKey('ChannelDown'); } catch (e) { caps = 'ch-' + e.name; }
@@ -166,12 +167,15 @@
     if (e.keyCode !== 427 && e.keyCode !== 428) return;
     e.preventDefault();
     var dir = e.keyCode === 427 ? -1 : 1;
-    if (view === 'video') { var st = BHHome.step(dir); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); barStation = st.name; showBar('Radio: ' + st.name); sendRequest('radio', st.id); } }
+    if (view === 'photos') { var ps = BHHome.step(dir); if (ps) { localAt = Date.now(); playAudio(ps.url, ps.name, ps.id); BHPhotos.note('Radio: ' + ps.name); sendRequest('radio', ps.id); } }
+    else if (view === 'video') { var st = BHHome.step(dir); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); barStation = st.name; showBar('Radio: ' + st.name); sendRequest('radio', st.id); } }
     else if (view.indexOf('home') === 0) BHHome.channel(dir);
   });
   document.addEventListener('keydown', function (e) {
     if (e.defaultPrevented) return; // The menu has already handled the key
     var back = e.keyCode === 10009 || e.keyCode === 8;
+    if (back && view === 'photos') { BHPhotos.stop(); homeView(); e.preventDefault(); return; }
+    if (view === 'photos') { if (e.keyCode === 13) BHPhotos.togglePause(); else if (e.keyCode === 39) BHPhotos.skip(); e.preventDefault(); return; }
     if (back && view === 'video') { localAt = Date.now(); stopVideo(); homeView(); sendRequest('back', 'x'); e.preventDefault(); return; }
     if (back && view.indexOf('home') === 0 && BHHome.back()) { e.preventDefault(); return; }
     if (back && paused && view.indexOf('home') === 0) { clearPause(); e.preventDefault(); return; }
@@ -252,6 +256,7 @@
     clearTimeout(lateTimer);
     var wait = 4000 - (Date.now() - localAt);
     if (wait > 0) { lateTimer = setTimeout(function () { render(c); }, wait + 50); return; }
+    if (view === 'photos') { if (c.mode !== 'share') return; BHPhotos.stop(); }
     if (c.mode === 'share' && c.offer) {
       if (c.session !== shareSession) { stopShare(); startShare(c); }
       return;

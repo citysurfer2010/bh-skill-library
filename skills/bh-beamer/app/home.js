@@ -1,11 +1,12 @@
 // Beamer start screen: menu on the left, clock, weather, school day, radio and moods. Deliberately old JavaScript for Tizen 5.5.
 window.BHHome = (function () {
   'use strict';
-  var LAT = 52.52; var LON = 13.41; var PLACE = 'Berlin'; var COLS = { radio: 4, mood: 3, rooms: 3 };
+  var LAT = 52.52; var LON = 13.41; var PLACE = 'Berlin'; var COLS = { radio: 4, mood: 3, rooms: 3, photos: 4 };
   var DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
   var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
   var homeEl = document.getElementById('home');
-  var PAGES = ['start', 'radio', 'mood', 'rooms'];
+  var PAGES = ['start', 'radio', 'mood', 'photos', 'rooms'];
+  var ALBUM_ROW = 172; var ALL_ALBUMS = { id: 'all', label: 'Alle Alben', when: 'Zufällig, ohne Wiederholung' };
   var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
   var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = ''; var party = null; var partyView = true; var tight = false;
   var edit = null; var pending = null; var heating = null; var events = []; var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
@@ -188,6 +189,12 @@ window.BHHome = (function () {
   }
   function saveEdit(value) { api.onRoomTemp(edit.id, value); setPending(edit.name); edit = null; }
 
+  // Long album list: the focused row stays in view, with one row of context above.
+  function scrollAlbums() {
+    var g = grids.photos; if (!g) return;
+    g.el.children[1].scrollTop = Math.max(0, Math.floor(g.at / COLS.photos) - 1) * ALBUM_ROW;
+  }
+
   function paint() {
     paintRoomsHint();
     homeEl.setAttribute('data-page', page);
@@ -211,6 +218,7 @@ window.BHHome = (function () {
         }
       }
     });
+    scrollAlbums(); // last: a hidden list cannot scroll
   }
 
   var deg = function (v) { return v === null || v === undefined ? '–' : String(v).replace('.', ',') + '°'; };
@@ -281,10 +289,11 @@ window.BHHome = (function () {
     board = menu.board || null; renderBoard();
     renderBirthdays(menu.birthdays || [], menu.onThisDay);
     renderRooms(menu.rooms || [], menu.heating);
-    var next = JSON.stringify([menu.radio, menu.mood]);
+    var albums = menu.photoAlbums || []; var next = JSON.stringify([menu.radio, menu.mood, albums]);
     if (next === signature) return;
     signature = next;
     buildGrid('radio', 'Radio', menu.radio || [], function (x) { return '<div class="tile station">' + esc(x.name) + '<small>' + esc(x.sub || '') + '</small></div>'; });
+    buildGrid('photos', 'Fotos', albums.length ? [ALL_ALBUMS].concat(albums) : [], function (x) { return '<div class="tile album' + (x.id === 'all' ? ' all' : '') + '"><b>' + esc(x.label) + '</b><small>' + esc(x.when || '') + '</small></div>'; });
     buildGrid('mood', 'Stimmung', menu.mood || [], function (x) { return '<div class="tile mood"><img src="' + esc(x.thumb) + '" alt=""><span>' + esc(x.label) + '</span></div>'; });
     paint();
   }
@@ -359,7 +368,7 @@ window.BHHome = (function () {
       edit = { id: chosen.id, name: chosen.name, temp: typeof chosen.target === 'number' ? chosen.target : 20, from: chosen.target, manual: chosen.mode === 'manual' };
       paint(); return;
     }
-    if (page === 'radio') api.onTune(g.items[g.at]); else api.onMood(g.items[g.at]);
+    if (page === 'radio') api.onTune(g.items[g.at]); else if (page === 'photos') { if (g.items[g.at]) api.onPhotos(g.items[g.at]); } else api.onMood(g.items[g.at]);
   }
 
   document.addEventListener('keydown', function (e) {
