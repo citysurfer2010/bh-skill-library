@@ -1,9 +1,8 @@
 html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #2563eb; color: #0f1f3d; font-family: "Samsung One", "SamsungOne", sans-serif; }
 #home, #screen, #share, #ambient { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
 body.home #home { display: block; background: #0b1730; }
-#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); transform-origin: 100% 50%; transition: transform 260ms cubic-bezier(.22, .8, .24, 1), border-radius 260ms, box-shadow 260ms; }
-#home.menu { background: linear-gradient(180deg, #0b1730 0%, #14285a 100%); }
-#home.menu #stage { transform: scale(.8); border-radius: 44px; box-shadow: -30px 0 90px rgba(0, 0, 0, .55); }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); z-index: 1; transition: transform 340ms cubic-bezier(.32, .72, 0, 1), box-shadow 340ms ease; }
+#home.menu #stage { transform: translateX(340px); box-shadow: -18px 0 50px rgba(0, 0, 0, .4); }
 body.text #screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 45%, #fdf3e3 100%); color: #fff; }
 body.share #share { display: block; background: #000; object-fit: contain; }
 body.video #ambient { display: block; background: #000; }
@@ -14,14 +13,14 @@ body.video #ambient { display: block; background: #000; }
 h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap: break-word; max-width: 100%; }
 #text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
 #text:empty, #title:empty { display: none; }
-/* Menue: liegt unter dem Bild ueber die volle Hoehe. Beim Oeffnen rueckt das ganze Bild verkleinert nach rechts und schwebt. */
-#side { position: absolute; z-index: 2; left: 0; top: 0; width: 384px; height: 1080px; box-sizing: border-box; padding: 64px 34px; background: linear-gradient(180deg, #0b1730 0%, #14285a 100%); transform: translateX(-384px); transition: transform 260ms cubic-bezier(.22, .8, .24, 1); }
-#home.menu #side { transform: none; }
-.brand { margin: 0 0 56px 22px; font-size: 36px; font-weight: 800; letter-spacing: -.01em; color: #fff; }
-.side-item { display: flex; align-items: center; box-sizing: border-box; height: 100px; margin-bottom: 12px; padding: 0 26px; border-radius: 26px; color: rgba(255, 255, 255, .66); font-size: 40px; font-weight: 700; transition: background 140ms, color 140ms, transform 140ms; }
-.side-item svg { flex: none; margin-right: 22px; }
+/* Menue: liegt ruhig unter dem Bild, das Bild schiebt sich zur Seite. */
+#side { position: absolute; z-index: 0; left: 0; top: 0; width: 340px; height: 1080px; box-sizing: border-box; padding: 64px 26px; background: linear-gradient(180deg, #0b1730 0%, #14285a 100%); opacity: 0; transition: opacity 260ms ease; }
+#home.menu #side { opacity: 1; }
+.brand { margin: 0 0 44px 18px; font-size: 26px; font-weight: 600; letter-spacing: .01em; color: rgba(255, 255, 255, .9); }
+.side-item { display: flex; align-items: center; box-sizing: border-box; height: 72px; margin-bottom: 6px; padding: 0 18px; border-radius: 14px; color: rgba(255, 255, 255, .62); font-size: 30px; font-weight: 500; transition: background 160ms, color 160ms; }
+.side-item svg { flex: none; width: 30px; height: 30px; margin-right: 16px; stroke-width: 1.75; }
 .side-item.current { color: #fff; }
-.side-item.focus { background: #fff; color: #0f1f3d; transform: scale(1.04); }
+.side-item.focus { background: rgba(255, 255, 255, .16); color: #fff; }
 #side-hint { position: absolute; z-index: 5; left: 0; top: 500px; padding: 18px 8px 18px 2px; border-radius: 0 16px 16px 0; background: rgba(12, 22, 48, .55); color: #fff; }
 #side-hint svg { display: block; width: 28px; height: 28px; }
 #home.menu #side-hint { display: none; }
@@ -108,6 +107,8 @@ body.audio #home[data-page="start"] #playing { display: flex; }
 .dep span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dep b, .dep i { flex: none; }
 .dep b { display: inline-block; margin-right: 10px; padding: 2px 12px; border-radius: 8px; background: #1e40af; color: #fff; font-size: 30px; }
+.dep em { flex: none; margin-right: 10px; padding: 2px 10px; border-radius: 8px; background: #e8effb; color: #1e3a8a; font-style: normal; font-size: 28px; font-weight: 700; }
+.dep em.w { background: #ffedd5; color: #9a3412; }
 .dep i { font-style: normal; font-weight: 700; color: #1e3a8a; margin-left: 8px; }
 .dep.late i { color: #9a3412; }
 .dep.off { color: #b91c1c; text-decoration: line-through; }
