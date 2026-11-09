@@ -6,7 +6,9 @@
   const SHARE_TEXT = { connecting: 'Verbinde mit dem Beamer …', live: 'Wird auf dem Beamer gezeigt.', ended: 'Freigabe beendet.', failed: 'Keine Verbindung zum Beamer. Ist das Gerät im Heimnetz?' };
   let catalog; let now = null; let zustand = null; let statusFailed = false; let poweringOn = false; let shareLive = false;
   let pending = null; let scrolledPast = false; let confirmOff = false; let confirmTimer = null; let paused = false;
+  let plan = null; let dayIndex = 0;
   const $ = (id) => document.getElementById(id);
+  const showDay = () => { $('bm-schedule').innerHTML = BeamerView.schedule(plan, dayIndex); };
   const all = (sel) => host.querySelectorAll(sel);
   const setText = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
   const setHidden = (sel, hidden) => all(sel).forEach((b) => { b.hidden = hidden; });
@@ -129,6 +131,7 @@
     if (!b) return;
     if ('gotoRemote' in b.dataset) { host.querySelector('[role="tab"][data-view="remote"]').click(); $('bm-hero').scrollIntoView(); return; }
     if (b.dataset.key) { if (e.detail === 0) press(b.dataset.key); return; } // Tastatur; Maus und Finger laufen über pointerdown
+    if (b.dataset.day) { dayIndex = Math.max(0, dayIndex + Number(b.dataset.day)); showDay(); return; }
     if (b.dataset.view) {
       $('bm-layout').dataset.view = b.dataset.view;
       all('[data-view][role="tab"]').forEach((t) => t.setAttribute('aria-selected', String(t === b)));
@@ -161,7 +164,7 @@
     let view = 'start'; try { view = localStorage.getItem('beamer-view') || 'start'; } catch { /* egal */ }
     host.querySelector(`[role="tab"][data-view="${view === 'remote' ? 'remote' : 'start'}"]`).click();
     new IntersectionObserver(([en]) => { scrolledPast = !en.isIntersecting; paint(); }).observe($('bm-hero'));
-    BeamerApi.schedule().then((plan) => { $('bm-schedule').innerHTML = BeamerView.schedule(plan); }).catch(() => { $('bm-schedule').innerHTML = BeamerView.scheduleError(); });
+    BeamerApi.schedule().then((p) => { plan = p; showDay(); }).catch(() => { $('bm-schedule').innerHTML = BeamerView.scheduleError(); });
     await refresh();
     setInterval(() => { if (!document.hidden) refresh(); }, 15000);
   } catch (err) { Toast.error(err.message || 'Fehler beim Laden'); }

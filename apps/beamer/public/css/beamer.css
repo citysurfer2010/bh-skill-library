@@ -104,3 +104,16 @@
 .bm-l.changed { background: var(--bh-warm-soft); color: var(--bh-warm); }
 .bm-l.exam { background: var(--bh-primary-soft); color: var(--bh-primary); }
 #bm-schedule { min-height: 112px; }
+.bm-daynav { display: flex; gap: 6px; }
+.bm-daynav .bh-btn { padding: 0 8px; }
+.bm-hw { margin: 10px 0 0; padding: 8px 0 0; border-top: 1px solid var(--bh-border-light); list-style: none; font-size: 13px; color: var(--bh-muted); }
+.bm-hw li + li { margin-top: 4px; }
+.bm-hw b { color: var(--bh-text); font-size: 13px; }
+.bm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.bm-l.exam, .bm-mono { color: var(--bh-info); }
+@media (max-width: 960px) {
+  #bm-schedule { min-height: 224px; order: 1; }
+  .bm-layout .bm-main { display: flex; flex-direction: column; }
+  .bm-main > :nth-child(n+3) { order: 2; }
+  .bm-layout[data-view="remote"] .bm-main { display: none; }
+}

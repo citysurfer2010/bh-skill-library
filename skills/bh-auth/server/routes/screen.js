@@ -86,7 +86,7 @@ export function screenRoutes({ config }) {
     requestWaiters.add(done);
     res.on("close", () => finish(false));
   });
-  r.post("/screen-menu", express.json({ limit: "32kb" }), (req, res) => {
+  r.post("/screen-menu", express.json({ limit: "128kb" }), (req, res) => {
     if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
     if (!Array.isArray(req.body?.radio) || !Array.isArray(req.body?.mood)) return res.status(400).json({ error: "ungueltig" });
     writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null }), { mode: 0o600 });

@@ -90,4 +90,47 @@ async function day(date = schoolDate()) {
   return { date, label: label(date), kids };
 }
 
-module.exports = { day, schoolDate, label, lesson, setFetch };
+const compact = (d) => d.replace(/-/g, '');
+const fromCompact = (n) => String(n).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+
+/** Offene Hausaufgaben je Kind und Fälligkeitstag. */
+function homeworkIndex(data) {
+  const lessons = new Map((data.lessons || []).map((l) => [l.id, l.subject]));
+  const owners = new Map((data.records || []).map((r) => [r.homeworkId, r.elementIds || []]));
+  const out = new Map();
+  for (const h of data.homeworks || []) {
+    if (h.completed) continue;
+    for (const student of owners.get(h.id) || []) {
+      const key = `${student}:${fromCompact(h.dueDate)}`;
+      if (!out.has(key)) out.set(key, []);
+      out.get(key).push({ subject: lessons.get(h.lessonId) || '', text: String(h.text || '').slice(0, 140) });
+    }
+  }
+  return out;
+}
+
+function nextSchoolDates(count, start = schoolDate()) {
+  const dates = []; let d = start;
+  while (dates.length < count) { const wd = new Date(`${d}T12:00:00Z`).getUTCDay(); if (wd !== 0 && wd !== 6) dates.push(d); d = addDays(d, 1); }
+  return dates;
+}
+
+/** Mehrere Schultage in einer Anmeldung, für das Blättern. */
+async function days(count = 5) {
+  const dates = nextSchoolDates(Math.min(Math.max(Number(count) || 5, 1), 10));
+  const get = await session();
+  const data = await get('/api/rest/view/v1/app/data');
+  const first = dates[0]; const last = dates[dates.length - 1];
+  const hw = await get(`/api/homeworks/lessons?startDate=${compact(first)}&endDate=${compact(last)}`);
+  const homework = homeworkIndex(hw.data || {});
+  const plans = [];
+  for (const s of data.user?.students || []) {
+    const q = new URLSearchParams({ start: first, end: last, format: '1', resourceType: 'STUDENT', resources: String(s.id), periodTypes: '', timetableType: 'MY_TIMETABLE' });
+    const t = await get(`/api/rest/view/v1/timetable/entries?${q}`);
+    const byDate = new Map((t.days || []).map((d) => [d.date, (d.gridEntries || []).map(lesson).sort((a, b) => a.from.localeCompare(b.from))]));
+    plans.push({ id: s.id, name: String(s.displayName).split(' ').pop(), byDate });
+  }
+  return { days: dates.map((date) => ({ date, kids: plans.map((p) => ({ name: p.name, lessons: p.byDate.get(date) || [], homework: homework.get(`${p.id}:${date}`) || [] })) })) };
+}
+
+module.exports = { day, days, homeworkIndex, nextSchoolDates, schoolDate, label, lesson, setFetch };
