@@ -177,7 +177,7 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 #home[data-page="rooms"] #grid-rooms { display: block; }
 .tile.room { width: 564px; padding: 18px 28px; }
 .grid h2 .g-hint { margin-left: 36px; font-size: 32px; font-weight: 500; }
-.g-hint kbd { display: inline-block; margin: 0 8px 0 18px; padding: 0 10px; border: 2px solid currentColor; border-radius: 8px; font: inherit; line-height: 1.25; }
+.g-hint kbd { display: inline-block; margin: 0 8px 0 14px; padding: 0 10px; border: 2px solid currentColor; border-radius: 8px; font: inherit; line-height: 1.25; }
 .g-hint kbd:first-child { margin-left: 0; }
 .tile.room b { display: block; font-size: 36px; }
 .tile.room .t { display: block; margin: 4px 0; font-size: 92px; font-weight: 800; line-height: 1.1; }
@@ -185,13 +185,13 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .tile.room.playing { background: var(--card); color: var(--ink); }
 .tile.room.playing:not(.focus) { box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
 .tile.room.playing small { color: var(--sub); }
-.tile.room.playing b::after { content: "Startbild"; margin-left: 14px; padding: 2px 12px; border-radius: 8px; background: var(--chip); color: var(--chip-ink); font-size: 26px; font-weight: 700; vertical-align: 3px; }
+.tile.room.playing > b::after { content: "Startbild"; margin-left: 14px; padding: 2px 12px; border-radius: 8px; background: var(--chip); color: var(--chip-ink); font-size: 26px; font-weight: 700; vertical-align: 3px; }
 .tile.room small.heat { color: #c2410c; font-weight: 700; }
 #home[data-time="evening"] .tile.room small.heat, #home[data-time="night"] .tile.room small.heat { color: #fb923c; }
 .tile.room small.alarm { display: table; padding: 0 12px; border-radius: 8px; background: #ffedd5; color: #7c2d12; font-weight: 700; }
 .tile.room.focus { transform: scale(1.02); }
 #home[data-time="evening"] .tile.room.focus, #home[data-time="night"] .tile.room.focus { box-shadow: 0 0 0 6px #7db4ff, 0 12px 30px rgba(0, 0, 0, .35); }
-#home[data-page="rooms"] #indoor .warn { display: none; }
+#home[data-page="rooms"] #indoor { display: none; }
 /* Einmalige Termine aus dem Family-Kalender, im freien Streifen unter dem Stundenplan */
 #events { display: none; position: absolute; left: 90px; right: 90px; top: 800px; box-sizing: border-box; height: 70px; align-items: center; padding: 0 24px; border-radius: 18px; background: var(--card); color: var(--ink); box-shadow: 0 4px 14px rgba(15, 31, 61, .18); }
 #home[data-page="start"] #events.on { display: flex; }
@@ -204,3 +204,14 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .ev b.ev-now { color: #b45309; }
 #home[data-time="evening"] .ev b.ev-now, #home[data-time="night"] .ev b.ev-now { color: #ffb454; }
 #transit { border-radius: 18px; }
+/* Raumsteuerung: Plan neben der Überschrift, Soll wird direkt auf der Kachel geändert */
+.grid h2 .g-plan { margin-left: 28px; padding: 4px 16px; border-radius: 10px; background: var(--card); color: var(--ink); font-size: 32px; font-weight: 700; }
+.tile.room small { line-height: 38px; min-height: 38px; }
+.tile.room.editing .t { color: #1d4ed8; }
+.tile.room.editing .t i { margin-left: 18px; font-size: 48px; font-style: normal; vertical-align: 12px; }
+.tile.room.editing.focus { box-shadow: 0 0 0 8px #1d4ed8, 0 12px 30px rgba(15, 31, 61, .32); }
+#home[data-time="evening"] .tile.room.editing .t, #home[data-time="night"] .tile.room.editing .t { color: #7db4ff; }
+#home[data-time="evening"] .tile.room.editing.focus, #home[data-time="night"] .tile.room.editing.focus { box-shadow: 0 0 0 8px #7db4ff, 0 12px 30px rgba(0, 0, 0, .35); }
+.grid.is-editing .g-plan { display: none; }
+.grid h2 { text-shadow: 0 2px 6px rgba(15, 31, 61, .75), 0 0 26px rgba(15, 31, 61, .6); }
+.grid h2 .g-plan { text-shadow: none; }

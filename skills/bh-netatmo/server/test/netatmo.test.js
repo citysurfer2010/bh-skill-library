@@ -23,7 +23,7 @@ function server(accept = true) {
 test('Räume: Werte zusammengeführt, höchstens eine Anmeldung, Zwischenspeicher', async () => {
   fs.rmSync(state, { force: true });
   const { f, seen } = server(); n.setFetch(f);
-  assert.deepEqual(await n.rooms(), [{ name: 'Küche', temp: 21, target: 19, mode: 'schedule', heating: true, windowOpen: false, reachable: true, batteryLow: true }]);
+  assert.deepEqual(await n.rooms(), [{ id: '1', name: 'Küche', temp: 21, target: 19, mode: 'schedule', heating: true, windowOpen: false, reachable: true, batteryLow: true }]);
   await n.rooms();
   assert.equal(seen.logins, 1); assert.equal(seen.api, 2);
   assert.equal(fs.statSync(state).mode & 0o777, 0o600);
@@ -56,7 +56,7 @@ test('Solltemperatur: Grenzen, begrenzte Dauer, zurück zum Plan', async () => {
   await assert.rejects(n.setRoom({ room: 'Mond', temp: 20 }), /nicht gefunden/);
   const now = Date.parse('2026-11-09T10:00:00Z');
   await n.setRoom({ room: 'Küche', temp: 22.5 }, now);
-  assert.deepEqual(sent[0], { home: { id: 'h', rooms: [{ id: '1', therm_setpoint_mode: 'manual', therm_setpoint_temperature: 22.5, therm_setpoint_end_time: now / 1000 + 3600 }] } });
+  assert.deepEqual(sent[0], { home_id: 'h', room_id: '1', mode: 'manual', temp: 22.5, endtime: now / 1000 + 3600 });
   await n.setRoom({ room: 'Küche', backToPlan: true });
-  assert.deepEqual(sent[1].home.rooms, [{ id: '1', therm_setpoint_mode: 'home' }]);
+  assert.deepEqual(sent[1], { home_id: 'h', room_id: '1', mode: 'home' });
 });

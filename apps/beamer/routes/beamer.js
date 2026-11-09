@@ -144,9 +144,21 @@ function buildRouter() {
     back: () => (now?.kind === 'mood' ? leaveMood() : null),
     stop: stopAll,
     refresh: () => bridge.refreshIfStale(),
+    temp: heatingCommand,
     radiooff: () => (now?.kind === 'mood' ? ambient(byId(MOODS, now.id), null) : null),
   };
   return router;
 }
 
-module.exports = { buildRouter };
+// Soll-Änderung von der Fernbedienung: Raum-ID, dann halbe Grad oder p für zurück zum Plan.
+async function heatingCommand(id) {
+  const m = /^(\d+)t(p|\d+)$/.exec(id);
+  if (!m) return;
+  try {
+    await gateway.call('netatmo_set_room', m[2] === 'p' ? { room: m[1], backToPlan: true } : { room: m[1], temp: Number(m[2]) / 2 });
+  } catch (e) { console.error(`[netatmo] ${e.message}`); }
+  await bridge.refreshRooms().catch(() => {});
+  setTimeout(() => bridge.refreshRooms().catch(() => {}), 10_000).unref();
+}
+
+module.exports = { buildRouter, heatingCommand };

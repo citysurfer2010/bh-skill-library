@@ -205,10 +205,10 @@ test('Lagerfeuer: Schnee-Video nur im Winter', () => {
 
 test('Räume: gesendet wird nur bei Änderung, Fehler behalten die letzten Werte', async () => {
   const bridge = require('../lib/menu-bridge');
-  const room = (temp) => JSON.stringify([{ name: 'Wohnzimmer', temp, target: 21, heating: false, windowOpen: false, reachable: true, batteryLow: false }]);
+  const room = (temp) => JSON.stringify({ plan: 'Arbeitswoche', mode: null, rooms: [{ name: 'Wohnzimmer', temp, target: 21, heating: false, windowOpen: false, reachable: true, batteryLow: false }] });
   const sets = []; let answer = room(21); let broken = false;
   gateway.setCaller(async (name, args) => { if (name === 'beamer_menu_set') { sets.push(args.menu); return 'ok'; } if (broken) throw new Error('weg'); return answer; });
-  await bridge.refreshRooms(); assert.equal(sets.length, 1); assert.equal(sets[0].rooms[0].temp, 21);
+  await bridge.refreshRooms(); assert.equal(sets.length, 1); assert.equal(sets[0].rooms[0].temp, 21); assert.equal(sets[0].heating.plan, 'Arbeitswoche');
   await bridge.refreshRooms(); assert.equal(sets.length, 1);
   broken = true; await assert.rejects(bridge.refreshRooms()); assert.equal(sets.length, 1);
   broken = false; answer = room(21.5); await bridge.refreshRooms(); assert.equal(sets.length, 2);
@@ -221,4 +221,14 @@ test('Termine: gesendet wird nur bei Änderung', async () => {
   gateway.setCaller(async (name, args) => { if (name === 'beamer_menu_set') { sets.push(args.menu); return 'ok'; } return answer; });
   await bridge.refreshEvents(); await bridge.refreshEvents();
   assert.equal(sets.length, 1); assert.equal(sets[0].events[0].title, 'Elternabend');
+});
+
+test('Heizung: Fernbedienung setzt Soll und Plan, Kaputtes wird ignoriert', async () => {
+  const { heatingCommand } = require('../routes/beamer');
+  const calls = []; gateway.setCaller(async (name, args) => { calls.push([name, args]); return name === 'netatmo_status' ? JSON.stringify({ plan: 'A', mode: null, rooms: [] }) : 'ok'; });
+  await heatingCommand('123t43');
+  assert.deepEqual(calls[0], ['netatmo_set_room', { room: '123', temp: 21.5 }]);
+  await heatingCommand('123tp');
+  assert.ok(calls.some((c) => c[0] === 'netatmo_set_room' && c[1].backToPlan === true));
+  calls.length = 0; await heatingCommand('kaputt'); assert.equal(calls.length, 0);
 });

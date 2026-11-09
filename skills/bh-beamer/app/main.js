@@ -181,6 +181,7 @@
     else if (e.keyCode === 13 && playingUrl) { localAt = Date.now(); stopAudio(); videoVolume(); showBar('Radio aus'); sendRequest('radiooff', 'x'); }
   });
 
+  BHHome.onRoomTemp = function (id, value) { sendRequest('temp', id + 't' + (value === 'p' ? 'p' : Math.round(value * 2))); };
   BHHome.isRadioOn = function () { return !!playingUrl; };
   BHHome.onPreview = function (st) { stationEl.textContent = st.name; stationEl.className = st.name.length > 13 ? 'long' : ''; noteEl.textContent = 'Wechsle …'; };
 

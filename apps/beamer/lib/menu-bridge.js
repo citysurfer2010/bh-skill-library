@@ -12,8 +12,9 @@ let board = null;
 let birthdays = [];
 let onThisDay = null;
 let rooms = [];
+let heating = null;
 let events = [];
-const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay, rooms, events } });
+const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay, rooms, heating, events } });
 
 // Bis 7 Uhr ist der Vertretungsplan eingestellt; um 16:05 springt die Anzeige auf den nächsten Schultag.
 const SCHEDULE_AT = ['06:30', '06:45', '07:00', '10:00', '13:00', '16:05'];
@@ -58,9 +59,10 @@ async function refreshBirthdays() {
 }
 // Raumwerte über den Skill netatmo, alle 10 Minuten; gesendet wird nur bei Änderung. Bei Fehlern bleiben die letzten Werte.
 async function refreshRooms() {
-  const next = JSON.parse(await gateway.call('netatmo_rooms'));
-  if (JSON.stringify(next) === JSON.stringify(rooms)) return;
-  rooms = next;
+  const status = JSON.parse(await gateway.call('netatmo_status'));
+  const nextHeating = { plan: status.plan, mode: status.mode };
+  if (JSON.stringify([status.rooms, nextHeating]) === JSON.stringify([rooms, heating])) return;
+  rooms = status.rooms; heating = nextHeating;
   await pushMenu();
 }
 // Einmalige Termine über den Skill familycal, alle 30 Minuten; gesendet wird nur bei Änderung.

@@ -8,7 +8,7 @@ window.BHHome = (function () {
   var PAGES = ['start', 'radio', 'mood', 'rooms'];
   var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
   var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = ''; var party = null; var partyView = true; var tight = false;
-  var events = []; var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
+  var edit = null; var pending = null; var heating = null; var events = []; var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
   try { room = localStorage.getItem('bh-room') || room; } catch (e) { /* ohne Speicher bleibt das Wohnzimmer */ }
   var api = { onTune: function () {}, onMood: function () {}, isRadioOn: function () { return false; } };
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
@@ -151,7 +151,45 @@ window.BHHome = (function () {
   // Nur neu zeichnen, wenn sich etwas aendert: sonst startet das Konfetti bei jedem Menue-Update von vorn.
   function paintOnce(el, cls, html) { el.className = cls + (tight ? ' tight' : ''); if (el.bhHtml !== html) { el.innerHTML = html; el.bhHtml = html; } }
 
+  function roomNote(r) {
+    if (!r.reachable) return { text: 'Nicht erreichbar', cls: 'alarm' };
+    if (r.windowOpen) return { text: 'Fenster offen', cls: 'alarm' };
+    if (r.batteryLow) return { text: 'Batterie schwach', cls: 'alarm' };
+    if (r.heating) return { text: 'Heizt auf ' + deg(r.target), cls: 'heat' };
+    return { text: (r.mode === 'manual' ? 'Manuell: ' : 'Soll ') + deg(r.target), cls: '' };
+  }
+  function paintRoom(tile, r) {
+    if (r.name === shownRoom().name) tile.className += ' playing';
+    tile.className = tile.className.replace(' editing', '');
+    var small = tile.querySelector('small'); var note = roomNote(r);
+    var big = tile.querySelector('.t');
+    var editing = edit && edit.name === r.name;
+    big.innerHTML = editing ? deg(edit.temp) + '<i>▲▼</i>' : deg(r.temp);
+    if (editing) { tile.className += ' editing'; small.className = ''; small.textContent = 'Aktuell ' + deg(r.temp); }
+    else if (pending && pending.name === r.name) {
+      small.className = pending.state === 'fail' ? 'alarm' : pending.state === 'ok' ? 'heat' : '';
+      small.textContent = pending.state === 'fail' ? 'Nicht gespeichert' : pending.state === 'ok' ? 'Gespeichert' : 'Wird gesetzt …';
+    }
+    else { small.className = note.cls; small.textContent = note.text; }
+  }
+  function paintRoomsHint() {
+    var g = grids.rooms; if (!g) return;
+    var hint = g.el.querySelector('.g-hint'); if (!hint) return;
+    g.el.className = 'grid' + (edit ? ' is-editing' : '');
+    hint.innerHTML = edit ? '<kbd>▲▼</kbd> Ändern <kbd>OK</kbd> Speichern ' + (edit.manual ? '<kbd>◀</kbd> Wieder nach Plan ' : '') + (edit.name !== shownRoom().name ? '<kbd>▶</kbd> Startbild ' : '') + '<kbd>Zurück</kbd> Abbrechen' : '<kbd>OK</kbd> Soll und Startbild <kbd>Zurück</kbd> Schließen';
+  }
+  function finishPending(state, ms) {
+    pending.state = state; clearTimeout(setPending.t);
+    setPending.t = setTimeout(function () { pending = null; paint(); }, ms);
+  }
+  function setPending(name) {
+    pending = { name: name, state: 'wait' }; clearTimeout(setPending.t);
+    setPending.t = setTimeout(function () { finishPending('fail', 4000); paint(); }, 15000);
+  }
+  function saveEdit(value) { api.onRoomTemp(edit.id, value); setPending(edit.name); edit = null; }
+
   function paint() {
+    paintRoomsHint();
     homeEl.setAttribute('data-page', page);
     homeEl.className = zone === 'side' ? 'menu' : '';
     var items = document.querySelectorAll('.side-item');
@@ -164,7 +202,7 @@ window.BHHome = (function () {
       for (var k = 0; k < tiles.length; k++) {
         tiles[k].className = tiles[k].className.replace(/ (focus|playing)/g, '');
         if (zone === 'content' && page === name && k === g.at) tiles[k].className += ' focus';
-        if (name === 'rooms' && g.items[k].name === shownRoom().name) tiles[k].className += ' playing';
+        if (name === 'rooms') paintRoom(tiles[k], g.items[k]);
         if (name === 'radio') {
           var on = g.items[k].id === playingId;
           if (on && audio === 'ok') tiles[k].className += ' playing';
@@ -189,16 +227,15 @@ window.BHHome = (function () {
     var differs = typeof r.temp === 'number' && typeof r.target === 'number' && Math.abs(r.temp - r.target) >= 0.5;
     el.innerHTML = esc(r.name) + ' <b>' + deg(r.temp) + '</b>' + (differs ? ' (Soll ' + deg(r.target) + ')' : '') + (r.heating ? ' · heizt' : '') + (warn ? '<span class="warn">' + esc(warn) + '</span>' : '');
   }
-  function renderRooms(list) {
-    var sig = JSON.stringify(list);
+  function renderRooms(list, heat) {
+    var sig = JSON.stringify([list, heat]);
     if (sig === roomsSig) return;
-    roomsSig = sig;
+    roomsSig = sig; heating = heat || null; if (pending && pending.state === 'wait') finishPending('ok', 3000);
     rooms = list.slice().sort(function (a, b) { return (b.name === 'Wohnzimmer') - (a.name === 'Wohnzimmer'); });
     var at = grids.rooms ? grids.rooms.at : 0;
-    buildGrid('rooms', 'Räume<span class="g-hint"><kbd>OK</kbd> Aufs Startbild <kbd>Zurück</kbd> Schließen</span>', rooms, function (r) {
-      var note = !r.reachable ? 'Nicht erreichbar' : r.windowOpen ? 'Fenster offen' : r.batteryLow ? 'Batterie schwach' : r.heating ? 'Heizt auf ' + deg(r.target) : 'Soll ' + deg(r.target);
-      var cls = !r.reachable || r.windowOpen || r.batteryLow ? 'alarm' : r.heating ? 'heat' : '';
-      return '<div class="tile room"><b>' + esc(r.name) + '</b><span class="t">' + deg(r.temp) + '</span><small class="' + cls + '">' + esc(note) + '</small></div>';
+    var state = heating && (heating.mode || heating.plan) ? '<span class="g-plan">' + esc(heating.mode || 'Plan: ' + heating.plan) + '</span>' : '';
+    buildGrid('rooms', 'Räume' + state + '<span class="g-hint"></span>', rooms, function (r) {
+      return '<div class="tile room"><b>' + esc(r.name) + '</b><span class="t">' + deg(r.temp) + '</span><small></small></div>';
     });
     grids.rooms.at = Math.min(at, Math.max(list.length - 1, 0));
     renderIndoor(); paint();
@@ -243,7 +280,7 @@ window.BHHome = (function () {
     alertsEl.innerHTML = alerts.slice(0, 2).map(function (a) { return '<div class="alert"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><b>' + esc(a.label) + '</b><span>' + esc(a.text) + '</span></div>'; }).join('');
     board = menu.board || null; renderBoard();
     renderBirthdays(menu.birthdays || [], menu.onThisDay);
-    renderRooms(menu.rooms || []);
+    renderRooms(menu.rooms || [], menu.heating);
     var next = JSON.stringify([menu.radio, menu.mood]);
     if (next === signature) return;
     signature = next;
@@ -276,6 +313,12 @@ window.BHHome = (function () {
   }
 
   function moveGrid(dx, dy) {
+    if (page === 'rooms' && edit) {
+      if (dy) edit.temp = Math.min(30, Math.max(7, edit.temp - dy * 0.5));
+      else if (dx > 0) { room = edit.name; try { localStorage.setItem('bh-room', room); } catch (e) { /* gilt dann bis zum Neustart */ } edit = null; renderIndoor(); }
+      else if (dx < 0 && edit.manual) saveEdit('p');
+      paint(); return;
+    }
     var g = grids[page]; if (!g) return;
     var cols = COLS[page]; var col = g.at % cols;
     if (dx < 0 && col === 0) { setZone('side'); return; }
@@ -312,8 +355,9 @@ window.BHHome = (function () {
     var g = grids[page]; if (!g) return;
     if (page === 'rooms') {
       var chosen = g.items[g.at]; if (!chosen) return;
-      room = chosen.name; try { localStorage.setItem('bh-room', room); } catch (e) { /* gilt dann bis zum Neustart */ }
-      renderIndoor(); paint(); return;
+      if (edit) { if (edit.temp !== edit.from) saveEdit(edit.temp); else edit = null; paint(); return; }
+      edit = { id: chosen.id, name: chosen.name, temp: typeof chosen.target === 'number' ? chosen.target : 20, from: chosen.target, manual: chosen.mode === 'manual' };
+      paint(); return;
     }
     if (page === 'radio') api.onTune(g.items[g.at]); else api.onMood(g.items[g.at]);
   }
@@ -332,6 +376,7 @@ window.BHHome = (function () {
   // Zurueck: erst zurueck zum Start-Inhalt, danach entscheidet main.js.
   api.back = function () {
     clearTimeout(tuneTimer); tuneTimer = null;
+    if (edit) { edit = null; paint(); return true; }
     if (zone === 'side') { setZone('content'); return true; }
     if (page !== 'start') { page = 'start'; dayIndex = 0; renderDay(); paint(); return true; }
     if (dayIndex) { dayIndex = 0; renderDay(); return true; }
