@@ -10,7 +10,7 @@
 
 ## Schonung des Kontos
 
-- Raumwerte gelten 5 Minuten, die Anmeldung 2,5 Stunden.
+- Raumwerte gelten 5 Minuten. Die Anmeldung bleibt bestehen und wird weitergeführt; neu angemeldet wird nur, wenn das nicht mehr geht. Quelle: Matti, 09.11.2026.
 - Nach einer abgelehnten Anmeldung ist für 30 Minuten kein neuer Versuch möglich.
 - Bei 401 oder 403 wird genau einmal neu angemeldet.
 

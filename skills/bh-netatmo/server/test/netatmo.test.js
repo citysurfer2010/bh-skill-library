@@ -60,3 +60,20 @@ test('Solltemperatur: Grenzen, begrenzte Dauer, zurück zum Plan', async () => {
   await n.setRoom({ room: 'Küche', backToPlan: true });
   assert.deepEqual(sent[1], { home_id: 'h', room_id: '1', mode: 'home' });
 });
+
+test('Sitzung wird weitergeführt statt neu angemeldet', async () => {
+  fs.rmSync(state, { force: true });
+  let logins = 0; let resumed = 0; const body = { body: { homes: [{ id: 'h', rooms: [{ id: '1', name: 'K', module_ids: [] }] }] } };
+  n.setFetch(async (u, init) => {
+    if (u.includes('/access/csrf')) return reply({ token: 't' });
+    if (u.includes('/access/postlogin')) { logins += 1; return reply({}, ['netatmocomaccess_token=abc%7C1; path=/', 'authnetatmocomrefresh_token=r; path=/']); }
+    if (u.includes('/access/login')) { if (/refresh_token=r/.test(init.headers.cookie)) { resumed += 1; return reply({}, ['netatmocomaccess_token=neu; path=/']); } return reply({}); }
+    if (u.includes('homesdata')) return reply(body);
+    return reply({ body: { home: { rooms: [], modules: [] } } });
+  });
+  await n.status();
+  assert.equal(logins, 1);
+  const expire = () => { const s = JSON.parse(fs.readFileSync(state, 'utf8')); s.tokenUntil = 0; s.state = null; fs.writeFileSync(state, JSON.stringify(s)); };
+  expire(); await n.status(); expire(); await n.status();
+  assert.equal(logins, 1); assert.equal(resumed, 2);
+});
