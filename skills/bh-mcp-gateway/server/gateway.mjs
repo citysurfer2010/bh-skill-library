@@ -34,7 +34,7 @@ async function handleRpc(registry, user, msg) {
   const reply = (result) => ({ jsonrpc: "2.0", id, result });
   switch (method) {
     case "initialize":
-      return reply({ protocolVersion: params?.protocolVersion || "2025-03-26", capabilities: { tools: {} }, serverInfo: { name: "bh-mcp-gateway", version: "1.0.0" } });
+      return reply({ protocolVersion: params?.protocolVersion || "2025-03-26", capabilities: { tools: {} }, serverInfo: { name: "bh-mcp-gateway", version: "26.11.1" } });
     case "ping": return reply({});
     case "tools/list": return reply({ tools: await registry.list(user) });
     case "tools/call": return reply(await registry.call(user, params?.name, params?.arguments || {}));

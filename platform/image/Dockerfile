@@ -21,6 +21,7 @@ RUN npm install -g --no-fund --no-audit "opencode-ai@${OPENCODE_VERSION}" \
 
 COPY sshd_config /etc/devbox/sshd_config
 COPY opencode.json /etc/opencode/opencode.json
+COPY CODING-RULES.md /etc/opencode/CODING-RULES.md
 COPY profile.sh /etc/profile.d/devbox.sh
 COPY entrypoint.sh /usr/local/bin/devbox-entrypoint
 RUN chmod 755 /usr/local/bin/devbox-entrypoint \

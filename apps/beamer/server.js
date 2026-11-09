@@ -48,7 +48,7 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 
-app.get('/health', (_req, res) => res.json({ status: 'ok', skill: APP_ID, version: '1.0.0' }));
+app.get('/health', (_req, res) => res.json({ status: 'ok', skill: APP_ID, version: require('./package.json').version }));
 app.get('/api/build-id', (_req, res) => {
   res.set('Cache-Control', 'no-store');
   res.json({ buildId: BUILD_ID });
