@@ -76,12 +76,14 @@ window.BHHome = (function () {
 
   function weather() {
     var x = new XMLHttpRequest();
-    x.open('GET', 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON + '&current=temperature_2m,weather_code,is_day&timezone=Europe%2FBerlin');
+    x.open('GET', 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON + '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,precipitation_probability_max&forecast_days=1&timezone=Europe%2FBerlin');
     x.onload = function () {
       try {
-        var now = JSON.parse(x.responseText).current;
+        var data = JSON.parse(x.responseText); var now = data.current; var today = data.daily || {};
         document.getElementById('temp').textContent = Math.round(now.temperature_2m) + '°';
         document.getElementById('sky').textContent = sky(now.weather_code) + ' · ' + PLACE;
+        var hi = today.temperature_2m_max; var rain = today.precipitation_probability_max;
+        document.getElementById('wxday').textContent = hi && hi.length ? 'Heute bis ' + Math.round(hi[0]) + '°' + (rain && rain[0] !== null ? ' · Regen ' + rain[0] + ' %' : '') : '';
         document.getElementById('wxbg').innerHTML = scene(now.weather_code, now.is_day !== 0);
       } catch (e) { /* naechster Versuch */ }
     };
