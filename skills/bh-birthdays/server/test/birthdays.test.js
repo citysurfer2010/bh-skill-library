@@ -30,6 +30,11 @@ test('An diesem Tag: nur Schönes, ohne Trennzeichen, höchstens drei', () => {
   assert.deepEqual(out, { facts: [{ year: 1961, text: 'Das Ampelmännchen wird erfunden.' }, { year: 1986, text: 'Die Spielekonsole kommt erstmals nach Europa.' }], born: { year: 1970, text: 'Anna Beispiel, deutsche Schauspielerin' } });
 });
 
+test('An diesem Tag: Ministerium ist erlaubt, Minister und Waffen nicht', () => {
+  const out = d.select({ events: [{ year: 1961, text: 'Beim Ministerium wird das Ampelmännchen eingereicht.' }, { year: 1962, text: 'Der Außenminister eröffnet die Brücke.' }, { year: 1914, text: 'Der Erfinder erhält ein Patent auf die Gasmaske.' }] });
+  assert.deepEqual(out.facts.map((f) => f.year), [1961]);
+});
+
 test('An diesem Tag: höchstens ein Abruf pro Tag, nur Monat und Tag in der Adresse', async () => {
   let calls = 0; let seen;
   const load = async (u) => { calls += 1; seen = u; return { ok: true, json: async () => ({ selected: [{ year: 1986, text: 'Erstmals ein Film.' }], events: [], births: [] }) }; };
