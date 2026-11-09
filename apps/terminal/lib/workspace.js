@@ -29,4 +29,7 @@ function hostKey(name) {
   return Buffer.from(line.split(/\s+/)[1], 'base64');
 }
 
-module.exports = { nameOf, statusOf, hostKey };
+/** Ergebnis des Sicherheits-Wächters je Route; nie mit gefundenen Werten. */
+const guardOf = (name) => json(path.join(dir(), 'guard', `${name}.json`)) || {};
+
+module.exports = { nameOf, statusOf, hostKey, guardOf };

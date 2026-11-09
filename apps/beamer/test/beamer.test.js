@@ -232,3 +232,14 @@ test('Heizung: Fernbedienung setzt Soll und Plan, Kaputtes wird ignoriert', asyn
   assert.ok(calls.some((c) => c[0] === 'netatmo_set_room' && c[1].backToPlan === true));
   calls.length = 0; await heatingCommand('kaputt'); assert.equal(calls.length, 0);
 });
+
+test('Heute: Stand lesen, Heizung nur mit gültigen Werten', async () => {
+  const calls = []; gateway.setCaller(async (name, args) => { calls.push([name, args]); return name === 'netatmo_status' ? JSON.stringify({ plan: 'A', mode: null, rooms: [] }) : 'ok'; });
+  const r = await t.call('/api/today', { as: 'u@beispiel.de' });
+  assert.equal(r.status, 200);
+  assert.equal((await t.call('/api/heating', { method: 'POST', as: 'u@beispiel.de', body: { room: 'x; rm', temp: 20 } })).status, 400);
+  assert.equal((await t.call('/api/heating', { method: 'POST', as: 'u@beispiel.de', body: { room: '12', temp: 40 } })).status, 400);
+  assert.equal(calls.length, 0);
+  assert.equal((await t.call('/api/heating', { method: 'POST', as: 'u@beispiel.de', body: { room: '12', temp: 21.5 } })).status, 200);
+  assert.deepEqual(calls[0], ['netatmo_set_room', { room: '12', temp: 21.5 }]);
+});

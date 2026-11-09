@@ -1,7 +1,8 @@
 # Bekannte Einschränkungen: BH Workspace
 
 - Der Server hat wenig Arbeitsspeicher und einen Kern. Jeder Container darf bis 2,5 GB nutzen, viele gleichzeitig aktive User reichen ihn aus.
-- User-Apps sind nur nach Anmeldung erreichbar. Öffentliche Apps gehen noch nicht.
+- Der Wächter findet bekannte Muster, er ersetzt keine Sicherheitsprüfung des Codes. Eigene Logikfehler einer App erkennt er nicht.
+- Zwischen zwei Prüfungen können bis zu 5 Minuten liegen.
 - Alle angemeldeten User können die Apps der anderen öffnen, sofern sie die Adresse kennen.
 - Wird ein User deaktiviert, bleibt sein Container bestehen, und er kommt nicht mehr hinein.
 - Der Name in der Google-Verbindung wird aus der E-Mail abgeleitet. Bei einem Namen wie `anna-2` passt das nicht.

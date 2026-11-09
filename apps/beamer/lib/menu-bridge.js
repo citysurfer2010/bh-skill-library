@@ -14,6 +14,7 @@ let onThisDay = null;
 let rooms = [];
 let heating = null;
 let events = [];
+let eventsLoaded = false;
 const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay, rooms, heating, events } });
 
 // Bis 7 Uhr ist der Vertretungsplan eingestellt; um 16:05 springt die Anzeige auf den nächsten Schultag.
@@ -68,8 +69,9 @@ async function refreshRooms() {
 // Einmalige Termine über den Skill familycal, alle 30 Minuten; gesendet wird nur bei Änderung.
 async function refreshEvents() {
   const next = JSON.parse(await gateway.call('familycal_upcoming'));
+  eventsLoaded = true;
   if (JSON.stringify(next) === JSON.stringify(events)) return;
-  events = next;
+  events = next; eventsLoaded = true;
   await pushMenu();
 }
 const berlinTime = (d = new Date()) => new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
@@ -106,4 +108,6 @@ function start(commands) {
   loop();
 }
 
-module.exports = { start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, refreshEvents, SCHEDULE_AT };
+const snapshot = () => ({ schedule, alerts, board, birthdays, onThisDay, rooms, heating, events, eventsLoaded });
+
+module.exports = { snapshot, start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, refreshEvents, SCHEDULE_AT };

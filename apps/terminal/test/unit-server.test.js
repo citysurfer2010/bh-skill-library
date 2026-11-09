@@ -126,7 +126,8 @@ test('Terminal: Herkunft, Geheimnis, Dateinamen, Routen', async () => {
   const { fromEdge } = require('../lib/edge');
   const { sameOrigin, TAB } = require('../lib/terminal-ws');
   const { safeName } = require('../routes/workspace');
-  const { PATH_OK, portOk } = require('../routes/apps');
+  const { PATH_OK, DIR_OK, portOk } = require('../routes/apps');
+  assert.equal(DIR_OK.test('projects/spiel'), true); assert.equal(DIR_OK.test('/etc'), false); assert.equal(DIR_OK.test('a b'), false);
   const prev = process.env.BH_EDGE_SECRET; process.env.BH_EDGE_SECRET = 'geheim';
   assert.equal(fromEdge({ 'x-edge-secret': 'geheim' }), true);
   assert.equal(fromEdge({ 'x-edge-secret': 'falsch' }), false);
@@ -145,8 +146,10 @@ test('Router im Container: längster Pfad gewinnt, Präfix wird entfernt', async
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'r-')); fs.mkdirSync(path.join(home, '.config/bh-apps'), { recursive: true });
   fs.writeFileSync(path.join(home, '.config/bh-apps/routes.json'), JSON.stringify({ routes: [{ path: '/a', port: 3001 }, { path: '/a/b', port: 3002 }] }));
   const prev = process.env.HOME; process.env.HOME = home;
-  const { match, target } = await import(`../container/bh-router.mjs?${Date.now()}`);
+  const { match, target, unsafe } = await import(`../container/bh-router.mjs?${Date.now()}`);
   assert.equal(match('/a/b/c').port, 3002); assert.equal(match('/ab'), undefined);
   assert.equal(target(match('/a/x?y=1'), '/a/x?y=1'), '/x?y=1'); assert.equal(target(match('/a'), '/a'), '/');
+  for (const u of ['/privat/../spiel', '/a/%2e%2e/b', '/a%2fb', '/a\\b']) assert.equal(unsafe(u), true, u);
+  assert.equal(unsafe('/spiel/x.js?a=../b'), false);
   process.env.HOME = prev;
 });

@@ -37,6 +37,7 @@ bh-route list
 bh-route rm /spiel
 ```
 
+- Öffentlich machen: `bh-route public /spiel ~/projects/spiel`, zurücknehmen mit `bh-route private /spiel`. Der Sicherheits-Wächter gibt die Route erst nach bestandener Prüfung frei.
 - Dasselbe geht im Web-Terminal unter „Meine Apps“. `bh-router` im Container verteilt die Anfragen und entfernt den Pfad vor der Weitergabe. Das Präfix steht in `X-Forwarded-Prefix`.
 
 ## Einrichten

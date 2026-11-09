@@ -1,0 +1,6 @@
+title = "BH Workspace"
+[extend]
+useDefault = true
+[allowlist]
+description = "Fremdcode und Build-Ergebnisse"
+paths = ['''(^|/)node_modules/''', '''(^|/)\.git/''', '''(^|/)dist/''', '''(^|/)\.next/''']
