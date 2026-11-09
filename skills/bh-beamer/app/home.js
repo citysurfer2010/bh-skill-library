@@ -90,7 +90,7 @@ window.BHHome = (function () {
     el.innerHTML = '<span class="stop">' + esc(board.stop) + (board.morning ? ' · Westen' : '') + '</span>' + upcoming.map(function (d) {
       var min = Math.max(0, Math.round((new Date(d.when) - Date.now()) / 60000));
       var late = d.delayMinutes >= 3;
-      return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line) + '</b><span>' + esc(d.direction) + '</span><i>' + (d.cancelled ? 'fällt aus' : (min ? min + ' Min' : 'jetzt') + (late ? ' (+' + d.delayMinutes + ')' : '')) + '</i></span>';
+      return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line) + '</b>' + (d.towards ? '<em class="' + (d.towards === 'Westen' ? 'w' : '') + '">' + (d.towards === 'Westen' ? '← Westen' : 'Zoo →') + '</em>' : '') + '<span>' + esc(d.direction) + '</span><i>' + (d.cancelled ? 'fällt aus' : (min ? min + ' Min' : 'jetzt') + (late ? ' (+' + d.delayMinutes + ')' : '')) + '</i></span>';
     }).join('');
   }
 

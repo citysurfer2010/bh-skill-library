@@ -56,8 +56,12 @@ const berlinHour = (now) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 
 /** Abfahrtstafel fürs Startbild: morgens nur Richtung Westen zum Herder-Gymnasium. */
 async function board(now = new Date(), stop = SCHOOL_STOP) {
   const hour = berlinHour(now); const morning = hour >= 5 && hour < 10;
-  const list = await departures(stop.id, { minutes: 60, results: 9 });
-  return { stop: stop.name, morning, departures: list.filter((d) => !morning || !/Zoologischer|\bZoo\b/.test(d.direction)).slice(0, 3) };
+  const list = await departures(stop.id, { minutes: 60, results: 12 });
+  const tagged = list.map((d) => ({ ...d, towards: /Zoologischer|\bZoo\b/.test(d.direction) ? 'Zoo' : /Staaken|Heerstr|Nennhauser|Reimerweg/.test(d.direction) ? 'Westen' : '' }));
+  const west = tagged.filter((d) => d.towards === 'Westen'); const rest = tagged.filter((d) => d.towards !== 'Westen');
+  // Morgens zählt nur der Schulweg, sonst je Richtung die nächsten.
+  const chosen = morning ? west.slice(0, 3) : [...west.slice(0, 2), ...rest.slice(0, 1)].sort((x, y) => String(x.when).localeCompare(String(y.when)));
+  return { stop: stop.name, morning, departures: chosen };
 }
 
 module.exports = { stops, departures, alerts, board, setFetch };

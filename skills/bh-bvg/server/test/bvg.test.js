@@ -36,4 +36,5 @@ test('Tafel: morgens nur Richtung Westen, sonst beide Richtungen', async () => {
   assert.equal(am.morning, true); assert.deepEqual(am.departures.map((d) => d.direction), ['Staaken, Reimerweg']);
   const pm = await b.board(new Date('2026-11-09T15:10:00+01:00'));
   assert.equal(pm.morning, false); assert.equal(pm.departures.length, 2);
+  assert.deepEqual(pm.departures.map((d) => d.towards), ['Zoo', 'Westen']);
 });
