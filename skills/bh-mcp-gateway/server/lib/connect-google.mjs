@@ -1,4 +1,4 @@
-// Nimmt die Google-Freigabe entgegen, die der Anmeldedienst im Browser eingeholt hat. Sie laeuft nie durch ein Modell.
+// Receives the Google grant that the login service obtained in the browser. It never passes through a model.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, renameSync } from "node:fs";
 import { timingSafeEqual, createHash } from "node:crypto";
 import path from "node:path";
@@ -31,7 +31,7 @@ export function storeGoogle(usersDir, b) {
   return { status: 200, connected: true };
 }
 
-/** Entzieht die Freigabe bei Google, soweit möglich, und löscht sie hier in jedem Fall. */
+/** Revokes the grant at Google where possible, and deletes it here in any case. */
 export async function removeGoogle(usersDir, { user }, fetchImpl = fetch) {
   const h = home(usersDir, user);
   if (!h) return { status: 404, error: "User unbekannt" };

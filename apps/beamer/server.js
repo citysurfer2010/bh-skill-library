@@ -22,7 +22,7 @@ const PORT = parseInt(process.env.PORT || '3310', 10);
 const HOST = process.env.HOST || '127.0.0.1';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const INDEX_HTML = path.join(PUBLIC_DIR, 'index.html');
-const TODAY_HTML = path.join(PUBLIC_DIR, 'heute.html');
+const TODAY_HTML = path.join(PUBLIC_DIR, 'today.html');
 const ADMIN_HTML = path.join(PUBLIC_DIR, 'admin.html');
 
 // Neu bei jedem Prozess-Start: Der Cache-Buster macht alte Assets nach einem Deploy ungültig.
@@ -77,7 +77,7 @@ app.use(express.static(PUBLIC_DIR, { index: false, setHeaders: (res) => res.set(
 
 // Jede Ansicht ist ein echter Pfad.
 app.get('/', (_req, res) => sendPage(res, INDEX_HTML));
-app.get('/heute', (_req, res) => sendPage(res, TODAY_HTML));
+app.get('/today', (_req, res) => sendPage(res, TODAY_HTML));
 
 app.get('/api/me', (req, res) => {
   const { email, name, role } = req.user;

@@ -11,7 +11,7 @@ const { startApp, resetAuthEnv } = require('./helpers');
 const PROTECTED = [
   ['GET', '/', 'user'],
   ['GET', '/api/catalog', 'user'],
-  ['GET', '/heute', 'user'],
+  ['GET', '/today', 'user'],
   ['GET', '/api/today', 'user'],
   ['GET', '/api/status', 'user'],
   ['GET', '/api/me', 'user'],

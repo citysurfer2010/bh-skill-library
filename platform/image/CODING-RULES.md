@@ -2,6 +2,14 @@
 
 Gilt für opencode und alle anderen Coding-Agenten in diesem Repo und in den Devboxen.
 
+## Sprache
+
+Englisch sind: Routen und URLs samt Query-Parametern, Dateinamen, Bezeichner, Code-Kommentare, Beschreibungen von MCP-Tools und Parametern, Commit- und PR-Texte. Das gilt auch für deutsche Fachbegriffe in Namen.
+
+Deutsch bleiben nur Texte, die Nutzer sehen: Oberflächen, Fehlermeldungen an Nutzer und Dokumentation wie `SKILL.md`, `BUSINESS_LOGIC.md` und `LIMITATIONS.md`.
+
+Schon geteilte deutsche Pfade leiten mit 301 auf den englischen Pfad um.
+
 ## Versionierung
 
 Skills, Apps und ihre Dateien tragen die Version `JJ.M.N`, zum Beispiel `26.11.1`.

@@ -1,9 +1,9 @@
 'use strict';
 /**
- * Wem gehört welche Arbeitsumgebung. Die Daten schreibt der Abgleich auf dem Server; die App liest sie nur.
+ * Who owns which workspace. The data is written by the reconciler on the server; the app only reads it.
  *   map.json            { "email": "name" }
  *   status/<name>.json  { "state": "preparing" | "ready" | "failed" }
- *   hostkeys/<name>.pub öffentlicher Schlüssel des Containers
+ *   hostkeys/<name>.pub public key of the container
  */
 const fs = require('fs');
 const path = require('path');
@@ -29,7 +29,7 @@ function hostKey(name) {
   return Buffer.from(line.split(/\s+/)[1], 'base64');
 }
 
-/** Ergebnis des Sicherheits-Wächters je Route; nie mit gefundenen Werten. */
+/** Security guard result per route; never includes the values found. */
 const guardOf = (name) => json(path.join(dir(), 'guard', `${name}.json`)) || {};
 
 module.exports = { nameOf, statusOf, hostKey, guardOf };

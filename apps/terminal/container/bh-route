@@ -1,5 +1,5 @@
 #!/bin/bash
-# Legt fest, unter welchem Pfad eine App auf der eigenen Subdomain erreichbar ist.
+# Sets the path under which an app is reachable on your own subdomain.
 #   bh-route add /spiel 3001 | bh-route rm /spiel | bh-route list
 #   bh-route public /spiel ~/projects/spiel | bh-route private /spiel
 set -eu

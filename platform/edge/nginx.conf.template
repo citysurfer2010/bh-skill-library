@@ -1,18 +1,18 @@
-# Einziger Web-Eingang. Erreichbar nur ueber den Cloudflare-Tunnel, daher gilt CF-Connecting-IP.
-# apps.<domain> ist die Hauptadresse; eine neue App bekommt dort ihren eigenen location-Block
-# mit auth_request /_auth (siehe Skill bh-auth).
+# Single web entry point. Reachable only through the Cloudflare tunnel, so CF-Connecting-IP applies.
+# apps.<domain> is the main address; a new app gets its own location block there
+# with auth_request /_auth (see skill bh-auth).
 resolver 127.0.0.11 valid=30s;
-# Weiterleitungen relativ: Sonst haengt nginx seinen internen Port 8080 an die Adresse.
+# Relative redirects: otherwise nginx appends its internal port 8080 to the address.
 absolute_redirect off;
 
 map $http_upgrade $conn_upgrade { default upgrade; "" close; }
-# Nur Routen, die der Sicherheits-Waechter freigegeben hat (Skill bh-workspace).
+# Only routes approved by the security guard (skill bh-workspace).
 map "$host$uri" $bh_public {
   default 0;
   include /etc/nginx/conf.d/public-routes.map;
 }
 limit_req_zone $http_cf_connecting_ip zone=bh_public:10m rate=20r/s;
-# Die Sitzung der Plattform geht nie an Apps, die User selbst betreiben.
+# The platform session never reaches apps that users run themselves.
 map $http_cookie $bh_no_session {
   default $http_cookie;
   "~^(?<bh_c1>.*?)(?:^|; *)bh_session=[^;]*(?:; *)?(?<bh_c2>.*)$" "$bh_c1$bh_c2";
@@ -45,15 +45,17 @@ server {
     return 302 /login?next=$request_uri;
   }
 
-  # Reiner Anzeige-Screen; technisch liefert ihn die Beamer-App, weil er deren Daten zeigt.
-  location = /heute {
+  # Pure display screen; technically served by the Beamer app because it shows its data.
+  location = /heute { return 301 /today; }
+
+  location = /today {
     auth_request /_auth;
     auth_request_set $u_email $upstream_http_x_auth_email;
     auth_request_set $u_name $upstream_http_x_auth_name;
     auth_request_set $u_role $upstream_http_x_auth_role;
     error_page 401 = @login;
     set $app http://bh-apps:3300;
-    rewrite ^ /heute break;
+    rewrite ^ /today break;
     proxy_pass $app;
     proxy_set_header Host $host;
     proxy_set_header X-User-Email $u_email;
@@ -73,7 +75,7 @@ server {
   }
 }
 
-# Jeder User hat eine eigene Subdomain; bh-router im Container verteilt sie auf seine Apps.
+# Every user has their own subdomain; bh-router in the container routes it to their apps.
 server {
   listen 8080;
   server_name "~^(?<box>[a-z][a-z0-9-]{1,30})\.__DOMAIN__$";
@@ -91,7 +93,7 @@ server {
   }
 
   location @public {
-    # Der Pfad geht roh an den Container: Tricks mit .. oder Kodierung dürfen die Freigabe nicht umgehen.
+    # The path goes raw to the container: tricks with .. or encoding must not bypass the approval.
     if ($request_uri ~* "/\.\./|/\.\.$|/\.\.\?|%2e|%2f|%5c") { return 400; }
     limit_req zone=bh_public burst=40 nodelay;
     set $up http://devbox-$box:8088;

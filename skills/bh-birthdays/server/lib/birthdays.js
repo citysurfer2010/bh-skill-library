@@ -1,5 +1,5 @@
 'use strict';
-/** Geburtstage der Familie. Die Daten liegen nur auf dem Server, nie im Repo; zum Beamer gehen nur Name, Alter und Abstand. */
+/** Family birthdays. The data lives only on the server, never in the repo; only name, age and days away go to the Beamer. */
 const fs = require('fs');
 const path = require('path');
 
@@ -24,7 +24,7 @@ function remove(name) { save(load().filter((b) => b.name !== name)); }
 
 function todayBerlin(now) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); }
 
-/** Wer in den nächsten sieben Tagen Geburtstag hat, am nächsten zuerst. */
+/** Who has a birthday in the next seven days, nearest first. */
 function upcoming(now = new Date(), list = load()) {
   const today = todayBerlin(now); const base = Date.parse(`${today}T12:00:00Z`); const year = Number(today.slice(0, 4));
   return list.map((b) => {

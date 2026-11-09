@@ -1,5 +1,5 @@
 'use strict';
-/** Verbindet den Browser per WebSocket mit einer tmux-Sitzung im eigenen Container. */
+/** Connects the browser via WebSocket to a tmux session in the user's own container. */
 const { WebSocketServer } = require('ws');
 const { currentUser } = require('./auth');
 const { fromEdge } = require('./edge');
@@ -33,7 +33,7 @@ async function stillLoggedIn(cookie, email) {
     if (r.status === 401) return false;
     if (!r.ok) return true;
     return String((await r.json()).email).toLowerCase() === email;
-  } catch { return true; } // Ein Ausfall der Anmeldung beendet keine laufende Arbeit.
+  } catch { return true; } // A login outage does not end running work.
 }
 
 async function bridge(ws, req, user, name, tab, cols, rows) {
@@ -42,7 +42,7 @@ async function bridge(ws, req, user, name, tab, cols, rows) {
   conn.exec(START_ROUTER, (e, s) => { if (!e) s.on('data', () => {}).resume(); });
   const cmd = `exec tmux -u -f ${CONF} new-session -A -s web-${tab} -c /home/dev`;
   const stream = await new Promise((ok, no) => conn.exec(cmd, { pty: { term: 'xterm-256color', cols, rows } }, (e, s) => (e ? no(e) : ok(s))));
-  const close = () => { clearInterval(ping); clearInterval(check); try { conn.end(); } catch { /* schon zu */ } try { ws.close(); } catch { /* schon zu */ } };
+  const close = () => { clearInterval(ping); clearInterval(check); try { conn.end(); } catch { /* already closed */ } try { ws.close(); } catch { /* already closed */ } };
   stream.on('data', (d) => {
     if (ws.readyState !== ws.OPEN) return;
     ws.send(d);
@@ -59,7 +59,7 @@ async function bridge(ws, req, user, name, tab, cols, rows) {
   });
   let alive = true; ws.on('pong', () => { alive = true; });
   const ping = setInterval(() => { if (!alive) return ws.terminate(); alive = false; ws.ping(); return undefined; }, 30_000);
-  // Wer sich abmeldet, verliert auch offene Terminals.
+  // Whoever logs out also loses open terminals.
   const check = setInterval(async () => { if (!(await stillLoggedIn(req.headers.cookie, user.email))) ws.close(4401, 'abgemeldet'); }, 300_000);
 }
 
@@ -78,7 +78,7 @@ function attach(server) {
     return wss.handleUpgrade(req, socket, head, (ws) => {
       bridge(ws, req, user, name, tab, size(url.searchParams.get('c'), 100, 1000), size(url.searchParams.get('r'), 30, 500)).catch((e) => {
         console.error(`[terminal] ${name}: ${e.message}`);
-        try { ws.close(4500, 'Verbindung fehlgeschlagen'); } catch { /* schon zu */ }
+        try { ws.close(4500, 'Verbindung fehlgeschlagen'); } catch { /* already closed */ }
       });
     });
   });

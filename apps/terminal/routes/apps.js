@@ -1,5 +1,5 @@
 'use strict';
-/** Die eigenen Apps: welcher Pfad auf der Subdomain zu welchem Port im Container gehört. */
+/** The user's own apps: which path on the subdomain maps to which port in the container. */
 const express = require('express');
 const { statusOf, guardOf } = require('../lib/workspace');
 const { withSftp } = require('../lib/ssh');
@@ -12,7 +12,7 @@ const portOk = (p) => Number.isInteger(p) && p >= 1024 && p <= 65535 && p !== 22
 const load = (s) => new Promise((ok) => s.readFile(FILE, (e, b) => { try { ok(e ? [] : JSON.parse(b).routes || []); } catch { ok([]); } }));
 const save = (s, routes) => new Promise((ok, no) => s.writeFile(FILE, JSON.stringify({ routes }, null, 2), (e) => (e ? no(e) : ok())));
 
-// Welche Apps gerade laufen. Nur Zahlen gehen in den Befehl.
+// Which apps are currently running. Only numbers go into the command.
 function openPorts(conn, list) {
   const ports = [...new Set(list.map((x) => x.port).filter(portOk))];
   if (!ports.length) return Promise.resolve(new Set());
@@ -49,7 +49,7 @@ function buildRouter() {
       return res.json({ routes });
     } catch (e) { return next(e); }
   });
-  // Öffentlich schalten fordert nur die Prüfung an; freigeben kann allein der Wächter auf dem Server.
+  // Going public only requests the check; only the guard on the server can approve it.
   r.post('/apps/public', ready, async (req, res, next) => {
     const { path, dir, on } = req.body || {};
     if (!PATH_OK.test(String(path))) return res.status(400).json({ error: 'Ungültiger Pfad' });

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Sicherheits-Wächter: Eine App wird nur öffentlich, wenn sie geprüft und sauber ist. Läuft alle 5 Minuten als root.
-# Geprüft wird neu, sobald sich Dateien ändern; Live-Abfragen laufen immer. Fund = sofort nicht mehr öffentlich.
+# Security guard: an app only goes public if it has been checked and is clean. Runs every 5 minutes as root.
+# Rechecked as soon as files change; live probes always run. Any finding = immediately no longer public.
 set -uo pipefail
 S=/srv/bh-terminal; ST=$S/state; U=/srv/devbox/users; G=$ST/guard; MAP_OUT=/srv/edge/conf/public-routes.map
 IMAGE=zricethezav/gitleaks:v8.24.0; CFG=/usr/local/share/bh-workspace/gitleaks.toml
@@ -13,7 +13,7 @@ install -d -m 755 "$G"; [ -f "$MAP_OUT" ] || : >"$MAP_OUT"
 
 finding() { jq -n --arg r "$1" --arg t "$2" --arg f "${3:-}" '{rule: $r, text: $t, file: $f}'; }
 probe() { docker exec bh-edge wget -q -T 5 -O - "http://devbox-$1:8088$2" 2>/dev/null </dev/null | head -c 200000; }
-code_scan() { # home-Pfad, relativer Ordner. Ausgabe: Funde als JSON-Zeilen. Geheimnisse werden nie ausgegeben.
+code_scan() { # home path, relative folder. Output: findings as JSON lines. Secrets are never printed.
   local dir=$1/$2 r
   r=$(docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges --user 1000:1000 --memory 512m --pids-limit 64 \
       -v "$dir:/scan:ro" -v "$CFG:/cfg.toml:ro" "$IMAGE" dir /scan --no-banner --redact --config /cfg.toml --exit-code 0 --log-level error --report-format json --report-path /dev/stdout 2>/dev/null </dev/null) || { finding scan-failed "Die Prüfung konnte nicht laufen"; return; }
@@ -21,7 +21,7 @@ code_scan() { # home-Pfad, relativer Ordner. Ausgabe: Funde als JSON-Zeilen. Geh
   ( cd "$dir" && grep -rIlE --exclude-dir=node_modules --exclude-dir=.git "$GATEWAY" . 2>/dev/null | head -5 ) | while read -r f; do finding gateway-access "Die App nutzt das KI- oder MCP-Gateway. Öffentlich könnte jeder deine Kosten auslösen." "${f#./}" | jq -c .; done
   ( cd "$dir" && find . -path ./node_modules -prune -o -type f \( -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name 'id_rsa' -o -name 'id_ed25519' -o -name '*.sqlite' -o -name '*.db' \) -print 2>/dev/null | grep -v '\.example$' | head -5 ) | while read -r f; do finding sensitive-file "Sensible Datei im App-Ordner. Sie darf nicht ausgeliefert werden." "${f#./}" | jq -c .; done
 }
-live_scan() { # name, pfad
+live_scan() { # name, path
   local b; [ "$2" = / ] && b= || b=$2
   local root; root=$(probe "$1" "$b/")
   [ -n "$root" ] || { finding not-running "Die App antwortet gerade nicht" | jq -c .; return; }
@@ -43,7 +43,7 @@ for ud in "$U"/*/; do
   while IFS=$'\t' read -r path port dir; do
     [[ $path =~ ^/([a-z0-9-]+(/[a-z0-9-]+)*)?$ ]] && [[ $port =~ ^[0-9]+$ ]] || continue
     findings=""; hash=""
-    # Nur ein Ordner im eigenen Home, nie über symbolische Links hinaus.
+    # Only a folder inside the user home, never beyond symbolic links.
     real=$(realpath -e "$h/$dir" 2>/dev/null || true); home_real=$(realpath -e "$h")
     if [ -z "$dir" ] || [ -z "$real" ] || [ ! -d "$real" ] || [[ $real != "$home_real/"* ]]; then
       findings=$(finding no-folder "Gib den Ordner der App an, damit er geprüft werden kann" | jq -c .)
@@ -60,7 +60,7 @@ for ud in "$U"/*/; do
     results=$(jq -c --arg p "$path" --arg s "$state" --arg h "$hash" --argjson c "$code" --argjson f "$(printf '%s\n' "$findings" | jq -cs 'map(select(. != null))')" --argjson at "$(date +%s)" '. + {($p): {state: $s, hash: $h, code: $c, findings: $f, at: $at}}' <<<"$results")
     unset code
     if [ "$state" = ok ]; then
-      # Regex passt nur exakt auf diesen Pfad und alles darunter; "/" gilt für die ganze Subdomain.
+      # The regex matches only this exact path and everything below it; "/" covers the whole subdomain.
       if [ "$path" = / ]; then printf '"~^%s\\.%s/" 1;\n' "$n" "$DOMAIN" >>"$new_map"; else printf '"~^%s\\.%s%s(/|$)" 1;\n' "$n" "$DOMAIN" "$path" >>"$new_map"; fi
     fi
   done < <(jq -r '.routes[]? | select(.public == true) | [.path, (.port|tostring), (.dir // "")] | @tsv' "$f" 2>/dev/null)

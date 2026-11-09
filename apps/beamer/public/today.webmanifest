@@ -3,7 +3,7 @@
   "short_name": "Heute",
   "description": "Was heute für die Familie wichtig ist",
   "lang": "de",
-  "start_url": "/heute",
+  "start_url": "/today",
   "scope": "/",
   "display": "standalone",
   "background_color": "#1d4ed8",

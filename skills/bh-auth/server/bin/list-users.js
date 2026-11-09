@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Für den Abgleich der Arbeitsumgebungen: E-Mail je aktivem User, der seine Einladung angenommen hat.
+// For reconciling workspaces: email per active user who has accepted their invitation.
 import { loadConfig } from "../lib/config.js";
 import { openDb } from "../lib/db.js";
 import { usersStore } from "../lib/users.js";

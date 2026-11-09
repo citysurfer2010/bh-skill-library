@@ -1,6 +1,6 @@
 {
   "name": "beamer",
-  "version": "26.11.6",
+  "version": "26.11.8",
   "private": true,
   "description": "Beamer steuern: Stimmung, Radio, YouTube und Fernbedienung",
   "main": "server.js",

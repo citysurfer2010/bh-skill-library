@@ -238,3 +238,14 @@ test('Heute: Stand lesen, ändern geht hier nicht', async () => {
   assert.equal((await t.call('/api/today', { as: 'u@beispiel.de' })).status, 200);
   assert.equal((await t.call('/api/heating', { method: 'POST', as: 'u@beispiel.de', body: { room: '1', temp: 20 } })).status, 404);
 });
+
+test('Heute: A1-Termine nur für den Inhaber, nie im Beamer-Menü', async () => {
+  const bridge = require('../lib/menu-bridge');
+  const sets = [];
+  gateway.setCaller(async (name, args) => { if (name === 'beamer_menu_set') { sets.push(args.menu); return 'ok'; } return JSON.stringify({ owner: 'chef@beispiel.de', events: [{ date: '2026-11-10', time: '10:00', title: 'Notar' }] }); });
+  await bridge.refreshWork();
+  assert.equal((await (await t.call('/api/today', { as: 'chef@beispiel.de' })).json()).workEvents[0].title, 'Notar');
+  assert.deepEqual((await (await t.call('/api/today', { as: 'kind@beispiel.de' })).json()).workEvents, []);
+  await bridge.pushMenu();
+  assert.equal(JSON.stringify(sets).includes('Notar'), false);
+});

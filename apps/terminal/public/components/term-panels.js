@@ -1,5 +1,5 @@
 'use strict';
-/** Seitenleisten des Terminals: Dateien und eigene Apps. */
+/** Terminal sidebars: files and the user's own apps. */
 window.TermPanels = (() => {
   const BASE = window.APP_BASE; const esc = (s) => AppShell.esc(s);
   const quote = (p) => `'${p.replace(/'/g, `'\\''`)}'`;
@@ -7,7 +7,7 @@ window.TermPanels = (() => {
   const head = (title) => `<h2>${title} <button class="term-btn" data-close>Schließen</button></h2>`;
   const touch = () => matchMedia('(pointer: coarse)').matches;
   const pretty = (n) => n.replace(/^\d{14}-/, '');
-  // Löschen braucht zwei Klicks: Beim ersten fragt der Knopf nach.
+  // Deleting takes two clicks: on the first, the button asks for confirmation.
   function confirmClick(btn, run) {
     if (btn.dataset.sure) { run(); return; }
     btn.dataset.sure = '1'; const text = btn.textContent; btn.textContent = 'Wirklich?'; btn.classList.add('danger');

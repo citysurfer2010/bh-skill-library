@@ -1,4 +1,4 @@
-/* Seite Heute: aufgebaut wie das Startbild des Beamers, Himmel und Farben folgen der Tageszeit. */
+/* Today page: built like the Beamer home image; sky and colors follow the time of day. */
 .hx-body { margin: 0; }
 .hx-scene { position: relative; min-height: 100dvh; box-sizing: border-box; padding: 20px 12px 32px; overflow: hidden; background: var(--hx-sky); color: var(--hx-ink); }
 .hx-hills { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -78,6 +78,8 @@
 .hx-rm b.heat::after { content: " ▲"; font-size: .7em; }
 .hx-issue { padding: 0 8px; border-radius: 6px; background: var(--hx-orange-bg); color: var(--hx-orange); font-weight: 700; text-shadow: none; }
 .hx-day:focus-visible { outline: 3px solid var(--hx-focus); outline-offset: 1px; }
+/* Events, disruptions and departures sit at the bottom edge; on mobile they follow the normal flow. */
+.hx-foot { display: contents; }
 @media (max-width: 960px) {
   .hx-top { order: -3; position: relative; }
   .hx-stale { order: -2; }
@@ -88,11 +90,13 @@
   .hx-indoor { justify-content: flex-start; }
   .hx-temp-big { position: absolute; right: 0; top: 0; }
 }
-/* Ab Tablet-Breite gleicher Aufbau wie das Startbild, aber in Monitor-Größe statt Beamer-Größe. */
+/* From tablet width the same layout as the home image, but at monitor size instead of Beamer size. */
 @media (min-width: 961px) {
-  .hx-scene { --u: clamp(.5px, calc(min(100vw, 177.78vh) / 2700 * var(--fit)), .8px); line-height: 1.25; padding: calc(var(--u) * 58) calc(var(--u) * 90) calc(var(--u) * 34); }
-  .hx-inner { gap: calc(var(--u) * 18); }
-  .hx-top { position: relative; flex-wrap: nowrap; align-items: flex-start; min-height: calc(var(--u) * 210); }
+  .hx-scene { --u: clamp(.5px, calc(min(100vw, 177.78vh) / 2700 * var(--fit)), .8px); line-height: 1.25; padding: calc(var(--u) * 58) calc(var(--u) * 90) calc(var(--u) * 58); }
+  .hx-scene { display: flex; flex-direction: column; }
+  .hx-inner { flex: 1 1 auto; gap: calc(var(--u) * 18); }
+  .hx-foot { display: flex; flex-direction: column; gap: calc(var(--u) * 14); margin-top: auto; padding-top: calc(var(--u) * 18); }
+  .hx-top { position: relative; flex-wrap: nowrap; align-items: flex-start; min-height: calc(var(--u) * 210); margin-bottom: calc(var(--u) * 26); }
   .hx-top > div:first-child { flex: none; }
   .hx-wx { flex: 0 1 auto; min-width: 0; }
   .hx-clock { font-size: calc(var(--u) * 120); }

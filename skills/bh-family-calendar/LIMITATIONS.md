@@ -7,3 +7,4 @@
 - Termine lassen sich nur anlegen, nicht ändern oder löschen; das geht über `bh-google-workspace` oder im Kalender.
 - Wiederkehrende Termine legt das Werkzeug nicht an.
 - Alle Nutzer arbeiten über die Google-Freigabe von Matti: Anlegen und Einladen läuft immer in seinem Namen, auch wenn jemand anderes es auslöst.
+- „Wichtig“ erkennt das System nicht inhaltlich: Jeder einmalige, zugesagte Termin zählt.

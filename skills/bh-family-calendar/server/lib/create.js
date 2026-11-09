@@ -1,5 +1,5 @@
 'use strict';
-/** Baut und legt einmalige Termine im Family-Kalender an. Gäste bekommen die Einladung per E-Mail von Google. */
+/** Builds and creates one-off events in the Family calendar. Guests get the invitation by email from Google. */
 const MAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; const MAX_GUESTS = 30;
 const DAY = /^\d{4}-\d{2}-\d{2}$/; const STAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const TZ = 'Europe/Berlin';

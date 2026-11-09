@@ -1,7 +1,7 @@
-/* Die Brotkrumen kosten im Terminal nur Platz. */
+/* Breadcrumbs only waste space in the terminal. */
 .term-body .bhs-crumbs { display: none; }
 
-/* Web-Terminal: volle Höhe unter der Navbar. --term-vh folgt der Bildschirmtastatur. */
+/* Web terminal: full height below the navbar. --term-vh follows the on-screen keyboard. */
 .term-page { position: relative; display: flex; flex-direction: column; height: calc(var(--term-vh, 100dvh) - 52px); background: var(--bh-term-bg); color: var(--bh-term-fg); }
 .term-bar { display: flex; align-items: center; gap: 4px; flex: none; min-height: 44px; padding: 4px 24px; background: var(--bh-surface); color: var(--bh-text); border-bottom: 1px solid var(--bh-border); }
 .term-tabs { display: flex; align-items: center; gap: 2px; flex: 0 1 auto; min-width: 0; margin-left: -10px; overflow-x: auto; }
