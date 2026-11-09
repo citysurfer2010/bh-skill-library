@@ -16,7 +16,7 @@
   var stationEl = document.getElementById('station');
   var frame = document.getElementById('player-frame');
   var vbar = document.getElementById('vbar');
-  var shownVideo = null; var vbarTimer = null; var localAt = 0; var failed = false; var lateTimer = null;
+  var shownVideo = null; var vbarTimer = null; var localAt = 0; var failed = false; var barStation = null; var lateTimer = null;
   var playingEl = document.getElementById('playing');
   function audioState(state) { failed = state === 'fail'; playingEl.setAttribute('data-s', state); BHHome.setState(state); }
 
@@ -37,7 +37,7 @@
   }
   function stopVideo() {
     if (!shownVideo) return;
-    shownVideo = null; frame.src = 'about:blank';
+    shownVideo = null; frame.src = 'about:blank'; barStation = null;
     stopWeb();
     if (playingUrl) { player.src = playingUrl; var p = player.play(); if (p && p.catch) p.catch(function () {}); }
   }
@@ -142,14 +142,14 @@
   }
   // Sofort umschalten, die App erfaehrt es parallel und zeigt denselben Stand.
   BHHome.onTune = function (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
-  BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); showBar('◀ ▶ Radio · Zurück beendet'); sendRequest('mood', m.id); };
+  BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); showBar(playingUrl ? 'Radio: ' + stationEl.textContent + ' · CH wechselt' : 'CH ▲ ▼ Radio dazu · Zurück beendet'); sendRequest('mood', m.id); };
   // Kanal-Wippe der Fernbedienung wechselt den Sender. Die Tasten muessen eigens angemeldet werden.
   try { tizen.tvinputdevice.registerKey('ChannelUp'); tizen.tvinputdevice.registerKey('ChannelDown'); } catch (e) { caps = 'ch-' + e.name; }
   document.addEventListener('keydown', function (e) {
     if (e.keyCode !== 427 && e.keyCode !== 428) return;
     e.preventDefault();
     var dir = e.keyCode === 427 ? -1 : 1;
-    if (view === 'video') { var st = BHHome.step(dir); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); showBar(st.name); sendRequest('radio', st.id); } }
+    if (view === 'video') { var st = BHHome.step(dir); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); barStation = st.name; showBar('Radio: ' + st.name); sendRequest('radio', st.id); } }
     else if (view.indexOf('home') === 0) BHHome.channel(dir);
   });
   document.addEventListener('keydown', function (e) {
@@ -159,7 +159,7 @@
     if (back && view.indexOf('home') === 0 && BHHome.back()) { e.preventDefault(); return; }
     if (back && (playingUrl || view.indexOf('home') < 0)) { stopShare(); stopAudio(); homeView(); sendRequest('stop', 'x'); e.preventDefault(); return; }
     if (view !== 'video') return;
-    if (e.keyCode >= 37 && e.keyCode <= 40) { var st = BHHome.step(e.keyCode === 39 || e.keyCode === 40 ? 1 : -1); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); showBar(st.name); sendRequest('radio', st.id); } }
+    if (e.keyCode >= 37 && e.keyCode <= 40) { var st = BHHome.step(e.keyCode === 39 || e.keyCode === 40 ? 1 : -1); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); barStation = st.name; showBar('Radio: ' + st.name); sendRequest('radio', st.id); } }
     else if (e.keyCode === 13 && playingUrl) { localAt = Date.now(); stopAudio(); videoVolume(); showBar('Radio aus'); sendRequest('radiooff', 'x'); }
   });
 
@@ -247,6 +247,8 @@
     if (c.mode === 'video' && c.video) {
       if (c.url) { playAudio(c.url, c.station, stationIdFor(c)); } else stopAudio();
       showVideo(c.video); videoVolume();
+      if (c.url && c.station && c.station !== barStation) { barStation = c.station; showBar('Radio: ' + c.station); }
+      if (!c.url) barStation = null;
       return;
     }
     stopVideo();
