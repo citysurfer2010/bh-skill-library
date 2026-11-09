@@ -53,3 +53,5 @@ while read -r email; do
   [ "$(jq -r .state "$f" 2>/dev/null)" = ready ] || status "$n" preparing
   if build "$n"; then status "$n" ready; else status "$n" failed; echo "Fehler beim Aufbau für $n" >&2; fi
 done <<<"$emails"
+# The iCloud login page is served through the Beamer app, which loses this network when it is redeployed.
+docker network inspect bh-icloud-net >/dev/null 2>&1 && docker network connect bh-icloud-net bh-apps 2>/dev/null || true

@@ -26,6 +26,7 @@ if [ -n "$(val GOOGLE_CLIENT_ID)" ]; then
   (umask 077; jq -n --arg i "$(val GOOGLE_CLIENT_ID)" --arg s "$(val GOOGLE_CLIENT_SECRET)" '{web: {client_id: $i, client_secret: $s}}' >"$D/google/client_secret.json.new")
   chown "$U:$U" "$D/google/client_secret.json.new"; chmod 400 "$D/google/client_secret.json.new"; mv "$D/google/client_secret.json.new" "$D/google/client_secret.json"
 fi
+mkdir -p /srv/icloud-photos/inbox
 docker run -d --name mcp-gateway --network name=mcp-gateway-net,gw-priority=100 --restart unless-stopped --env-file "$D/nas.env" \
   --read-only --tmpfs /tmp:rw,nosuid,nodev,size=256m \
   --cap-drop ALL --security-opt no-new-privileges \
@@ -35,6 +36,7 @@ docker run -d --name mcp-gateway --network name=mcp-gateway-net,gw-priority=100 
   -v /srv/llm-gateway/config:/etc/mcp-gateway/tokens:ro \
   -v "$D/users:/var/lib/mcp-gateway/users" \
   -v "$D/family:/var/lib/mcp-gateway/family" \
+  -v /srv/icloud-photos/inbox:/var/lib/mcp-gateway/icloud-inbox \
   mcp-gateway:current >/dev/null
 for net in $(docker network ls --format '{{.Name}}' | grep '^devbox-net-' || true); do
   docker network connect "$net" mcp-gateway

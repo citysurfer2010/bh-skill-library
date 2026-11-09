@@ -7,7 +7,7 @@ description: Holt neue Fotos aus iCloud auf den Server. Nutzen, wenn es um den A
 
 ## Zweck
 
-Neue iCloud-Fotos kommen ohne laufenden Mac auf den Server. Stufe 1 ist der Download mit Anmeldung, das Hochladen auf die Synology folgt als Stufe 2.
+Neue iCloud-Fotos kommen ohne laufenden Mac auf den Server. Sie landen in `/photo/iCloud-Matti` auf der Synology. Werkzeuge `icloudphotos_upload_step` und `icloudphotos_status`, nur für die Beamer-App.
 
 ## Anmeldung
 

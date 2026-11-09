@@ -172,3 +172,17 @@ test('iCloud-Anmeldung: nur der Besitzer, nur eigene Herkunft, Seite wird angepa
     assert.equal(rewriteHtml('<link rel="stylesheet" href="https://cdn.jsdelivr.net/x.css">'), '');
   } finally { gateway.setCaller(null); delete process.env.BH_ICLOUD_LOGIN_HOST; delete process.env.BH_ICLOUD_LOGIN_PORT; }
 });
+
+test('iCloud-Upload: pausiert waehrend der Slideshow, wartet wenn nichts offen ist', async () => {
+  const gateway = require('../lib/gateway');
+  const stream = require('../lib/photo-stream');
+  const up = require('../lib/icloud-uploader');
+  try {
+    stream.reset();
+    gateway.setCaller(async () => '{"uploaded":true}'); assert.equal(await up.round(), 2000);
+    gateway.setCaller(async () => '{"done":true,"removedLocal":0}'); assert.equal(await up.round(), 900000);
+    gateway.setCaller(async () => { throw new Error('weg'); }); assert.equal(await up.round(), 120000);
+    stream.handle('all'); await new Promise(setImmediate);
+    assert.equal(await up.round(), 60000);
+  } finally { gateway.setCaller(null); stream.reset(); }
+});
