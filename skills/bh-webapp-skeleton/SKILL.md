@@ -63,7 +63,7 @@ Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
 │   ├── css/                   tokens.css (alle Farben) + kleine Module, ausgeliefert als /bh-styles.css und /app.css
 │   ├── components/            BHAppShell, BHListPage, BHDataTable, BHSideDrawer, BHSelect, gebündelt als /app.js
 │   │   └── pages/             Seiten-Orchestratoren
-│   └── branding/              App-Icons mit der BH-Marke, erzeugt von scripts/make-app-icons.mjs
+│   └── branding/              App-Icons aus dem Logo, erzeugt von scripts/make-app-icons.mjs
 ├── scripts/                   app.sh (Start/Stopp), make-app-icons.mjs
 ├── PRODUCT_CONTEXT.md         Warum: Vision, Regeln, Lessons Learned
 ├── DEVELOPMENT.md             Wie: Aufbau, Tests, Regeln
@@ -96,7 +96,43 @@ Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
 - Bearer-API `/api/external/*` mit selbstverwalteten API-Keys (gespeichert wird nur der SHA-256-Hash), Datei-Upload mit Typ- und Größenprüfung.
 - Eigene Fehlerseiten für 401, 403, 404 und 500, unter `/api/` als JSON, nie mit Stacktrace.
 - Hinweis „Neue Version verfügbar“ über `/api/build-id`, Cache-Buster an jedem Asset.
-- `manifest.webmanifest`, Favicon und App-Icons mit der Marke „BH“.
+- `manifest.webmanifest`, Favicon und App-Icons aus dem Logo, siehe „Icons und Favicon“.
+
+## Icons und Favicon (Pflicht)
+
+Jede Web-App hat genau diesen Satz. Quelle ist das Logo `bh-logo.svg` aus dem Skill `bh-styleguide`. Icons nie von Hand zeichnen oder einzeln tauschen, sondern immer erzeugen:
+
+```bash
+node scripts/make-app-icons.mjs --out public
+```
+
+| Datei | Größe | Zweck |
+|---|---|---|
+| `public/favicon.svg` | Vektor | Browser-Tab, byte-gleich mit `bh-logo.svg` |
+| `public/branding/apple-touch-icon.png` | 180 px, randlos | iPhone-Startbildschirm |
+| `public/branding/icon-192.png` | 192 px, runde Ecken | App-Icon (Manifest) |
+| `public/branding/icon-512.png` | 512 px, runde Ecken | App-Icon groß (Manifest) |
+| `public/branding/icon-maskable-512.png` | 512 px, randlos, Logo auf 80 % | Android schneidet es selbst zu |
+| `public/branding/nav-icon.svg` | Vektor | Navbar auf Blau, 24 px |
+| `public/branding/icons.stamp.json` | | Prüfsumme, welches Logo erzeugt wurde |
+| `public/manifest.webmanifest` | | Name, `theme_color` und `background_color` `#1d4ed8`, alle Icons oben |
+
+Jede HTML-Seite verlinkt im `<head>` genau einmal:
+
+```html
+<link rel="icon" type="image/svg+xml" href="__APP_BASE__/favicon.svg?v=2">
+<link rel="apple-touch-icon" href="__APP_BASE__/branding/apple-touch-icon.png?v=2">
+<link rel="manifest" href="__APP_BASE__/manifest.webmanifest">
+<meta name="theme-color" content="#1d4ed8">
+```
+
+Regeln:
+
+- Icons und Manifest sind ohne Anmeldung erreichbar, sonst fehlen sie auf der Login-Seite.
+- Ändert sich ein Icon, `?v=` überall hochzählen, sonst zeigen Browser das alte.
+- Wer eine Content-Security-Policy setzt, braucht `manifest-src 'self'`.
+- Ein Dienst an der Wurzel der Domain beantwortet zusätzlich `/favicon.ico`.
+- Die Suite `branding` und `scripts/validate.sh` prüfen das. Fehlt etwas, ist das Rot.
 
 ## Vorlagen ändern
 

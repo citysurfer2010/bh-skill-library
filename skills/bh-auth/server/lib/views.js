@@ -7,7 +7,7 @@ function page(title, body, { css = [], js = [] } = {}) {
   const links = ["/auth.css", ...css].map((h) => `<link rel="stylesheet" href="${h}">`).join("");
   const scripts = js.map((h) => `<script src="${h}" defer></script>`).join("");
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(title)} · BH Platform</title><script src="/theme.js"></script>${links}${scripts}</head><body>${body}</body></html>`;
+<title>${esc(title)} · BH Platform</title><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2"><link rel="apple-touch-icon" href="/branding/apple-touch-icon.png?v=2"><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1d4ed8"><script src="/theme.js"></script>${links}${scripts}</head><body>${body}</body></html>`;
 }
 
 const center = (title, inner) => page(title, `<main class="center"><section class="card narrow">${brand}${inner}</section></main>`);

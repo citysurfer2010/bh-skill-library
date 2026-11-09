@@ -26,9 +26,11 @@ export function createApp({ config = loadConfig(), db = openDb(config.dataDir), 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
   app.use((_req, res, next) => {
-    res.set({ "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "same-origin", "Cache-Control": "no-store, no-transform", "Content-Security-Policy": `default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; form-action 'self' ${config.returnOrigins.join(" ")}; base-uri 'none'; frame-ancestors 'none'` });
+    res.set({ "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "same-origin", "Cache-Control": "no-store, no-transform", "Content-Security-Policy": `default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; manifest-src 'self'; form-action 'self' ${config.returnOrigins.join(" ")}; base-uri 'none'; frame-ancestors 'none'` });
     next();
   });
+  // Clients that ignore the icon links still ask for this path.
+  app.get("/favicon.ico", (_req, res) => res.redirect(308, "/branding/icon-192.png?v=2"));
   app.use(express.static(path.join(here, "public")));
   app.use(cookieParser());
   app.use(express.urlencoded({ extended: false, limit: "32kb" }));

@@ -1,0 +1,16 @@
+{
+  "name": "BH Platform",
+  "short_name": "BH",
+  "lang": "de",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1d4ed8",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    { "src": "/favicon.svg?v=2", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/branding/icon-192.png?v=2", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/branding/icon-512.png?v=2", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/branding/icon-maskable-512.png?v=2", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}

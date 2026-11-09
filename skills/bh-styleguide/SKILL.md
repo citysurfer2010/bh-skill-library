@@ -170,6 +170,8 @@ Marke: kräftiges B, Variante „V1“. Dateien in `assets/logo/` (SVG, 64er Ras
 | `bh-logo-round.svg` | Profilbild, Avatar, Social Media |
 - `bh-logo-tv.svg`: quadratisch ohne runde Ecken, für das App-Icon auf dem Beamer
 
+Favicon und App-Icons jeder Web-App entstehen aus `bh-logo.svg`; Dateien, Größen und Einbindung stehen im Skill `bh-webapp-skeleton` unter „Icons und Favicon“.
+
 Regeln: Mindestgröße 20 px. Rundherum mindestens ein Viertel der Logobreite frei. Das B nie verzerren, drehen oder mit Verlauf versehen; der Verlauf gehört nur in die Kachel. Neben dem Logo steht „Biskup Home“ in der Systemschrift.
 
 ## Teil 5: Qualitätscheckliste
