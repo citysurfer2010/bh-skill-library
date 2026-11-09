@@ -1,5 +1,5 @@
 'use strict';
-/** Was die App anbietet. Der Browser schickt nur Kennungen; Adressen und Videos stehen ausschließlich hier. */
+/** What the app offers. The browser only sends IDs; addresses and videos live exclusively here. */
 const MOODS = [
   { id: 'kamin', label: 'Kaminfeuer', video: '6VB4bgiB0yA' },
   { id: 'strand', label: 'Strand am Abend', video: 'dh4KtUdVuYc' },
@@ -9,7 +9,7 @@ const MOODS = [
   { id: 'regen', label: 'Regen am Fenster', video: 'cjrZwn7JQvc' },
 ];
 
-// Das Schnee-Video passt nur im Winter (November bis Februar).
+// The snow video only fits in winter (November to February).
 const isWinter = (now = new Date()) => [10, 11, 0, 1].includes(now.getMonth());
 const videoOf = (mood, now = new Date()) => (mood.winterVideo && isWinter(now) ? mood.winterVideo : mood.video);
 
@@ -31,7 +31,7 @@ const STATIONS = [
 ];
 
 const APPS = ['YouTube', 'Prime Video', 'Netflix', 'Disney+', 'Apple TV', 'Spotify', 'WOW', 'Internet'];
-// Bewusst ohne KEY_POWER: Ein/Aus läuft über /api/power, das den Zustand prüft.
+// Deliberately without KEY_POWER: on/off goes through /api/power, which checks the state.
 const KEYS = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_ENTER', 'KEY_RETURN', 'KEY_HOME', 'KEY_VOLUP', 'KEY_VOLDOWN', 'KEY_MUTE', 'KEY_PLAY', 'KEY_PAUSE'];
 
 const publicCatalog = () => ({
@@ -40,7 +40,7 @@ const publicCatalog = () => ({
   apps: APPS,
 });
 
-// Menue fuer die App auf dem Beamer: Sie spielt Sender selbst und braucht darum die Adressen.
+// Menu for the app on the Beamer: it plays stations itself and therefore needs the addresses.
 const byIdVideo = (id) => videoOf(MOODS.find((m) => m.id === id));
 const beamerMenu = () => ({
   radio: STATIONS.map(({ id, label, sub, url }) => ({ id, name: label.replace(/ Kultur$/, ''), sub, url })),

@@ -1,10 +1,10 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-// Zellen strukturiert lesen: echter Wert (Bool/Zahl/Datum-Seriennummer/Text),
-// angezeigter Text und ALLE Links der Zelle. sheets.getRange liefert nur Text —
-// Zeilenumbrueche in Zellen zerlegen dort die Zeilen, und Link-Ziele (HYPERLINK,
-// Rich-Text-Links aus sheets.setLinks) gehen ganz verloren.
+// Read cells in structured form: real value (bool/number/date serial/text),
+// displayed text and ALL links of the cell. sheets.getRange returns only text —
+// line breaks in cells split the rows there, and link targets (HYPERLINK,
+// rich text links from sheets.setLinks) are lost entirely.
 
 function cellLinks(c) {
   const text = c.formattedValue || '';
@@ -31,10 +31,10 @@ function cellValue(c) {
 
 module.exports = {
   name: 'sheets.getCellsJson',
-  description: 'Liest einen Bereich strukturiert als JSON: {"rows":[[{"v":Wert,"f":"angezeigter Text","links":[{"url","label"}]}]]}. v = echter Wert (true/false, Zahl, Datum als Seriennummer seit 30.12.1899, Text); links enthaelt HYPERLINK- und Rich-Text-Links. Zeilenumbrueche in Zellen bleiben erhalten.',
+  description: 'Reads a range in structured form as JSON: {"rows":[[{"v":value,"f":"displayed text","links":[{"url","label"}]}]]}. v = real value (true/false, number, date as serial since 30.12.1899, text); links contains HYPERLINK and rich text links. Line breaks in cells are preserved.',
   inputSchema: { type: 'object', properties: {
     spreadsheetId: { type: 'string' },
-    range: { type: 'string', description: 'z. B. "Aufgaben!A2:I501"' },
+    range: { type: 'string', description: 'e.g. "Aufgaben!A2:I501"' },
   }, required: ['spreadsheetId', 'range'] },
   cellLinks,
   handler: async ({ spreadsheetId, range }) => {

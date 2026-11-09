@@ -1,13 +1,13 @@
 'use strict';
 /**
- * drive_fetch_to_dir — Datenraum-Download-Helfer.
+ * drive_fetch_to_dir — data room download helper.
  *
- * Lädt Dateien aus Drive rekursiv in ein lokales Verzeichnis (für ZIP-Bündelung
- * durch die Datenraum-App). SICHERHEIT: rootFolderId ist Pflicht und wirkt als
- * Guard — es werden NUR Dateien geladen, die im Subtree dieses Ordners liegen.
- * Dateien außerhalb (auch wenn ihre fileId übergeben wird) werden verweigert.
- * So kann über diesen Weg nichts außerhalb des freigegebenen Datenraums
- * exponiert werden, obwohl das Drive-Konto theoretisch mehr sehen könnte.
+ * Downloads files from Drive recursively into a local directory (for ZIP bundling
+ * by the data room app). SECURITY: rootFolderId is mandatory and acts as a
+ * guard — ONLY files in the subtree of this folder are downloaded.
+ * Files outside it (even if their fileId is passed) are refused.
+ * So nothing outside the shared data room can be exposed
+ * this way, although the Drive account could in theory see more.
  */
 const fs    = require('fs');
 const path  = require('path');
@@ -22,7 +22,7 @@ const FOLDER = 'application/vnd.google-apps.folder';
 // time-to-first-byte. Cloudflare cuts proxied responses at ~100s → keep it well
 // under that for big rooms. Override via DATAROOM_FETCH_CONCURRENCY.
 const CONCURRENCY = Math.max(1, Number(process.env.DATAROOM_FETCH_CONCURRENCY) || 12);
-// Google-native MIME -> Export-Format (Bytes via /export)
+// Google-native MIME -> export format (bytes via /export)
 const EXPORT = {
   'application/vnd.google-apps.document':     { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ext: '.docx' },
   'application/vnd.google-apps.spreadsheet':  { mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ext: '.xlsx' },
@@ -101,28 +101,28 @@ async function downloadOne(file, destDir, fileName) {
       }).on('error', reject).end();
   });
   const abs = path.join(destDir, fileName);
-  // Sicherheitspruefung 05.11.2026 — ein gesperrter Pfad landet als 'skipped' im Ergebnis
+  // Security review 05.11.2026 — a blocked path ends up as 'skipped' in the result
   const real = writeGuarded(abs, buf);
   return { path: real, name: fileName, bytes: buf.length };
 }
 
 module.exports = {
   name: 'drive_fetch_to_dir',
-  description: 'Lädt Dateien eines Drive-Ordners rekursiv in ein lokales Verzeichnis (für ZIP-Bündelung der Datenraum-App). rootFolderId ist Pflicht-Guard: nur Dateien im Subtree dieses Ordners werden geladen. Ohne fileIds wird der gesamte Subtree geladen; mit fileIds nur diese (jede muss im Subtree liegen, sonst übersprungen). Google-Docs/Sheets/Slides werden zu PDF/xlsx/pptx exportiert.',
+  description: 'Downloads files of a Drive folder recursively into a local directory (for ZIP bundling by the data room app). rootFolderId is a mandatory guard: only files in the subtree of this folder are downloaded. Without fileIds the whole subtree is downloaded; with fileIds only those (each must be in the subtree, else skipped). Google Docs/Sheets/Slides are exported to PDF/xlsx/pptx.',
   inputSchema: {
     type: 'object',
     properties: {
-      rootFolderId: { type: 'string', description: 'Wurzel-Ordner des Datenraums (Sicherheits-Guard).' },
-      targetDir:    { type: 'string', description: 'Lokales Zielverzeichnis (wird angelegt).' },
-      fileIds:      { type: 'array', items: { type: 'string' }, description: 'Optional: nur diese Datei-/Ordner-IDs (müssen im Subtree liegen). Leer = ganzer Subtree.' },
-      maxFiles:     { type: 'number', description: 'Obergrenze Dateien (Default 2000).' },
+      rootFolderId: { type: 'string', description: 'Root folder of the data room (security guard).' },
+      targetDir:    { type: 'string', description: 'Local target directory (created if needed).' },
+      fileIds:      { type: 'array', items: { type: 'string' }, description: 'Optional: only these file/folder IDs (must be in the subtree). Empty = whole subtree.' },
+      maxFiles:     { type: 'number', description: 'File limit (default 2000).' },
     },
     required: ['rootFolderId', 'targetDir'],
   },
   handler: async ({ rootFolderId, targetDir, fileIds, maxFiles = 2000 }) => {
     if (!rootFolderId) return err('rootFolderId fehlt (Sicherheits-Guard).');
     if (!targetDir)    return err('targetDir fehlt.');
-    { const g0 = require('../../lib/local-file-guard.cjs').checkWritablePath(path.join(String(targetDir), 'probe.bin')); if (!g0.ok) return err(g0.error); } // Sicherheitspruefung 05.11.2026
+    { const g0 = require('../../lib/local-file-guard.cjs').checkWritablePath(path.join(String(targetDir), 'probe.bin')); if (!g0.ok) return err(g0.error); } // Security review 05.11.2026
     const wanted = Array.isArray(fileIds) && fileIds.length ? new Set(fileIds.filter(Boolean)) : null;
 
     const skipped = [];

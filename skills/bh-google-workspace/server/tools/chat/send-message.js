@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'chat.sendMessage', description: 'Sendet eine Nachricht in einen Google Chat Space.', inputSchema: { type: 'object', properties: { spaceName: { type: 'string' }, text: { type: 'string' }, threadName: { type: 'string', description: 'Thread-Name für Antworten (optional)' } }, required: ['spaceName', 'text'] },
+module.exports = { name: 'chat.sendMessage', description: 'Sends a message to a Google Chat space.', inputSchema: { type: 'object', properties: { spaceName: { type: 'string' }, text: { type: 'string' }, threadName: { type: 'string', description: 'Thread name for replies (optional)' } }, required: ['spaceName', 'text'] },
   handler: async ({ spaceName, text, threadName }) => {
   const body = { text };
   if (threadName) body.thread = { name: threadName };

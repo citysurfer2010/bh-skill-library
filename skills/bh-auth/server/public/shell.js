@@ -1,4 +1,4 @@
-// Benutzermenue oben rechts: oeffnen, schliessen, Design waehlen.
+// User menu top right: open, close, choose theme.
 (function () {
   'use strict';
   var host = document.querySelector('.bh-um');
@@ -14,7 +14,7 @@
   var toggle = document.querySelector('[data-bhs-theme]');
   function apply(theme) {
     document.documentElement.dataset.theme = theme;
-    try { localStorage.setItem('bh-theme', theme); } catch (e) { /* privater Modus */ }
+    try { localStorage.setItem('bh-theme', theme); } catch (e) { /* private mode */ }
     mark();
   }
   if (toggle) toggle.addEventListener('click', function () { apply(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); });

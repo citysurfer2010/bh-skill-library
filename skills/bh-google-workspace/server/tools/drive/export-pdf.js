@@ -6,9 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-module.exports = { name: 'drive.exportPdf', description: 'Exportiert ein Google Docs/Sheets/Slides als PDF. Speichert lokal wenn savePath angegeben.', inputSchema: { type: 'object', properties: { fileId: { type: 'string', description: 'ID des Google-Dokuments' }, savePath: { type: 'string', description: 'Lokaler Speicherpfad (optional)' } }, required: ['fileId'] },
+module.exports = { name: 'drive.exportPdf', description: 'Exports a Google Docs/Sheets/Slides file as PDF. Saves locally if savePath is given.', inputSchema: { type: 'object', properties: { fileId: { type: 'string', description: 'ID of the Google document' }, savePath: { type: 'string', description: 'Local save path (optional)' } }, required: ['fileId'] },
   handler: async ({ fileId, savePath, _blockProtectedDrives }) => {
-  if (savePath) { const guard = checkWritablePath(savePath); if (!guard.ok) return err(guard.error); } // Sicherheitspruefung 05.11.2026
+  if (savePath) { const guard = checkWritablePath(savePath); if (!guard.ok) return err(guard.error); } // Security review 05.11.2026
   { const { toBlockSet, refuseProtectedFile } = require('../../lib/protected-drives.js'); const _ref = await refuseProtectedFile(fileId, toBlockSet(_blockProtectedDrives)); if (_ref) return _ref; }
   const token = await getAccessToken();
   const url = `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=application/pdf`;

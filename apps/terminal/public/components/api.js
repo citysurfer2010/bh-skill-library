@@ -1,7 +1,7 @@
 'use strict';
 /**
- * HTTP-Client für Terminal. Alle Pfade mit window.APP_BASE als Präfix.
- * me() ist 60 s gecacht, damit die Navbar bei Seitenwechseln sofort steht.
+ * HTTP client for Terminal. All paths prefixed with window.APP_BASE.
+ * me() is cached for 60 s so the navbar is ready immediately on page changes.
  */
 window.TerminalApi = (() => {
   const BASE = (typeof window !== 'undefined' && window.APP_BASE) || '';

@@ -2,7 +2,7 @@
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 const { encodeEmail } = require('../../lib/gmail-helpers.js');
 
-module.exports = { name: 'gmail.createDraft', description: 'Erstellt einen E-Mail-Entwurf. Setze html:true, damit der Body als text/html gerendert wird (sonst als Plaintext).', inputSchema: { type: 'object', properties: { to: { type: 'string' }, subject: { type: 'string' }, body: { type: 'string' }, cc: { type: 'string' }, html: { type: 'boolean', description: 'Wenn true, wird Content-Type auf text/html gesetzt; sonst text/plain.' } }, required: ['to', 'subject', 'body'] },
+module.exports = { name: 'gmail.createDraft', description: 'Creates an email draft. Set html:true to render the body as text/html (otherwise plain text).', inputSchema: { type: 'object', properties: { to: { type: 'string' }, subject: { type: 'string' }, body: { type: 'string' }, cc: { type: 'string' }, html: { type: 'boolean', description: 'If true, Content-Type is set to text/html; otherwise text/plain.' } }, required: ['to', 'subject', 'body'] },
   handler: async ({ to, subject, body, cc, html }) => {
   const contentType = html ? 'text/html; charset=utf-8' : 'text/plain; charset=utf-8';
   const hdrs = { To: to, Subject: subject, 'Content-Type': contentType, 'MIME-Version': '1.0' };

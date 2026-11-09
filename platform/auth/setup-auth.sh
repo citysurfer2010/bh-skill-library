@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Baut und startet den Anmeldedienst (idempotent). Ohne Domain bleibt er intern.
+# Builds and starts the login service (idempotent). Without a domain it stays internal.
 set -euo pipefail
 D=/srv/bh-auth; U=101000
 install -d -m 711 "$D"

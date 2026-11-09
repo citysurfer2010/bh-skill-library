@@ -1,4 +1,4 @@
-/* Listenseite (.bhlp-*) und Tabelle (.bhdt-*): Seitenkopf 68 px, Toolbar 48 px, Kopfzeile 39 px, Zellen 13 px mit 16/24 px. */
+/* List page (.bhlp-*) and table (.bhdt-*): page header 68 px, toolbar 48 px, header row 39 px, cells 13 px with 16/24 px. */
 .bhlp{flex:1;min-height:0;display:flex;flex-direction:column}
 .bhlp-top{min-height:68px;box-sizing:border-box;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-shrink:0;border-bottom:1px solid var(--bh-border)}
 .bhlp-top h1{margin:0;font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-.01em;color:var(--bh-text)}

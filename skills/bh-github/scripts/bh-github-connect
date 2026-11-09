@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Verknuepft das GitHub-Konto eines Users und schaltet damit den Skill bh-github frei.
-#   bh-github-connect            Link und Code anzeigen; im Terminal bis zur Bestaetigung warten
-#   bh-github-connect --status   Stand abfragen
-# Das Token laeuft nie durch ein Modell.
+# Links a user's GitHub account and thereby unlocks the skill bh-github.
+#   bh-github-connect            Show link and code; wait in the terminal until confirmed
+#   bh-github-connect --status   Query the state
+# The token never passes through a model.
 set -euo pipefail
 GATEWAY=${BH_GATEWAY_URL:-http://mcp-gateway:18800}
 TOKEN_FILE=${BH_TOKEN_FILE:-/etc/devbox/llm/token}
@@ -55,7 +55,7 @@ for _ in $(seq 1 30); do [ -n "$(code)" ] && break; sleep 0.5; done
 [ -n "$(code)" ] || { echo "GitHub hat keinen Code geliefert." >&2; exit 1; }
 show_code
 
-# Im Terminal warten; ein Agent ruft stattdessen spaeter --status auf.
+# Wait in the terminal; an agent calls --status later instead.
 if [ -t 1 ]; then
   while running; do sleep 2; done
   status

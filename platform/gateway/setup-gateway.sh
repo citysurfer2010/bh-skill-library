@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Baut und startet den llm-proxy als Container "llm-gateway" (idempotent).
-# Voraussetzung: MELIOUS_API_KEY in /srv/bh-platform/.env und der Proxy-Quellcode unter ./proxy-src
-# (nicht Teil dieses Repos).
-# Der Container wird nicht veroeffentlicht; erreichbar ist er nur aus den User-Netzen.
+# Builds and starts the llm-proxy as container "llm-gateway" (idempotent).
+# Requirement: MELIOUS_API_KEY in /srv/bh-platform/.env and the proxy source code under ./proxy-src
+# (not part of this repo).
+# The container is not published; it is reachable only from the user networks.
 set -euo pipefail
 cd "$(dirname "$0")"
-D=/srv/llm-gateway; U=101000     # uid 1000 im Container
+D=/srv/llm-gateway; U=101000     # uid 1000 in the container
 ENV=/srv/bh-platform/.env
 val() { sed -n "s/^$1=//p" "$ENV" | head -1; }
 [ -n "$(val MELIOUS_API_KEY)" ] || { echo "MELIOUS_API_KEY fehlt in $ENV" >&2; exit 1; }

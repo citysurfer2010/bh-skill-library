@@ -1,8 +1,8 @@
 'use strict';
-/** Ruft die Beamer-Werkzeuge über das zentrale MCP-Gateway auf. Die App spricht den Beamer nie selbst an. */
+/** Calls the Beamer tools via the central MCP gateway. The app never talks to the Beamer directly. */
 const fs = require('fs');
 
-// Einschalten wartet bis zu 48 s auf die Bestaetigung des Beamers.
+// Switching on waits up to 48 s for the Beamer to confirm.
 const TIMEOUT_MS = 60_000;
 
 async function realCall(name, args) {

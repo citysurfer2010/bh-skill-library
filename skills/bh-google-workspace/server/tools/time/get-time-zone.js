@@ -3,7 +3,7 @@ const { ok } = require('../../lib/gapi.js');
 
 module.exports = {
   name: 'time.getTimeZone',
-  description: 'Gibt die aktuell konfigurierte Systemzeitzone zurück.',
+  description: 'Returns the currently configured system time zone.',
   inputSchema: { type: 'object', properties: {} },
   handler: async () => ok(Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Berlin'),
 };

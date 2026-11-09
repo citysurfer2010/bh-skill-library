@@ -1,4 +1,4 @@
-// Startbild des Beamers: Menue links, Uhr, Wetter, Schultag, Radio und Stimmungen. Bewusst altes JavaScript fuer Tizen 5.5.
+// Beamer start screen: menu on the left, clock, weather, school day, radio and moods. Deliberately old JavaScript for Tizen 5.5.
 window.BHHome = (function () {
   'use strict';
   var LAT = 52.52; var LON = 13.41; var PLACE = 'Berlin'; var COLS = { radio: 4, mood: 3, rooms: 3 };
@@ -9,7 +9,7 @@ window.BHHome = (function () {
   var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
   var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = ''; var party = null; var partyView = true; var tight = false;
   var edit = null; var pending = null; var heating = null; var events = []; var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
-  try { room = localStorage.getItem('bh-room') || room; } catch (e) { /* ohne Speicher bleibt das Wohnzimmer */ }
+  try { room = localStorage.getItem('bh-room') || room; } catch (e) { /* without storage it stays the living room */ }
   var api = { onTune: function () {}, onMood: function () {}, isRadioOn: function () { return false; } };
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); };
@@ -25,12 +25,12 @@ window.BHHome = (function () {
     return out;
   }
 
-  // Morgens und tagsueber hell, abends warm, nachts dunkel.
+  // Bright in the morning and by day, warm in the evening, dark at night.
   function dayPhase(h) { return h >= 5 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night'; }
   var stars = document.getElementById('stars'); var si = '';
   for (var n = 0; n < 70; n++) {
     var sx = (n * 277) % 1900; var sy = (n * 89) % 500;
-    // Keine Sterne hinter Uhr, Datum und Wettertext: Dort lesen sie sich wie Satzzeichen.
+    // No stars behind clock, date and weather text: there they read like punctuation marks.
     if ((sx >= 70 && sx <= 540 && sy >= 40 && sy <= 310) || (sx >= 1420 && sx <= 1860 && sy >= 150 && sy <= 260)) continue;
     si += '<i style="left:' + sx + 'px;top:' + sy + 'px;animation-delay:' + ((n * 0.31) % 4).toFixed(2) + 's"></i>';
   }
@@ -53,9 +53,9 @@ window.BHHome = (function () {
     if (code <= 77 || code === 85 || code === 86) return 'Schnee';
     return 'Gewitter';
   }
-  // Wetter als bewegter Hintergrund der rechten oberen Ecke.
+  // Weather as an animated background in the top right corner.
   var CLOUD_PATH = 'M30 80h60a20 20 0 0 0 4-39 29 29 0 0 0-55-7 23 23 0 0 0-9 46z';
-  // Rechts stehen Temperatur und Text: Wolken dort bleiben duenn, damit die Schrift lesbar ist.
+  // Temperature and text sit on the right: clouds stay thin there so that the text remains readable.
   var SPOTS = [[620, 6, 330, .3, 24], [300, 44, 430, .38, 34], [860, 120, 270, .2, 19], [90, 8, 340, .28, 40], [500, 150, 380, .32, 28], [900, -24, 330, .24, 22]];
   function cloud(s, fill) {
     return '<svg class="wc" viewBox="0 0 120 90" style="left:' + s[0] + 'px;top:' + s[1] + 'px;width:' + s[2] + 'px;opacity:' + s[3] + ';animation-duration:' + s[4] + 's"><path fill="' + fill + '" d="' + CLOUD_PATH + '"/></svg>';
@@ -92,12 +92,12 @@ window.BHHome = (function () {
         var hi = today.temperature_2m_max; var rain = today.precipitation_probability_max;
         document.getElementById('wxday').textContent = hi && hi.length ? 'Heute bis ' + Math.round(hi[0]) + '°' + (rain && rain[0] !== null ? ' · Regen ' + rain[0] + ' %' : '') : '';
         document.getElementById('wxbg').innerHTML = scene(now.weather_code, now.is_day !== 0);
-      } catch (e) { /* naechster Versuch */ }
+      } catch (e) { /* next attempt */ }
     };
     x.send();
   }
 
-  // Abfahrten kommen ueber die App vom Skill bvg; die Minuten rechnet der Beamer selbst weiter.
+  // Departures come through the app from skill bvg; the Beamer keeps counting the minutes itself.
   var board = null;
   function renderBoard() {
     var el = document.getElementById('transit');
@@ -114,7 +114,7 @@ window.BHHome = (function () {
   function notable(d) { return d.kids.some(function (k) { return k.lessons.some(function (l) { return l.state !== 'regular' || l.exam; }); }); }
 
   var CAL = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM8 3v4M16 3v4M4 10h16"/></svg>';
-  // Nur wenn Platz ist: Stoerungen, Geburtstag und ein langer Plan gehen vor.
+  // Only if there is room: disruptions, birthdays and a long schedule take priority.
   function renderEvents() {
     var el = document.getElementById('events'); var today = document.getElementById('today');
     var free = !tight && !(party && partyView) && today.offsetTop + today.offsetHeight <= 784;
@@ -148,7 +148,7 @@ window.BHHome = (function () {
     }).join('') : '<div class="kid"><div class="kid-head">Schulfrei</div></div>') + '</div>');
   }
 
-  // Nur neu zeichnen, wenn sich etwas aendert: sonst startet das Konfetti bei jedem Menue-Update von vorn.
+  // Redraw only when something changes: otherwise the confetti restarts on every menu update.
   function paintOnce(el, cls, html) { el.className = cls + (tight ? ' tight' : ''); if (el.bhHtml !== html) { el.innerHTML = html; el.bhHtml = html; } }
 
   function roomNote(r) {
@@ -218,7 +218,7 @@ window.BHHome = (function () {
     var hit = rooms.filter(function (r) { return r.name === room; })[0];
     return hit || rooms.filter(function (r) { return r.name === 'Wohnzimmer'; })[0] || rooms[0] || {};
   }
-  // Ein Raum auf dem Startbild; Warnungen gelten fuer die ganze Wohnung.
+  // One room on the start screen; warnings apply to the whole apartment.
   function renderIndoor() {
     var el = document.getElementById('indoor'); var r = shownRoom();
     if (!r.name) { el.innerHTML = ''; return; }
@@ -315,7 +315,7 @@ window.BHHome = (function () {
   function moveGrid(dx, dy) {
     if (page === 'rooms' && edit) {
       if (dy) edit.temp = Math.min(30, Math.max(7, edit.temp - dy * 0.5));
-      else if (dx > 0) { room = edit.name; try { localStorage.setItem('bh-room', room); } catch (e) { /* gilt dann bis zum Neustart */ } edit = null; renderIndoor(); }
+      else if (dx > 0) { room = edit.name; try { localStorage.setItem('bh-room', room); } catch (e) { /* then applies until the next restart */ } edit = null; renderIndoor(); }
       else if (dx < 0 && edit.manual) saveEdit('p');
       paint(); return;
     }
@@ -335,7 +335,7 @@ window.BHHome = (function () {
     else if (key === 39) { if (onParty) { partyView = false; dayIndex = 0; renderDay(); } else if (dayIndex < count - 1) { dayIndex++; renderDay(); } }
     else if (api.isRadioOn()) { var st = step(key === 40 ? 1 : -1); if (st) tuneSoon(st); }
   }
-  // Das Menue schliesst sich von selbst, wenn nichts mehr gedrueckt wird.
+  // The menu closes by itself when nothing is pressed any more.
   function setZone(z) {
     zone = z; clearTimeout(sideTimer);
     if (z === 'side') sideTimer = setTimeout(function () { setZone('content'); }, 8000);
@@ -373,7 +373,7 @@ window.BHHome = (function () {
     e.preventDefault();
   });
 
-  // Zurueck: erst zurueck zum Start-Inhalt, danach entscheidet main.js.
+  // Back: first back to the start content, after that main.js decides.
   api.back = function () {
     clearTimeout(tuneTimer); tuneTimer = null;
     if (edit) { edit = null; paint(); return true; }
@@ -383,21 +383,21 @@ window.BHHome = (function () {
     if (party && !partyView) { partyView = true; renderDay(); return true; }
     return false;
   };
-  // Zeigt die installierte Version: vom System, sonst aus dem Paket selbst.
+  // Shows the installed version: from the system, otherwise from the package itself.
   (function showVersion() {
     var el = document.getElementById('side-ver');
     var put = function (v) { if (v) el.textContent = 'BH Screen ' + v; };
-    try { put(tizen.application.getAppInfo().version); return; } catch (e) { /* weiter mit config.xml */ }
+    try { put(tizen.application.getAppInfo().version); return; } catch (e) { /* continue with config.xml */ }
     try {
       var x = new XMLHttpRequest(); x.open('GET', 'config.xml');
       x.onload = function () { var m = /<widget[^>]*\sversion="([^"]+)"/.exec(x.responseText); if (m) put(m[1]); };
       x.send();
-    } catch (e) { /* ohne Anzeige weiter */ }
+    } catch (e) { /* continue without display */ }
   })();
   tick(); setInterval(tick, 5000);
   weather(); setInterval(weather, 900000);
   setInterval(renderBoard, 20000);
-  // Kanal-Wippe: Bei laufendem Radio blaettern, sonst den ersten Sender starten.
+  // Channel rocker: step through stations while the radio plays, otherwise start the first one.
   api.channel = function (dir) { var st = step(dir); if (!st) return; if (api.isRadioOn()) tuneSoon(st); else api.onTune(st); };
   api.currentId = function () { return playingId; };
   api.step = step; api.setState = function (s) { audio = s; paint(); };

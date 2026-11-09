@@ -1,8 +1,8 @@
 'use strict';
 /**
- * /api/external/*: Bearer-API für externe Clients. Auth: `Authorization: Bearer bhter_<key>`.
- * Keys entstehen über POST /api/me/api-keys. Die Platzhalter unten durch das eigene Modell ersetzen,
- * Middleware und Scope-Prüfung für jeden neuen Endpoint beibehalten.
+ * /api/external/*: Bearer API for external clients. Auth: `Authorization: Bearer bhter_<key>`.
+ * Keys are created via POST /api/me/api-keys. Replace the placeholders below with your own model,
+ * keep the middleware and scope check for every new endpoint.
  */
 const express = require('express');
 const path = require('path');

@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Ratchet: App-Icon, Favicon, Navbar-Icon und Benutzermenü. Alles kommt aus scripts/make-app-icons.mjs,
- * die Marke sind die Buchstaben „BH“ auf der blauen Kachel. Der PNG-Decoder liest echte Pixel ohne Abhängigkeiten.
+ * Ratchet: app icon, favicon, navbar icon and user menu. Everything comes from scripts/make-app-icons.mjs,
+ * the mark is the letters "BH" on the blue tile. The PNG decoder reads real pixels without dependencies.
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

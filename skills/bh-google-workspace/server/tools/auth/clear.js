@@ -2,7 +2,7 @@
 const { clearCreds } = require('../../lib/auth.js');
 const { err, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'auth.clear', description: 'Löscht gespeicherte Google Credentials (Neuauthentifizierung erforderlich).', inputSchema: { type: 'object', properties: {} },
+module.exports = { name: 'auth.clear', description: 'Deletes stored Google credentials (re-authentication required).', inputSchema: { type: 'object', properties: {} },
   handler: async () => {
   try {
     clearCreds();

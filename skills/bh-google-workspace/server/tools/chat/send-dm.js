@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'chat.sendDm', description: 'Sendet eine Google Chat Direct Message an eine E-Mail-Adresse.', inputSchema: { type: 'object', properties: { email: { type: 'string' }, text: { type: 'string' } }, required: ['email', 'text'] },
+module.exports = { name: 'chat.sendDm', description: 'Sends a Google Chat direct message to an email address.', inputSchema: { type: 'object', properties: { email: { type: 'string' }, text: { type: 'string' } }, required: ['email', 'text'] },
   handler: async ({ email, text }) => {
   // Create/find DM space, then send message
   const r = await gapiJSON('POST', 'https://chat.googleapis.com/v1/spaces:findDirectMessage?name=users/me', {});

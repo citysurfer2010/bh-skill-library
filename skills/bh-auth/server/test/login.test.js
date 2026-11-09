@@ -103,7 +103,7 @@ test("Formular zum Passwort-Link sendet im Browser eine echte Herkunft", async (
     const u = await g.addUser("n@b.de", { password: false });
     const r = await g.client()(`/set-password?token=${g.users.issueLink(u.id, "invite")}`);
     assert.equal(r.status, 200);
-    // Mit no-referrer senden Browser "Origin: null", die Herkunftspruefung weist das Formular dann ab.
+    // With no-referrer, browsers send "Origin: null", and the origin check then rejects the form.
     assert.equal(r.headers.get("referrer-policy"), "same-origin");
   } finally { await g.stop(); }
 });

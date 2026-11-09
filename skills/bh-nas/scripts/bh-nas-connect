@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verbindet das eigene Synology-Konto mit dem zentralen Gateway. Das Passwort laeuft nicht durch das Modell.
+# Connects your own Synology account to the central gateway. The password does not pass through the model.
 set -euo pipefail
 [ -t 0 ] || { echo "Bitte selbst im eigenen Terminal ausfuehren." >&2; exit 1; }
 read -r -p "Synology-Benutzer: " user

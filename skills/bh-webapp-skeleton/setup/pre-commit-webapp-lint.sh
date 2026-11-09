@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# BH-Commit-Gate. Prüft den gestagten Stand einer Web-App:
-#   - neue oder wachsende Dateien über 200 Zeilen (public/, server.js, routes/, lib/)
-#   - neue feste style="..."-Attribute in HTML/JS
-#   - neue Browser-Popups (window.alert/confirm/prompt)
-#   - test/validate.test.js (statische Struktur, JS-Syntax, Standalone-Regeln)
-# Trendbasiert: Bestand darf bleiben und schrumpfen, nichts darf neu dazukommen.
-# Umgehen (--no-verify) nur im Notfall.
+# BH commit gate. Checks the staged state of a web app:
+#   - new or growing files over 200 lines (public/, server.js, routes/, lib/)
+#   - new fixed style="..." attributes in HTML/JS
+#   - new browser popups (window.alert/confirm/prompt)
+#   - test/validate.test.js (static structure, JS syntax, standalone rules)
+# Trend-based: existing issues may stay and shrink, nothing new may be added.
+# Bypass (--no-verify) only in an emergency.
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 

@@ -1,16 +1,16 @@
 'use strict';
 /**
- * RBAC: Wer darf was, und die Anmeldung bleibt zu, wenn etwas fehlt.
- * Für jede neue geschützte Route hier einen Eintrag ergänzen (Tabelle PROTECTED).
+ * RBAC: who may do what, and login stays closed if something is missing.
+ * Add an entry here for every new protected route (table PROTECTED).
  */
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { startApp, resetAuthEnv } = require('./helpers');
 
-// [Methode, Pfad, nötige Rolle]
+// [method, path, required role]
 const PROTECTED = [
   ['GET', '/', 'user'],
-  ['GET', '/eintraege', 'user'],
+  ['GET', '/entries', 'user'],
   ['GET', '/api/me', 'user'],
   ['GET', '/api/me/api-keys', 'user'],
   ['GET', '/admin', 'admin'],

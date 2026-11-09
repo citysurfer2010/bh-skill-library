@@ -1,5 +1,5 @@
 const { guarded } = require('../../lib/remote.js');
 const { shareStart } = require('../../lib/screen.js');
-module.exports = { name: 'share_start', description: 'Gibt ein WebRTC-Angebot an die App BH Screen weiter und holt sie nach vorn. Liefert die Sitzungskennung. Normal bedient ueber die App Beamer.',
-  inputSchema: { type: 'object', required: ['offer'], properties: { offer: { type: 'string', description: 'SDP-Angebot inklusive ICE-Kandidaten' } } },
+module.exports = { name: 'share_start', description: 'Passes a WebRTC offer to the BH Screen app and brings it to the front. Returns the session ID. Normally operated through the Beamer app.',
+  inputSchema: { type: 'object', required: ['offer'], properties: { offer: { type: 'string', description: 'SDP offer including ICE candidates' } } },
   handler: guarded(async ({ offer }) => shareStart(offer)) };

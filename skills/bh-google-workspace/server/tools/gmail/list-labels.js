@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'gmail.listLabels', description: 'Listet alle Gmail-Labels auf.', inputSchema: { type: 'object', properties: {} },
+module.exports = { name: 'gmail.listLabels', description: 'Lists all Gmail labels.', inputSchema: { type: 'object', properties: {} },
   handler: async () => {
   const r = await gapiJSON('GET', 'https://gmail.googleapis.com/gmail/v1/users/me/labels');
   if (r.status !== 200) return apiErr('gmail.listLabels', r.status, r.data);

@@ -1,4 +1,4 @@
-/** GitHub-REST-Client. Das Token liegt je User auf dem Gateway, nie im Container. */
+/** GitHub REST client. The token lives per user on the gateway, never in the container. */
 'use strict';
 
 const fs   = require('fs');
@@ -27,6 +27,6 @@ async function gh(method, url, body, fetchImpl = fetch) {
 const ok  = (v) => ({ content: [{ type: 'text', text: typeof v === 'string' ? v : JSON.stringify(v, null, 2) }] });
 const err = (op, r) => ({ content: [{ type: 'text', text: `${op}: HTTP ${r.status}: ${r.data?.message || ''}` }], isError: true });
 const REPO = { type: 'string', description: 'owner/repo' };
-const PR   = { type: 'number', description: 'Nummer des Pull Requests' };
+const PR   = { type: 'number', description: 'Pull request number' };
 
 module.exports = { gh, ok, err, REPO, PR, tokenFile };

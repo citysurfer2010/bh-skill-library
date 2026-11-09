@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'sheets.getMetadata', description: 'Gibt Metadaten einer Google Sheets Tabelle zurück (Sheets, Spalten, Zeilen).', inputSchema: { type: 'object', properties: { spreadsheetId: { type: 'string' } }, required: ['spreadsheetId'] },
+module.exports = { name: 'sheets.getMetadata', description: 'Returns metadata of a Google Sheets spreadsheet (sheets, columns, rows).', inputSchema: { type: 'object', properties: { spreadsheetId: { type: 'string' } }, required: ['spreadsheetId'] },
   handler: async ({ spreadsheetId }) => {
   const r = await gapiJSON('GET', `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=false`);
   if (r.status !== 200) return apiErr('sheets.getMetadata', r.status, r.data);

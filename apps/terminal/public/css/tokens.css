@@ -1,4 +1,4 @@
-/* BH-Design: alle Farben und Maße an einer Stelle. Hell in :root, dunkel über html[data-theme="dark"]. */
+/* BH design: all colors and sizes in one place. Light in :root, dark via html[data-theme="dark"]. */
 :root {
   --term-vh: 100dvh;
   --bh-term-bg: #0b1730;

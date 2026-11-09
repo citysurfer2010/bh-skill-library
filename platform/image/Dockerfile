@@ -1,4 +1,4 @@
-# Arbeitsumgebung je User: opencode + Werkzeuge, laeuft komplett als uid 1000.
+# Work environment per user: opencode + tools, runs entirely as uid 1000.
 FROM node:24-trixie-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -9,8 +9,8 @@ RUN apt-get update -qq \
  && sed -i 's/# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && locale-gen >/dev/null \
  && rm -rf /var/lib/apt/lists/*
 
-# Das Basis-Image bringt "node" als uid 1000 mit; wir brauchen genau diese uid als "dev".
-# Passwort "*" statt "!": ohne PAM wertet sshd "!" als gesperrtes Konto.
+# The base image ships "node" as uid 1000; we need exactly this uid as "dev".
+# Password "*" instead of "!": without PAM, sshd treats "!" as a locked account.
 RUN userdel -r node 2>/dev/null || true \
  && useradd -u 1000 -m -s /bin/bash dev \
  && usermod -p '*' dev

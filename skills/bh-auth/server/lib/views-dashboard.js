@@ -16,7 +16,7 @@ function appTile(a) {
 const adminTile = (href, icon, label, desc) => `<a href="${href}" class="app-tile"><div class="tile-icon admin-icon">${icon}</div><div class="tile-label">${label}</div><div class="tile-desc">${desc}</div></a>`;
 const section = (title, tiles) => `<div class="app-section"><div class="section-header"><h2>${title}</h2><div class="section-line"></div></div><div class="grid">${tiles}</div></div>`;
 
-// Eingebettet statt nachgeladen: Kacheln und Suche stehen sofort. "<" maskiert, damit Namen den Block nicht beenden.
+// Embedded, not fetched later: tiles and search appear at once. "<" is escaped so that names cannot end the block.
 function searchData(apps, user) {
   const entries = [...apps.map((a) => ({ id: a.id, label: a.name, description: a.description, url: a.url }))];
   if (user.isAdmin) entries.push({ id: "users", label: "Benutzerverwaltung", description: "Benutzer und Berechtigungen", url: "/admin" }, { id: "manage", label: "Apps verwalten", description: "Apps der Übersicht pflegen", url: "/admin/apps" });

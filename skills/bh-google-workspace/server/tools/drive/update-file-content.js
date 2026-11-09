@@ -6,31 +6,31 @@ const { readGuarded, checkReadablePath } = require('../../lib/local-file-guard.c
 const https = require('https');
 
 /**
- * Ersetzt den INHALT einer bestehenden Drive-Datei — Datei-ID, Link und
- * Freigaben bleiben erhalten.
+ * Replaces the CONTENT of an existing Drive file — file ID, link and
+ * shares are preserved.
  *
- * Warum nicht drive_upload_file: das legt IMMER eine neue Datei an. Wer einen
- * bereits geteilten Beleg korrigiert (Kontoblatt, Report, Beschlussvorlage),
- * macht damit den herumgereichten Link tot und hat zwei Fassungen im Ordner.
- * Drive versioniert den alten Stand automatisch — mit keepRevisionForever
- * bleibt er dauerhaft abrufbar statt nach 30 Tagen zu verfallen.
+ * Why not drive_upload_file: it ALWAYS creates a new file. Anyone correcting an
+ * already shared record (account sheet, report, resolution draft)
+ * thereby kills the circulated link and has two versions in the folder.
+ * Drive versions the old state automatically — with keepRevisionForever
+ * it stays retrievable permanently instead of expiring after 30 days.
  */
 module.exports = {
   name: 'drive_update_file_content',
   description:
-    'Ersetzt den Inhalt einer VORHANDENEN Drive-Datei (fileId bleibt, Link und Freigaben bleiben gueltig). '
-    + 'Quelle: localPath ODER content (+contentEncoding base64 fuer Binaerdaten). '
-    + 'Der bisherige Stand bleibt als Drive-Revision erhalten. Zum Anlegen einer NEUEN Datei drive_upload_file nehmen.',
+    'Replaces the content of an EXISTING Drive file (fileId stays, link and shares stay valid). '
+    + 'Source: localPath OR content (+contentEncoding base64 for binary data). '
+    + 'The previous state is kept as a Drive revision. To create a NEW file use drive_upload_file.',
   inputSchema: {
     type: 'object',
     properties: {
-      fileId: { type: 'string', description: 'ID der zu aktualisierenden Datei' },
-      localPath: { type: 'string', description: 'Pfad zur lokalen Datei (Alternative zu content)' },
-      content: { type: 'string', description: 'Inhalt inline (Alternative zu localPath)' },
-      contentEncoding: { type: 'string', enum: ['utf8', 'base64'], description: 'Kodierung von content — base64 fuer BINAERE Inhalte. Default utf8.' },
-      mimeType: { type: 'string', description: 'Content-Type des neuen Inhalts. Ohne Angabe aus der Dateiendung, sonst application/octet-stream.' },
-      newName: { type: 'string', description: 'Datei zusaetzlich umbenennen (optional).' },
-      keepRevisionForever: { type: 'boolean', description: 'Vorherige Fassung dauerhaft als Revision behalten (default true).' },
+      fileId: { type: 'string', description: 'ID of the file to update' },
+      localPath: { type: 'string', description: 'Path to the local file (alternative to content)' },
+      content: { type: 'string', description: 'Content inline (alternative to localPath)' },
+      contentEncoding: { type: 'string', enum: ['utf8', 'base64'], description: 'Encoding of content — base64 for BINARY content. Default utf8.' },
+      mimeType: { type: 'string', description: 'Content type of the new content. If omitted, from the file extension, else application/octet-stream.' },
+      newName: { type: 'string', description: 'Also rename the file (optional).' },
+      keepRevisionForever: { type: 'boolean', description: 'Keep the previous version permanently as a revision (default true).' },
       format: { type: 'string', enum: ['text', 'json'] },
     },
     required: ['fileId'],
@@ -45,7 +45,7 @@ module.exports = {
       if (contentEncoding && !['utf8', 'base64'].includes(contentEncoding)) return err(`contentEncoding unbekannt: ${contentEncoding}`);
       fileContent = Buffer.from(String(content), contentEncoding === 'base64' ? 'base64' : 'utf8');
     } else {
-      // Sicherheitspruefung 05.11.2026: nur Dokumente aus den erlaubten Ordnern, geoeffnet ueber den aufgeloesten Pfad
+      // Security review 05.11.2026: only documents from the allowed folders, opened via the resolved path
       const g = checkReadablePath(localPath);
       if (!g.ok) return err(g.error);
       if (!fs.existsSync(g.path)) return err(`Datei nicht gefunden: ${localPath}`);
@@ -62,8 +62,8 @@ module.exports = {
 
     const token = await getAccessToken();
 
-    // Umbenennen ist ein Metadaten-Update und laeuft ueber die normale API, nicht
-    // ueber den Upload-Endpunkt — sonst kollidiert es mit uploadType=media.
+    // Renaming is a metadata update and goes through the normal API, not
+    // the upload endpoint — otherwise it collides with uploadType=media.
     if (newName) {
       const metaBody = JSON.stringify({ name: newName });
       const metaRes = await new Promise((resolve, reject) => {

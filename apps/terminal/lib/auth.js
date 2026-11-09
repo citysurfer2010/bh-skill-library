@@ -1,11 +1,11 @@
 'use strict';
 
-// Der Anmeldedienst schickt Namen URL-kodiert, damit Umlaute in Kopfzeilen ueberleben.
+// The login service sends names URL-encoded so that umlauts survive in headers.
 function decodeName(v) { try { return v ? decodeURIComponent(v) : v; } catch { return v; } }
 /**
- * Wer angemeldet ist, sagt der BH-Auth-Proxy per Kopfzeilen. Vertraut wird ihnen nur mit TRUST_PROXY_AUTH=1,
- * also nur, wenn die App ausschließlich hinter dem Proxy erreichbar ist. Sonst zählen nur DEV_USER_EMAIL und DEV_USER_ROLE.
- * Ohne gültige E-Mail gibt es keinen Benutzer; eine unbekannte Rolle ist "user".
+ * The BH auth proxy says who is logged in via headers. They are trusted only with TRUST_PROXY_AUTH=1,
+ * i.e. only if the app is reachable exclusively behind the proxy. Otherwise only DEV_USER_EMAIL and DEV_USER_ROLE count.
+ * Without a valid email there is no user; an unknown role is "user".
  */
 const { sendError } = require('./error-page');
 

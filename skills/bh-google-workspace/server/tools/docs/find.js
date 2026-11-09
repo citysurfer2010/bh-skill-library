@@ -2,7 +2,7 @@
 const { DRIVE_FIELDS } = require('../../lib/drive-helpers.js');
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'docs.find', description: 'Sucht Google Docs nach Namen oder Inhalt.', inputSchema: { type: 'object', properties: { query: { type: 'string' }, driveId: { type: 'string' } } },
+module.exports = { name: 'docs.find', description: 'Searches Google Docs by name or content.', inputSchema: { type: 'object', properties: { query: { type: 'string' }, driveId: { type: 'string' } } },
   handler: async ({ query, driveId }) => {
   let q = `mimeType='application/vnd.google-apps.document' and trashed=false`;
   if (query) q += ` and (name contains '${query.replace(/'/g, "\\'")}' or fullText contains '${query.replace(/'/g, "\\'")}')`;

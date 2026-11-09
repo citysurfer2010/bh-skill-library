@@ -1,4 +1,4 @@
-// Zaehlt Fehlversuche je Schluessel im Speicher; fuer einen einzelnen Dienst genuegt das.
+// Counts failed attempts per key in memory; that is enough for a single service.
 export function rateLimiter({ max = 8, windowMs = 15 * 60_000, now = Date.now } = {}) {
   const hits = new Map();
   const live = (key) => {

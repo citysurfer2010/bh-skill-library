@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Startet Web-Eingang (nginx) und Cloudflare-Tunnel (idempotent). Es werden keine Ports geoeffnet.
-# Vorher: setup-cloudflare.py
+# Starts the web entry (nginx) and Cloudflare tunnel (idempotent). No ports are opened.
+# Before this: setup-cloudflare.py
 set -euo pipefail
 cd "$(dirname "$0")"
 ENV=/srv/bh-platform/.env; D=/srv/edge

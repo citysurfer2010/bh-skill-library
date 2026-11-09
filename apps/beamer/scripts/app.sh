@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Start und Stopp von Beamer: scripts/app.sh start|stop|restart|status
-# "start" ist idempotent. PORT und DATA_DIR kommen aus der Umgebung, sonst aus .env, sonst aus dem Standard.
+# Start and stop Beamer: scripts/app.sh start|stop|restart|status
+# "start" is idempotent. PORT and DATA_DIR come from the environment, else from .env, else from the default.
 set -u
 cd "$(dirname "$0")/.." || exit 1
 
@@ -15,7 +15,7 @@ healthy() {
   node -e "fetch('http://127.0.0.1:$PORT/health',{signal:AbortSignal.timeout(2000)}).then(r=>r.json()).then(j=>process.exit(j.skill==='beamer'?0:1),()=>process.exit(1))"
 }
 
-# Nur unser eigener Prozess: Eine PID kann nach einem Neustart zu etwas anderem gehören.
+# Only our own process: after a restart a PID may belong to something else.
 our_pid() {
   [ -f "$PID_FILE" ] || return 1
   local pid; pid=$(cat "$PID_FILE")

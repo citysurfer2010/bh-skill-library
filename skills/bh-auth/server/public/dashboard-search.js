@@ -1,4 +1,4 @@
-// Zentrale Suche: filtert Kacheln live, "/" fokussiert, Enter oeffnet den besten Treffer, Esc leert.
+// Central search: filters tiles live, "/" focuses, Enter opens the best match, Esc clears.
 (function () {
   'use strict';
   var input = document.getElementById('appSearch');
@@ -69,6 +69,6 @@
     var tag = (document.activeElement && document.activeElement.tagName) || '';
     if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(tag)) { e.preventDefault(); input.focus(); }
   });
-  // Auf Touch-Geraeten nicht, sonst verdeckt die Tastatur sofort die Kacheln.
+  // Not on touch devices, otherwise the keyboard immediately covers the tiles.
   if (!window.matchMedia('(pointer: coarse)').matches) input.focus({ preventScroll: true });
 })();

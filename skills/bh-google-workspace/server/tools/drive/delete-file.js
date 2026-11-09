@@ -1,24 +1,24 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-// Löscht eine Datei oder einen Ordner in Google Drive.
-//   - Default (permanent nicht/false): Papierkorb (PATCH trashed=true) —
-//     reversibel (~30 Tage). Sicherer Default.
-//   - permanent:true: hartes Löschen (DELETE). Hartes Löschen schlägt auf
-//     Shared Drives mit 404/403 fehl, wenn das Konto nur "Contributor" ist
-//     (Drive maskiert fehlende Rechte als notFound). Fallback: Papierkorb.
-//     Vorfall 2026-06-05: >1000 _test_*-Ordner-Leichen, weil der Test-Cleanup
-//     den stillen 404 schluckte.
-module.exports = { name: 'drive_delete_file', description: 'Löscht eine Datei oder einen Ordner in Google Drive. Default: Papierkorb (trashed=true, reversibel). permanent:true = hartes Löschen (files.delete) mit Papierkorb-Fallback, falls hartes Löschen auf Shared Drives nicht erlaubt ist.', inputSchema: { type: 'object', properties: { fileId: { type: 'string' }, permanent: { type: 'boolean', description: 'true = endgültig löschen (files.delete). Default false = Papierkorb (reversibel).' } }, required: ['fileId'] },
+// Deletes a file or folder in Google Drive.
+//   - Default (permanent unset/false): trash (PATCH trashed=true) —
+//     reversible (~30 days). Safe default.
+//   - permanent:true: hard delete (DELETE). Hard delete fails on
+//     Shared Drives with 404/403 if the account is only "Contributor"
+//     (Drive masks missing rights as notFound). Fallback: trash.
+//     Incident 2026-06-05: >1000 leftover _test_* folders because the test cleanup
+//     swallowed the silent 404.
+module.exports = { name: 'drive_delete_file', description: 'Deletes a file or folder in Google Drive. Default: trash (trashed=true, reversible). permanent:true = hard delete (files.delete) with trash fallback if hard delete is not allowed on Shared Drives.', inputSchema: { type: 'object', properties: { fileId: { type: 'string' }, permanent: { type: 'boolean', description: 'true = delete permanently (files.delete). Default false = trash (reversible).' } }, required: ['fileId'] },
   handler: async ({ fileId, permanent }) => {
   const trash = async (note) => {
     const t = await gapiJSON('PATCH', `https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true`, { trashed: true });
     if (t.status === 200) return ok(JSON.stringify({ fileId, state: 'trashed', ...(note ? { note } : {}) }));
     return apiErr('drive_delete_file', t.status, t.data);
   };
-  // Sicherer Default: Papierkorb.
+  // Safe default: trash.
   if (!permanent) return trash();
-  // Hartes Löschen mit Papierkorb-Fallback.
+  // Hard delete with trash fallback.
   const r = await gapiJSON('DELETE', `https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true`);
   if (r.status === 204 || r.status === 200) return ok(JSON.stringify({ fileId, state: 'deleted' }));
   if (r.status === 404 || r.status === 403) return trash('hartes Löschen nicht erlaubt (Shared-Drive-Contributor) — stattdessen Papierkorb');

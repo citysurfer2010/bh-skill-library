@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Ratchet: kein natives <select>/<datalist> in der Oberfläche. Jedes Dropdown ist BHSelectCore (public/components/bh-select.js):
- * `<div data-bh-select data-options='[…]'>` + BHSelectCore.mountAll(root). ALLOWLIST nur für Altbestand, Zahlen dürfen nur sinken.
+ * Ratchet: no native <select>/<datalist> in the UI. Every dropdown is BHSelectCore (public/components/bh-select.js):
+ * `<div data-bh-select data-options='[…]'>` + BHSelectCore.mountAll(root). ALLOWLIST for legacy code only, counts may only fall.
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

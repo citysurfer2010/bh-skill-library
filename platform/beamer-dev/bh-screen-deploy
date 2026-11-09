@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Registriert das Profil BH fuer die Kommandozeile (Klartext-Passwoerter, die GUI-Verschluesselung kennt die CLI nicht),
-# paketiert BH Screen, erteilt dem Beamer die Installationserlaubnis und installiert die App.
+# Registers the profile BH for the command line (plain-text passwords, the CLI does not know the GUI encryption),
+# packages BH Screen, grants the Beamer the install permission and installs the app.
 set -uo pipefail
 H=/home/tizen; TS=$H/tizen-studio; T=$TS/tools/ide/bin/tizen; S=$TS/tools/sdb; C=$H/SamsungCertificate/BH; ENV=/srv/bh-platform/.env
 P=$H/tizen-studio-data/profile/profiles.xml; B=$(sed -n 's/^BH_BEAMER_IP=//p' $ENV | tail -1); PW=$(sed -n 's/^BH_TIZEN_AUTHOR_PW=//p' $ENV | tail -1)
@@ -27,7 +27,7 @@ open(p, 'w').write(f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 ''')
 PY
 chmod 600 $P
-# config.js (Adresse mit Geheimnis) bleibt liegen, alles andere kommt immer aus dem Repo.
+# config.js (address with secret) stays in place, everything else always comes from the repo.
 for f in config.xml index.html main.js home.js style.css icon.png; do install -m 644 -o tizen -g tizen /opt/bh-skill-library/skills/bh-beamer/app/$f $H/bhscreen/$f; done
 rm -rf $H/bhscreen/.buildResult $H/bhscreen/*signature*.xml $H/bhscreen/BHScreen.wgt
 run "cd bhscreen && $T build-web -- ." >/dev/null 2>&1

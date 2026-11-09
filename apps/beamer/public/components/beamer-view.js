@@ -1,5 +1,5 @@
 'use strict';
-/** Markup der Bedienseite: nur Darstellung, die Logik steht in pages/home-page.js. */
+/** Markup of the control page: presentation only, the logic is in pages/home-page.js. */
 window.BeamerView = (() => {
   const esc = (s) => AppShell.esc(s);
   const data = (o) => esc(JSON.stringify(o));

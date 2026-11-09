@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * Beamer — Web-App. Port 3310, Pfad "/beamer".
- * Anmeldung: lib/auth.js (Kopfzeilen des BH-Auth-Proxys, lokal DEV_USER_EMAIL). Lokal lauscht die App nur auf 127.0.0.1.
+ * Beamer — web app. Port 3310, path "/beamer".
+ * Login: lib/auth.js (headers from the BH auth proxy, locally DEV_USER_EMAIL). Locally the app listens only on 127.0.0.1.
  */
 const express = require('express');
 const path = require('path');
@@ -25,7 +25,7 @@ const INDEX_HTML = path.join(PUBLIC_DIR, 'index.html');
 const TODAY_HTML = path.join(PUBLIC_DIR, 'today.html');
 const ADMIN_HTML = path.join(PUBLIC_DIR, 'admin.html');
 
-// Neu bei jedem Prozess-Start: Der Cache-Buster macht alte Assets nach einem Deploy ungültig.
+// New on every process start: the cache buster invalidates old assets after a deploy.
 const BUILD_ID = Date.now().toString(36);
 const LOCAL_ASSET_RE = new RegExp(`(\\s(?:src|href))="(${APP_BASE}/[^"?]+\\.(?:js|css))"`, 'g');
 
@@ -63,19 +63,19 @@ app.get('/build-version-check.js', (_req, res) => {
   res.send(fs.readFileSync(path.join(PUBLIC_DIR, 'build-version-check.js'), 'utf8'));
 });
 
-// Bearer-API für externe Clients, eigene Prüfung per API-Key, deshalb vor der Benutzer-Prüfung.
+// Bearer API for external clients, own check via API key, hence before the user check.
 app.use('/api/external', externalRoutes.buildRouter());
 
 app.use(currentUser);
 app.use((req, res, next) => (worksWithoutUser(req.path) ? next() : requireUser(req, res, next)));
 
-// Vor express.static, sonst wäre admin.html ohne Rollenprüfung erreichbar.
+// Before express.static, otherwise admin.html would be reachable without a role check.
 app.get(['/admin', '/admin/', '/admin.html'], requireRole('admin'), (_req, res) => sendPage(res, ADMIN_HTML));
 
-// index:false, damit GET / über sendPage mit Cache-Bustern läuft.
+// index:false so that GET / goes through sendPage with cache busters.
 app.use(express.static(PUBLIC_DIR, { index: false, setHeaders: (res) => res.set('Cache-Control', 'no-cache') }));
 
-// Jede Ansicht ist ein echter Pfad.
+// Every view is a real path.
 app.get('/', (_req, res) => sendPage(res, INDEX_HTML));
 app.get('/today', (_req, res) => sendPage(res, TODAY_HTML));
 

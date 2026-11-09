@@ -1,11 +1,11 @@
-// Suchlogik der App-Uebersicht, ohne DOM und ohne Netz.
+// Search logic of the app overview, without DOM and without network.
 //   rank(modules, apps, query, limit) -> { modules: [...], top: { type, id, url } | null }
 (function () {
   'use strict';
   var MIN_CHARS = 2;
-  var APP_BONUS = 10; // genau getippter App-Name schlaegt ein Modul mit gleichem Wort
+  var APP_BONUS = 10; // an exactly typed app name beats a module with the same word
 
-  // translit: ae/oe/ue-Schreibweise, so tippt man ohne Umlaut-Taste. Beide Formen gelten.
+  // translit: ae/oe/ue spelling, as typed without umlaut keys. Both forms count.
   function foldBase(s, translit) {
     var t = String(s == null ? '' : s).toLowerCase().replace(/ß/g, 'ss');
     if (translit) t = t.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue');
@@ -28,7 +28,7 @@
     return { label: foldBase(e.label, translit), section: foldBase(e.section, translit), app: foldBase(e.appLabel, translit), kw: foldBase(e.kw, translit), desc: foldBase(e.description, translit) };
   }
 
-  // Jedes getippte Wort muss treffen; Titel zaehlt voll, Abschnitt, Stichwort und App weniger.
+  // Every typed word must match; the title counts fully, section, keyword and app count less.
   function scoreVariant(f, tokens, isApp) {
     var sum = 0;
     for (var i = 0; i < tokens.length; i++) {

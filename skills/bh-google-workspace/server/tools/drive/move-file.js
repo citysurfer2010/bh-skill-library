@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'drive_move_file', description: 'Verschiebt eine Datei in einen anderen Google Drive Ordner.', inputSchema: { type: 'object', properties: { fileId: { type: 'string' }, newParentId: { type: 'string' }, oldParentId: { type: 'string' }, driveId: { type: 'string' } }, required: ['fileId', 'newParentId', 'oldParentId', 'driveId'] },
+module.exports = { name: 'drive_move_file', description: 'Moves a file to another Google Drive folder.', inputSchema: { type: 'object', properties: { fileId: { type: 'string' }, newParentId: { type: 'string' }, oldParentId: { type: 'string' }, driveId: { type: 'string' } }, required: ['fileId', 'newParentId', 'oldParentId', 'driveId'] },
   handler: async ({ fileId, newParentId, oldParentId, driveId }) => {
   let url = `https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true&addParents=${newParentId}`;
   if (oldParentId) url += `&removeParents=${oldParentId}`;

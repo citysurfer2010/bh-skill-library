@@ -1,10 +1,10 @@
 'use strict';
-/** Logik der Bedienseite; Markup in beamer-view.js, Gestaltung in css/beamer.css. */
+/** Logic of the control page; markup in beamer-view.js, styling in css/beamer.css. */
 (async () => {
   const host = document.getElementById('page-host');
   const REPEAT = new Set(['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_VOLUP', 'KEY_VOLDOWN']);
   const SHARE_TEXT = { connecting: 'Verbinde mit dem Beamer …', live: 'Wird auf dem Beamer gezeigt.', ended: 'Freigabe beendet.', failed: 'Keine Verbindung zum Beamer. Ist das Gerät im Heimnetz?' };
-  let catalog; let now = null; let zustand = null; let statusFailed = false; let poweringOn = false; let shareLive = false;
+  let catalog; let now = null; let powerState = null; let statusFailed = false; let poweringOn = false; let shareLive = false;
   let pending = null; let scrolledPast = false; let confirmOff = false; let confirmTimer = null; let paused = false;
   let plan = null; let dayIndex = 0;
   const $ = (id) => document.getElementById(id);
@@ -16,16 +16,16 @@
   function model() {
     if (poweringOn) return { state: ['Startet', ''], title: 'Wird eingeschaltet …', sub: 'Das dauert einen Moment.' };
     if (statusFailed) return { state: ['Unbekannt', 'off'], title: 'Status nicht abrufbar', sub: 'Die Verbindung zum Beamer ist gestört.' };
-    if (zustand === 'nicht erreichbar') return { state: ['Unbekannt', 'off'], title: 'Beamer aus oder nicht erreichbar', sub: 'Tippe eine Stimmung, einen Sender oder eine App an, um ihn einzuschalten.' };
-    if (zustand && zustand !== 'on') return { state: ['Aus', 'off'], title: 'Der Beamer ist aus', sub: 'Tippe eine Stimmung, einen Sender oder eine App an, er schaltet sich dann ein.' };
+    if (powerState === 'unreachable') return { state: ['Unbekannt', 'off'], title: 'Beamer aus oder nicht erreichbar', sub: 'Tippe eine Stimmung, einen Sender oder eine App an, um ihn einzuschalten.' };
+    if (powerState && powerState !== 'on') return { state: ['Aus', 'off'], title: 'Der Beamer ist aus', sub: 'Tippe eine Stimmung, einen Sender oder eine App an, er schaltet sich dann ein.' };
     if (pending) return { state: ['An', 'on'], title: `Startet: ${pending}`, sub: 'Einen Moment …' };
     if (now) return { state: ['Läuft', 'live'], title: now.label, sub: '' };
-    return { state: [zustand ? 'An' : 'Wird geprüft', zustand ? 'on' : ''], title: 'Bereit', sub: 'Such dir etwas aus.' };
+    return { state: [powerState ? 'An' : 'Wird geprüft', powerState ? 'on' : ''], title: 'Bereit', sub: 'Such dir etwas aus.' };
   }
 
   function paint() {
     if (!$('bm-hero')) return;
-    const m = model(); const on = zustand === 'on';
+    const m = model(); const on = powerState === 'on';
     setText($('bm-state'), m.state[0]); $('bm-state').dataset.tone = m.state[1];
     setText($('bm-title'), m.title); setText($('bm-sub'), m.sub);
     const mood = on && now?.kind === 'mood' && catalog.moods.find((x) => x.id === now.id);
@@ -34,8 +34,8 @@
     img.hidden = !mood; $('bm-hero').classList.toggle('has-image', !!mood);
     const canStop = on && !!now && !pending;
     setHidden('[data-stop]', !canStop || confirmOff);
-    $('bm-layout').toggleAttribute('data-off', !!zustand && !on);
-    setHidden('[data-power="on"]', !zustand || on || poweringOn);
+    $('bm-layout').toggleAttribute('data-off', !!powerState && !on);
+    setHidden('[data-power="on"]', !powerState || on || poweringOn);
     setHidden('[data-power="off"]', !on || confirmOff);
     setHidden('[data-power-confirm], [data-power-cancel]', !on || !confirmOff);
     $('bm-nowbar').hidden = !(scrolledPast && on && (now || pending));
@@ -47,13 +47,13 @@
   }
 
   async function refresh() {
-    try { ({ zustand, now } = await BeamerApi.status()); statusFailed = false; } catch { statusFailed = true; }
+    try { ({ powerState, now } = await BeamerApi.status()); statusFailed = false; } catch { statusFailed = true; }
     paint();
   }
 
   async function powerOn() {
     poweringOn = true; paint();
-    try { await BeamerApi.send('/power', { state: 'on' }); await refresh(); return zustand === 'on'; }
+    try { await BeamerApi.send('/power', { state: 'on' }); await refresh(); return powerState === 'on'; }
     catch (e) { Toast.error(e.message); await refresh(); return false; }
     finally { poweringOn = false; paint(); }
   }
@@ -62,7 +62,7 @@
     if (pending) return;
     pending = label; b.classList.add('is-pending'); b.setAttribute('aria-disabled', 'true'); paint();
     try {
-      if (zustand !== 'on' && !(await powerOn())) return;
+      if (powerState !== 'on' && !(await powerOn())) return;
       const r = await BeamerApi.send(path, body);
       if ('now' in r) now = r.now;
       paused = false;
@@ -78,7 +78,7 @@
     if (!shareLive) refresh();
   }
   async function share(b) {
-    if (zustand !== 'on' && !(await powerOn())) return;
+    if (powerState !== 'on' && !(await powerOn())) return;
     try { await BeamerShare.start(b.dataset.share, shareState); await refresh(); }
     catch (e) { shareState('ended'); if (e.name !== 'NotAllowedError') Toast.error(e.message || 'Freigabe nicht möglich'); }
   }
@@ -97,7 +97,7 @@
     refresh();
   }
 
-  // Taste: sofort senden, nie mehrere gleichzeitig; das Gateway braucht je Druck einige Hundert Millisekunden.
+  // Key: send immediately, never several at once; the gateway needs a few hundred milliseconds per press.
   const queue = []; let draining = false; let lastError = 0; let holdTimer = null; let repeatTimer = null;
   async function drain() {
     if (draining) return;
@@ -109,7 +109,7 @@
     draining = false;
   }
   function press(key, repeat = false) {
-    if (zustand && zustand !== 'on') { if (!repeat) Toast.error('Der Beamer ist aus.'); return; }
+    if (powerState && powerState !== 'on') { if (!repeat) Toast.error('Der Beamer ist aus.'); return; }
     if (repeat ? (queue.length || draining) : queue.length >= 6) return;
     let k = key;
     if (key === 'TOGGLE') { k = paused ? 'KEY_PLAY' : 'KEY_PAUSE'; paused = !paused; }
@@ -130,12 +130,12 @@
     const b = e.target.closest('button');
     if (!b) return;
     if ('gotoRemote' in b.dataset) { host.querySelector('[role="tab"][data-view="remote"]').click(); $('bm-hero').scrollIntoView(); return; }
-    if (b.dataset.key) { if (e.detail === 0) press(b.dataset.key); return; } // Tastatur; Maus und Finger laufen über pointerdown
+    if (b.dataset.key) { if (e.detail === 0) press(b.dataset.key); return; } // Keyboard; mouse and finger go through pointerdown
     if (b.dataset.day) { dayIndex = Math.max(0, dayIndex + Number(b.dataset.day)); showDay(); return; }
     if (b.dataset.view) {
       $('bm-layout').dataset.view = b.dataset.view;
       all('[data-view][role="tab"]').forEach((t) => t.setAttribute('aria-selected', String(t === b)));
-      try { localStorage.setItem('beamer-view', b.dataset.view); } catch { /* egal */ }
+      try { localStorage.setItem('beamer-view', b.dataset.view); } catch { /* ignore */ }
       return;
     }
     if (b.dataset.share) { share(b); return; }
@@ -161,7 +161,7 @@
     Navbar.render('home', me);
     AppShell.render(host, BeamerView.page(catalog));
     if (window.matchMedia('(min-width: 961px)').matches) $('bm-more').open = true;
-    let view = 'start'; try { view = localStorage.getItem('beamer-view') || 'start'; } catch { /* egal */ }
+    let view = 'start'; try { view = localStorage.getItem('beamer-view') || 'start'; } catch { /* ignore */ }
     host.querySelector(`[role="tab"][data-view="${view === 'remote' ? 'remote' : 'start'}"]`).click();
     new IntersectionObserver(([en]) => { scrolledPast = !en.isIntersecting; paint(); }).observe($('bm-hero'));
     BeamerApi.schedule().then((p) => { plan = p; showDay(); }).catch(() => { $('bm-schedule').innerHTML = BeamerView.scheduleError(); });

@@ -1,4 +1,4 @@
-/* BH-Bedienelemente: Knöpfe, Felder, Beschriftungen. */
+/* BH controls: buttons, fields, labels. */
 .bh-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: var(--bh-control-h); padding: 0 14px; box-sizing: border-box;

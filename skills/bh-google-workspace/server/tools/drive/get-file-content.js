@@ -3,15 +3,15 @@ const { driveNotFoundMessage } = require('../../lib/drive-helpers.js');
 const { apiErr, err, gapi, gapiJSON, ok } = require('../../lib/gapi.js');
 const { toBlockSet, refuseProtectedFile } = require('../../lib/protected-drives.js');
 
-// Vorfall 2026-08-13: ein Google-Sheet-Export ("NKA Abrechnungen") kam als 1.333.920
-// Zeichen in EINEM Tool-Result zurück — der Chat-Kontext sprang dadurch in einem
-// einzigen Schritt von ~11k auf ~857k Tokens und crashte kurz danach am Modell-Limit
-// (1.048.576 Tokens bei Gemini), die eigentliche Aufgabe blieb unerledigt. Kein
-// bestehendes Tool hatte einen Size-Cap — anders als drive.getPdfText (Seitenrange).
+// Incident 2026-08-13: a Google Sheet export ("NKA Abrechnungen") came back as 1,333,920
+// chars in ONE tool result — the chat context thereby jumped in a
+// single step from ~11k to ~857k tokens and crashed shortly after at the model limit
+// (1,048,576 tokens on Gemini), the actual task stayed undone. No
+// existing tool had a size cap — unlike drive.getPdfText (page range).
 const MAX_CHARS_DEFAULT = 100000;
 
-// Schneidet an einer Zeilengrenze (nicht mitten in einer CSV-Zeile/JSON-Zeile) ab,
-// damit die zurückgegebene Teilmenge selbst noch sinnvoll interpretierbar bleibt.
+// Cuts at a line boundary (not in the middle of a CSV/JSON line)
+// so the returned subset itself stays meaningfully interpretable.
 function truncateWithNote(text, offset, maxChars) {
   const total = text.length;
   const from = Math.max(0, offset);
@@ -32,23 +32,23 @@ function truncateWithNote(text, offset, maxChars) {
   );
 }
 
-const tool = { name: 'drive.getFileContent', description: 'Ruft den Text-Inhalt einer Datei aus Google Drive ab. Funktioniert für Google Docs/Sheets/Slides (Export als Text/CSV) und Text/JSON/XML-Dateien. PDFs werden abgelehnt — für PDFs drive.getPdfText nutzen. Bilder und Office-Binärdateien werden ebenfalls abgelehnt. Große Dateien werden an einer Zeilengrenze gekürzt (Default 100.000 Zeichen) — mit offset+maxChars paginieren.', inputSchema: { type: 'object', properties: { fileId: { type: 'string' }, maxChars: { type: 'integer', description: `Max. Zeichen pro Aufruf (Default ${MAX_CHARS_DEFAULT}).` }, offset: { type: 'integer', description: 'Zeichen-Offset für die nächste Seite (aus der Kürzungs-Notiz des vorherigen Aufrufs).' } }, required: ['fileId'] },
+const tool = { name: 'drive.getFileContent', description: 'Retrieves the text content of a file from Google Drive. Works for Google Docs/Sheets/Slides (export as text/CSV) and text/JSON/XML files. PDFs are rejected — use drive.getPdfText for PDFs. Images and Office binary files are rejected as well. Large files are truncated at a line boundary (default 100,000 chars) — paginate with offset+maxChars.', inputSchema: { type: 'object', properties: { fileId: { type: 'string' }, maxChars: { type: 'integer', description: `Max. chars per call (default ${MAX_CHARS_DEFAULT}).` }, offset: { type: 'integer', description: 'Character offset for the next page (from the truncation note of the previous call).' } }, required: ['fileId'] },
   handler: async ({ fileId, maxChars, offset, _blockProtectedDrives }) => {
   const _ref = await refuseProtectedFile(fileId, toBlockSet(_blockProtectedDrives));
   if (_ref) return _ref;
   const maxC = Number.isFinite(maxChars) && maxChars > 0 ? maxChars : MAX_CHARS_DEFAULT;
   const off  = Number.isFinite(offset) && offset > 0 ? offset : 0;
-  // Metadaten vorab holen, um mimeType zu prüfen. `alt=media` liefert bei
-  // Binärdateien (PDF, Bilder, Office) Rohbytes — die sind für den LLM nicht
-  // lesbar und blähen über Context/Truncate das 413-Limit. Wir lehnen das
-  // deshalb früh ab, anstatt es durchzureichen.
+  // Fetch metadata first to check the mimeType. For binary files (PDF,
+  // images, Office) `alt=media` returns raw bytes — those are unreadable for the LLM
+  // and inflate past the 413 limit via context/truncate. We therefore
+  // reject this early instead of passing it through.
   const meta = await gapiJSON('GET',
     `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=${encodeURIComponent('id,name,mimeType,size')}&supportsAllDrives=true`);
   if (meta.status === 404) return err(driveNotFoundMessage(fileId));
   if (meta.status !== 200) return apiErr('drive.getFileContent', meta.status, meta.data);
 
   const mt = meta.data.mimeType || '';
-  // Google-Workspace-Formate → export als plain text / markdown.
+  // Google Workspace formats → export as plain text / markdown.
   const GOOGLE_EXPORTS = {
     'application/vnd.google-apps.document':     'text/plain',
     'application/vnd.google-apps.spreadsheet':  'text/csv',
@@ -60,14 +60,14 @@ const tool = { name: 'drive.getFileContent', description: 'Ruft den Text-Inhalt 
     if (r.status !== 200) return apiErr('drive.getFileContent', r.status, r.body);
     return ok(truncateWithNote(r.body, off, maxC));
   }
-  // Plain-Text-MIME-Types: durchreichen.
+  // Plain text MIME types: pass through.
   if (/^text\//.test(mt) || mt === 'application/json' || mt === 'application/xml') {
     const r = await gapi('GET',
       `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`);
     if (r.status !== 200) return apiErr('drive.getFileContent', r.status, r.body);
     return ok(truncateWithNote(r.body, off, maxC));
   }
-  // Binärdateien (PDF, Bilder, Office-Binary) — NICHT durchreichen.
+  // Binary files (PDF, images, Office binary) — do NOT pass through.
   const size = meta.data.size ? `${meta.data.size} Bytes` : 'unbekannt';
   return err(
     `drive.getFileContent: Datei "${meta.data.name}" ist vom Typ ${mt} (${size}) — ` +
@@ -77,4 +77,4 @@ const tool = { name: 'drive.getFileContent', description: 'Ruft den Text-Inhalt 
 };
 
 module.exports = tool;
-module.exports.truncateWithNote = truncateWithNote; // fuer Unit-Tests
+module.exports.truncateWithNote = truncateWithNote; // for unit tests

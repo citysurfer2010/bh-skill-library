@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Ratchet: nichts von außen blockiert das erste Zeichnen. Jedes externe Stylesheet braucht media="print" onload, jedes externe
- * Script async oder defer; besser: selbst ausliefern. Zeilen mit `load-exempt: <Grund>` werden übersprungen. ALLOWLIST nur für Altbestand.
+ * Ratchet: nothing external blocks the first paint. Every external stylesheet needs media="print" onload, every external
+ * script async or defer; better: serve it yourself. Lines with `load-exempt: <reason>` are skipped. ALLOWLIST for legacy code only.
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');

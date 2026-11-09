@@ -1,4 +1,4 @@
-# sshd laeuft als uid 1000 (kein root im Container) und kennt nur den User "dev".
+# sshd runs as uid 1000 (no root in the container) and knows only the user "dev".
 Port 2222
 HostKey /etc/devbox/ssh/ssh_host_ed25519_key
 PidFile /tmp/sshd.pid
@@ -9,10 +9,10 @@ AuthorizedKeysFile /etc/devbox/ssh/authorized_keys
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 UsePAM no
-# Die Key-Dateien sind schreibgeschuetzt eingehaengt und gehoeren dem Host.
+# The key files are mounted read-only and belong to the host.
 StrictModes no
 
-# Nur vom Laptop in den Container (Dev-Server ansehen), nie umgekehrt.
+# Only from the laptop into the container (to view the dev server), never the other way round.
 AllowTcpForwarding local
 GatewayPorts no
 AllowAgentForwarding no

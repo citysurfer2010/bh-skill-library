@@ -4,7 +4,7 @@ const { DRIVE_FIELDS, driveCorpora, formatDriveFile } = require('../../lib/drive
 const { apiErr, gapiJSON, ok, okJson } = require('../../lib/gapi.js');
 const { toBlockSet, dropBlocked } = require('../../lib/protected-drives.js');
 
-module.exports = { name: 'drive.findFolder', description: 'Sucht einen Ordner in Google Drive nach Name.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, driveId: { type: 'string' }, parentId: { type: 'string' }, format: { type: 'string', enum: ['text', 'json'], description: 'json liefert {query,folders} statt Text' } }, required: ['name'] },
+module.exports = { name: 'drive.findFolder', description: 'Finds a folder in Google Drive by name.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, driveId: { type: 'string' }, parentId: { type: 'string' }, format: { type: 'string', enum: ['text', 'json'], description: 'json returns {query,folders} instead of text' } }, required: ['name'] },
   handler: async ({ name, driveId, parentId, format, _blockProtectedDrives }) => {
   let q = `mimeType='application/vnd.google-apps.folder' and name contains '${name.replace(/'/g, "\\'")}' and trashed=false`;
   if (parentId) q += ` and '${parentId}' in parents`;

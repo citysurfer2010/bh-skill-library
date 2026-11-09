@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Verwaltung der User-Container. Nur root auf dem VPS.
-#   devbox add <name> <pubkey-datei> | list | set-key <name> <pubkey-datei>
+# Management of the user containers. Root on the VPS only.
+#   devbox add <name> <pubkey-file> | list | set-key <name> <pubkey-file>
 #   devbox rotate-llm-token <name> | restart <name> | recreate <name>|--all
-#   devbox remove <name> [--purge]     (ohne --purge bleiben die Daten erhalten)
+#   devbox remove <name> [--purge]     (without --purge the data is kept)
 set -euo pipefail
 
 ROOT=/srv/devbox; USERS=$ROOT/users; IMAGE=devbox:current
-MAPPED_UID=101000          # uid 1000 im Container (dockremap-Basis 100000 + 1000)
+MAPPED_UID=101000          # uid 1000 in the container (dockremap base 100000 + 1000)
 PORT_BASE=2201
 HOME_SIZE=${DEVBOX_HOME_SIZE:-10G}
 MEM=${DEVBOX_MEM:-2500m}; MEM_SWAP=${DEVBOX_MEM_SWAP:-3g}
@@ -20,7 +20,7 @@ check_name() { [[ $1 =~ ^[a-z][a-z0-9-]{1,30}$ ]] || die "ungueltiger Name: $1";
 exists() { [ -d "$USERS/$1" ]; }
 need() { exists "$1" || die "User $1 existiert nicht"; }
 
-# Genau ein Schluessel, ohne Optionen wie command= oder from=.
+# Exactly one key, without options such as command= or from=.
 check_key() {
   [ "$(grep -c . "$1")" = 1 ] || die "Schluesseldatei muss genau eine Zeile enthalten"
   grep -qE '^(ssh-ed25519|ecdsa-sha2-[a-z0-9-]+|sk-ssh-ed25519@openssh.com|sk-ecdsa-sha2-nistp256@openssh.com|ssh-rsa) ' "$1" \
@@ -38,7 +38,7 @@ run_container() {
   local n=$1 d=$USERS/$1 port
   port=$(cat "$d/port")
   docker network inspect "devbox-net-$n" >/dev/null 2>&1 || docker network create "devbox-net-$n" >/dev/null
-  # Gateways (falls vorhanden) in jedes User-Netz haengen: mehr sieht der User dort nicht.
+  # Attach gateways (if any) to every user network: the user sees nothing more there.
   local gw
   for gw in $GATEWAYS; do
     docker inspect "$gw" >/dev/null 2>&1 && docker network connect "devbox-net-$n" "$gw" 2>/dev/null || true
@@ -65,7 +65,7 @@ cmd_add() {
   install -d -m 700 -o "$MAPPED_UID" -g "$MAPPED_UID" "$d/llm"
   next_port >"$d/port"
 
-  # Eigenes Dateisystem je User: harte Plattengrenze, nosuid/nodev.
+  # Separate file system per user: hard disk limit, nosuid/nodev.
   truncate -s "$HOME_SIZE" "$d/home.img"
   mkfs.ext4 -q -F -m 0 "$d/home.img"
   echo "$d/home.img $d/home ext4 loop,nosuid,nodev,noatime,nofail 0 2" >>/etc/fstab
@@ -103,9 +103,9 @@ cmd_set_key() {
   echo "Schluessel von $1 ersetzt"
 }
 
-# Je User ein eigenes Gateway-Token, das fest an seinen Aufrufer gebunden ist.
+# A separate gateway token per user, firmly bound to its caller.
 TOKENS=/srv/llm-gateway/config/user-tokens.json
-write_tokens() {   # $1 = jq-Filter, restliche Argumente an jq
+write_tokens() {   # $1 = jq filter, remaining arguments go to jq
   local filter=$1; shift
   jq "$@" "$filter" "$TOKENS" >"$TOKENS.new"
   chown "$MAPPED_UID:$MAPPED_UID" "$TOKENS.new"; chmod 400 "$TOKENS.new"

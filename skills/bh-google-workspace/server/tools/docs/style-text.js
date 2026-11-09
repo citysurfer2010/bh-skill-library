@@ -6,32 +6,32 @@ const {
 } = require('../../lib/docs-tabs.js');
 
 /**
- * docs.styleText — formatiert vorhandenen Text nachtraeglich (fett, kursiv, Farbe,
- * Link, Unterstreichung), gefunden ueber seinen Wortlaut.
+ * docs.styleText — formats existing text after the fact (bold, italic, color,
+ * link, underline), found by its exact wording.
  *
- * Warum es das braucht: docs.replaceText kann nur Text tauschen, docs.appendText und
- * docs.appendToTableCell nur beim Einfuegen faerben. Wer nachtraeglich Ueberschriften
- * fetten oder eine per replaceText eingefuegte URL klickbar machen will, hatte bisher
- * kein Werkzeug — die Formatierung blieb Handarbeit im Browser.
+ * Why it is needed: docs.replaceText can only swap text, docs.appendText and
+ * docs.appendToTableCell only color on insert. Anyone wanting to bold headings later
+ * or make a URL inserted via replaceText clickable previously had
+ * no tool — the formatting stayed manual work in the browser.
  *
- * Typischer Fall (BP-Doc): die Kopfzeilen einer Verlaufs-Zelle fetten, ohne die
- * Zelle neu zu schreiben —
+ * Typical case (BP doc): bold the header lines of a history cell without
+ * rewriting the cell —
  *   docs.styleText(documentId, tabId, find: "Befund:", bold: true)
- * trifft alle Vorkommen im Tab, also alle Zeilen der Tabelle auf einmal.
+ * hits all occurrences in the tab, i.e. all rows of the table at once.
  *
- * Grenzen, bewusst:
- *   - Der Suchtext muss INNERHALB EINES ABSATZES liegen. Google Docs speichert je
- *     Absatz eigene textRuns; ein Treffer ueber einen Absatzumbruch hinweg hat keinen
- *     zusammenhaengenden Index-Bereich. Mehrzeiliges bitte zeilenweise aufrufen.
- *   - Gesucht wird case-sensitive und exakt — wie bei docs.replaceText, damit beide
- *     Werkzeuge dieselben Treffer liefern.
+ * Deliberate limits:
+ *   - The search text must be WITHIN ONE PARAGRAPH. Google Docs stores separate
+ *     textRuns per paragraph; a match across a paragraph break has no
+ *     contiguous index range. Call line by line for multi-line text.
+ *   - The search is case-sensitive and exact — as in docs.replaceText, so both
+ *     tools return the same matches.
  */
 
 const norm = (s) => String(s == null ? '' : s);
 
-// Baut je Absatz den Volltext samt Index-Karte: Position im String → Dokument-Index.
-// Noetig, weil ein Absatz aus mehreren textRuns besteht und Treffer ueber deren
-// Grenzen laufen koennen.
+// Builds the full text per paragraph plus an index map: string position → document index.
+// Needed because a paragraph consists of several textRuns and matches can cross
+// their boundaries.
 function paragraphRuns(el) {
   const out = { text: '', map: [] };
   for (const e of el.paragraph?.elements || []) {
@@ -45,7 +45,7 @@ function paragraphRuns(el) {
   return out;
 }
 
-// Laeuft Absaetze UND Tabellenzellen ab — im BP-Doc steht alles Relevante in Zellen.
+// Walks paragraphs AND table cells — in the BP doc everything relevant is in cells.
 function walk(content, hits, find) {
   for (const el of content || []) {
     if (el.paragraph) {
@@ -70,20 +70,20 @@ function walk(content, hits, find) {
 
 module.exports = {
   name: 'docs.styleText',
-  description: 'Formatiert vorhandenen Text nachtraeglich: fett, kursiv, unterstrichen, Farbe, Link. Trefferauswahl ueber den Wortlaut (exakt, case-sensitive), tab-faehig. Ergaenzt docs.replaceText (tauscht nur Text) und docs.appendToTableCell (faerbt nur beim Einfuegen). Der Suchtext muss innerhalb eines Absatzes liegen.',
+  description: 'Formats existing text after the fact: bold, italic, underline, color, link. Matches are selected by exact wording (case-sensitive), tab-aware. Complements docs.replaceText (only swaps text) and docs.appendToTableCell (only colors on insert). The search text must be within one paragraph.',
   inputSchema: {
     type: 'object',
     properties: {
       documentId: { type: 'string' },
-      tabId: { type: 'string', description: 'Ziel-Tab (s. docs.listTabs). Ohne Angabe: erster Tab.' },
-      tabTitle: { type: 'string', description: 'Alternative zu tabId: Tab-Titel exakt.' },
-      find: { type: 'string', description: 'Zu formatierender Text, exakt und case-sensitive. Muss innerhalb eines Absatzes liegen.' },
-      bold: { type: 'boolean', description: 'Fett setzen (true) oder aufheben (false).' },
-      italic: { type: 'boolean', description: 'Kursiv setzen oder aufheben.' },
-      underline: { type: 'boolean', description: 'Unterstreichen oder aufheben.' },
-      color: { type: 'string', description: 'Hex-Schriftfarbe, z. B. "#D63384".' },
-      link: { type: 'string', description: 'URL, mit der der Text verlinkt wird.' },
-      maxOccurrences: { type: 'number', description: 'Nur die ersten N Treffer formatieren (default: alle).' },
+      tabId: { type: 'string', description: 'Target tab (see docs.listTabs). If omitted: first tab.' },
+      tabTitle: { type: 'string', description: 'Alternative to tabId: exact tab title.' },
+      find: { type: 'string', description: 'Text to format, exact and case-sensitive. Must be within one paragraph.' },
+      bold: { type: 'boolean', description: 'Set bold (true) or remove it (false).' },
+      italic: { type: 'boolean', description: 'Set or remove italic.' },
+      underline: { type: 'boolean', description: 'Set or remove underline.' },
+      color: { type: 'string', description: 'Hex text color, e.g. "#D63384".' },
+      link: { type: 'string', description: 'URL to link the text to.' },
+      maxOccurrences: { type: 'number', description: 'Format only the first N matches (default: all).' },
     },
     required: ['documentId', 'find'],
   },
@@ -126,8 +126,8 @@ module.exports = {
     if (rgb) { textStyle.foregroundColor = { color: { rgbColor: rgb } }; fields.push('foregroundColor'); }
     if (link) { textStyle.link = { url: String(link) }; fields.push('link'); }
 
-    // Absteigend anwenden: Style-Requests verschieben zwar keine Indizes, aber die
-    // Reihenfolge haelt die Requests deterministisch und damit nachvollziehbar.
+    // Apply in descending order: style requests do not shift indexes, but the
+    // order keeps the requests deterministic and thus traceable.
     const reqs = use
       .slice()
       .sort((a, b) => b.start - a.start)

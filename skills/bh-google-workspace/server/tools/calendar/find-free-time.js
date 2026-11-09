@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'calendar.findFreeTime', description: 'Sucht freie Zeiten für mehrere Personen.', inputSchema: { type: 'object', properties: { emails: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] }, timeMin: { type: 'string' }, timeMax: { type: 'string' }, timeZone: { type: 'string' } }, required: ['emails', 'timeMin', 'timeMax'] },
+module.exports = { name: 'calendar.findFreeTime', description: 'Finds free time slots for several people.', inputSchema: { type: 'object', properties: { emails: { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] }, timeMin: { type: 'string' }, timeMax: { type: 'string' }, timeZone: { type: 'string' } }, required: ['emails', 'timeMin', 'timeMax'] },
   handler: async ({ emails, timeMin, timeMax, timeZone = 'Europe/Berlin' }) => {
   const items = (Array.isArray(emails) ? emails : [emails]).map(id => ({ id }));
   const r = await gapiJSON('POST', 'https://www.googleapis.com/calendar/v3/freeBusy', { timeMin, timeMax, timeZone, items });

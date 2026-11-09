@@ -1,4 +1,4 @@
-// Winziger MCP-Server fuer die Tests: zeigt, welches HOME er bekommen hat.
+// Tiny MCP server for the tests: shows which HOME it received.
 import readline from "node:readline";
 const send = (m) => process.stdout.write(`${JSON.stringify(m)}\n`);
 readline.createInterface({ input: process.stdin }).on("line", (l) => {

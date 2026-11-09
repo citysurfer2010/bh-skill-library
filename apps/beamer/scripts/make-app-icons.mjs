@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Zeichnet die BH-Marke in alle App-Icons, ohne Browser und ohne Abhängigkeiten.
+// Draws the BH mark into all app icons, without a browser and without dependencies.
 //   node scripts/make-app-icons.mjs --out public [--color #1d4ed8]
-// Die Marke sind die Buchstaben "BH" als Polygone. So sehen SVG und PNG überall gleich aus, ohne dass eine Schrift installiert sein muss.
-// Ausgabe: favicon.svg, branding/nav-icon.svg, branding/icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png, icons.stamp.json
-// Der Export wird von test/branding.test.js benutzt.
+// The mark is the letters "BH" as polygons. This way SVG and PNG look the same everywhere, without any font having to be installed.
+// Output: favicon.svg, branding/nav-icon.svg, branding/icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png, icons.stamp.json
+// The export is used by test/branding.test.js.
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -16,7 +16,7 @@ export const NAV_FILL = 'rgba(255,255,255,.18)';
 
 const move = (dx, dy, points) => points.map(([x, y]) => [x + dx, y + dy]);
 const B_X = 1.75, H_X = 12.75, TOP = 5;
-// Ringe im 24er-Raster, Füllung nach Even-Odd (die Innenflächen des B sind Löcher).
+// Rings on a 24-unit grid, even-odd fill (the inner areas of the B are holes).
 export const MARK = [
   move(B_X, TOP, [[0, 0], [7, 0], [9, 2], [9, 5.5], [7.75, 7], [9.5, 8.5], [9.5, 12], [7.5, 14], [0, 14]]),
   move(B_X, TOP, [[2.8, 2.4], [6, 2.4], [6.4, 2.9], [6.4, 5], [6, 5.6], [2.8, 5.6]]),
@@ -24,7 +24,7 @@ export const MARK = [
   move(H_X, TOP, [[0, 0], [2.8, 0], [2.8, 5.6], [6.7, 5.6], [6.7, 0], [9.5, 0], [9.5, 14], [6.7, 14], [6.7, 8.4], [2.8, 8.4], [2.8, 14], [0, 14]]),
 ];
 
-/** PNG-Satz: Datei, Pixelgröße, Art, Anteil der Marke an der Kachelbreite, Eckradius in Prozent. */
+/** PNG set: file, pixel size, kind, share of the mark in the tile width, corner radius in percent. */
 export const TARGETS = [
   ['icon-192.png', 192, { kind: 'any', share: 0.85, radius: 22 }],
   ['icon-512.png', 512, { kind: 'any', share: 0.85, radius: 22 }],
@@ -70,7 +70,7 @@ function chunk(type, data) {
   return out;
 }
 
-/** Rendert ein Ziel mit 4x4-Abtastung; ohne Alpha (RGB), wenn die Kachel randlos ist. */
+/** Renders a target with 4x4 sampling; without alpha (RGB) if the tile is borderless. */
 export function renderPng(size, { kind, share, radius }, color = COLOR) {
   const rgb = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
   const alpha = kind === 'any';

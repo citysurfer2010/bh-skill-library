@@ -1,5 +1,5 @@
 /* ── Utility classes ──────────────────────────────────────────────────
-   Statt fester style=-Attribute; neue Hilfsklassen hier ergänzen. */
+   Instead of fixed style= attributes; add new helper classes here. */
 .flex    { display: flex; }
 .gap-8   { gap: 8px; }
 .gap-12  { gap: 12px; }

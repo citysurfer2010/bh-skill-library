@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'drive_copy', description: 'Kopiert eine Google Drive Datei (z.B. Docs-Template). Gibt die neue Datei-ID zurück.', inputSchema: { type: 'object', properties: { fileId: { type: 'string', description: 'ID der zu kopierenden Datei' }, name: { type: 'string', description: 'Name der Kopie (optional)' }, parentId: { type: 'string', description: 'Zielordner-ID (optional)' } }, required: ['fileId'] },
+module.exports = { name: 'drive_copy', description: 'Copies a Google Drive file (e.g. a Docs template). Returns the new file ID.', inputSchema: { type: 'object', properties: { fileId: { type: 'string', description: 'ID of the file to copy' }, name: { type: 'string', description: 'Name of the copy (optional)' }, parentId: { type: 'string', description: 'Target folder ID (optional)' } }, required: ['fileId'] },
   handler: async ({ fileId, name, parentId, _blockProtectedDrives }) => {
   { const { toBlockSet, refuseProtectedFile } = require('../../lib/protected-drives.js'); const _b = toBlockSet(_blockProtectedDrives); const _ref = (await refuseProtectedFile(fileId, _b)) || (await refuseProtectedFile(parentId, _b)); if (_ref) return _ref; }
   const body = {};

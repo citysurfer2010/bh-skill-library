@@ -1,4 +1,4 @@
-/** Konstanten und Pfade. Jeder User hat seine Anmeldung im eigenen Home. */
+/** Constants and paths. Each user keeps their login in their own home. */
 'use strict';
 
 const os   = require('os');
@@ -9,7 +9,7 @@ const CFG_DIR = path.join(HOME, '.config', 'bh-google-workspace');
 const CREDS   = path.join(CFG_DIR, 'credentials.json');
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET_FILE || path.join(CFG_DIR, 'client_secret.json');
 
-// LLMs vergessen Zeichen aus Drive-IDs (28-44 Zeichen) bei Inline-Citation.
+// LLMs drop characters from Drive IDs (28-44 chars) when citing them inline.
 const ID_HINT =
   '⚠ Datei-IDs immer 1:1 kopieren — keine Zeichen weglassen, kein Leerzeichen einfügen.\n';
 

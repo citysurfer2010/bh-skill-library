@@ -1,5 +1,5 @@
 'use strict';
-/** Validate: statische Prüfungen ohne Server. Struktur, JS-Syntax, Rahmen, Listen, Standalone-Regeln. */
+/** Validate: static checks without a server. Structure, JS syntax, frame, lists, standalone rules. */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

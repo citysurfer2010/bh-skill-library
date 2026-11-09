@@ -1,4 +1,4 @@
-/** Haltestellen und Abfahrten der BVG. Offene Schnittstelle, ohne Schlüssel. */
+/** BVG stops and departures. Open interface, no key needed. */
 'use strict';
 
 const BASE = 'https://v6.bvg.transport.rest';
@@ -25,7 +25,7 @@ async function departures(stop, { minutes = 30, results = 8 } = {}) {
   return (data.departures || []).map((d) => ({ line: d.line?.name || '?', direction: d.direction || '', when: d.when || d.plannedWhen, delayMinutes: d.delay ? Math.round(d.delay / 60) : 0, cancelled: !!d.cancelled }));
 }
 
-// Was die Familie betrifft: Schulweg, Ringbahn Messe Nord, Stadtbahn ab Charlottenburg.
+// What concerns the family: way to school, Ringbahn Messe Nord, Stadtbahn from Charlottenburg.
 const WATCH = [
   { id: '900024104', label: 'M49 Amtsgerichtsplatz', lines: /^M49$/, products: '' },
   { id: '900024106', label: 'Ringbahn Messe Nord', lines: /^S4[12]$/, products: 'suburban' },
@@ -53,13 +53,13 @@ async function alerts(watch = WATCH) {
 const SCHOOL_STOP = { id: '900024104', name: 'Amtsgerichtsplatz' };
 const berlinHour = (now) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', hourCycle: 'h23' }).format(now));
 
-/** Abfahrtstafel fürs Startbild: morgens nur Richtung Westen zum Herder-Gymnasium. */
+/** Departure board for the start screen: in the morning only westbound to the Herder-Gymnasium. */
 async function board(now = new Date(), stop = SCHOOL_STOP) {
   const hour = berlinHour(now); const morning = hour >= 5 && hour < 10;
   const list = await departures(stop.id, { minutes: 60, results: 12 });
   const tagged = list.map((d) => ({ ...d, towards: /Zoologischer|\bZoo\b/.test(d.direction) ? 'Zoo' : /Staaken|Heerstr|Nennhauser|Reimerweg/.test(d.direction) ? 'Westen' : '' }));
   const west = tagged.filter((d) => d.towards === 'Westen'); const rest = tagged.filter((d) => d.towards !== 'Westen');
-  // Morgens zählt nur der Schulweg, sonst je Richtung die nächsten.
+  // In the morning only the way to school counts, otherwise the next ones per direction.
   const chosen = morning ? west.slice(0, 3) : [...west.slice(0, 2), ...rest.slice(0, 1)].sort((x, y) => String(x.when).localeCompare(String(y.when)));
   return { stop: stop.name, morning, departures: chosen };
 }

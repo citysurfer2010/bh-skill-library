@@ -2,7 +2,7 @@
 const { DRIVE_FIELDS } = require('../../lib/drive-helpers.js');
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'sheets.find', description: 'Sucht Google Sheets Tabellen nach Namen.', inputSchema: { type: 'object', properties: { query: { type: 'string' }, driveId: { type: 'string' } } },
+module.exports = { name: 'sheets.find', description: 'Finds Google Sheets spreadsheets by name.', inputSchema: { type: 'object', properties: { query: { type: 'string' }, driveId: { type: 'string' } } },
   handler: async ({ query, driveId }) => {
   let q = `mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`;
   if (query) q += ` and name contains '${query.replace(/'/g, "\\'")}'`;

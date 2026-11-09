@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Baut und startet den App-Container (idempotent). Apps verwaltet danach `bhapp`.
+# Builds and starts the app container (idempotent). `bhapp` manages the apps afterwards.
 set -euo pipefail
 cd "$(dirname "$0")"
 D=/srv/bh-apps; U=101000; ENV=/srv/bh-platform/.env; TOKENS=/srv/llm-gateway/config/user-tokens.json; L=/srv/bh-apps-llm
 val() { sed -n "s/^$1=//p" "$ENV" | head -1; }
 install -d -m 755 "$D"; install -d -m 711 "$L"; install -d -m 700 -o "$U" -g "$U" "$L/llm"
-# Eigenes Gateway-Token fuer die Apps: Kosten erscheinen getrennt von den Usern.
+# Separate gateway token for the apps: costs appear apart from the users.
 [ -n "$(val BH_APPS_LLM_TOKEN)" ] || (umask 077; echo "BH_APPS_LLM_TOKEN=$(openssl rand -hex 32)" >>"$ENV")
 jq --arg t "$(val BH_APPS_LLM_TOKEN)" 'with_entries(select(.value != "app/bh-apps")) + {($t): "app/bh-apps"}' "$TOKENS" >"$TOKENS.new"
 chown "$U:$U" "$TOKENS.new"; chmod 400 "$TOKENS.new"; mv "$TOKENS.new" "$TOKENS"

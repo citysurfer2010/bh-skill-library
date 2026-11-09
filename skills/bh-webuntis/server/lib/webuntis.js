@@ -1,4 +1,4 @@
-/** Tagesplan aus WebUntis: Anmeldung wie auf der Webseite, danach nur lesende Abfragen. */
+/** Daily schedule from WebUntis: login as on the website, then only read queries. */
 'use strict';
 
 const UA = 'bh-platform/1.0';
@@ -60,7 +60,7 @@ function berlin(now = new Date()) {
 
 const addDays = (date, n) => new Date(Date.parse(`${date}T12:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
 
-/** Ab 16 Uhr zählt der nächste Tag, am Wochenende der Montag. */
+/** From 4 pm the next day counts, at the weekend the Monday. */
 function schoolDate(now = new Date()) {
   const b = berlin(now);
   let d = b.hour >= 16 ? addDays(b.date, 1) : b.date;
@@ -93,7 +93,7 @@ async function day(date = schoolDate()) {
 const compact = (d) => d.replace(/-/g, '');
 const fromCompact = (n) => String(n).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
 
-/** Offene Hausaufgaben je Kind und Fälligkeitstag. */
+/** Open homework per child and due date. */
 function homeworkIndex(data) {
   const lessons = new Map((data.lessons || []).map((l) => [l.id, l.subject]));
   const owners = new Map((data.records || []).map((r) => [r.homeworkId, r.elementIds || []]));
@@ -115,7 +115,7 @@ function nextSchoolDates(count, start = schoolDate()) {
   return dates;
 }
 
-/** Mehrere Schultage in einer Anmeldung, für das Blättern. */
+/** Several school days in one login, for paging. */
 async function days(count = 5) {
   const dates = nextSchoolDates(Math.min(Math.max(Number(count) || 5, 1), 10));
   const get = await session();

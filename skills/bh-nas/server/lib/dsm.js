@@ -1,4 +1,4 @@
-/** Zugriff auf die Synology ueber ihre Web-API, je User mit dem eigenen Konto. */
+/** Access to the Synology through its web API, per user with their own account. */
 'use strict';
 
 const fs    = require('fs');
@@ -19,7 +19,7 @@ function credentials() {
   return { user: get('BH_NAS_USER'), password: get('BH_NAS_PASSWORD') };
 }
 
-// Die Synology hat ein eigenes Zertifikat: Es wird fest hinterlegt und exakt verglichen.
+// The Synology has its own certificate: it is pinned and compared exactly.
 function tlsOptions() {
   const fingerprint = process.env.BH_NAS_FP;
   return {
@@ -61,7 +61,7 @@ async function login() {
   sid = r.data.sid;
 }
 
-/** Fuehrt einen Aufruf aus und meldet sich bei abgelaufener Sitzung einmal neu an. */
+/** Runs a call and logs in again once if the session has expired. */
 async function request(params, options) {
   if (!sid) await login();
   let res = await transport({ ...params, _sid: sid }, options);
@@ -78,7 +78,7 @@ async function call(api, version, method, params = {}) {
   return r.data;
 }
 
-/** Liest hoechstens maxBytes einer Datei. */
+/** Reads at most maxBytes of a file. */
 async function download(file, maxBytes) {
   const res = await request({ api: 'SYNO.FileStation.Download', version: '2', method: 'download', path: JSON.stringify([file]), mode: 'download' }, { limit: maxBytes });
   if (res.type.includes('application/json')) { const r = parse(res); if (r.success === false) throw fail(r.error?.code); }

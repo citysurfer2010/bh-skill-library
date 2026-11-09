@@ -1,4 +1,4 @@
-// Startet alle Apps unter /apps/<slug>/ und holt abgestuerzte zurueck.
+// Starts all apps under /apps/<slug>/ and brings crashed ones back.
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -24,7 +24,7 @@ function start(slug, meta, delay = 1000) {
   child.on("exit", (code) => {
     children.delete(slug);
     if (stopping) return;
-    // Wer lange lief, startet sofort neu; wer sofort abstuerzt, wartet immer laenger.
+    // Whoever ran long restarts at once; whoever crashes at once waits longer and longer.
     const next = Date.now() - startedAt > 60_000 ? 1000 : Math.min(delay * 2, 30_000);
     log(slug, `beendet (${code}), neuer Start in ${next} ms`);
     setTimeout(() => { if (!stopping) start(slug, meta, next); }, next);

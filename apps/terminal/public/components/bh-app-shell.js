@@ -1,12 +1,12 @@
 /**
- * BHAppShell — der eine Rahmen jeder BH-App: Navbar, Breadcrumb, linke Sidebar, Hauptbereich. Vanilla, ohne Build.
- * Stile: public/css/bh-shell.css. Bis 900 px wandern Sidebar und Tabs in ein Menü hinter dem Menüknopf.
+ * BHAppShell — the one frame of every BH app: navbar, breadcrumb, left sidebar, main area. Vanilla, no build.
+ * Styles: public/css/bh-shell.css. Up to 900 px, sidebar and tabs move into a menu behind the menu button.
  *
  *   const shell = BHAppShell.mount({ root?, app: { name, href, logo? }, tabs?: [{ id, label, href, disabled? }], activeTab?,
  *     themeToggle?: false, adminHref?, user?, sidebar?: { title, items: [{ id, label, href, icon?, count? }], active, key },
- *     crumbs?: [['App', '/'], ['Seite']], onNavigate?(href, event) });
+ *     crumbs?: [['App', '/'], ['Page']], onNavigate?(href, event) });
  *   shell.main · shell.setCrumbs(list) · shell.setSidebar({ items?, active?, title? }) · shell.setActiveTab(id) · shell.setUser(me)
- * Braucht bh-user-menu.js und bh-sidebar-resize.js. Icons: BHAppShell.ICONS.
+ * Requires bh-user-menu.js and bh-sidebar-resize.js. Icons: BHAppShell.ICONS.
  */
 (function () {
   'use strict';
@@ -135,7 +135,7 @@
       if (o.onNavigate(a.getAttribute('href'), e) === true) e.preventDefault();
     });
 
-    // Benutzermenü und Admin-Zahnrad; die App liefert den Benutzer über setUser(me) aus /api/me.
+    // User menu and admin gear; the app supplies the user via setUser(me) from /api/me.
     function applyUser(me) {
       if (!me) return;
       if (window.BHUserMenu) window.BHUserMenu.mount('bhs-user', { user: me, themeToggle: o.themeToggle !== false });
@@ -144,7 +144,7 @@
     }
     if (o.user) applyUser(o.user);
     renderSidebar();
-    // Aktuelle Sidebar-Breite als --bhs-sidebar-w, damit feste Leisten unten an der Inhaltskante beginnen.
+    // Current sidebar width as --bhs-sidebar-w, so fixed bottom bars start at the content edge.
     const sbWidth = () => wrap.style.setProperty('--bhs-sidebar-w', `${sbEl.hidden ? 0 : Math.round(sbEl.getBoundingClientRect().width)}px`);
     sbWidth();
     if (window.ResizeObserver) new ResizeObserver(sbWidth).observe(sbEl);

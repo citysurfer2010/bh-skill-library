@@ -2,19 +2,19 @@
 const { gapiJSON, ok, err } = require('../../lib/gapi.js');
 
 /**
- * docs.setLayout — Seitenformat, Ränder und Grundschrift eines Google Docs setzen.
+ * docs.setLayout — sets page format, margins and base font of a Google Doc.
  *
- * Warum als eigenes Primitiv: Der HTML→Doc-Import von Drive erzeugt IMMER
- * US Letter (612×792 pt) und ignoriert `@page { size: A4 }` — auch dann, wenn
- * der Inhalt einer bereits A4-großen Datei ersetzt wird. Ein deutsches
- * updateDocumentStyle der Docs-API korrigieren (gleiche Technik wie
+ * Why a separate primitive: Drive's HTML→Doc import ALWAYS creates
+ * US Letter (612×792 pt) and ignores `@page { size: A4 }` — even when
+ * the content of an already A4-sized file is replaced. A German
+ * updateDocumentStyle of the Docs API corrects it (same technique as
  * setReportLayout in report/create-document.js).
  *
- * Die Grundschrift ist optional: Inline-`font-family` im HTML überlebt den
- * Import für Schriften, die Google Docs kennt (Inter, Lato, Roboto …), NICHT
- * aber für Source Sans Pro. fontFamily hier setzt die Familie nachträglich
- * über das gesamte Dokument — Fett/Kursiv/Farben bleiben erhalten, weil nur
- * das Feld weightedFontFamily geschrieben wird.
+ * The base font is optional: inline `font-family` in the HTML survives the
+ * import for fonts Google Docs knows (Inter, Lato, Roboto …), but NOT
+ * for Source Sans Pro. fontFamily here applies the family afterwards
+ * across the whole document — bold/italic/colors are kept because only
+ * the weightedFontFamily field is written.
  */
 
 const MM_TO_PT = 72 / 25.4;
@@ -29,8 +29,8 @@ function pt(mm) {
   return { magnitude: Math.round(mm * MM_TO_PT * 100) / 100, unit: 'PT' };
 }
 
-// Größter endIndex im Body = Ende des Dokuments. endIndex-1, weil der letzte
-// Absatzumbruch nicht Teil eines formatierbaren Bereichs ist.
+// Largest endIndex in the body = end of the document. endIndex-1 because the last
+// paragraph break is not part of a formattable range.
 function bodyEndIndex(doc) {
   let end = 1;
   for (const el of (doc.body?.content || [])) {
@@ -42,17 +42,17 @@ function bodyEndIndex(doc) {
 module.exports = {
   name: 'docs.setLayout',
   description:
-    'Setzt Seitenformat (A4/A4-quer/Letter), Seitenränder und optional die Grundschrift eines Google Docs. ' +
-    'PFLICHT nach jedem HTML→Doc-Import: Drive erzeugt dabei immer US Letter und ignoriert CSS @page. ' +
-    'marginsMm entweder als Zahl (alle vier Ränder) oder als {top,right,bottom,left}. ' +
-    'fontFamily setzt die Schriftfamilie je Textlauf; Fettungen bleiben erhalten (Gewicht wird aus bold abgeleitet).',
+    'Sets page format (A4/A4 landscape/Letter), margins and optionally the base font of a Google Doc. ' +
+    'REQUIRED after every HTML→Doc import: Drive always creates US Letter and ignores CSS @page. ' +
+    'marginsMm either as a number (all four margins) or as {top,right,bottom,left}. ' +
+    'fontFamily sets the font family per text run; bold is kept (weight is derived from bold).',
   inputSchema: {
     type: 'object',
     properties: {
-      documentId: { type: 'string', description: 'Google-Doc-ID' },
-      format: { type: 'string', enum: ['a4', 'a4-landscape', 'letter'], description: 'Seitenformat, Default a4' },
-      marginsMm: { description: 'Seitenränder in mm — Zahl für alle vier, oder {top,right,bottom,left}' },
-      fontFamily: { type: 'string', description: 'Grundschrift für das ganze Dokument, z.B. "Inter"' },
+      documentId: { type: 'string', description: 'Google Doc ID' },
+      format: { type: 'string', enum: ['a4', 'a4-landscape', 'letter'], description: 'Page format, default a4' },
+      marginsMm: { description: 'Margins in mm — number for all four, or {top,right,bottom,left}' },
+      fontFamily: { type: 'string', description: 'Base font for the whole document, e.g. "Inter"' },
     },
     required: ['documentId'],
   },
@@ -88,10 +88,10 @@ module.exports = {
       const doc = await gapiJSON('GET', `https://docs.googleapis.com/v1/documents/${documentId}`);
       if (doc.status !== 200) return err(`Dokument nicht lesbar (${doc.status}).`);
 
-      // Je Textlauf einzeln setzen und das Gewicht aus run.textStyle.bold ableiten.
-      // Ein pauschales updateTextStyle über das ganze Dokument setzt weight implizit
-      // auf 400 und macht damit JEDE Fettung platt (gemessen 21.09.2026 an einer
-      // importierten H1: blieb Inter-Regular).
+      // Set per text run and derive the weight from run.textStyle.bold.
+      // A blanket updateTextStyle over the whole document implicitly sets weight
+      // to 400 and thereby flattens ALL bold (measured 21.09.2026 on an
+      // imported H1: stayed Inter Regular).
       const requests = [];
       const walk = (content) => {
         for (const el of (content || [])) {
@@ -111,7 +111,7 @@ module.exports = {
       };
       walk(doc.data.body?.content);
 
-      // Docs-API deckelt die Requests pro batchUpdate — in Blöcken schicken.
+      // The Docs API caps requests per batchUpdate — send in chunks.
       for (let i = 0; i < requests.length; i += 400) {
         const f = await gapiJSON('POST', `https://docs.googleapis.com/v1/documents/${documentId}:batchUpdate`, {
           requests: requests.slice(i, i + 400),

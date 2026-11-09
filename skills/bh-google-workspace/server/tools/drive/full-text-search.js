@@ -4,7 +4,7 @@ const { DRIVE_FIELDS, driveCorpora, formatDriveFile } = require('../../lib/drive
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 const { toBlockSet, dropBlocked } = require('../../lib/protected-drives.js');
 
-module.exports = { name: 'drive.fullTextSearch', description: 'Volltextsuche in Google Drive (fullText contains).', inputSchema: { type: 'object', properties: { query: { type: 'string' }, pageSize: { type: 'number', description: 'Default 50' } }, required: ['query'] },
+module.exports = { name: 'drive.fullTextSearch', description: 'Full-text search in Google Drive (fullText contains).', inputSchema: { type: 'object', properties: { query: { type: 'string' }, pageSize: { type: 'number', description: 'Default 50' } }, required: ['query'] },
   handler: async ({ query, pageSize = 50, _blockProtectedDrives }) => {
   if (!query) return apiErr('drive.fullTextSearch', 400, 'query fehlt');
   const q = `fullText contains '${query.replace(/'/g, "\\'")}' and trashed=false`;

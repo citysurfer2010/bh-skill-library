@@ -1,7 +1,7 @@
 /**
  * Generic Google REST API Client.
- * Alle Tools rufen `gapiJSON()` — JSON-Response wird automatisch geparsed.
- * Bei Binär-Bodies (PDF-Export, Datei-Download) `gapi()` direkt nehmen.
+ * All tools call `gapiJSON()` — the JSON response is parsed automatically.
+ * For binary bodies (PDF export, file download) use `gapi()` directly.
  */
 'use strict';
 
@@ -45,9 +45,9 @@ function apiErr(op, status, data) {
   return err(`${op} Fehler ${status}: ${msg}`);
 }
 // Structured JSON return for programmatic consumers (Python-Skills via stdio).
-// Text-Tools wrappen ihre Daten in JSON.stringify, sodass der Caller mit
-// JSON.parse(content[0].text) ein typisiertes Objekt erhält statt regex-
-// parsen zu müssen. Aktiviert durch das optionale Tool-Argument format:'json'.
+// Text tools wrap their data in JSON.stringify, so the caller gets a typed
+// object via JSON.parse(content[0].text) instead of having to regex-
+// parse it. Enabled by the optional tool argument format:'json'.
 function okJson(data) { return { content: [{ type: 'text', text: JSON.stringify(data) }] }; }
 
 module.exports = { gapi, gapiJSON, ok, err, apiErr, okJson };

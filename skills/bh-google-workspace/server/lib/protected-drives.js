@@ -1,13 +1,13 @@
 /**
- * Geschützte Shared Drives — serverseitiger Ausgabe-Filter.
+ * Protected Shared Drives — server-side output filter.
  *
- * Das Gateway erzwingt die Zugriffsregel (nur Geschäftsführung bzw. eigener
- * Google-Zugriff) und reicht die zu blockierenden Shared-Drive-IDs als internes
- * Argument `_blockProtectedDrives` an jeden Drive-Tool-Aufruf durch. Dieser
- * Helfer entfernt alle Treffer aus diesen Drives aus dem Ergebnis bzw. verweigert
- * das Lesen einer Datei, die in einem gesperrten Drive liegt. Ohne das Argument
- * (Direkt-/Interne Aufrufe am Gateway vorbei) filtert er nichts — das Gateway ist
- * der Durchsetzungspunkt, nicht dieser MCP (er kennt die anfragende Person nicht).
+ * The gateway enforces the access rule (management only, or the person's own
+ * Google access) and passes the Shared Drive IDs to block as the internal
+ * argument `_blockProtectedDrives` on every Drive tool call. This
+ * helper removes all hits from those drives from the result, or refuses
+ * to read a file that sits in a blocked drive. Without the argument
+ * (direct/internal calls bypassing the gateway) it filters nothing — the gateway is
+ * the enforcement point, not this MCP (it does not know the requesting person).
  */
 'use strict';
 

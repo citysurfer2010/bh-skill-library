@@ -1,15 +1,15 @@
 'use strict';
 /**
- * drive_subtree_manifest — flacher Datei-Index eines Datenraum-Ordners.
+ * drive_subtree_manifest — flat file index of a data room folder.
  *
- * Liefert ALLE Dateien (keine Ordner) im Subtree von rootFolderId mit
- * createdTime/modifiedTime/Pfad — Grundlage für die „Neu/Aktualisiert seit
- * letztem Besuch"-Anzeige der Datenraum-App.
+ * Returns ALL files (no folders) in the subtree of rootFolderId with
+ * createdTime/modifiedTime/path — basis for the data room app's "Neu/Aktualisiert seit
+ * letztem Besuch" display.
  *
- * SICHERHEIT: rootFolderId ist Pflicht-Guard. Es wird ausschließlich der Subtree
- * dieses Ordners besucht (keine globale Drive-Suche) — nichts außerhalb des
- * freigegebenen Datenraums wird exponiert. Spiegelkopie in der skills-library
- * synchron halten.
+ * SECURITY: rootFolderId is a mandatory guard. Only the subtree of this
+ * folder is visited (no global Drive search) — nothing outside the
+ * shared data room is exposed. Keep the mirror copy in the skills-library
+ * in sync.
  */
 const { gapiJSON, okJson, err } = require('../../lib/gapi.js');
 
@@ -34,13 +34,13 @@ async function listChildren(parentId) {
 
 module.exports = {
   name: 'drive_subtree_manifest',
-  description: 'Flacher Datei-Index (alle Dateien, keine Ordner) eines Datenraum-Ordners im Subtree von rootFolderId, inkl. createdTime/modifiedTime/relativem Pfad. Für die „Neu/Aktualisiert seit letztem Besuch"-Anzeige. Scope-sicher via rootFolderId-Guard.',
+  description: 'Flat file index (all files, no folders) of a data room folder in the subtree of rootFolderId, incl. createdTime/modifiedTime/relative path. For the "Neu/Aktualisiert seit letztem Besuch" display. Scope-safe via rootFolderId guard.',
   inputSchema: {
     type: 'object',
     properties: {
-      rootFolderId: { type: 'string', description: 'Wurzel-Ordner des Datenraums (Sicherheits-Guard).' },
-      maxFiles:     { type: 'number', description: 'Obergrenze Dateien (Default 4000).' },
-      maxNodes:     { type: 'number', description: 'Max. besuchte Ordner (Default 4000).' },
+      rootFolderId: { type: 'string', description: 'Root folder of the data room (security guard).' },
+      maxFiles:     { type: 'number', description: 'File limit (default 4000).' },
+      maxNodes:     { type: 'number', description: 'Max. visited folders (default 4000).' },
     },
     required: ['rootFolderId'],
   },

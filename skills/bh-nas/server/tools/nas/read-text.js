@@ -1,6 +1,6 @@
 const { checkPath, download, guarded } = require('../../lib/dsm.js');
 const MAX = 256 * 1024;
-module.exports = { name: 'read_text', description: 'Liest eine Textdatei von der Synology, hoechstens 256 KB. Keine Bilder oder andere Binaerdateien.',
+module.exports = { name: 'read_text', description: 'Reads a text file from the Synology, at most 256 KB. No images or other binary files.',
   inputSchema: { type: 'object', required: ['path'], properties: { path: { type: 'string' } } },
   handler: guarded(async ({ path }) => {
     const r = await download(checkPath(path), MAX);

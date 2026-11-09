@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Legt eine neue BH-Web-App aus dem Template an.
+# Creates a new BH web app from the template.
 #
 #   init.sh <slug> "<Titel>" [--port N] [--base /pfad] [--label TEXT] [--description TEXT] [--dest PFAD]
 #
-# Ziel ist ~/projects/<slug> (Basis über BH_PROJECTS_DIR änderbar, --dest setzt den vollen Pfad).
-# Das Skript braucht nur bash, coreutils, sed und optional git. Der Skill darf read-only liegen, kein sudo, keine globalen Installationen.
+# Target is ~/projects/<slug> (base changeable via BH_PROJECTS_DIR, --dest sets the full path).
+# The script needs only bash, coreutils, sed and optionally git. The skill may be read-only, no sudo, no global installs.
 set -euo pipefail
 
 die() { echo "FEHLER: $*" >&2; exit 1; }
@@ -27,13 +27,13 @@ while [ $# -gt 0 ]; do
 done
 LABEL=${LABEL:-$TITLE}; DESCRIPTION=${DESCRIPTION:-$TITLE}
 
-# Der Slug wird Ordner-, Paket- und Schlüsselname.
+# The slug becomes the folder, package and key name.
 [[ $SLUG =~ ^[a-z][a-z0-9]*(-[a-z0-9]+)*$ ]] && [ ${#SLUG} -ge 2 ] && [ ${#SLUG} -le 41 ] \
   || die "Slug: 2 bis 41 Zeichen, Kleinbuchstaben, Ziffern, einzelne Bindestriche, Beginn mit Buchstabe ('$SLUG')"
-# Testinstanz läuft auf Port + 36000, muss also unter 65536 bleiben.
+# The test instance runs on port + 36000, so it must stay below 65536.
 [[ $PORT =~ ^[0-9]+$ ]] && [ "$PORT" -ge 1024 ] && [ "$PORT" -le 29534 ] || die "Port: Zahl von 1024 bis 29534 ('$PORT')"
 [ -z "$BASE" ] || [[ $BASE =~ ^(/[a-z0-9-]+)+$ ]] || die "Base: leer oder wie /meine-app ('$BASE')"
-# Die Texte landen in JS-, JSON- und HTML-Strings.
+# The texts end up in JS, JSON and HTML strings.
 for v in "$TITLE" "$LABEL" "$DESCRIPTION"; do
   [ -n "$v" ] || die "Titel, Label und Beschreibung dürfen nicht leer sein"
   [ ${#v} -le 120 ] || die "Texte höchstens 120 Zeichen"
@@ -51,12 +51,12 @@ mkdir -p "$(dirname "$DEST")"
 TMP="$DEST.partial.$$"
 trap 'rm -rf "$TMP"' EXIT
 cp -R "$TEMPLATE" "$TMP"
-# Der Skill liegt read-only, die erzeugten Dateien müssen aber dem Nutzer gehören und schreibbar sein.
+# The skill is read-only, but the generated files must belong to the user and be writable.
 chmod -R u+rwX "$TMP"
 
 NS=$(printf '%s' "$SLUG" | awk -F- '{ for (i = 1; i <= NF; i++) printf "%s%s", toupper(substr($i, 1, 1)), substr($i, 2) }')
 API_KEY_PREFIX="bh$(printf '%s' "$SLUG" | tr -cd 'a-z0-9' | cut -c1-3)_"
-# In sed-Ersetzungen haben &, | und \ eine Sonderbedeutung.
+# In sed replacements &, | and \ have a special meaning.
 esc() { printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g'; }
 
 while IFS= read -r -d '' f; do

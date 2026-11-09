@@ -1,4 +1,4 @@
-/* App-Uebersicht: Begruessung, zentrale Suche, Kachel-Sektionen. */
+/* App overview: greeting, central search, tile sections. */
 .hero { padding: 48px 24px 12px; text-align: center; }
 .hero h1 { font-size: 28px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.02em; }
 .hero p { font-size: 15px; color: var(--bh-muted); margin: 0; }

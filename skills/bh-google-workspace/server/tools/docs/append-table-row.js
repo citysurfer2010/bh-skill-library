@@ -6,27 +6,27 @@ const {
 } = require('../../lib/docs-tabs.js');
 
 /**
- * docs.appendTableRow — haengt EINE Zeile an eine bestehende Tabelle an.
+ * docs.appendTableRow — appends ONE row to an existing table.
  *
- * Gebaut fuer den BP-Doc-Uebertrag: pro Belegpruefungs-Frage eine Tabellenzeile
- * im Tab des Wirtschaftsjahres. Drei Dinge, an denen der naive Weg scheitert:
+ * Built for the BP doc transfer: one table row per audit question
+ * in the fiscal year's tab. Three things the naive approach fails on:
  *
- *   1. TABS — `documents.get` liefert `tabs[]` nur mit includeTabsContent=true
- *      (s. lib/docs-tabs.js). Ohne das landet man im ersten Tab und schreibt
- *      ins falsche Wirtschaftsjahr, ohne dass die API meckert.
+ *   1. TABS — `documents.get` returns `tabs[]` only with includeTabsContent=true
+ *      (see lib/docs-tabs.js). Without it you land in the first tab and write
+ *      into the wrong fiscal year without the API complaining.
  *
- *   2. ZELLEN VON HINTEN — insertTableRow legt nur ein leeres Geruest an. Jeder
- *      insertText verschiebt ALLE nachfolgenden Indizes, also muessen die Zellen
- *      in ABSTEIGENDER Index-Reihenfolge befuellt werden. Vorwaerts befuellt
- *      landet Zelle 2 mitten in Zelle 1.
+ *   2. CELLS FROM THE BACK — insertTableRow only creates an empty skeleton. Every
+ *      insertText shifts ALL following indexes, so the cells must be
+ *      filled in DESCENDING index order. Filled forwards,
+ *      cell 2 ends up in the middle of cell 1.
  *
- *   3. IDEMPOTENZ — an einem BP-Doc arbeiten mehrere Personen parallel und
- *      Uebertraege werden wiederholt. Vor dem Schreiben wird geprueft, ob es die
- *      Zeile schon gibt (per dedupeColumn, sonst ueber die ganze Zeile).
- *      `force: true` hebt den Schutz auf.
+ *   3. IDEMPOTENCE — several people work on a BP doc in parallel and
+ *      transfers get repeated. Before writing we check whether the
+ *      row already exists (via dedupeColumn, else across the whole row).
+ *      `force: true` disables the guard.
  */
 
-// Whitespace-tolerant vergleichen: Docs normalisiert Umbrueche/NBSP in Zellen.
+// Compare whitespace-tolerantly: Docs normalizes line breaks/NBSP in cells.
 function norm(s) {
   return String(s == null ? '' : s).replace(/ /g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
 }
@@ -52,8 +52,8 @@ function resolveTable(content, tableIndex, tableWithHeader) {
   return { table: tables[idx], tableIndex: idx, count: tables.length };
 }
 
-// Findet die Tabelle nach dem insertTableRow erneut: Indizes haben sich verschoben,
-// die Position in der Tabellen-Reihenfolge des Tabs aber nicht.
+// Finds the table again after insertTableRow: indexes have shifted,
+// but its position in the tab's table order has not.
 function tableAtPosition(content, position) {
   return tablesIn(content)[position] || null;
 }
@@ -76,20 +76,20 @@ function duplicateRow(table, cells, dedupeColumn) {
 
 module.exports = {
   name: 'docs.appendTableRow',
-  description: 'Haengt eine Zeile an eine bestehende Tabelle in einem Google Doc an — tab-faehig (tabId aus docs.listTabs, sonst erster Tab). Tabelle per tableIndex (0-basiert im Tab) oder tableWithHeader (Text in der Kopfzeile). Zellen werden intern von hinten nach vorne befuellt, damit die Indizes stimmen. Idempotent: eine bereits vorhandene Zeile wird uebersprungen (dedupeColumn = Spaltenindex fuer den Vergleich, sonst ganze Zeile; force:true schreibt trotzdem).',
+  description: 'Appends a row to an existing table in a Google Doc — tab-aware (tabId from docs.listTabs, else first tab). Table via tableIndex (0-based within the tab) or tableWithHeader (text in the header row). Cells are filled internally from back to front so the indexes stay correct. Idempotent: an existing row is skipped (dedupeColumn = column index for the comparison, else whole row; force:true writes anyway).',
   inputSchema: {
     type: 'object',
     properties: {
       documentId: { type: 'string' },
-      tabId: { type: 'string', description: 'Ziel-Tab (Wert hinter ?tab= in der URL, s. docs.listTabs). Ohne Angabe: erster Tab.' },
-      tabTitle: { type: 'string', description: 'Alternative zu tabId: Tab-Titel exakt, z. B. "2025er Belegpruefung".' },
-      tableIndex: { type: 'number', description: '0-basierter Index der Tabelle innerhalb des Tabs (default 0).' },
-      tableWithHeader: { type: 'string', description: 'Alternative zu tableIndex: Tabelle, deren Kopfzeile diesen Text enthaelt.' },
-      cells: { type: 'array', items: { type: 'string' }, description: 'Zellinhalte der neuen Zeile, in Spaltenreihenfolge.' },
-      dedupeColumn: { type: 'number', description: 'Spaltenindex fuer die Doppel-Pruefung (z. B. 3 = Thema). Ohne Angabe wird die ganze Zeile verglichen.' },
-      force: { type: 'boolean', description: 'Idempotenz-Schutz abschalten und in jedem Fall anhaengen.' },
-      color: { type: 'string', description: 'Hex-Farbe fuer den eingefuegten Text, z. B. "#D63384" (Pink = AI-Eintrag im BP-Doc).' },
-      linkify: { type: 'boolean', description: 'URLs im eingefuegten Text klickbar machen. Per API eingefuegter Text wird sonst NICHT verlinkt.' },
+      tabId: { type: 'string', description: 'Target tab (value after ?tab= in the URL, see docs.listTabs). If omitted: first tab.' },
+      tabTitle: { type: 'string', description: 'Alternative to tabId: exact tab title, e.g. "2025er Belegpruefung".' },
+      tableIndex: { type: 'number', description: '0-based index of the table within the tab (default 0).' },
+      tableWithHeader: { type: 'string', description: 'Alternative to tableIndex: table whose header row contains this text.' },
+      cells: { type: 'array', items: { type: 'string' }, description: 'Cell contents of the new row, in column order.' },
+      dedupeColumn: { type: 'number', description: 'Column index for the duplicate check (e.g. 3 = topic). If omitted, the whole row is compared.' },
+      force: { type: 'boolean', description: 'Disable the idempotence guard and append in any case.' },
+      color: { type: 'string', description: 'Hex color for the inserted text, e.g. "#D63384" (pink = AI entry in the BP doc).' },
+      linkify: { type: 'boolean', description: 'Make URLs in the inserted text clickable. Text inserted via the API is otherwise NOT linked.' },
     },
     required: ['documentId', 'cells'],
   },
@@ -100,7 +100,7 @@ module.exports = {
     const doc = await fetchDoc(documentId);
     if (doc.status !== 200) return apiErr('docs.appendTableRow (get)', doc.status, doc.data);
 
-    // Tab aufloesen — tabTitle ist nur Komfort ueber der tabId.
+    // Resolve the tab — tabTitle is only a convenience on top of tabId.
     let targetTabId = tabId;
     if (!targetTabId && tabTitle) {
       const t = findTabByTitle(doc.data.tabs, tabTitle);
@@ -131,7 +131,7 @@ module.exports = {
       }
     }
 
-    // 1) Leere Zeile unter der letzten Zeile anlegen.
+    // 1) Create an empty row below the last row.
     const lastRow = (table.table.tableRows || []).length - 1;
     if (lastRow < 0) return err('docs.appendTableRow: Tabelle hat keine Zeilen.');
     const ins = await batchUpdate(documentId, [{
@@ -146,7 +146,7 @@ module.exports = {
     }]);
     if (ins.status !== 200) return apiErr('docs.appendTableRow (insertTableRow)', ins.status, ins.data);
 
-    // 2) Positionen der neuen Zellen frisch lesen — der Insert hat alle Indizes verschoben.
+    // 2) Re-read the new cells' positions — the insert has shifted all indexes.
     const doc2 = await fetchDoc(documentId);
     if (doc2.status !== 200) return apiErr('docs.appendTableRow (reget)', doc2.status, doc2.data);
     const table2 = tableAtPosition(resolveSegment(doc2.data, targetTabId) || [], position);
@@ -155,8 +155,8 @@ module.exports = {
     const newRow = (table2.table.tableRows || [])[lastRow + 1];
     if (!newRow) return err('docs.appendTableRow: neue Zeile nach insertTableRow nicht gefunden.');
 
-    // 3) Zellen ABSTEIGEND nach Index befuellen — sonst verschiebt jeder Insert die
-    //    Startposition der jeweils folgenden Zelle.
+    // 3) Fill cells in DESCENDING index order — otherwise every insert shifts the
+    //    start position of the next cell.
     const writes = [];
     (newRow.tableCells || []).forEach((cell, ci) => {
       const start = cell.content?.[0]?.startIndex;
@@ -174,7 +174,7 @@ module.exports = {
       if (fill.status !== 200) return apiErr('docs.appendTableRow (insertText)', fill.status, fill.data);
     }
 
-    // 4) Farbe + Links — braucht die Indizes NACH dem Befuellen, also neu lesen.
+    // 4) Color + links — need the indexes AFTER filling, so read again.
     const rgb = hexToRgb(color);
     let styled = 0;
     if ((rgb || linkify) && writes.length) {

@@ -1,4 +1,4 @@
-// Zentrales MCP-Gateway: ein HTTP-Endpunkt je Installation, Werkzeuge laufen hier, nie beim User.
+// Central MCP gateway: one HTTP endpoint per installation, tools run here, never at the user's.
 import http from "node:http";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -53,7 +53,7 @@ export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLog
         const body = JSON.parse(await readBody(req));
         if (req.url === "/connect/google/status") { const { status, ...rest } = googleStatus(usersDir, body); return send(res, status, rest); }
         const { status, ...rest } = req.url === "/connect/google" ? storeGoogle(usersDir, body) : await removeGoogle(usersDir, body, fetchGoogle);
-        // Laufende Werkzeuge halten die alte Freigabe im Speicher.
+        // Running tools keep the old grant in memory.
         if (status === 200) pool.stopUser(body.user);
         return send(res, status, rest);
       }

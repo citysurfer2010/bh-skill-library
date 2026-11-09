@@ -1,20 +1,20 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-// Erste Zeile, deren Zelle in `column` leer ist — strukturiert ueber die
-// Values-API (JSON), nicht ueber den Text von sheets.getRange: dort zerlegt ein
-// Zeilenumbruch IN einer Zelle die Ausgabe in zwei Zeilen und verschiebt jede
-// Zaehlung (Vorfall 29.09.2026, Quick-Tasks: "Keine freie Zeile gefunden").
-// Nuetzlich fuer Sheets mit vorformatierten Leerzeilen, in die appendRow nicht passt.
+// First row whose cell in `column` is empty — structured via the
+// Values API (JSON), not via the text of sheets.getRange: there a line break
+// INSIDE a cell splits the output into two lines and shifts every
+// count (incident 29.09.2026, Quick-Tasks: "Keine freie Zeile gefunden").
+// Useful for sheets with preformatted empty rows where appendRow does not fit.
 module.exports = {
   name: 'sheets.findFirstEmptyRow',
-  description: 'Liefert die Nummer der ersten Zeile im Bereich fromRow..toRow, deren Zelle in der angegebenen Spalte leer ist (Zeilenumbrueche in Zellen zaehlen korrekt). Antwort: {"row": <Nummer>} oder {"row": null}, wenn alle belegt sind.',
+  description: 'Returns the number of the first row in fromRow..toRow whose cell in the given column is empty (line breaks in cells count correctly). Response: {"row": <number>} or {"row": null} if all are filled.',
   inputSchema: { type: 'object', properties: {
     spreadsheetId: { type: 'string' },
-    sheetName: { type: 'string', description: 'Tab-Name, z. B. "Aufgaben"' },
-    column: { type: 'string', description: 'Spaltenbuchstabe, z. B. "B"' },
-    fromRow: { type: 'number', description: 'Erste zu pruefende Zeile (z. B. 2 hinter der Kopfzeile)' },
-    toRow: { type: 'number', description: 'Letzte zu pruefende Zeile' },
+    sheetName: { type: 'string', description: 'Tab name, e.g. "Aufgaben"' },
+    column: { type: 'string', description: 'Column letter, e.g. "B"' },
+    fromRow: { type: 'number', description: 'First row to check (e.g. 2 after the header row)' },
+    toRow: { type: 'number', description: 'Last row to check' },
   }, required: ['spreadsheetId', 'sheetName', 'column', 'fromRow', 'toRow'] },
   handler: async ({ spreadsheetId, sheetName, column, fromRow, toRow }) => {
     const col = String(column || '').toUpperCase();

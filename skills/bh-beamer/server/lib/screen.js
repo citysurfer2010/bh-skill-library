@@ -1,4 +1,4 @@
-/** Legt fest, was die Anzeigeseite zeigt, und oeffnet Adressen im Browser des Beamers. */
+/** Sets what the display page shows and opens addresses in the Beamer's browser. */
 'use strict';
 
 const { launchBrowser } = require('./remote.js');
@@ -17,16 +17,16 @@ async function setContent(payload, http = fetch) {
   return r.json ? r.json().catch(() => ({})) : {};
 }
 
-// Nach einer Webseite hat die App ihre eigene Seite verlassen und fragt nichts mehr ab: nur ein Neustart holt sie zurueck.
+// After a web page the app has left its own page and polls no more: only a restart brings it back.
 const afterPrevious = (c) => (c.previous === 'url' ? { restart: true } : undefined);
 
-// Nicht warten: Die App zeigt den neuen Inhalt sofort; laeuft sie schon, antwortet der Beamer auf den Start erst nach dem Zeitlimit.
+// Do not wait: the app shows the new content at once; if it is already running, the Beamer answers the start only after the time limit.
 function bringToFront(remote, current) { Promise.resolve(remote.openApp('BH Screen', afterPrevious(current))).catch(() => {}); }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ACTIVE = ['PLAYING', 'TRANSITIONING', 'PAUSED_PLAYBACK'];
 
-// Mit installierter App BH Screen zeigt der Beamer den Text selbst; sonst als Bild per Stream.
+// With the BH Screen app installed the Beamer shows the text itself; otherwise as an image via stream.
 async function showText(title, text, { remote = require('./remote.js'), dlna = require('./dlna.js'), waitMs = 2500 } = {}) {
   const current = await setContent({ mode: 'text', title, text });
   if (await remote.isInstalled('BH Screen')) { bringToFront(remote, current); return 'app'; }
@@ -39,7 +39,7 @@ async function showText(title, text, { remote = require('./remote.js'), dlna = r
   throw new Error('Der Beamer hat das Bild nicht angenommen');
 }
 
-// Webseiten oeffnet die App BH Screen im Vollbild; ohne App bleibt nur der Samsung-Browser ohne Adressuebergabe.
+// The BH Screen app opens web pages full screen; without it only the Samsung browser remains, without passing the address.
 async function showUrl(url, { remote = require('./remote.js') } = {}) {
   const href = httpsUrl(url);
   if (await remote.isInstalled('BH Screen')) {
@@ -55,7 +55,7 @@ async function showHome({ remote = require('./remote.js') } = {}) {
   bringToFront(remote, await setContent({ mode: 'text', title: '', text: '' }));
 }
 
-// Stimmung in BH Screen, optional mit Radio dazu: Die App behaelt so die Fernbedienung.
+// Ambience in BH Screen, optionally with radio: this way the app keeps the remote control.
 async function playAmbient({ video, title, radioUrl, station }, { remote = require('./remote.js') } = {}) {
   if (radioUrl) httpsUrl(radioUrl);
   bringToFront(remote, await setContent({ mode: 'video', video, title, ...(radioUrl ? { url: radioUrl, station } : {}) }));
@@ -80,7 +80,7 @@ async function playRadio(url, title, { remote = require('./remote.js') } = {}) {
 
 const stopRadio = () => setContent({ mode: 'text', title: '', text: '' });
 
-// Bildschirmfreigabe: Der Server vermittelt nur Angebot und Antwort, das Bild laeuft direkt im Heimnetz.
+// Screen sharing: the server only relays offer and answer, the picture runs directly in the home network.
 async function shareStart(offer, { remote = require('./remote.js') } = {}) {
   const current = await setContent({ mode: 'share', offer });
   bringToFront(remote, current);

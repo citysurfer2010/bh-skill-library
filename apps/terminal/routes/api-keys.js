@@ -1,7 +1,7 @@
 'use strict';
 /**
- * /api/me/api-keys: Jeder angemeldete Benutzer verwaltet seine eigenen Keys.
- * Der Klartext steht nur in der POST-Antwort.
+ * /api/me/api-keys: Every logged-in user manages their own keys.
+ * The plain text appears only in the POST response.
  */
 const express = require('express');
 const apiKeys = require('../lib/api-keys');

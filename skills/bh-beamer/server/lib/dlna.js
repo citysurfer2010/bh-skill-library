@@ -1,4 +1,4 @@
-/** Spielt Medien per DLNA auf dem Beamer ab (Port 9197, nur durch den WireGuard-Tunnel erreichbar). */
+/** Plays media on the Beamer via DLNA (port 9197, reachable only through the WireGuard tunnel). */
 'use strict';
 
 const AVT = 'urn:schemas-upnp-org:service:AVTransport:1';
@@ -32,7 +32,7 @@ function mediaUrl(u) {
   return parsed.href;
 }
 
-// Medienart bestimmt Klasse und Typangabe; Radio-Streams (mp3/aac ohne Ende) laufen als Audio.
+// Media kind sets class and type; radio streams (endless mp3/aac) run as audio.
 const CLASSES = { image: ['object.item.imageItem.photo', 'image/jpeg'], audio: ['object.item.audioItem.audioBroadcast', 'audio/mpeg'], video: ['object.item.videoItem', '*'] };
 
 async function play(url, title = 'BH Platform', kind = 'video') {

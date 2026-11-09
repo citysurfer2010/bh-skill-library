@@ -1,8 +1,8 @@
 /**
- * Drive-Helpers: Listing und Folder-Lookup.
+ * Drive helpers: listing and folder lookup.
  *
- * IDs in Tool-Output stehen auf eigener Zeile, damit LLMs sie 1:1 kopieren —
- * Drive-IDs sind 28-44 Zeichen und werden bei Inline-Citation oft verstümmelt.
+ * IDs in tool output sit on their own line so LLMs copy them verbatim —
+ * Drive IDs are 28-44 chars and often get mangled when cited inline.
  */
 'use strict';
 
@@ -10,10 +10,10 @@ const { gapiJSON } = require('./gapi.js');
 
 const DRIVE_FIELDS = 'files(id,name,mimeType,size,modifiedTime,webViewLink,parents,driveId)';
 
-// Ohne corpora defaultet die Drive-API auf "user" (My-Drive); Shared-Drive-
-// Items fehlen dann trotz includeItemsFromAllDrives=true. Für einen konkreten
-// Shared Drive → corpora=drive+driveId, sonst allDrives (= My-Drive + alle
-// Shared Drives die der SA sieht).
+// Without corpora the Drive API defaults to "user" (My Drive); Shared Drive
+// items are then missing despite includeItemsFromAllDrives=true. For a specific
+// Shared Drive → corpora=drive+driveId, else allDrives (= My Drive + all
+// Shared Drives the SA can see).
 function driveCorpora(driveId) {
   return driveId ? `&corpora=drive&driveId=${driveId}` : '&corpora=allDrives';
 }
@@ -24,9 +24,9 @@ function formatDriveFile(f) {
   return `• ${f.name}\n  id: ${f.id}\n  ${mime}${date}`;
 }
 
-// Klare Fehlermeldung bei 404 von Drive. Häufigster Grund im Agent-Loop:
-// der LLM hat die fileId nicht wörtlich aus dem vorherigen Tool-Result
-// kopiert (Trace ax-nk8w75w7: "14wFFQPiKxpccHrW2Q TjMWhQDzLcmWD_9" → "2Q" weggelassen).
+// Clear error message on a 404 from Drive. Most common cause in the agent loop:
+// the LLM did not copy the fileId verbatim from the previous tool result
+// (trace ax-nk8w75w7: "14wFFQPiKxpccHrW2Q TjMWhQDzLcmWD_9" → "2Q" dropped).
 function driveNotFoundMessage(fileId) {
   const id  = String(fileId || '');
   const len = id.length;

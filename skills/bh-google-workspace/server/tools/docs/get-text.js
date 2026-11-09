@@ -4,23 +4,23 @@ const {
   fetchDoc, resolveSegment, findTab, findTabByTitle, flattenTabs, contentText,
 } = require('../../lib/docs-tabs.js');
 
-// Tabs: `documents.get` liefert tabs[] nur mit includeTabsContent=true — sonst kommt
-// ausschliesslich der erste Tab als legacy `body` zurueck. Frueher wurde der Parameter
-// hier NUR gesetzt, wenn eine tabId mitkam; ohne tabId las das Tool damit immer den
-// ersten Tab und meldete trotzdem Erfolg. Jetzt laeuft jeder Lauf ueber tabs[], und wer
-// den falschen Tab erwischt, sieht es an der Kopfzeile.
+// Tabs: `documents.get` returns tabs[] only with includeTabsContent=true — otherwise
+// only the first tab comes back, as legacy `body`. The parameter used to be set
+// here ONLY when a tabId was given; without tabId the tool thus always read the
+// first tab and still reported success. Now every run goes through tabs[], and whoever
+// hits the wrong tab sees it in the header line.
 
 module.exports = {
   name: 'docs.getText',
-  description: 'Liest den Text-Inhalt eines Google Docs. Ziel-Tab per tabId (aus docs.listTabs) oder tabTitle; ohne Angabe der erste Tab. Tabellen werden als Pipe-Zeilen ausgegeben.',
+  description: 'Reads the text content of a Google Doc. Target tab via tabId (from docs.listTabs) or tabTitle; if omitted the first tab. Tables are output as pipe rows.',
   inputSchema: {
     type: 'object',
     properties: {
       documentId: { type: 'string' },
-      tabId: { type: 'string', description: 'Tab (Wert hinter ?tab= in der URL, s. docs.listTabs). Ohne Angabe: erster Tab.' },
-      tabTitle: { type: 'string', description: 'Alternative zu tabId: Tab-Titel exakt, z. B. "2025er Belegpruefung".' },
-      maxChars: { type: 'number', description: 'Kuerzung (default 10000).' },
-      withHeader: { type: 'boolean', description: 'Kopfzeile mit Dokument-/Tab-Namen voranstellen (default true bei Docs mit mehreren Tabs).' },
+      tabId: { type: 'string', description: 'Tab (value after ?tab= in the URL, see docs.listTabs). If omitted: first tab.' },
+      tabTitle: { type: 'string', description: 'Alternative to tabId: exact tab title, e.g. "2025er Belegpruefung".' },
+      maxChars: { type: 'number', description: 'Truncation (default 10000).' },
+      withHeader: { type: 'boolean', description: 'Prepend a header line with document/tab name (default true for docs with several tabs).' },
     },
     required: ['documentId'],
   },

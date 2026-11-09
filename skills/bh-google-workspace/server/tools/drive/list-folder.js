@@ -2,7 +2,7 @@
 const { apiErr, gapiJSON, ok, okJson } = require('../../lib/gapi.js');
 const { toBlockSet, dropBlocked } = require('../../lib/protected-drives.js');
 
-module.exports = { name: 'drive_list_folder', description: 'Listet den Inhalt eines Google Drive Ordners nach ID auf. Auch in Shared Drives (driveId empfohlen).', inputSchema: { type: 'object', properties: { folderId: { type: 'string', description: 'ID des Ordners' }, driveId: { type: 'string', description: 'ID des Shared Drive (optional, aber empfohlen)' }, pageSize: { type: 'number' }, orderBy: { type: 'string' }, pageToken: { type: 'string', description: 'Pagination token from previous response' }, format: { type: 'string', enum: ['text', 'json'], description: 'json liefert {folderId,files,nextPageToken} statt Text' } }, required: ['folderId'] },
+module.exports = { name: 'drive_list_folder', description: 'Lists the contents of a Google Drive folder by ID. Also in Shared Drives (driveId recommended).', inputSchema: { type: 'object', properties: { folderId: { type: 'string', description: 'ID of the folder' }, driveId: { type: 'string', description: 'ID of the Shared Drive (optional but recommended)' }, pageSize: { type: 'number' }, orderBy: { type: 'string' }, pageToken: { type: 'string', description: 'Pagination token from previous response' }, format: { type: 'string', enum: ['text', 'json'], description: 'json returns {folderId,files,nextPageToken} instead of text' } }, required: ['folderId'] },
   handler: async ({ folderId, driveId, pageSize = 100, orderBy = 'name', pageToken, format, _blockProtectedDrives }) => {
   const base = driveId
     ? `driveId=${driveId}&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=drive`
@@ -21,10 +21,10 @@ module.exports = { name: 'drive_list_folder', description: 'Listet den Inhalt ei
     const icon = f.mimeType === 'application/vnd.google-apps.folder' ? '📁' : '📄';
     return `${icon} ${f.name}  (${f.id})`;
   }).join('\n');
-  // Abgeschnittene Listen MUESSEN sich als solche zu erkennen geben: der Text-Modus
-  // verschluckte den nextPageToken und meldete "460 Einträge", als waere das alles.
-  // Wer darauf eine Existenzpruefung stuetzt, legt Dubletten an (Vorfall 2026-09-09,
-  // zwei Objektordner Koenigsberger Strasse 7a). Endre 2026-09-10.
+  // Truncated lists MUST identify themselves as such: text mode
+  // swallowed the nextPageToken and reported "460 Einträge" as if that were everything.
+  // Anyone basing an existence check on that creates duplicates (incident 2026-09-09,
+  // two property folders Koenigsberger Strasse 7a). Endre 2026-09-10.
   const weiter = r.data.nextPageToken
     ? `\n\n⚠ NICHT VOLLSTÄNDIG — es gibt weitere Einträge. Naechste Seite mit`
       + ` pageToken="${r.data.nextPageToken}" holen (oder pageSize erhoehen).`

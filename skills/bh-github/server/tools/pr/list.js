@@ -1,5 +1,5 @@
 const { gh, ok, err, REPO } = require('../../lib/github.js');
-module.exports = { name: 'pr_list', description: 'Listet Pull Requests eines Repos.',
+module.exports = { name: 'pr_list', description: 'Lists pull requests of a repo.',
   inputSchema: { type: 'object', required: ['repo'], properties: { repo: REPO, state: { type: 'string', enum: ['open', 'closed', 'all'] } } },
   async handler({ repo, state = 'open' }) {
     const r = await gh('GET', `/repos/${repo}/pulls?state=${state}&per_page=50`);

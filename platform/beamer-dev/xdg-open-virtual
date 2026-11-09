@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Tizen-Werkzeuge (Certificate Manager) rufen xdg-open mit der Samsung-Anmelde-Adresse auf.
-# Kein Browser auf dem Server: der Anmelde-Rueckruf ist ein POST-Formular an http://localhost:4794,
-# das WebKit/Epiphany von der https-Seite aus nicht zustellt. Die Adresse wird abgelegt und im
-# Browser des Nutzers geoeffnet, dessen SSH-Tunnel (-L 4794:127.0.0.1:4794) den Rueckruf zum Server leitet.
+# Tizen tools (Certificate Manager) call xdg-open with the Samsung login address.
+# No browser on the server: the login callback is a POST form to http://localhost:4794,
+# which WebKit/Epiphany does not deliver from the https page. The address is stored and opened in
+# the user's browser, whose SSH tunnel (-L 4794:127.0.0.1:4794) carries the callback to the server.
 printf '%s\n' "$1" > /tmp/signin-url.txt
 date '+%F %T' >> /tmp/signin-url.txt
 exit 0

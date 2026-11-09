@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Bootet die App in diesem Prozess auf einem freien Port. DATA_DIR ist immer ein Wegwerf-Ordner, nie die echte Datenbank.
- * Ohne TRUST_PROXY_AUTH und DEV_USER_* startet jeder Test bei null.
+ * Boots the app in this process on a free port. DATA_DIR is always a throwaway folder, never the real database.
+ * Without TRUST_PROXY_AUTH and DEV_USER_* every test starts from zero.
  */
 const fs = require('fs');
 const path = require('path');

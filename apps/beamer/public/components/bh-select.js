@@ -1,10 +1,10 @@
-/* bh-select.js — das BH-Dropdown (framework-neutral), kein natives <select>.
+/* bh-select.js — the BH dropdown (framework-neutral), no native <select>.
  * window.BHSelectCore.create(host, opts) -> { update(partialOpts), destroy() }.
- * opts: value, options [{value,label,disabled,hint}], onChange(value), placeholder, searchable (Standard: über 8 Einträge), disabled,
+ * opts: value, options [{value,label,disabled,hint}], onChange(value), placeholder, searchable (default: more than 8 entries), disabled,
  *       size 'md'|'sm', label (aria-label), triggerText, searchPlaceholder, testId.
- * Liste im Portal (position: fixed), klappt nach oben/unten; Tastatur: Pfeile, Enter, Esc, Pos1/Ende, Tipp-Suche; Handy: Bottom-Sheet. */
+ * List in a portal (position: fixed), opens up/down; keyboard: arrows, Enter, Esc, Home/End, type-ahead; phone: bottom sheet. */
 (function () {
-  const SEARCH_FROM = 9; // Suche erst ab mehr als 8 Einträgen
+  const SEARCH_FROM = 9; // Search only with more than 8 entries
   let uid = 0;
   function h(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   const CHEV = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>';
@@ -103,8 +103,8 @@
       destroy() { close(false); clearTimeout(bufT); host.innerHTML = ''; host.classList.remove('bhs'); },
     };
   }
-  /** Vanilla-Seiten: <div data-bh-select data-options='[{"value":"","label":"Alle"}]' data-value="" data-label="Status"></div>
-   *  -> host.value + bubbling 'change'-Event wie beim nativen Element. */
+  /** Vanilla pages: <div data-bh-select data-options='[{"value":"","label":"Alle"}]' data-value="" data-label="Status"></div>
+   *  -> host.value + bubbling 'change' event like the native element. */
   function mountAll(root) {
     (root || document).querySelectorAll('[data-bh-select]').forEach((hostEl) => {
       if (hostEl._bhs) return;

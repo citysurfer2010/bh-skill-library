@@ -2,25 +2,25 @@
 const { gapiJSON, ok, err } = require('../../lib/gapi.js');
 
 /**
- * docs.insertPageBreaks — Marker-Absätze in echte Seitenumbrüche verwandeln.
+ * docs.insertPageBreaks — turns marker paragraphs into real page breaks.
  *
- * Warum als eigenes Primitiv: Der HTML→Doc-Import von Drive ignoriert
- * `page-break-before:always` vollständig (gemessen 21.09.2026) — ein HTML mit
- * drei erzwungenen Umbrüchen landet als einseitiges Doc. Echte Umbrüche gibt es
- * nur über den insertPageBreak-Request der Docs-API.
+ * Why a separate primitive: Drive's HTML→Doc import ignores
+ * `page-break-before:always` completely (measured 21.09.2026) — an HTML with
+ * three forced breaks ends up as a one-page doc. Real breaks exist
+ * only via the Docs API's insertPageBreak request.
  *
- * Ablauf: Das HTML enthält an jeder Bruchstelle einen Absatz, der NUR aus dem
- * Marker besteht. Dieses Tool sucht diese Absätze, löscht den Markertext und
- * setzt an derselben Stelle einen Seitenumbruch.
+ * Flow: at each break point the HTML contains a paragraph consisting ONLY of the
+ * marker. This tool finds these paragraphs, deletes the marker text and
+ * inserts a page break at the same position.
  *
- * Verarbeitet wird von HINTEN nach VORN: jede Änderung verschiebt alle
- * nachfolgenden Indizes, vorangehende bleiben gültig.
+ * Processing runs from BACK to FRONT: every change shifts all
+ * following indexes, preceding ones stay valid.
  */
 
 const DEFAULT_MARKER = '%%BH_PAGEBREAK%%';
 
-// Absätze im Body (nicht in Tabellen — ein Seitenumbruch in einer Zelle ist nicht erlaubt),
-// deren Text exakt dem Marker entspricht.
+// Paragraphs in the body (not in tables — a page break inside a cell is not allowed)
+// whose text exactly equals the marker.
 function findMarkerParagraphs(doc, marker) {
   const hits = [];
   for (const el of (doc.body?.content || [])) {
@@ -35,14 +35,14 @@ function findMarkerParagraphs(doc, marker) {
 module.exports = {
   name: 'docs.insertPageBreaks',
   description:
-    'Ersetzt Marker-Absätze in einem Google Doc durch echte Seitenumbrüche (Default-Marker %%BH_PAGEBREAK%%). ' +
-    'Nötig, weil der HTML→Doc-Import von Drive page-break-before komplett ignoriert. ' +
-    'Der Marker muss als eigener Absatz im Fließtext stehen, nicht in einer Tabellenzelle.',
+    'Replaces marker paragraphs in a Google Doc with real page breaks (default marker %%BH_PAGEBREAK%%). ' +
+    'Needed because the Drive HTML→Doc import ignores page-break-before completely. ' +
+    'The marker must be its own paragraph in the body text, not in a table cell.',
   inputSchema: {
     type: 'object',
     properties: {
-      documentId: { type: 'string', description: 'Google-Doc-ID' },
-      marker: { type: 'string', description: `Markertext, Default ${DEFAULT_MARKER}` },
+      documentId: { type: 'string', description: 'Google Doc ID' },
+      marker: { type: 'string', description: `Marker text, default ${DEFAULT_MARKER}` },
     },
     required: ['documentId'],
   },
@@ -58,11 +58,11 @@ module.exports = {
 
     const requests = [];
     for (const h of hits.slice().reverse()) {
-      // Markertext entfernen, den Absatzumbruch selbst stehen lassen …
+      // Remove the marker text, keep the paragraph break itself …
       if (h.endIndex - 1 > h.startIndex) {
         requests.push({ deleteContentRange: { range: { startIndex: h.startIndex, endIndex: h.endIndex - 1 } } });
       }
-      // … und an dieselbe Stelle den Seitenumbruch setzen.
+      // … and put the page break at the same position.
       requests.push({ insertPageBreak: { location: { index: h.startIndex } } });
     }
 

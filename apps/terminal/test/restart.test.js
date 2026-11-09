@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Restart: Die App übersteht einen Neustart über scripts/app.sh, der Start ist idempotent, Daten bleiben erhalten.
- * Eigener Port und eigenes DATA_DIR, damit die laufende App und die Testinstanz unberührt bleiben.
+ * Restart: the app survives a restart via scripts/app.sh, start is idempotent, data is preserved.
+ * Own port and own DATA_DIR, so the running app and the test instance stay untouched.
  */
 const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
@@ -15,7 +15,7 @@ const DATA_DIR = tmpDir();
 const env = { ...process.env, PORT: String(PORT), DATA_DIR, HOST: '127.0.0.1', TRUST_PROXY_AUTH: '1' };
 const script = (cmd) => execFileSync('bash', [path.join(APP, 'scripts', 'app.sh'), cmd], { env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 40_000 }).toString();
 const url = (p) => `http://127.0.0.1:${PORT}${p}`;
-// Nach einem Neustart kann der Client noch eine tote Keep-Alive-Verbindung im Pool haben.
+// After a restart the client may still have a dead keep-alive connection in its pool.
 async function fetchFresh(u, opts) {
   for (let i = 0; ; i++) {
     try { return await fetch(u, opts); } catch (e) { if (i >= 3) throw e; }

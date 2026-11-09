@@ -1,4 +1,4 @@
-/* Profilseite: Kopf, Karten und Zeilen mit Icon, Status und Aktion. */
+/* Profile page: header, cards and rows with icon, status and action. */
 .p-wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 16px; width: 100%; }
 .p-head { display: flex; align-items: center; gap: 20px; padding: 8px 0 8px; }
 .p-avatar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 50%; background: var(--bh-primary); color: var(--bh-on-primary); font-size: 28px; font-weight: 700; letter-spacing: .02em; }

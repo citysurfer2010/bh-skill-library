@@ -1,8 +1,8 @@
-// Fuehrt die Werkzeuge aller Server zusammen. Oeffentlicher Name: <server>_<werkzeug>,
-// Sonderzeichen werden zu "_", weil Modell-APIs Punkte in Namen ablehnen.
+// Merges the tools of all servers. Public name: <server>_<tool>,
+// special characters become "_", because model APIs reject dots in names.
 const clean = (name) => name.replace(/[^a-zA-Z0-9_-]/g, "_");
-// Ohne users-Liste steht ein Server allen offen; mit Liste nur den Genannten.
-// Dienst-Konten (bh-*) bekommen nur ausdruecklich freigegebene Server: Jeder andere waere ein unnoetiger Prozess.
+// Without a users list a server is open to all; with a list only to those named.
+// Service accounts (bh-*) get only explicitly approved servers: any other would be a needless process.
 const isService = (user) => user.startsWith("bh-");
 const allowed = (server, user) => (server.users ? server.users.includes(user) : isService(user) ? (server.services || []).includes(user) : true);
 

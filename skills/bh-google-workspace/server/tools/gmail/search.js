@@ -1,7 +1,7 @@
 'use strict';
 const { apiErr, gapiJSON, ok } = require('../../lib/gapi.js');
 
-module.exports = { name: 'gmail.search', description: 'Durchsucht Google Mail nach Nachrichten.', inputSchema: { type: 'object', properties: { query: { type: 'string', description: 'Gmail-Suchquery, z.B. "in:inbox from:example@gmail.com"' }, maxResults: { type: 'number', description: 'Max. Ergebnisse (default: 10)' } }, required: ['query'] },
+module.exports = { name: 'gmail.search', description: 'Searches Gmail for messages.', inputSchema: { type: 'object', properties: { query: { type: 'string', description: 'Gmail search query, e.g. "in:inbox from:example@gmail.com"' }, maxResults: { type: 'number', description: 'Max. results (default: 10)' } }, required: ['query'] },
   handler: async ({ query, maxResults = 10 }) => {
   const r = await gapiJSON('GET', `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=${maxResults}`);
   if (r.status !== 200) return apiErr('gmail.search', r.status, r.data);

@@ -17,7 +17,7 @@ body.video #ambient { display: block; background: #000; }
 h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap: break-word; max-width: 100%; }
 #text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
 #text:empty, #title:empty { display: none; }
-/* Menue: liegt ruhig unter dem Bild, das Bild schiebt sich zur Seite. */
+/* Menu: stays still below the picture, the picture slides aside. */
 #side { position: absolute; z-index: 0; left: 0; top: 0; width: 340px; height: 1080px; box-sizing: border-box; padding: 64px 26px; background: linear-gradient(180deg, #0b1730 0%, #14285a 100%); opacity: 0; transition: opacity 260ms ease; }
 #home.menu #side { opacity: 1; }
 .brand { margin: 0 0 44px 18px; font-size: 26px; font-weight: 600; letter-spacing: .01em; color: rgba(255, 255, 255, .9); }
@@ -38,7 +38,7 @@ h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap:
 #wx svg { display: block; width: 132px; height: 110px; overflow: visible; }
 #sky { margin-top: 12px; font-size: 40px; }
 #wxday { margin-top: 2px; font-size: 32px; }
-/* Radio-Platte */
+/* Radio disc */
 #playing { display: none; position: absolute; left: 90px; top: 238px; max-width: 980px; box-sizing: border-box; align-items: center; background: var(--plate); padding: 10px 24px; border-radius: 16px; box-shadow: 0 4px 14px rgba(15, 31, 61, .18); color: var(--ink); }
 #home[data-page="start"] #playing { display: flex; }
 body:not(.audio) #radio { display: none; }
@@ -52,7 +52,7 @@ body:not(.audio) #radio { display: none; }
 #station { font-size: 38px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #station.long { font-size: 36px; }
 #note { margin-left: 22px; font-size: 28px; color: var(--accent); white-space: nowrap; }
-/* Schultag */
+/* School day */
 #today { display: none; position: absolute; left: 90px; right: 90px; top: 326px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: var(--panel); box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
 #home[data-page="start"] #today.on { display: block; }
 .day-tabs { display: flex; align-items: center; margin-bottom: 14px; }
@@ -72,7 +72,7 @@ body:not(.audio) #radio { display: none; }
 .hw { margin-top: 14px; padding-top: 10px; border-top: 2px solid var(--card-line); font-size: 30px; line-height: 1.25; color: var(--sub); overflow: hidden; }
 .hw b { color: var(--ink); }
 .hw div { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-/* Raster fuer Radio und Stimmung */
+/* Grid for radio and mood */
 .grid { display: none; position: absolute; left: 90px; right: 0; top: 262px; }
 #home[data-page="radio"] #grid-radio, #home[data-page="mood"] #grid-mood { display: block; }
 .grid h2 { margin: 0 0 22px; font-size: 44px; font-weight: 700; color: #fff; }
@@ -85,7 +85,7 @@ body:not(.audio) #radio { display: none; }
 .tile.playing { background: #ffedd5; color: #9a3412; box-shadow: 0 0 0 5px #c2410c; }
 .tile.playing small { color: #9a3412; }
 .tile.focus { transform: scale(1.04); box-shadow: 0 0 0 6px #1d4ed8, 0 12px 30px rgba(15, 31, 61, .32); }
-/* Wetter: bewegter Hintergrund nur in der rechten oberen Ecke, zum Rand hin ausgeblendet. */
+/* Weather: animated background only in the top right corner, fading out towards the edge. */
 #wxbg { position: absolute; right: 0; top: 0; width: 1180px; height: 430px; overflow: hidden; -webkit-mask-image: radial-gradient(ellipse 100% 100% at 100% 0, black 58%, transparent 100%); }
 .wc { position: absolute; animation: wdrift 26s ease-in-out infinite alternate; }
 @keyframes wdrift { from { transform: translateX(-70px); } to { transform: translateX(80px); } }
@@ -103,7 +103,7 @@ body:not(.audio) #radio { display: none; }
 .wflash { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #fff; opacity: 0; animation: wflash 7s linear infinite; }
 @keyframes wflash { 0%, 90%, 94%, 100% { opacity: 0; } 91%, 93% { opacity: .25; } }
 .weather { position: relative; text-shadow: 0 2px 6px rgba(15, 31, 61, .75), 0 0 26px rgba(15, 31, 61, .6); }
-/* Abfahrten */
+/* Departures */
 #transit { display: none; position: absolute; left: 90px; right: 90px; bottom: 34px; box-sizing: border-box; padding: 16px 24px; border-radius: 20px; background: var(--card); box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; }
 #home[data-page="start"] #transit.on { display: flex; align-items: center; }
 .stop { flex: none; margin-right: 34px; font-size: 32px; font-weight: 700; color: var(--accent); }
@@ -117,32 +117,32 @@ body:not(.audio) #radio { display: none; }
 .dep i { font-style: normal; font-weight: 700; color: var(--accent); margin-left: 8px; }
 .dep.late i { color: #9a3412; }
 .dep.off { color: #b91c1c; text-decoration: line-through; }
-/* Stoerungen */
+/* Disruptions */
 #alerts { display: none; position: absolute; left: 90px; right: 90px; bottom: 122px; }
 #home[data-page="start"] #alerts.on { display: block; }
 .alert { display: flex; align-items: center; margin-top: 10px; padding: 14px 24px; border-radius: 18px; background: #ffedd5; color: #7c2d12; font-size: 32px; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
 .alert svg { flex: none; margin-right: 16px; }
 .alert b { flex: none; margin-right: 18px; }
 .alert span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-/* Nachthimmel */
+/* Night sky */
 #stars { position: absolute; left: 0; top: 0; width: 1920px; height: 520px; display: none; }
 #home[data-time="night"] #stars { display: block; }
 #stars i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; animation: twinkle 4s ease-in-out infinite; }
 @keyframes twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
-/* Geburtstage: oben in der Mitte, am Tag selbst festlich */
+/* Birthdays: top centre, festive on the day itself */
 #bday { display: none; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; top: 62px; max-width: 760px; box-sizing: border-box; padding: 14px 24px; border-radius: 18px; background: var(--plate); color: var(--ink); box-shadow: 0 4px 14px rgba(15, 31, 61, .18); }
 #home[data-page="start"] #bday.on { display: block; }
 .bd { display: flex; align-items: center; font-size: 34px; font-weight: 700; line-height: 1.3; }
 .bd svg { flex: none; margin-right: 14px; color: var(--bar); }
 .bd small { margin-right: 12px; font-size: 30px; font-weight: 400; color: var(--sub); }
-/* Radio-Zeile: Tasten als Kappen, Pause mit eigenem Symbol, ohne Radio zurückhaltend */
+/* Radio row: keys as caps, pause with its own symbol, understated without radio */
 #note kbd { display: inline-block; margin: 0 8px 0 10px; padding: 0 10px; border: 2px solid currentColor; border-radius: 8px; font: inherit; line-height: 1.25; }
 #note kbd:first-child { margin-left: 0; }
 #note b { font-size: 34px; color: var(--ink); }
 #pausei { display: none; flex: none; margin-right: 20px; font-size: 44px; font-weight: 800; line-height: 46px; color: var(--ink); }
 #playing[data-s="paused"] #pausei { display: block; }
 body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
-/* Geburtstags-Screen: Bühne statt Stundenplan, Konfetti nur in der Karte hinter dem Text */
+/* Birthday screen: a stage instead of the timetable, confetti only in the card behind the text */
 .day-tabs span { position: relative; }
 #today.party .day-tabs .tabdot { position: absolute; right: -4px; top: 50%; width: 16px; height: 16px; margin: -8px 0 0; border-radius: 50%; background: #f59e0b; }
 .p-wrap { display: flex; min-height: 344px; }
@@ -166,10 +166,10 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .fact span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .fact.born span { color: var(--sub); }
 #today.tight .fact span { -webkit-line-clamp: 1; }
-/* Abends und nachts bleibt alles gedämpft, auch Störungen */
+/* In the evening and at night everything stays muted, disruptions too */
 #home[data-time="night"] { --panel: #101c3a; --plate: #101c3a; }
 #home[data-time="evening"] .alert, #home[data-time="night"] .alert { background: #4a2a1c; color: #fed7aa; box-shadow: inset 0 0 0 2px #fb923c, 0 6px 18px rgba(0, 0, 0, .3); }
-/* Raumklima: ein Raum auf dem Startbild, alle auf der Seite Räume */
+/* Room climate: one room on the start screen, all of them on the rooms page */
 #indoor { margin-top: 6px; font-size: 32px; }
 #indoor b { font-weight: 800; }
 #indoor .warn { display: inline-block; margin: 0 0 0 14px; padding: 0 12px; border-radius: 8px; background: #ffedd5; color: #7c2d12; font-size: 28px; font-weight: 700; text-shadow: none; }
@@ -192,7 +192,7 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .tile.room.focus { transform: scale(1.02); }
 #home[data-time="evening"] .tile.room.focus, #home[data-time="night"] .tile.room.focus { box-shadow: 0 0 0 6px #7db4ff, 0 12px 30px rgba(0, 0, 0, .35); }
 #home[data-page="rooms"] #indoor { display: none; }
-/* Einmalige Termine aus dem Family-Kalender, im freien Streifen unter dem Stundenplan */
+/* One-off events from the Family calendar, in the free strip below the timetable */
 #events { display: none; position: absolute; left: 90px; right: 90px; top: 800px; box-sizing: border-box; height: 70px; align-items: center; padding: 0 24px; border-radius: 18px; background: var(--card); color: var(--ink); box-shadow: 0 4px 14px rgba(15, 31, 61, .18); }
 #home[data-page="start"] #events.on { display: flex; }
 #events svg { flex: none; margin-right: 18px; color: var(--accent); }
@@ -204,7 +204,7 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .ev b.ev-now { color: #b45309; }
 #home[data-time="evening"] .ev b.ev-now, #home[data-time="night"] .ev b.ev-now { color: #ffb454; }
 #transit { border-radius: 18px; }
-/* Raumsteuerung: Plan neben der Überschrift, Soll wird direkt auf der Kachel geändert */
+/* Room control: schedule beside the heading, the target is changed directly on the tile */
 .grid h2 .g-plan { margin-left: 28px; padding: 4px 16px; border-radius: 10px; background: var(--card); color: var(--ink); font-size: 32px; font-weight: 700; }
 .tile.room small { line-height: 38px; min-height: 38px; }
 .tile.room.editing .t { color: #1d4ed8; }
@@ -215,5 +215,5 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .grid.is-editing .g-plan { display: none; }
 .grid h2 { text-shadow: 0 2px 6px rgba(15, 31, 61, .75), 0 0 26px rgba(15, 31, 61, .6); }
 .grid h2 .g-plan { text-shadow: none; }
-/* Installierte Version unten in der Seitenleiste */
+/* Installed version at the bottom of the sidebar */
 #side-ver { position: absolute; left: 44px; bottom: 54px; font-size: 26px; color: rgba(255, 255, 255, .62); }

@@ -1,8 +1,8 @@
 'use strict';
 /**
- * Hinweis „Neue Version verfügbar“. Pollt {BASE}api/build-id alle 60 s; bei Änderung erscheint unten rechts ein nicht-blockierender
- * Toast. Kein Auto-Reload, damit niemand mitten im Tippen rausgerissen wird. BASE kommt aus der eigenen Script-URL, doppeltes Laden
- * registriert nur einmal. „Aktualisieren“ leert Cache und Service Worker und lädt mit Cache-Buster neu.
+ * "Neue Version verfügbar" notice. Polls {BASE}api/build-id every 60 s; on a change a non-blocking toast appears
+ * bottom right. No auto-reload, so nobody is interrupted mid-typing. BASE comes from the script's own URL, loading it twice
+ * registers only once. "Aktualisieren" clears cache and service worker and reloads with a cache buster.
  */
 (function () {
   if (window.__buildCheckInstalled) return;
@@ -10,18 +10,18 @@
 
   const POLL_MS = 60_000;
 
-  // wird unter /dms/build-version-check.js geladen → BASE = /dms/.
+  // loaded under /dms/build-version-check.js → BASE = /dms/.
   function getBase() {
     const me = document.currentScript;
     if (me && me.src) {
       try {
         const u = new URL(me.src, window.location.origin);
         const parts = u.pathname.split('/').filter(Boolean);
-        parts.pop(); // build-version-check.js entfernen
+        parts.pop(); // remove build-version-check.js
         return parts.length ? '/' + parts.join('/') + '/' : '/';
       } catch (_) { /* fallthrough */ }
     }
-    // Fallback: erster Path-Segment der aktuellen URL als Gateway-Prefix
+    // Fallback: first path segment of the current URL as gateway prefix
     const segs = window.location.pathname.split('/').filter(Boolean);
     return segs.length ? '/' + segs[0] + '/' : '/';
   }
@@ -56,34 +56,34 @@
     primaryD: 'var(--bh-primary-hover)',
   };
 
-  // Echter Hard-Reload: Cache API leeren, Service Worker abmelden, mit Cache-Buster neu navigieren.
-  // alte Bundles, auch wenn der Server schon das neue ausliefert.
+  // Real hard reload: clear Cache API, unregister service worker, navigate again with a cache buster.
+  // old bundles, even if the server already delivers the new one.
   async function forceHardReload() {
     try {
       if (typeof caches !== 'undefined' && caches && typeof caches.keys === 'function') {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       }
-    } catch (_) { /* nicht blockieren — Cache-API kann in Insecure-Contexts fehlen */ }
+    } catch (_) { /* do not block — Cache API may be missing in insecure contexts */ }
     try {
       if (navigator.serviceWorker && typeof navigator.serviceWorker.getRegistrations === 'function') {
         const regs = await navigator.serviceWorker.getRegistrations();
         await Promise.all(regs.map(r => r.unregister()));
       }
-    } catch (_) { /* dito */ }
+    } catch (_) { /* ditto */ }
 
     const loc   = window.location;
     const buster = latestBuildId || String(Date.now());
-    // Bestehenden _v=… aus der Query rausstrippen — sonst stackt der Param
-    // bei jedem Update (?_v=A&_v=B&_v=C …).
+    // Strip any existing _v=… from the query — otherwise the param stacks
+    // on every update (?_v=A&_v=B&_v=C …).
     const cleanSearch = (loc.search || '')
       .replace(/(?:^\?|&)_v=[^&]*/g, '')
       .replace(/^&/, '?')
       .replace(/^\?$/, '');
     const sep = cleanSearch ? (cleanSearch.startsWith('?') ? '&' : '?') : '?';
     const target = loc.pathname + cleanSearch + sep + '_v=' + encodeURIComponent(buster) + (loc.hash || '');
-    // replace statt assign: kein History-Back zur Vor-Update-Version
-    // (sonst klickt User „zurück" und kriegt wieder die alte URL ohne _v).
+    // replace instead of assign: no history back to the pre-update version
+    // (otherwise the user clicks "back" and gets the old URL without _v again).
     loc.replace(target);
   }
 
@@ -145,8 +145,8 @@
   function start() {
     tick();
     setInterval(tick, POLL_MS);
-    // Bei Tab-Wiederfokus: Sofort-Check, falls der User den Tab lange
-    // im Hintergrund hatte (Browser drosseln dann setInterval).
+    // On tab refocus: immediate check, in case the user had the tab
+    // in the background for long (browsers then throttle setInterval).
     window.addEventListener('focus', tick);
   }
   if (document.readyState === 'loading') {

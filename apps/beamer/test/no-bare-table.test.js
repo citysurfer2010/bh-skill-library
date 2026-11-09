@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Ratchet: Tabellen sind BHDataTable. Eine handgebaute <table> hat keine ziehbaren Spalten, kein Sortieren über alle Zeilen, keine feste Kopfzeile.
- * ALLOWLIST nur für Altbestand, Zahlen dürfen nur sinken. <table> in E-Mail-/Druck-HTML: Zeile mit `table-exempt: <Grund>` markieren.
+ * Ratchet: tables are BHDataTable. A hand-built <table> has no draggable columns, no sorting over all rows, no fixed header row.
+ * ALLOWLIST for legacy code only, counts may only fall. <table> in email/print HTML: mark the line with `table-exempt: <reason>`.
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const APP = path.join(__dirname, '..');
-// app-shell.js: AppShell.list, die kleine statische Liste. bh-data-table.js: die Tabelle selbst.
+// app-shell.js: AppShell.list, the small static list. bh-data-table.js: the table itself.
 const ALLOWLIST = { 'public/components/app-shell.js': 1, 'public/components/bh-data-table.js': 1 };
 
 function walk(dir, out = []) {
@@ -34,7 +34,7 @@ test('no bare <table> beyond the allowlist; counts never grow', () => {
   assert.deepEqual(errs, [], '\n' + errs.join('\n'));
 });
 
-// Die Beispielseite des Skeletons ist ersetzt; diese App hat keine Tabellen. Die Bausteine bleiben Pflicht.
+// The skeleton's example page has been replaced; this app has no tables. The building blocks remain mandatory.
 test('Tabellen-Bausteine sind vorhanden', () => {
   for (const f of ['bh-data-table.js', 'bh-list-page.js']) assert.ok(fs.existsSync(path.join(APP, 'public', 'components', f)), f);
 });

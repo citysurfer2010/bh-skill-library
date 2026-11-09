@@ -1,11 +1,11 @@
 /**
- * BHListPage — Aufbau jeder Listenseite: Seitenkopf (68 px) mit Überschrift, Suche und Aktionen, optionale KPI-Filterboxen,
- * Toolbar (48 px) mit Trefferzahl und Chips, darunter die Tabelle randlos. Stile: public/css/bh-table.css.
+ * BHListPage — layout of every list page: page header (68 px) with heading, search and actions, optional KPI filter boxes,
+ * toolbar (48 px) with hit count and chips, below it the borderless table. Styles: public/css/bh-table.css.
  *   const page = BHListPage.render(host, { title, sub?, actions?, search?: { placeholder, value?, onInput(text) },
  *     kpis?: [{ key, label, value, sub?, href? }], kpiActive?, onKpi?(key), chips?: [{ key, label, count?, href? }], chipActive?, onChip?(key),
  *     countLabel?, topActions?/toolbarActions?: [{ id?, label, onClick?(), href?, primary?, icon? }], toolbarRight?, table?, content?, toolbar?: false });
  *   page.table · page.setCount(n) · page.setKpis(items, active) · page.setChips(items, active) · page.contentEl · page.toolbarRightEl · page.searchEl
- * Eine Suche mit Tabelle und ohne onInput filtert die Tabelle direkt.
+ * A search with a table and without onInput filters the table directly.
  */
 (function () {
   'use strict';
@@ -30,7 +30,7 @@
       `${esc(c.label)}${c.count == null ? '' : ` <span class="bhlp-chip-n">${num(c.count)}</span>`}`)).join('');
   }
 
-  // Knöpfe aus Daten: Hauptaktion blau, sonst umrandet.
+  // Buttons from data: main action blue, otherwise outlined.
   function buttonsHtml(list, area) {
     return (list || []).map((b, i) => {
       const cls = `bhlp-btn${b.primary ? ' bhlp-btn-primary' : ''}`;

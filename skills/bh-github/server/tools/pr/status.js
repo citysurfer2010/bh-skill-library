@@ -1,5 +1,5 @@
 const { gh, ok, err, REPO, PR } = require('../../lib/github.js');
-module.exports = { name: 'pr_status', description: 'Zeigt Status eines Pull Requests: Zustand, Branches, Merge-Faehigkeit und Checks.',
+module.exports = { name: 'pr_status', description: 'Shows the status of a pull request: state, branches, mergeability and checks.',
   inputSchema: { type: 'object', required: ['repo', 'pr'], properties: { repo: REPO, pr: PR } },
   async handler({ repo, pr }) {
     const r = await gh('GET', `/repos/${repo}/pulls/${pr}`);

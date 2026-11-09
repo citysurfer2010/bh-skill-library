@@ -8,8 +8,8 @@ const b64 = (b) => b.toString("base64url");
 const G = "https://www.googleapis.com/auth/";
 const SERVICES = ["openid", "email", "profile", ...["gmail.modify", "drive", "calendar", "documents", "spreadsheets", "presentations", "tasks"].map((s) => G + s)].join(" ");
 
-// Google bestaetigt nur, wem ein Konto gehoert. Zugang haben eingeladene Adressen und Konten,
-// die ein angemeldeter User selbst mit seinem Profil verknuepft hat.
+// Google only confirms who owns an account. Access is for invited addresses and accounts
+// that a logged-in user has linked to their own profile.
 export function googleRoutes({ config, users, sessions, avatars, requireLogin }) {
   const r = Router();
   const redirectUri = `${config.publicUrl}/oauth/google/callback`;
@@ -38,7 +38,7 @@ export function googleRoutes({ config, users, sessions, avatars, requireLogin })
     toGoogle(res, { linkUid: req.user.id });
   });
 
-  // Kalender, Drive und Co. sind eine eigene Zustimmung, getrennt von der reinen Anmeldung.
+  // Calendar, Drive and the like are a separate consent, apart from the plain login.
   r.get("/oauth/google/services", requireLogin, (req, res) => {
     if (!config.google || !config.connect.secret) return res.redirect("/profile");
     toGoogle(res, { servicesUid: req.user.id }, { scope: SERVICES, access_type: "offline", prompt: "consent" });

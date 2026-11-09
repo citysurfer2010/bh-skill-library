@@ -39,7 +39,7 @@ export const messageView = (title, text) => center(title, `<h1>${esc(title)}</h1
 const CHEVRON = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
 export const initials = (u) => esc(String(u.name || u.email || "?").split(/[\s.@]+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join(""));
 
-/** Profilbild, sonst Initialen. */
+/** Profile picture, otherwise initials. */
 export const avatarInner = (u) => (u.avatarType ? `<img src="/avatar/me?v=${esc(u.avatarAt)}" alt="">` : initials(u));
 
 function navTabs(user, active) {
@@ -47,7 +47,7 @@ function navTabs(user, active) {
   return tabs.map(([id, href, label]) => `<a class="bhs-tab${id === active ? " active" : ""}" href="${href}">${label}</a>`).join("");
 }
 
-// Standard-Benutzermenue: oben rechts, wie im Skeleton (siehe Skill bh-webapp-skeleton).
+// Standard user menu: top right, as in the skeleton (see skill bh-webapp-skeleton).
 function userMenu(user) {
   const adminLinks = user.isAdmin ? `<a class="bh-um-item bh-um-mobile" role="menuitem" href="/admin">Benutzer</a><a class="bh-um-item bh-um-mobile" role="menuitem" href="/admin/apps">Apps verwalten</a>` : "";
   return `<div class="bh-um"><button type="button" class="bh-um-btn" aria-haspopup="menu" aria-expanded="false"><span class="bh-um-avatar" aria-hidden="true">${avatarInner(user)}</span><span class="bh-um-name">${esc(user.name)}</span><span class="bh-um-chevron">${CHEVRON}</span></button>

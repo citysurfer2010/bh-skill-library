@@ -1,4 +1,4 @@
-/** Fernbedienung eines Samsung-Beamers ueber dessen verschluesselte Schnittstelle (Port 8002). */
+/** Remote control of a Samsung Beamer via its encrypted interface (port 8002). */
 'use strict';
 
 const crypto = require('crypto');
@@ -17,7 +17,7 @@ const tokenFile = () => path.join(process.env.HOME || os.homedir(), '.config', '
 function readToken() { try { return fs.readFileSync(tokenFile(), 'utf8').trim(); } catch { return ''; } }
 function saveToken(t) { fs.mkdirSync(path.dirname(tokenFile()), { recursive: true, mode: 0o700 }); fs.writeFileSync(tokenFile(), String(t), { mode: 0o600 }); }
 
-// Der Beamer bringt ein eigenes Zertifikat mit: fest hinterlegt und exakt verglichen.
+// The Beamer brings its own certificate: pinned and compared exactly.
 function tlsOptions() {
   const fingerprint = process.env.BH_BEAMER_FP;
   return {
@@ -32,7 +32,7 @@ function encodeText(text) {
   return Buffer.concat([head, mask, payload.map((b, i) => b ^ mask[i % 4])]);
 }
 
-/** Zerlegt empfangene Daten in Textnachrichten; unvollstaendige Reste bleiben stehen. */
+/** Splits received data into text messages; incomplete remainders stay in place. */
 function decodeFrames(buffer) {
   const texts = []; let at = 0;
   while (buffer.length - at >= 2) {
@@ -72,7 +72,7 @@ function realOpen(urlPath, onText) {
 let opener = realOpen;
 const setOpener = (fn) => { opener = fn; };
 
-/** Oeffnet die Fernbedienungs-Verbindung, wartet auf die Freigabe am Beamer und fuehrt work aus. */
+/** Opens the remote-control connection, waits for approval on the Beamer and runs work. */
 async function withChannel(work, onEvent = () => {}) {
   const token = readToken();
   let ready; let refuse;
@@ -101,14 +101,14 @@ async function press(key) {
   });
 }
 
-// Auf diesem Beamer per Abfrage bestaetigt. Vor jedem Start wird der echte Name erneut geprueft.
+// Confirmed by query on this Beamer. Before every start the real name is checked again.
 const APPS = { 'BH Screen': 'bhscreen01.BHScreen', YouTube: '111299001912', 'Prime Video': '3201910019365', Netflix: '3201907018807', 'Disney+': '3201901017640', 'Apple TV': '3201807016597', Spotify: '3201606009684', WOW: '3201411000562', Internet: '3201907018784' };
 
 function realRest(method, id, timeout = 6000) {
   return new Promise((resolve, reject) => {
     const req = https.request({ ...tlsOptions(), host: process.env.BH_BEAMER_IP, port: PORT, path: `/api/v2/applications/${id}`, method, timeout }, (res) => {
       let t = ''; res.on('data', (c) => { t += c; });
-      res.on('end', () => { let json = {}; try { json = JSON.parse(t); } catch { /* leere Antwort */ } resolve({ status: res.statusCode, json }); });
+      res.on('end', () => { let json = {}; try { json = JSON.parse(t); } catch { /* empty answer */ } resolve({ status: res.statusCode, json }); });
     });
     req.on('timeout', () => req.destroy(new Error('timeout')));
     req.on('error', (e) => reject(new Error(e.message === 'timeout' ? 'timeout' : 'Beamer ist aus oder nicht erreichbar')));
@@ -135,20 +135,20 @@ async function waitVisible(id, tries, delayMs) {
 }
 
 const installedUntil = new Map();
-// Installiert bleibt installiert: Das Ergebnis spart bei jedem Umschalten eine Abfrage.
+// Installed stays installed: the result saves one query on every switch.
 async function isInstalled(app) {
   if ((installedUntil.get(app) || 0) > Date.now()) return true;
   try { await appInfo(app); installedUntil.set(app, Date.now() + 600_000); return true; } catch { return false; }
 }
 
-// Per sdb installierte Entwickler-Apps (BH Screen) melden dem REST-Endpunkt nie `running`/`visible`.
-// Dort gilt die Antwort `true` auf den Start als Erfolg; laeuft die App schon im Vordergrund, antwortet
-// der Beamer auf den Start gar nicht (Timeout) - auch das ist dann kein Fehler, erreichbar war er eben noch.
+// Developer apps installed via sdb (BH Screen) never report `running`/`visible` to the REST endpoint.
+// There the answer `true` to the start counts as success; if the app is already in the foreground, the
+// Beamer does not answer the start at all (timeout) - that is no error either, it was reachable just now.
 async function openApp(app, { tries = 8, delayMs = 750, restart = false } = {}) {
   const { id } = await appInfo(app);
   if (restart) { await rest('DELETE', id).catch(() => {}); await pause(1500); }
   let started = false; let busy = false;
-  // Kurzes Limit: Auf den Start einer laufenden App antwortet der Beamer nicht und blockiert solange alle anderen Abfragen.
+  // Short limit: the Beamer does not answer the start of a running app and blocks all other queries meanwhile.
   try { started = (await rest('POST', id, 1500)).json === true; } catch (e) { if (e.message !== 'timeout') throw e; busy = true; }
   if (await waitVisible(id, started || busy ? 2 : tries, delayMs)) return 'visible';
   if (started) return 'started';
@@ -156,14 +156,14 @@ async function openApp(app, { tries = 8, delayMs = 750, restart = false } = {}) 
   throw new Error(`${app} liess sich nicht starten`);
 }
 
-/** Haelt eine Taste gedrueckt (Ausschalten geht bei diesem Modell nur so). */
+/** Holds a key down (the only way to power off this model). */
 async function hold(key, ms = 3000) {
   if (!KEYS.includes(key)) throw new Error(`Unbekannte Taste: ${key}`);
   const send = (socket, Cmd) => socket.send(JSON.stringify({ method: 'ms.remote.control', params: { Cmd, DataOfCmd: key, Option: 'false', TypeOfRemote: 'SendRemoteKey' } }));
   await withChannel(async (socket) => { send(socket, 'Press'); await pause(ms); send(socket, 'Release'); await pause(300); });
 }
 
-/** Startet den Browser und uebergibt die Adresse. Ob der Beamer sie laedt, meldet er nicht. */
+/** Starts the browser and passes the address. The Beamer does not report whether it loads it. */
 async function launchBrowser(url, { tries = 6, delayMs = 750 } = {}) {
   await openApp('Internet', { tries, delayMs });
   const { id } = await appInfo('Internet');

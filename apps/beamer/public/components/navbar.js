@@ -1,12 +1,12 @@
 'use strict';
 /**
- * Beamer: Einstellungen des Rahmens. Der Rahmen selbst ist bh-app-shell.js.
- *   Navbar.render(aktiverTab, me)  erster Aufruf baut den Rahmen, spätere aktualisieren Tab und Benutzer
- *   Navbar.shell()                 die BHAppShell-Instanz (setCrumbs, setSidebar, setActiveTab, main)
- * Seitenknöpfe gehören nie in die Navbar, sondern in den Seitenkopf.
+ * Beamer: frame settings. The frame itself is bh-app-shell.js.
+ *   Navbar.render(activeTab, me)  first call builds the frame, later ones update tab and user
+ *   Navbar.shell()                 the BHAppShell instance (setCrumbs, setSidebar, setActiveTab, main)
+ * Page buttons never belong in the navbar, but in the page header.
  */
 (function () {
-  // Modul-Tabs: beim Anlegen neuer Seiten ergänzen. `id` ist der Wert für Navbar.render().
+  // Module tabs: extend when adding new pages. `id` is the value for Navbar.render().
   var TABS = [
     { id: 'home', href: '/beamer/', label: 'Beamer' },
     { id: 'today', href: '/beamer/today', label: 'Heute' },
@@ -17,11 +17,11 @@
     if (shell || !window.BHAppShell) return shell;
     shell = window.BHAppShell.mount({
       root: document.getElementById('app-root') || document.body,
-      // Navbar = "[BH-Kachel] App-Name"; das Icon erzeugt scripts/make-app-icons.mjs.
+      // Navbar = "[BH tile] app name"; scripts/make-app-icons.mjs generates the icon.
       app: { name: 'Beamer', href: '/beamer/',
         logo: '<img class="bhs-brand" src="/beamer/branding/nav-icon.svg?v=1" width="24" height="24" alt="">' },
       tabs: TABS,
-      adminHref: '/beamer/admin', // Zahnrad nur für Admins
+      adminHref: '/beamer/admin', // Gear for admins only
     });
     return shell;
   }

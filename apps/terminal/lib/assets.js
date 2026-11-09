@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Bündel für die Auslieferung: eine CSS-Datei je Schicht, ein JS-Bündel aller Komponenten (1 Request statt N).
- * /bh-styles.css = Design-System, /app.css = App-eigene Stile. Die Quellen bleiben kleine Dateien.
+ * Bundles for delivery: one CSS file per layer, one JS bundle of all components (1 request instead of N).
+ * /bh-styles.css = design system, /app.css = app-specific styles. The sources remain small files.
  */
 const fs = require('fs');
 const path = require('path');
@@ -12,7 +12,7 @@ const CSS_MODULES = ['base', 'layout', 'forms', 'components', 'bh-select', 'util
 
 const css = (names) => names.map((name) => `\n/* ─── ${name}.css ─── */\n${fs.readFileSync(path.join(PUBLIC, 'css', `${name}.css`), 'utf8')}`).join('\n');
 
-// Nicht pages/*: Seiten-Orchestratoren laufen nur auf ihrer eigenen Seite.
+// Not pages/*: page orchestrators run only on their own page.
 const COMPONENTS = path.join(PUBLIC, 'components');
 const APP_JS = fs.readdirSync(COMPONENTS)
   .filter((f) => f.endsWith('.js'))

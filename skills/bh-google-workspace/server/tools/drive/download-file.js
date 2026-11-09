@@ -8,7 +8,7 @@ const { checkWritablePath, openWriteGuarded } = require('../../lib/local-file-gu
 
 module.exports = {
   name: 'drive_download_file',
-  description: 'Lädt eine Datei aus Google Drive herunter. Mit savePath wird direkt auf die Platte gestreamt (keine Größengrenze, Arbeitsspeicher bleibt klein); ohne savePath nur die Größe (in-memory).',
+  description: 'Downloads a file from Google Drive. With savePath it streams directly to disk (no size limit, memory stays small); without savePath only the size (in memory).',
   inputSchema: {
     type: 'object',
     properties: {
@@ -18,17 +18,17 @@ module.exports = {
     required: ['fileId'],
   },
   handler: async ({ fileId, savePath, _blockProtectedDrives }) => {
-    if (savePath) { const g0 = checkWritablePath(savePath); if (!g0.ok) return err(g0.error); } // Sicherheitspruefung 05.11.2026: vor jedem Drive-Aufruf
+    if (savePath) { const g0 = checkWritablePath(savePath); if (!g0.ok) return err(g0.error); } // Security review 05.11.2026: before every Drive call
   { const { toBlockSet, refuseProtectedFile } = require('../../lib/protected-drives.js'); const _ref = await refuseProtectedFile(fileId, toBlockSet(_blockProtectedDrives)); if (_ref) return _ref; }
     const token = await getAccessToken();
     const u = new URL(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`);
     if (savePath) {
-      const guard = checkWritablePath(savePath); // Sicherheitspruefung 05.11.2026: nie in Code-/Konfig-/Schluessel-Ordner schreiben
+      const guard = checkWritablePath(savePath); // Security review 05.11.2026: never write into code/config/key folders
       if (!guard.ok) return err(guard.error);
-      savePath = guard.path; // ab hier nur noch der aufgeloeste Pfad
-      // Streaming (Matti 09.10.2026: 3,6-GB-Bildschirmaufnahme scheiterte am Sammeln im Speicher, Grenze 2 GB): Antwort → Datei, nie im Speicher.
+      savePath = guard.path; // from here on only the resolved path
+      // Streaming (Matti 09.10.2026: a 3.6 GB screen recording failed when buffered in memory, limit 2 GB): response → file, never in memory.
       const tmp = `${savePath}.part`;
-      const part = openWriteGuarded(tmp); // O_NOFOLLOW + fd-Pruefung
+      const part = openWriteGuarded(tmp); // O_NOFOLLOW + fd check
       let fdOpen = true; // the write stream closes the fd itself once it took over
       const discard = (done) => { if (fdOpen) { try { fs.closeSync(part.fd); } catch { /* closed */ } fdOpen = false; } fs.unlink(tmp, () => done()); };
       const bytes = await new Promise((resolve, reject) => {

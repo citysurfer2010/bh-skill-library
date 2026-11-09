@@ -2,33 +2,33 @@
 const { gapiJSON, ok, err } = require('../../lib/gapi.js');
 
 /**
- * docs.setFooter — setzt eine ECHTE Google-Docs-Fußzeile (Segment DEFAULT).
+ * docs.setFooter — sets a REAL Google Docs footer (segment DEFAULT).
  *
- * Warum als eigenes Primitiv: Beim HTML→Doc-Import erzeugt Drive KEINE Fußzeile —
- * ein <footer>-Element landet einfach als letzter Absatz im Fließtext. Eine echte,
- * auf jeder Seite wiederholte Fußzeile geht nur über die Docs-API (createFooter +
- * insertText, optional insertPageNumber). Genutzt von agent-actions.create_doc.
+ * Why a separate primitive: on HTML→Doc import Drive creates NO footer —
+ * a <footer> element just lands as the last paragraph in the body. A real footer
+ * repeated on every page is only possible via the Docs API (createFooter +
+ * insertText, optionally insertPageNumber). Used by agent-actions.create_doc.
  */
 module.exports = {
   name: 'docs.setFooter',
   description:
-    'Setzt eine echte Fußzeile (auf jeder Seite) in einem Google Doc. text = Fußzeilentext. ' +
-    'Idempotent: existiert bereits eine DEFAULT-Fußzeile, wird deren Inhalt ersetzt. ' +
-    'Ohne dieses Tool erzeugt ein HTML-Import KEINE Fußzeile. ' +
-    'HINWEIS: Automatische SEITENZAHLEN kann die Docs-API nicht einfügen (kein insertPageNumber-' +
-    'Request, HTTP 400) — die muessen bei Bedarf manuell in der Doc-UI ergaenzt werden.',
+    'Sets a real footer (on every page) in a Google Doc. text = footer text. ' +
+    'Idempotent: if a DEFAULT footer already exists, its content is replaced. ' +
+    'Without this tool an HTML import creates NO footer. ' +
+    'NOTE: the Docs API cannot insert automatic PAGE NUMBERS (no insertPageNumber' +
+    'request, HTTP 400) — add them manually in the doc UI if needed.',
   inputSchema: {
     type: 'object',
     properties: {
-      documentId: { type: 'string', description: 'Google-Doc-ID' },
-      text: { type: 'string', description: 'Fußzeilentext, z.B. "RE SMART Management GmbH · Vertraulich"' },
-      fontSize: { type: 'number', description: 'Schriftgröße pt (Default 8)' },
-      color: { type: 'string', description: 'Hex-Farbe, Default #64748b' },
+      documentId: { type: 'string', description: 'Google Doc ID' },
+      text: { type: 'string', description: 'Footer text, e.g. "RE SMART Management GmbH · Vertraulich"' },
+      fontSize: { type: 'number', description: 'Font size in pt (default 8)' },
+      color: { type: 'string', description: 'Hex color, default #64748b' },
     },
     required: ['documentId', 'text'],
   },
   handler: async ({ documentId, text, fontSize = 8, color = '#64748b' }) => {
-    // 1) Bestehende DEFAULT-Fußzeile suchen (sonst neu anlegen) — sonst entstünden Duplikate.
+    // 1) Look for an existing DEFAULT footer (else create one) — otherwise duplicates would arise.
     const docR = await gapiJSON('GET', `https://docs.googleapis.com/v1/documents/${documentId}?fields=footers,documentStyle`);
     if (docR.status !== 200) return err(`Doc lesen fehlgeschlagen (${docR.status})`);
     let footerId = docR.data.documentStyle?.defaultFooterId
@@ -42,7 +42,7 @@ module.exports = {
       footerId = cr.data.replies?.[0]?.createFooter?.footerId;
       if (!footerId) return err('createFooter lieferte keine footerId');
     } else {
-      // Vorhandenen Inhalt leeren (Segment beginnt bei 1; letztes \n muss bleiben).
+      // Clear existing content (segment starts at 1; the last \n must stay).
       const seg = await gapiJSON('GET', `https://docs.googleapis.com/v1/documents/${documentId}?fields=footers`);
       const el = seg.data.footers?.[footerId]?.content || [];
       const end = el.length ? el[el.length - 1].endIndex : 1;
@@ -57,8 +57,8 @@ module.exports = {
       const h = String(hex).replace('#', '');
       return { red: parseInt(h.slice(0, 2), 16) / 255, green: parseInt(h.slice(2, 4), 16) / 255, blue: parseInt(h.slice(4, 6), 16) / 255 };
     };
-    // KEIN insertPageNumber — den Request kennt die Docs-API nicht (HTTP 400
-    // "Cannot find field"). Seitenzahlen bleiben ein UI-Schritt.
+    // NO insertPageNumber — the Docs API does not know that request (HTTP 400
+    // "Cannot find field"). Page numbers remain a UI step.
     const body = String(text);
     const requests = [
       { insertText: { location: { segmentId: footerId, index: 0 }, text: body } },

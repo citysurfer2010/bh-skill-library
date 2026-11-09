@@ -2,19 +2,19 @@
 const { apiErr, err, gapiJSON, okJson } = require('../../lib/gapi.js');
 
 /**
- * docs.insertSection — fuegt Absaetze UND echte Tabellen an einem Text-Anker ein,
- * optional in einem bestimmten Tab eines Google Docs.
+ * docs.insertSection — inserts paragraphs AND real tables at a text anchor,
+ * optionally in a specific tab of a Google Doc.
  *
- * Warum ein eigenes Tool (statt docs.insertText):
- *   1. Tabs — docs.insertText/getText kennen nur den ersten Tab (legacy `body`).
- *      Ein BP-Doc hat pro Wirtschaftsjahr einen Tab; ohne tabId landet alles falsch.
- *   2. Tabellen — die Docs-API legt mit insertTable nur ein leeres Geruest an.
- *      Die Zellen muessen danach befuellt werden, und zwar in ABSTEIGENDER
- *      Index-Reihenfolge, weil jeder Insert alle nachfolgenden Indizes verschiebt.
+ * Why a separate tool (instead of docs.insertText):
+ *   1. Tabs — docs.insertText/getText only know the first tab (legacy `body`).
+ *      A BP doc has one tab per fiscal year; without tabId everything lands wrong.
+ *   2. Tables — with insertTable the Docs API only creates an empty skeleton.
+ *      The cells must be filled afterwards, and in DESCENDING
+ *      index order, because every insert shifts all following indexes.
  *
- * Bloecke werden in UMGEKEHRTER Reihenfolge am selben Anker eingefuegt — dadurch
- * steht am Ende Block 0 oben, ohne dass Indizes zwischen den Bloecken nachgefuehrt
- * werden muessen.
+ * Blocks are inserted in REVERSE order at the same anchor — so block 0
+ * ends up on top, without indexes having to be tracked between the
+ * blocks.
  */
 
 const HEADER_BG = { red: 0.945, green: 0.953, blue: 0.961 }; // #F1F3F4
@@ -34,7 +34,7 @@ function findTab(tabs, tabId) {
   return null;
 }
 
-// Liefert die Content-Elemente des Ziel-Tabs (oder des Legacy-Body ohne tabId).
+// Returns the content elements of the target tab (or the legacy body without tabId).
 function resolveSegment(doc, tabId) {
   if (!tabId) {
     if (doc.body?.content) return doc.body.content;
@@ -53,7 +53,7 @@ function segmentText(content) {
   return (content || []).map(paragraphText).join('');
 }
 
-// Einfuegeposition = Ende des Absatzes, der den Anker enthaelt.
+// Insert position = end of the paragraph containing the anchor.
 function anchorIndex(content, afterText) {
   const needle = afterText.trim();
   for (const el of content) {
@@ -77,12 +77,12 @@ function range(startIndex, endIndex, tabId) {
   return tabId ? { startIndex, endIndex, tabId } : { startIndex, endIndex };
 }
 
-// Sucht die Tabelle, die an `index` beginnt (direkt nach dem insertTable-Call).
+// Finds the table starting at `index` (right after the insertTable call).
 function findTableAt(content, index) {
   for (const el of content) {
     if (el.table && el.startIndex === index) return el;
   }
-  // Fallback: erste Tabelle ab index
+  // Fallback: first table from index onward
   for (const el of content) {
     if (el.table && el.startIndex >= index) return el;
   }
@@ -116,8 +116,8 @@ async function insertTable(documentId, tabId, index, block) {
   ]);
   if (created.status !== 200) return created;
 
-  // Zellen befuellen: Positionen NACH dem Anlegen frisch lesen, dann absteigend
-  // einfuegen, damit fruehere Indizes gueltig bleiben.
+  // Fill cells: re-read positions AFTER creation, then insert in descending
+  // order so earlier indexes stay valid.
   const doc = await fetchDoc(documentId);
   if (doc.status !== 200) return doc;
   const table = findTableAt(resolveSegment(doc.data, tabId) || [], index);
@@ -139,8 +139,8 @@ async function insertTable(documentId, tabId, index, block) {
     if (r.status !== 200) return r;
   }
 
-  // Kopfzeile hervorheben — Indizes haben sich durch das Befuellen verschoben,
-  // deshalb erneut lesen.
+  // Highlight the header row — filling has shifted the indexes,
+  // so read again.
   if (block.header) {
     const doc2 = await fetchDoc(documentId);
     const t2 = findTableAt(resolveSegment(doc2.data, tabId) || [], index);
@@ -176,16 +176,16 @@ async function insertTable(documentId, tabId, index, block) {
 
 module.exports = {
   name: 'docs.insertSection',
-  description: 'Fuegt Absaetze und echte Tabellen in ein Google Doc ein — tab-faehig (tabId aus docs.listTabs) und an einem Text-Anker (afterText) statt an einem rohen Index. blocks: [{type:"paragraph",text,bold?} | {type:"table",header:[...],rows:[[...]]}]. skipIfContains verhindert Doppel-Einfuegungen bei Wiederholungslaeufen.',
+  description: 'Inserts paragraphs and real tables into a Google Doc — tab-aware (tabId from docs.listTabs) and at a text anchor (afterText) instead of a raw index. blocks: [{type:"paragraph",text,bold?} | {type:"table",header:[...],rows:[[...]]}]. skipIfContains prevents duplicate inserts on repeat runs.',
   inputSchema: {
     type: 'object',
     properties: {
       documentId: { type: 'string' },
-      tabId: { type: 'string', description: 'Ziel-Tab (Wert hinter ?tab= in der URL). Ohne Angabe: erster Tab.' },
-      afterText: { type: 'string', description: 'Text des Absatzes, NACH dem eingefuegt wird.' },
-      index: { type: 'number', description: 'Alternative zu afterText: expliziter Index.' },
-      skipIfContains: { type: 'string', description: 'Idempotenz-Guard: bricht ab, wenn der Tab diesen Text schon enthaelt.' },
-      blocks: { type: 'array', items: { type: 'object' }, description: 'Bloecke in Lesereihenfolge.' },
+      tabId: { type: 'string', description: 'Target tab (value after ?tab= in the URL). If omitted: first tab.' },
+      afterText: { type: 'string', description: 'Text of the paragraph AFTER which to insert.' },
+      index: { type: 'number', description: 'Alternative to afterText: explicit index.' },
+      skipIfContains: { type: 'string', description: 'Idempotence guard: aborts if the tab already contains this text.' },
+      blocks: { type: 'array', items: { type: 'object' }, description: 'Blocks in reading order.' },
     },
     required: ['documentId', 'blocks'],
   },
@@ -209,13 +209,13 @@ module.exports = {
       if (at == null) return err(`docs.insertSection: Anker "${afterText}" im Tab nicht gefunden.`);
     }
 
-    // Ist der Anker der letzte Absatz, zeigt sein endIndex hinter das abschliessende
-    // Newline des Segments — dort verweigert die Docs-API jedes Insert. Auf die
-    // letzte gueltige Position zurueckziehen.
+    // If the anchor is the last paragraph, its endIndex points past the segment's
+    // final newline — the Docs API refuses any insert there. Pull back to the
+    // last valid position.
     const segmentEnd = content[content.length - 1]?.endIndex;
     if (segmentEnd != null && at >= segmentEnd) at = segmentEnd - 1;
 
-    // Rueckwaerts einfuegen — alle Bloecke landen am selben Anker.
+    // Insert backwards — all blocks land at the same anchor.
     const done = [];
     for (let i = blocks.length - 1; i >= 0; i--) {
       const b = blocks[i];

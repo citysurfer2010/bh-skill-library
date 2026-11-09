@@ -6,10 +6,10 @@ const path = require('path');
 const { readGuarded, checkReadablePath } = require('../../lib/local-file-guard.cjs');
 const https = require('https');
 
-// Ziel-Formate für die Google-Konvertierung. Drive wandelt beim Upload um, wenn in den
-// METADATEN ein Google-mimeType steht (der Media-Teil behält den Quell-Typ).
-// Damit wird aus HTML ein ECHTES Google Doc mit Überschriften/Fett/Tabellen — statt
-// einer rohen Datei oder (bisheriger Workaround) einem Brief mit hineinkopiertem
+// Target formats for the Google conversion. Drive converts on upload if the
+// METADATA holds a Google mimeType (the media part keeps the source type).
+// This turns HTML into a REAL Google Doc with headings/bold/tables — instead of
+// a raw file or (the previous workaround) a letter with pasted-in
 const CONVERT_TARGETS = {
   document: 'application/vnd.google-apps.document',
   spreadsheet: 'application/vnd.google-apps.spreadsheet',
@@ -19,21 +19,21 @@ const CONVERT_TARGETS = {
 module.exports = {
   name: 'drive_upload_file',
   description:
-    'Lädt eine Datei in einen Google Drive Ordner hoch. Quelle entweder localPath ODER content (inline). ' +
-    'Mit convertTo="document" wird der Inhalt beim Upload in ein ECHTES Google Doc konvertiert — ' +
-    'für formatierte Reports content als HTML (<h1>/<b>/<table>) übergeben und mimeType="text/html" setzen. ' +
-    'Ohne convertTo wird die Datei unverändert abgelegt.',
+    'Uploads a file to a Google Drive folder. Source either localPath OR content (inline). ' +
+    'With convertTo="document" the content is converted to a REAL Google Doc on upload — ' +
+    'for formatted reports pass content as HTML (<h1>/<b>/<table>) and set mimeType="text/html". ' +
+    'Without convertTo the file is stored unchanged.',
   inputSchema: {
     type: 'object',
     properties: {
-      localPath: { type: 'string', description: 'Pfad zur lokalen Datei (Alternative zu content)' },
-      content: { type: 'string', description: 'Inhalt direkt inline (Alternative zu localPath) — z.B. HTML für einen Report' },
-      contentEncoding: { type: 'string', enum: ['utf8', 'base64'], description: 'Kodierung von content. base64 für BINÄRE Inhalte (z.B. DOCX) — utf8 würde sie zerstören. Default utf8.' },
-      fileName: { type: 'string', description: 'Zielname in Drive (bei content Pflicht, sonst Basename von localPath)' },
-      parentId: { type: 'string', description: 'Drive-Ordner-ID (Zielordner)' },
-      mimeType: { type: 'string', description: 'Quell-mimeType, z.B. text/html. Ohne Angabe aus der Dateiendung abgeleitet.' },
-      convertTo: { type: 'string', enum: ['document', 'spreadsheet', 'presentation'], description: 'In Google-Format konvertieren (document = Google Doc)' },
-      format: { type: 'string', enum: ['text', 'json'], description: 'json liefert {id,name,mimeType,webViewLink} statt Text' },
+      localPath: { type: 'string', description: 'Path to the local file (alternative to content)' },
+      content: { type: 'string', description: 'Content directly inline (alternative to localPath) — e.g. HTML for a report' },
+      contentEncoding: { type: 'string', enum: ['utf8', 'base64'], description: 'Encoding of content. base64 for BINARY content (e.g. DOCX) — utf8 would destroy it. Default utf8.' },
+      fileName: { type: 'string', description: 'Target name in Drive (required with content, else basename of localPath)' },
+      parentId: { type: 'string', description: 'Drive folder ID (target folder)' },
+      mimeType: { type: 'string', description: 'Source mimeType, e.g. text/html. If omitted, derived from the file extension.' },
+      convertTo: { type: 'string', enum: ['document', 'spreadsheet', 'presentation'], description: 'Convert to Google format (document = Google Doc)' },
+      format: { type: 'string', enum: ['text', 'json'], description: 'json returns {id,name,mimeType,webViewLink} instead of text' },
     },
     required: ['parentId'],
   },
@@ -44,13 +44,13 @@ module.exports = {
     let fileContent, uploadName;
     if (content != null) {
       if (!fileName) return err('Bei content ist fileName Pflicht.');
-      // BINÄRE Inhalte (DOCX o.Ä.) MÜSSEN als base64 kommen — ein utf8-Roundtrip
-      // ersetzt jedes Nicht-UTF8-Byte durch U+FFFD und macht das Archiv unlesbar.
+      // BINARY content (DOCX etc.) MUST arrive as base64 — a utf8 round trip
+      // replaces every non-UTF8 byte with U+FFFD and makes the archive unreadable.
       if (contentEncoding && !['utf8', 'base64'].includes(contentEncoding)) return err(`contentEncoding unbekannt: ${contentEncoding}`);
       fileContent = Buffer.from(String(content), contentEncoding === 'base64' ? 'base64' : 'utf8');
       uploadName = fileName;
     } else {
-      // Sicherheitspruefung 05.11.2026: nur Dokumente aus den erlaubten Ordnern, geoeffnet ueber den aufgeloesten Pfad
+      // Security review 05.11.2026: only documents from the allowed folders, opened via the resolved path
       const g = checkReadablePath(localPath);
       if (!g.ok) return err(g.error);
       if (!fs.existsSync(g.path)) return err(`Datei nicht gefunden: ${localPath}`);
@@ -69,7 +69,7 @@ module.exports = {
 
     const token = await getAccessToken();
     const boundary = 'a1workspace314159';
-    // Ziel-mimeType NUR in den Metadaten → Drive konvertiert. Media behält den Quell-Typ.
+    // Target mimeType ONLY in the metadata → Drive converts. Media keeps the source type.
     const meta = JSON.stringify({
       name: uploadName,
       parents: [parentId],
@@ -80,7 +80,7 @@ module.exports = {
       fileContent,
       Buffer.from(`\r\n--${boundary}--`),
     ]);
-    // fields=… damit die Response webViewLink mitliefert (Default-Fields enthalten ihn nicht).
+    // fields=… so the response includes webViewLink (the default fields do not).
     const uploadPath = '/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true'
       + '&fields=' + encodeURIComponent('id,name,mimeType,webViewLink,size,parents');
     const result = await new Promise((resolve, reject) => {
