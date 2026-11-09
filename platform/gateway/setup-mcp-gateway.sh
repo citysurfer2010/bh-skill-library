@@ -41,4 +41,6 @@ for net in $(docker network ls --format '{{.Name}}' | grep '^devbox-net-' || tru
 done
 # Only for the Beamer's display page in the login service.
 docker network connect bh-apps-net mcp-gateway 2>/dev/null || true
+# Only for the local face analysis, which has no route to the outside.
+docker network connect bh-faces-net mcp-gateway 2>/dev/null || true
 echo "mcp-gateway laeuft"

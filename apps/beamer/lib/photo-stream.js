@@ -13,5 +13,6 @@ function handle(id) {
   gateway.call('photos_push_next', { start: id }).catch((e) => console.error(`[fotos] ${e.message}`)).finally(() => { busy = false; });
 }
 const reset = () => { busy = false; last = 0; };
+const lastActive = () => last;
 
-module.exports = { handle, reset };
+module.exports = { handle, reset, lastActive };
