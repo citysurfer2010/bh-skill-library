@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-agent-actions",
+  "name": "bh-agent-actions",
+  "version": "26.11.1",
+  "description": "Zentrale Aktionen und Rezepte, die ueber Beamer, Handy und Terminal gleich funktionieren",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}
