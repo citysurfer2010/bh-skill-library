@@ -89,7 +89,7 @@ export function screenRoutes({ config }) {
   r.post("/screen-menu", express.json({ limit: "128kb" }), (req, res) => {
     if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
     if (!Array.isArray(req.body?.radio) || !Array.isArray(req.body?.mood)) return res.status(400).json({ error: "ungueltig" });
-    writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null, board: req.body.board || null, alerts: req.body.alerts || [], birthdays: req.body.birthdays || [], rooms: req.body.rooms || [], onThisDay: req.body.onThisDay || null }), { mode: 0o600 });
+    writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null, board: req.body.board || null, alerts: req.body.alerts || [], birthdays: req.body.birthdays || [], rooms: req.body.rooms || [], events: req.body.events || [], onThisDay: req.body.onThisDay || null }), { mode: 0o600 });
     changed();
     res.status(204).end();
   });

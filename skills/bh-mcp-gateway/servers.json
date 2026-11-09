@@ -6,5 +6,6 @@
   {"id": "webuntis", "command": ["node", "/opt/skills/bh-webuntis/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_WEBUNTIS_SERVER", "BH_WEBUNTIS_SCHOOL", "BH_WEBUNTIS_USER", "BH_WEBUNTIS_PASSWORD"]},
   {"id": "beamer", "command": ["node", "/opt/skills/bh-beamer/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_BEAMER_IP", "BH_BEAMER_MAC", "BH_BEAMER_CA_B64", "BH_BEAMER_FP", "BH_SCREEN_URL", "BH_SCREEN_WRITE", "BH_AUTH_INTERNAL"]},
   {"id": "birthdays", "command": ["node", "/opt/skills/bh-birthdays/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_FAMILY_DIR"]},
-  {"id": "netatmo", "command": ["node", "/opt/skills/bh-netatmo/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_NETATMO_USER", "BH_NETATMO_PASSWORD", "BH_FAMILY_DIR"]}
+  {"id": "netatmo", "command": ["node", "/opt/skills/bh-netatmo/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_NETATMO_USER", "BH_NETATMO_PASSWORD", "BH_FAMILY_DIR"]},
+  {"id": "familycal", "command": ["node", "/opt/skills/bh-family-calendar/server/server.js"], "users": ["matti", "bh-apps"], "env": {"HOME": "/var/lib/mcp-gateway/users/matti", "GOOGLE_CLIENT_SECRET_FILE": "/etc/mcp-gateway/google/client_secret.json"}, "envFrom": ["BH_FAMILY_CALENDAR_ID"]}
 ]

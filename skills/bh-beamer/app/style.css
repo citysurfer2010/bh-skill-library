@@ -192,3 +192,15 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .tile.room.focus { transform: scale(1.02); }
 #home[data-time="evening"] .tile.room.focus, #home[data-time="night"] .tile.room.focus { box-shadow: 0 0 0 6px #7db4ff, 0 12px 30px rgba(0, 0, 0, .35); }
 #home[data-page="rooms"] #indoor .warn { display: none; }
+/* Einmalige Termine aus dem Family-Kalender, im freien Streifen unter dem Stundenplan */
+#events { display: none; position: absolute; left: 90px; right: 90px; top: 800px; box-sizing: border-box; height: 70px; align-items: center; padding: 0 24px; border-radius: 18px; background: var(--card); color: var(--ink); box-shadow: 0 4px 14px rgba(15, 31, 61, .18); }
+#home[data-page="start"] #events.on { display: flex; }
+#events svg { flex: none; margin-right: 18px; color: var(--accent); }
+.ev { flex: 0 0 auto; max-width: 41%; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 32px; }
+.ev + .ev { margin-left: 28px; padding-left: 28px; border-left: 2px solid var(--card-line); }
+.ev b { font-weight: 800; }
+.ev:last-child { flex: 0 1 auto; max-width: none; }
+.ev b.ev-today { color: var(--accent); }
+.ev b.ev-now { color: #b45309; }
+#home[data-time="evening"] .ev b.ev-now, #home[data-time="night"] .ev b.ev-now { color: #ffb454; }
+#transit { border-radius: 18px; }

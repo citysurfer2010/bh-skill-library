@@ -214,3 +214,11 @@ test('Räume: gesendet wird nur bei Änderung, Fehler behalten die letzten Werte
   broken = false; answer = room(21.5); await bridge.refreshRooms(); assert.equal(sets.length, 2);
   await bridge.pushMenu(); assert.equal(sets[2].rooms[0].temp, 21.5);
 });
+
+test('Termine: gesendet wird nur bei Änderung', async () => {
+  const bridge = require('../lib/menu-bridge');
+  const sets = []; const answer = JSON.stringify([{ date: '2026-11-12', time: '18:30', title: 'Elternabend' }]);
+  gateway.setCaller(async (name, args) => { if (name === 'beamer_menu_set') { sets.push(args.menu); return 'ok'; } return answer; });
+  await bridge.refreshEvents(); await bridge.refreshEvents();
+  assert.equal(sets.length, 1); assert.equal(sets[0].events[0].title, 'Elternabend');
+});
