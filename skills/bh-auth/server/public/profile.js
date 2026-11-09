@@ -4,7 +4,7 @@
   function show(panel, btn, open) {
     panel.hidden = !open;
     if (btn) btn.setAttribute('aria-expanded', String(open));
-    if (open) { var field = panel.querySelector('input, [data-cancel]'); if (field) field.focus(); } else if (btn) btn.focus();
+    if (open) { var field = panel.querySelector('[data-autofocus]') || panel.querySelector('input:not([type="hidden"]), [data-cancel]'); if (field) field.focus(); } else if (btn) btn.focus();
   }
   document.querySelectorAll('[data-toggle]').forEach(function (btn) {
     var panel = document.getElementById(btn.dataset.toggle);

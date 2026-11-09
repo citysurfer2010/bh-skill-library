@@ -28,7 +28,7 @@ function fakeCalendar(seen, overrides = {}) {
     if (url.pathname === '/123/principal/') return multi(ok('/123/principal/', `<calendar-home-set ${CAL_NS}><href>https://p12-caldav.icloud.com:443/123/calendars/</href></calendar-home-set>`));
     if (req.method === 'PROPFIND') return multi(
       ok('/123/calendars/', '<resourcetype><collection/></resourcetype>'),
-      ok('/123/calendars/home/', `<displayname>Privat &amp; Familie</displayname><resourcetype><collection/><calendar ${CAL_NS}/></resourcetype><supported-calendar-component-set ${CAL_NS}><comp name="VEVENT"/></supported-calendar-component-set>`),
+      ok('/123/calendars/home/', `<displayname>Privat &amp; Familie</displayname><resourcetype><collection/><calendar ${CAL_NS}/></resourcetype><supported-calendar-component-set ${CAL_NS}><comp name='VEVENT' xmlns='urn:ietf:params:xml:ns:caldav'/></supported-calendar-component-set>`),
       ok('/123/calendars/tasks/', `<displayname>Listen</displayname><resourcetype><collection/><calendar ${CAL_NS}/></resourcetype><supported-calendar-component-set ${CAL_NS}><comp name="VTODO"/></supported-calendar-component-set>`),
       ok('/123/calendars/inbox/', `<resourcetype><schedule-inbox ${CAL_NS}/></resourcetype>`));
     if (overrides.report) return overrides.report(url, req);

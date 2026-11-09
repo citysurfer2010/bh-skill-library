@@ -35,6 +35,16 @@ function googleRow(user, enabled) {
   return row({ icon: googleIcon, title: "Google", status: tag(linked, "Verknüpft", "Nicht verknüpft"), sub, action, panel });
 }
 
+function icloudAddressForm(state, error, form) {
+  const mail = esc(form.mailUser ?? "");
+  return `<form id="icloudForm" class="p-panel" method="post" action="/profile/icloud"${error ? "" : " hidden"}>${error ? `<p id="icloudError" class="alert error" role="alert">${esc(error)}</p>` : ""}
+<p>Deine Anmeldung bleibt bestehen. Trage nur deine iCloud-Mail-Adresse ein (@icloud.com, @me.com oder @mac.com).</p>
+<input type="hidden" name="appleId" value="${esc(state.appleId)}">
+<label>iCloud-Mail-Adresse<input type="email" name="mailUser" value="${mail}" placeholder="name@icloud.com" autocomplete="off" required data-autofocus aria-describedby="icloudMailHint"></label>
+<p id="icloudMailHint" class="p-hint">Apple verlangt für E-Mail diese Adresse, nicht die Apple-ID. Hast du keine, kannst du abbrechen: Kalender und Kontakte bleiben nutzbar.</p>
+<div class="p-buttons"><button type="submit">Speichern</button><button type="button" class="p-btn" data-cancel="icloudForm">Abbrechen</button></div></form>`;
+}
+
 function icloudForm(user, state, error, form) {
   const apple = esc(form.appleId ?? state.appleId ?? user.email);
   const mail = esc(form.mailUser ?? "");
@@ -44,20 +54,23 @@ function icloudForm(user, state, error, form) {
 <ol class="p-steps"><li><a href="https://account.apple.com/account/manage" target="_blank" rel="noopener">Apple-Konto öffnen (neuer Tab)</a></li><li>„Anmeldung und Sicherheit“, dann „App-spezifische Passwörter“</li><li>Neues Passwort erstellen, Name zum Beispiel „BH Platform“</li><li>Das angezeigte Passwort unten einfügen</li></ol>
 <p class="p-hint">Dafür muss bei Apple die Zwei-Faktor-Authentifizierung aktiv sein. Das Passwort gilt nur für diesen Zugriff und lässt sich bei Apple jederzeit widerrufen.</p></div>
 <label>Apple-ID<input type="email" name="appleId" value="${apple}" autocomplete="username" required></label>
-<div class="p-field"><label for="icloudPassword">App-spezifisches Passwort</label><div class="p-secret"><input id="icloudPassword" type="password" name="password" placeholder="abcd-efgh-ijkl-mnop" pattern="\\s*([a-zA-Z]{4}-?){3}[a-zA-Z]{4}\\s*" title="Vier Gruppen aus je vier Buchstaben" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" required${invalid}><button type="button" class="p-btn" data-reveal="icloudPassword">Anzeigen</button></div></div>
+<div class="p-field"><label for="icloudPassword">App-spezifisches Passwort</label><div class="p-secret"><input id="icloudPassword" type="password" name="password" placeholder="abcd-efgh-ijkl-mnop" pattern="\\s*([a-zA-Z]{4}-?){3}[a-zA-Z]{4}\\s*" title="Vier Gruppen aus je vier Buchstaben" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false"${state.connected ? "" : " required"}${invalid}><button type="button" class="p-btn" data-reveal="icloudPassword">Anzeigen</button></div>${state.connected ? `<p class="p-hint">Leer lassen behält das bisherige Passwort.</p>` : ""}</div>
 <details class="p-more"${form.mailUser ? " open" : ""}><summary>Andere iCloud-Mail-Adresse angeben</summary><label>iCloud-Mail-Adresse<input type="email" name="mailUser" value="${mail}" autocomplete="off" aria-describedby="icloudMailHint"></label><p id="icloudMailHint" class="p-hint">Nur nötig, wenn deine Apple-ID keine @icloud.com-Adresse ist und du iCloud-Mail nutzt.</p></details>
 <div class="p-buttons"><button type="submit">iCloud verbinden</button><button type="button" class="p-btn" data-cancel="icloudForm">Abbrechen</button></div></form>`;
 }
 
 function icloudRow(state, user, error, form = {}) {
   if (!state) return "";
-  const { connected, appleId, rejected } = state;
-  const toggle = `<button type="button" class="p-btn${!connected || rejected ? " p-primary" : ""}" data-toggle="icloudForm" aria-expanded="${!!error}" aria-controls="icloudForm">${connected ? "Neu verbinden" : "Verbinden"}</button>`;
+  const { connected, appleId, rejected, mailRejected } = state;
+  const addressOnly = connected && mailRejected && !rejected;
+  const label = addressOnly ? "Adresse ergänzen" : connected ? "Neu verbinden" : "Verbinden";
+  const toggle = `<button type="button" class="p-btn${!connected || rejected || mailRejected ? " p-primary" : ""}" data-toggle="icloudForm" aria-expanded="${!!error}" aria-controls="icloudForm">${label}</button>`;
   const action = connected ? `<button type="button" class="p-btn" data-toggle="icloudConfirm" aria-expanded="false" aria-controls="icloudConfirm">Trennen</button> ${toggle}` : toggle;
   const confirm = connected ? `<form id="icloudConfirm" class="p-panel p-confirm" method="post" action="/profile/icloud/disconnect" hidden><p>Deine Werkzeuge verlieren den Zugriff auf deine iCloud-Daten. Das Passwort wird hier gelöscht, bei Apple kannst du es zusätzlich widerrufen.</p><div class="p-buttons"><button type="submit" class="p-btn p-danger">Ja, trennen</button><button type="button" class="p-btn" data-cancel="icloudConfirm">Abbrechen</button></div></form>` : "";
-  const sub = rejected ? "Passwort abgelaufen oder bei Apple widerrufen." : connected ? `Verbunden als ${esc(appleId)}` : "Kalender, Kontakte und E-Mail, nur lesend";
-  const status = rejected ? `<span class="p-tag warn">Anmeldung abgelehnt</span>` : tag(connected, "Verbunden", "Nicht verbunden");
-  return row({ icon: CLOUD, title: "iCloud", status, sub, action, panel: icloudForm(user, state, error, form) + confirm });
+  const sub = rejected ? "Passwort abgelaufen oder bei Apple widerrufen." : addressOnly ? "Kalender und Kontakte sind verbunden. Für E-Mail fehlt deine @icloud.com-Adresse." : connected ? `Verbunden als ${esc(appleId)}` : "Kalender, Kontakte und E-Mail, nur lesend";
+  const status = rejected ? `<span class="p-tag warn">Anmeldung abgelehnt</span>` : addressOnly ? `<span class="p-tag warn">E-Mail unvollständig</span>` : tag(connected, "Verbunden", "Nicht verbunden");
+  const formHtml = addressOnly ? icloudAddressForm(state, error, form) : icloudForm(user, state, error, form);
+  return row({ icon: CLOUD, title: "iCloud", status, sub, action, panel: formHtml + confirm });
 }
 
 function googleServicesRow(state) {

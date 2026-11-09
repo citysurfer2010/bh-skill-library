@@ -19,7 +19,7 @@
 .p-row + .p-row { border-top: 1px solid var(--bh-border); }
 .p-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; background: var(--bh-bg-subtle); color: var(--bh-primary); }
 .p-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; font-weight: 600; }
-.p-sub { color: var(--bh-muted); font-size: 13px; overflow-wrap: anywhere; }
+.p-sub { color: var(--bh-muted); font-size: 13px; overflow-wrap: anywhere; text-wrap: pretty; }
 .p-tag { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
 .p-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .p-tag.on { background: var(--bh-ok-bg); color: var(--bh-ok); }

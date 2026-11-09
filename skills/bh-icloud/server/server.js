@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * bh-icloud MCP Server v26.11.1
+ * bh-icloud MCP Server v26.11.2
  *
  *
  * Architecture:
@@ -33,7 +33,7 @@ rl.on('line', async (line) => {
       result: {
         protocolVersion: params?.protocolVersion || '2024-11-05',
         capabilities:    { tools: {} },
-        serverInfo:      { name: 'bh-icloud', version: '26.11.1' },
+        serverInfo:      { name: 'bh-icloud', version: '26.11.2' },
       },
     });
     return;
@@ -69,4 +69,4 @@ rl.on('line', async (line) => {
 rl.on('close', () => process.exit(0));
 process.stdin.on('error', () => {});
 
-process.stderr.write(`[bh-icloud] v26.11.1 started — ${TOOL_NAMES.length} Tools registriert.\n`);
+process.stderr.write(`[bh-icloud] v26.11.2 started — ${TOOL_NAMES.length} Tools registriert.\n`);
