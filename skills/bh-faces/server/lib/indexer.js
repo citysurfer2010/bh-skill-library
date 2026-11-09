@@ -46,7 +46,8 @@ async function scan(album) {
 
 async function analyzePhoto(photo) {
   let res;
-  try { res = await download(photo.path, MAX_FILE_BYTES + 1); } catch { store.markPhoto(photo.path, 'error'); return { error: true }; }
+  // Only the Synology's verdict on this file is final; an unreachable Synology must not write off the picture.
+  try { res = await download(photo.path, MAX_FILE_BYTES + 1); } catch (e) { if (typeof e.code !== 'number') throw e; store.markPhoto(photo.path, 'error'); return { error: true }; }
   if (res.truncated || res.body[0] !== 0xFF || res.body[1] !== 0xD8) { store.markPhoto(photo.path, 'error'); return { error: true }; }
   const result = await analyze(res.body);
   if (!result) { store.markPhoto(photo.path, 'error'); return { error: true }; }

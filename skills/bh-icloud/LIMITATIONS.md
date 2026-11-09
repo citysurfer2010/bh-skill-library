@@ -19,7 +19,7 @@
 
 ## Fotos
 
-- **Das Hochladen vom VPS auf die Synology funktioniert noch nicht.** `SYNO.FileStation.Upload` antwortet auf der DS215j (DSM 7.0.1) mit Fehler 102, auch mit Version 3 und anderen Pfaden. Der Antrieb in der Beamer-App ist deshalb aus (`apps/beamer/lib/icloud-uploader.js`). Bis dahin bringt nur das Mac-Skript Fotos auf die Synology.
+- Das Hochladen vom VPS braucht mindestens DSM 7.1.1. Unter DSM 7.0.1 antwortete `SYNO.FileStation.Upload` auf der DS215j mit Fehler 102; seit dem Update am 10.11.2026 funktioniert es.
 - Ob Apple Anmeldungen aus dem Rechenzentrum dauerhaft akzeptiert, ist noch nicht erprobt. Die erste Anmeldung am 09.11.2026 hat geklappt.
 - Etwa alle zwei Monate läuft die Apple-Sitzung ab, nach einem Neustart des Containers ist die Anmeldung nötig. Benachrichtigt wird darüber noch nicht.
 - Die Anmeldeseite stammt von icloudpd und folgt nicht dem Plattform-Design.
