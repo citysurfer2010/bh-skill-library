@@ -66,8 +66,10 @@ export function googleRoutes({ config, users, sessions, avatars, requireLogin })
         if (!me || me.id !== saved.servicesUid) return fail(res);
         res.clearCookie(COOKIE, cookie);
         const who = await config.fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { authorization: `Bearer ${accessToken}` } });
-        const account = who.ok ? (await who.json()).email : null;
-        const stored = !!granted.refresh_token && await storeServices(config, me, granted, account);
+        const profile = who.ok ? await who.json() : {};
+        const stored = !!granted.refresh_token && await storeServices(config, me, granted, profile.email || null);
+        // Sessions outlive the feature: this is often the only Google round trip a user ever makes again.
+        if (stored && !me.avatarType) await avatars.fromGoogle(me.id, profile.picture);
         return res.redirect(stored ? "/profile?saved=google-services" : "/profile?google=services-failed");
       }
       const info = await config.fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { authorization: `Bearer ${accessToken}` } });

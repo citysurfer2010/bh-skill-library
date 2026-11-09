@@ -179,3 +179,41 @@ test("Profilbild: nur Google-Adressen und nur Bilder, Fehler stoeren den Login n
   } finally { await g.stop(); }
 });
 
+function servicesGoogle(seen) {
+  return async (url) => {
+    const u = String(url); seen.push(u);
+    if (u.includes("/token")) return { ok: true, json: async () => ({ access_token: "t", refresh_token: "r", expires_in: 5 }) };
+    if (u.includes("/connect/google")) return { ok: true };
+    if (u.includes("userinfo")) return { ok: true, json: async () => ({ email: "a@beispiel.de", picture: PIC }) };
+    return { ok: true, headers: new Headers({ "content-type": "image/jpeg" }), arrayBuffer: async () => Uint8Array.from([1, 2, 3]).buffer };
+  };
+}
+
+async function connectServices(g, c) {
+  const r = await c("/oauth/google/services");
+  const state = new URL(r.headers.get("location")).searchParams.get("state");
+  return c(`/oauth/google/callback?state=${state}&code=c`);
+}
+
+test("Google-Dienste verbinden holt ein fehlendes Profilbild nach", async () => {
+  const g = await start({ google: true, fetchImpl: servicesGoogle([]) });
+  g.config.connect.secret = "x";
+  try {
+    const u = await g.addUser("a@beispiel.de"); const c = g.client(); await g.login(c, "a@beispiel.de");
+    assert.equal((await connectServices(g, c)).headers.get("location"), "/profile?saved=google-services");
+    assert.equal(g.users.byId(u.id).avatarType, "image/jpeg");
+  } finally { await g.stop(); }
+});
+
+test("Google-Dienste verbinden ueberschreibt ein vorhandenes Profilbild nicht", async () => {
+  const seen = [];
+  const g = await start({ google: true, fetchImpl: servicesGoogle(seen) });
+  g.config.connect.secret = "x";
+  try {
+    const u = await g.addUser("a@beispiel.de"); g.users.setAvatar(u.id, "image/png");
+    const c = g.client(); await g.login(c, "a@beispiel.de");
+    await connectServices(g, c);
+    assert.equal(g.users.byId(u.id).avatarType, "image/png");
+    assert.ok(!seen.some((s) => s.includes("googleusercontent")));
+  } finally { await g.stop(); }
+});
