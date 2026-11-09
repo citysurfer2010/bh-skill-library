@@ -19,7 +19,7 @@
       root: document.getElementById('app-root') || document.body,
       // Navbar = "[BH tile] app name"; scripts/make-app-icons.mjs generates the icon.
       app: { name: 'Beamer', href: '/beamer/',
-        logo: '<img class="bhs-brand" src="/beamer/branding/nav-icon.svg?v=1" width="24" height="24" alt="">' },
+        logo: '<img class="bhs-brand" src="/beamer/branding/nav-icon.svg?v=2" width="24" height="24" alt="">' },
       tabs: TABS,
       adminHref: '/beamer/admin', // Gear for admins only
     });

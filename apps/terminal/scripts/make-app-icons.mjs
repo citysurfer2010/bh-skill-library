@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Draws the BH mark into all app icons, without a browser and without dependencies.
-//   node scripts/make-app-icons.mjs --out public [--color #1d4ed8]
-// The mark is the letters "BH" as polygons. This way SVG and PNG look the same everywhere, without any font having to be installed.
+// Draws the Biskup Home logo into all app icons, without a browser and without dependencies.
+//   node scripts/make-app-icons.mjs --out public
+// MARK_PATH is the B from skills/bh-styleguide/assets/logo/bh-logo.svg on a 64-unit grid; favicon.svg is that file.
 // Output: favicon.svg, branding/nav-icon.svg, branding/icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png, icons.stamp.json
 // The export is used by test/branding.test.js.
 import fs from 'node:fs';
@@ -10,41 +10,63 @@ import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
-export const GENERATOR = 'bh-make-app-icons v1';
-export const COLOR = '#1d4ed8';
+export const GENERATOR = 'bh-make-app-icons v2';
+export const GRADIENT = ['#172554', '#2563eb'];
 export const NAV_FILL = 'rgba(255,255,255,.18)';
+export const MARK_PATH = 'M18 11h16.5c8 0 13 4.7 13 11.2 0 4.3-2.3 7.6-5.8 9.3 4.6 1.6 7.8 5.4 7.8 10.6C49.5 49 44 53 35.5 53H18zM27 19.5v8.6h6.7c2.9 0 4.7-1.7 4.7-4.3s-1.8-4.3-4.7-4.3zM27 36v8.5h7.7c3.1 0 5-1.6 5-4.2S37.8 36 34.7 36z';
+const GRID = 64;
+const CURVE_STEPS = 16;
 
-const move = (dx, dy, points) => points.map(([x, y]) => [x + dx, y + dy]);
-const B_X = 1.75, H_X = 12.75, TOP = 5;
-// Rings on a 24-unit grid, even-odd fill (the inner areas of the B are holes).
-export const MARK = [
-  move(B_X, TOP, [[0, 0], [7, 0], [9, 2], [9, 5.5], [7.75, 7], [9.5, 8.5], [9.5, 12], [7.5, 14], [0, 14]]),
-  move(B_X, TOP, [[2.8, 2.4], [6, 2.4], [6.4, 2.9], [6.4, 5], [6, 5.6], [2.8, 5.6]]),
-  move(B_X, TOP, [[2.8, 8.2], [6.3, 8.2], [6.8, 8.7], [6.8, 11], [6.3, 11.6], [2.8, 11.6]]),
-  move(H_X, TOP, [[0, 0], [2.8, 0], [2.8, 5.6], [6.7, 5.6], [6.7, 0], [9.5, 0], [9.5, 14], [6.7, 14], [6.7, 8.4], [2.8, 8.4], [2.8, 14], [0, 14]]),
-];
-
-/** PNG set: file, pixel size, kind, share of the mark in the tile width, corner radius in percent. */
-export const TARGETS = [
-  ['icon-192.png', 192, { kind: 'any', share: 0.85, radius: 22 }],
-  ['icon-512.png', 512, { kind: 'any', share: 0.85, radius: 22 }],
-  ['icon-maskable-512.png', 512, { kind: 'maskable', share: 0.72, radius: 0 }],
-  ['apple-touch-icon.png', 180, { kind: 'apple', share: 0.8, radius: 0 }],
-];
-
-const n = (v) => String(Math.round(v * 100) / 100);
-const markPath = () => MARK.map((ring) => `M${ring.map(([x, y]) => `${n(x)} ${n(y)}`).join('L')}Z`).join('');
-
-function tileSvg(fill) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7.04" fill="${fill}"/>`
-    + `<path transform="translate(2.4 2.4) scale(1.1333)" fill="#ffffff" fill-rule="evenodd" d="${markPath()}"/></svg>\n`;
+// Turns the SVG path into polygon rings; the even-odd rule makes the inner areas of the B holes.
+function flatten(d) {
+  const tokens = d.match(/[a-zA-Z]|-?\d*\.?\d+/g);
+  const rings = []; let ring = null; let x = 0, y = 0, cx = 0, cy = 0, cmd = '', i = 0;
+  const num = () => Number(tokens[i++]);
+  const curve = (x1, y1, x2, y2, ex, ey) => {
+    for (let s = 1; s <= CURVE_STEPS; s++) {
+      const t = s / CURVE_STEPS, u = 1 - t;
+      ring.push([u ** 3 * x + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * ex, u ** 3 * y + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3 * ey]);
+    }
+    cx = x2; cy = y2; x = ex; y = ey;
+  };
+  while (i < tokens.length) {
+    if (/[a-zA-Z]/.test(tokens[i])) cmd = tokens[i++];
+    const rel = cmd === cmd.toLowerCase(), ox = rel ? x : 0, oy = rel ? y : 0;
+    switch (cmd.toUpperCase()) {
+      case 'M': x = ox + num(); y = oy + num(); ring = [[x, y]]; rings.push(ring); break;
+      case 'H': x = ox + num(); ring.push([x, y]); break;
+      case 'V': y = oy + num(); ring.push([x, y]); break;
+      case 'C': { const a = [ox + num(), oy + num(), ox + num(), oy + num(), ox + num(), oy + num()]; curve(...a); break; }
+      case 'S': { const x1 = 2 * x - cx, y1 = 2 * y - cy; const a = [ox + num(), oy + num(), ox + num(), oy + num()]; curve(x1, y1, ...a); break; }
+      case 'Z': break;
+      default: throw new Error(`Unsupported path command ${cmd}`);
+    }
+    cx = ['C', 'S'].includes(cmd.toUpperCase()) ? cx : x;
+    cy = ['C', 'S'].includes(cmd.toUpperCase()) ? cy : y;
+  }
+  return rings;
 }
-export const buildFavicon = (color = COLOR) => tileSvg(color);
-export const buildNavIcon = () => tileSvg(NAV_FILL);
+export const MARK = flatten(MARK_PATH);
+
+/** PNG set: file, pixel size, kind, scale of the logo, corner radius in percent. */
+export const TARGETS = [
+  ['icon-192.png', 192, { kind: 'any', scale: 1, radius: 25 }],
+  ['icon-512.png', 512, { kind: 'any', scale: 1, radius: 25 }],
+  ['icon-maskable-512.png', 512, { kind: 'maskable', scale: 0.8, radius: 0 }],
+  ['apple-touch-icon.png', 180, { kind: 'apple', scale: 1, radius: 0 }],
+];
+
+const markTag = `<path fill="#fff" fill-rule="evenodd" d="${MARK_PATH}"/>`;
+// Byte-identical to bh-logo.svg; scripts/validate.sh compares the two.
+export const buildFavicon = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Biskup Home"><defs><linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${GRADIENT[0]}"/><stop offset="1" stop-color="${GRADIENT[1]}"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#t)"/>${markTag}</svg>\n`;
+export const buildNavIcon = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="${NAV_FILL}"/>${markTag}</svg>\n`;
 export const sha256 = (v) => crypto.createHash('sha256').update(v).digest('hex');
-export const stampFor = (color = COLOR) => ({ markSha256: sha256(JSON.stringify(MARK)), color, generator: GENERATOR });
+export const stampFor = () => ({ markSha256: sha256(MARK_PATH), gradient: GRADIENT, generator: GENERATOR });
+
+const BOUNDS = MARK.flat().reduce((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [GRID, GRID, 0, 0]);
 
 function inMark(x, y) {
+  if (x < BOUNDS[0] || y < BOUNDS[1] || x > BOUNDS[2] || y > BOUNDS[3]) return false; // Saves most of the polygon tests.
   let inside = false;
   for (const ring of MARK) {
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -70,12 +92,14 @@ function chunk(type, data) {
   return out;
 }
 
+const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+
 /** Renders a target with 4x4 sampling; without alpha (RGB) if the tile is borderless. */
-export function renderPng(size, { kind, share, radius }, color = COLOR) {
-  const rgb = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+export function renderPng(size, { kind, scale, radius }) {
+  const [from, to] = GRADIENT.map(hex);
   const alpha = kind === 'any';
   const cornerR = (size * radius) / 100;
-  const unit = (size * share) / 24, off = (size - 24 * unit) / 2;
+  const unit = (size * scale) / GRID, off = (size - GRID * unit) / 2;
   const bpp = alpha ? 4 : 3, SS = 4;
   const raw = Buffer.alloc((size * bpp + 1) * size);
   for (let py = 0; py < size; py++) {
@@ -91,7 +115,8 @@ export function renderPng(size, { kind, share, radius }, color = COLOR) {
         }
       }
       const m = tile ? mark / tile : 0;
-      for (let c = 0; c < 3; c++) raw[o++] = Math.round(rgb[c] + (255 - rgb[c]) * m);
+      const g = (px + py + 1) / (2 * size); // Diagonal gradient, as in the logo.
+      for (let c = 0; c < 3; c++) { const base = from[c] + (to[c] - from[c]) * g; raw[o++] = Math.round(base + (255 - base) * m); }
       if (alpha) raw[o++] = Math.round((255 * tile) / (SS * SS));
     }
   }
@@ -110,15 +135,14 @@ function arg(name, def) {
 
 export function main() {
   const out = arg('out');
-  if (!out) { console.error('Aufruf: make-app-icons.mjs --out <public-Ordner> [--color #1d4ed8]'); process.exit(2); }
-  const color = arg('color', COLOR);
+  if (!out) { console.error('Aufruf: make-app-icons.mjs --out <public-Ordner>'); process.exit(2); }
   const brand = path.join(out, 'branding');
   fs.mkdirSync(brand, { recursive: true });
-  fs.writeFileSync(path.join(out, 'favicon.svg'), buildFavicon(color));
+  fs.writeFileSync(path.join(out, 'favicon.svg'), buildFavicon());
   fs.writeFileSync(path.join(brand, 'nav-icon.svg'), buildNavIcon());
-  fs.writeFileSync(path.join(brand, 'icons.stamp.json'), `${JSON.stringify(stampFor(color), null, 2)}\n`);
+  fs.writeFileSync(path.join(brand, 'icons.stamp.json'), `${JSON.stringify(stampFor(), null, 2)}\n`);
   for (const [file, px, o] of TARGETS) {
-    fs.writeFileSync(path.join(brand, file), renderPng(px, o, color));
+    fs.writeFileSync(path.join(brand, file), renderPng(px, o));
     console.log('Icon', file, `${px}x${px}`);
   }
 }
