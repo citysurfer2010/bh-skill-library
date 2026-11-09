@@ -24,6 +24,8 @@ _(Nur Entscheidungen mit Auswirkung auf das Produkt.)_
 ## 7. Lessons Learned
 _(Fehler, die uns überrascht haben. Jeder Eintrag bekommt einen `test/regression-<slug>.test.js`.)_
 
+- Eingaben, die der Browser direkt nach dem Verbinden schickt, gingen verloren, solange die Verbindung zum Container noch aufgebaut wurde. Deshalb startete der Knopf OpenCode nicht (`regression-terminal-session-url`).
+
 ## 8. Bewusst nicht umgesetzt
 _(Was wurde abgelehnt und warum, damit es nicht erneut vorgeschlagen wird.)_
 

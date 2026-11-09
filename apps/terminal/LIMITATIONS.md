@@ -18,3 +18,4 @@ Details zu einem Modul: `docs/limitations/<modul>.md`.
 
 - Die Brotkrumen sind im Terminal bewusst ausgeblendet, damit die Fläche voll genutzt wird.
 - Mit der Bildschirmtastatur auf echten Handys ist das Terminal noch nicht getestet.
+- Öffnen zwei Fenster dieselbe Sitzung, zeigen beide denselben Inhalt und teilen sich die Fenstergröße.

@@ -6,13 +6,30 @@ window.TermApp = (() => {
   const KEYS = [['Esc', '\x1b'], ['Tab', '\t'], ['↑', '\x1b[A'], ['↓', '\x1b[B'], ['←', '\x1b[D'], ['→', '\x1b[C'], ['Strg+C', '\x03'], ['Strg+D', '\x04']];
   const LAYOUT = `<div class="term-page"><div class="term-bar"><div class="term-tabs" role="tablist" aria-label="Sitzungen"></div><button class="term-btn" data-a="new" aria-label="Neue Sitzung">+</button><span class="term-spacer"></span><button class="term-btn primary" data-a="opencode">opencode starten</button><button class="term-btn" data-a="files" aria-expanded="false">Dateien</button><button class="term-btn" data-a="apps" aria-expanded="false">Meine Apps</button><button class="term-btn term-more-only" data-a="more" aria-label="Mehr" aria-expanded="false">⋯</button><button class="term-btn term-extra" data-a="find">Suchen</button><button class="term-btn term-extra" data-a="smaller" aria-label="Schrift kleiner">A−</button><button class="term-btn term-extra" data-a="bigger" aria-label="Schrift größer">A+</button></div><div class="term-search" hidden><input aria-label="Im Terminal suchen" placeholder="Im Terminal suchen"><button class="term-btn" data-a="prev" aria-label="Vorheriger Treffer">↑</button><button class="term-btn" data-a="next" aria-label="Nächster Treffer">↓</button><button class="term-btn" data-a="find">Schließen</button></div><div class="term-banner" role="status" hidden>Verbindung unterbrochen, wird wiederhergestellt …</div><div class="term-stage"><div class="term-views"></div><aside class="term-panel" hidden></aside></div><div class="term-keys"></div><div class="term-toast" role="status" aria-live="polite" hidden></div><div class="term-toast undo" role="status" hidden></div></div>`;
 
+  const ID = /^[a-z0-9]{1,12}$/;
+  // Per browser window, so that each window keeps its own sessions across a reload.
+  const windowTabs = { get() { try { return JSON.parse(sessionStorage.getItem('bh-term-tabs')) ?? []; } catch (e) { return []; } }, set(v) { try { sessionStorage.setItem('bh-term-tabs', JSON.stringify(v)); } catch (e) { /* convenience only */ } } };
+  const tidy = (list) => list.map((t) => (typeof t === 'string' ? { id: t, label: '' } : t)).filter((t) => t && ID.test(t.id));
+
+  /** Which sessions a window opens: its own, else only the one in the address, else all known ones. */
+  function initialTabs(urlId, mine, known) {
+    const wanted = urlId && ID.test(urlId) ? (known.find((t) => t.id === urlId) || { id: urlId, label: '' }) : null;
+    if (mine.length) return wanted && !mine.some((t) => t.id === wanted.id) ? [...mine, wanted] : mine;
+    if (wanted) return [wanted];
+    return known.length ? known : [{}];
+  }
+
   function start(host) {
     host.innerHTML = LAYOUT;
     const page = host.firstChild; const $ = (s) => page.querySelector(s);
     const views = $('.term-views'); const panel = $('.term-panel'); const tabsEl = $('.term-tabs'); const search = $('.term-search'); const toastEl = $('.term-toast:not(.undo)'); const undoEl = $('.term-toast.undo'); const banner = $('.term-banner');
     const sessions = new Map(); const meta = new Map(); let active = null; let font = store.get('font', 14); let openPanel = null;
     const current = () => sessions.get(active);
-    const saveTabs = () => store.set('tabs', [...meta.entries()].filter(([, m]) => !m.leaving).map(([id, m]) => ({ id, label: m.label })));
+    const saveTabs = () => {
+      const mine = [...meta.entries()].filter(([, m]) => !m.leaving).map(([id, m]) => ({ id, label: m.label }));
+      windowTabs.set(mine);
+      store.set('tabs', [...tidy(store.get('tabs', [])).filter((t) => !meta.has(t.id)), ...mine]); // Other windows keep their entries.
+    };
     let toastTimer; const toast = (html, ms) => { clearTimeout(toastTimer); toastEl.innerHTML = html; toastEl.hidden = false; if (ms) toastTimer = setTimeout(() => { toastEl.hidden = true; }, ms); };
 
     const visible = () => [...meta.entries()].filter(([, m]) => !m.leaving);
@@ -23,7 +40,7 @@ window.TermApp = (() => {
       banner.hidden = !active || meta.get(active)?.state !== 'wait';
     }
     const setState = (id, s) => { if (meta.has(id)) { meta.get(id).state = s; drawTabs(); } };
-    function focus(id) { active = id; sessions.forEach((s, k) => s.show(k === id)); drawTabs(); }
+    function focus(id) { active = id; sessions.forEach((s, k) => s.show(k === id)); drawTabs(); history.replaceState(null, '', `${location.pathname}?session=${id}`); }
     function open(id = Math.random().toString(36).slice(2, 8), label = '') { meta.set(id, { label, state: 'connecting' }); sessions.set(id, TermSession.create({ id, parent: views, fontSize: font, onState: setState })); saveTabs(); focus(id); return sessions.get(id); }
     // Five seconds to undo; only then is the session really ended.
     let pending = null;
@@ -90,8 +107,9 @@ window.TermApp = (() => {
     keys.addEventListener('click', (e) => { const i = e.target.dataset.k; if (i !== undefined) { current().type(KEYS[i][1]); current().focus(); } });
     const size = () => document.documentElement.style.setProperty('--term-vh', `${window.visualViewport.height}px`);
     if (window.visualViewport) { window.visualViewport.addEventListener('resize', size); size(); }
-    const saved = store.get('tabs', []).map((t) => (typeof t === 'string' ? { id: t, label: '' } : t)).filter((t) => /^[a-z0-9]{1,12}$/.test(t.id));
-    (saved.length ? saved : [{}]).forEach((t) => open(t.id, t.label || ''));
+    const urlId = new URLSearchParams(location.search).get('session');
+    initialTabs(urlId, tidy(windowTabs.get()), tidy(store.get('tabs', []))).forEach((t) => open(t.id, t.label || ''));
+    if (urlId && sessions.has(urlId)) focus(urlId);
   }
-  return { start };
+  return { start, initialTabs };
 })();
