@@ -41,7 +41,8 @@ window.BHHome = (function () {
   }
   // Wetter als bewegter Hintergrund der rechten oberen Ecke.
   var CLOUD_PATH = 'M30 80h60a20 20 0 0 0 4-39 29 29 0 0 0-55-7 23 23 0 0 0-9 46z';
-  var SPOTS = [[660, 6, 330, .46, 24], [330, 44, 430, .36, 34], [840, 110, 270, .34, 19], [90, 8, 340, .26, 40], [520, 150, 380, .3, 28], [900, -24, 330, .42, 22]];
+  // Rechts stehen Temperatur und Text: Wolken dort bleiben duenn, damit die Schrift lesbar ist.
+  var SPOTS = [[620, 6, 330, .3, 24], [300, 44, 430, .38, 34], [860, 120, 270, .2, 19], [90, 8, 340, .28, 40], [500, 150, 380, .32, 28], [900, -24, 330, .24, 22]];
   function cloud(s, fill) {
     return '<svg class="wc" viewBox="0 0 120 90" style="left:' + s[0] + 'px;top:' + s[1] + 'px;width:' + s[2] + 'px;opacity:' + s[3] + ';animation-duration:' + s[4] + 's"><path fill="' + fill + '" d="' + CLOUD_PATH + '"/></svg>';
   }

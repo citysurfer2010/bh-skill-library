@@ -60,10 +60,9 @@ function start(commands) {
   menu();
   const fetchPlan = () => refreshIfStale(true).catch((e) => console.error(`[stundenplan] ${e.message}`));
   fetchPlan();
-  const inService = () => { const t = berlinTime(); return t >= '05:30' && t < '23:00'; };
-  const fetchBoard = () => { if (inService()) refreshBoard().catch((e) => console.error(`[bvg] ${e.message}`)); else if (board) { board = null; pushMenu().catch(() => {}); } };
+  const fetchBoard = () => refreshBoard().catch((e) => console.error(`[bvg] ${e.message}`));
   fetchBoard(); setInterval(fetchBoard, 60_000);
-  const fetchAlerts = () => { const t = berlinTime(); if (t >= '05:30' && t < '23:00') refreshAlerts().catch((e) => console.error(`[bvg] ${e.message}`)); };
+  const fetchAlerts = () => refreshAlerts().catch((e) => console.error(`[bvg] ${e.message}`));
   fetchAlerts(); setInterval(fetchAlerts, 300_000);
   let last = '';
   setInterval(() => { const t = berlinTime(); if (t !== last && SCHEDULE_AT.includes(t)) fetchPlan(); last = t; }, 20_000);
