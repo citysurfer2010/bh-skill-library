@@ -8,6 +8,8 @@
 (function () {
   // Module tabs: extend when adding new pages. `id` is the value for Navbar.render().
   var TABS = [
+    { id: 'home', label: 'Terminal', href: '/terminal/' },
+    { id: 'guide', label: 'Anleitung', href: '/terminal/guide' },
   ];
   var shell = null;
 

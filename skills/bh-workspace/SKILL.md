@@ -26,6 +26,8 @@ Jeder User bekommt nach der Registrierung ohne Zutun einen eigenen Container, ei
 - Bilder und Dateien einfügen oder hineinziehen: landen in `~/uploads`, der Pfad wird ins Terminal geschrieben.
 - Bilder anzeigen: Vorschau in „Bilder“, im Terminal mit `bh-show bild.png`.
 
+Die Anleitung für Nutzer steht im Terminal unter `/terminal/guide` (`apps/terminal/public/components/guide-content.js`). Ändert sich der Ablauf, dort mitändern.
+
 ## Subdomain und Routen
 
 - Adresse: `<name>.<domain>`, nur nach Anmeldung an der Plattform erreichbar.

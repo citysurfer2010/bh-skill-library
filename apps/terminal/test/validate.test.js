@@ -9,7 +9,7 @@ const vm = require('vm');
 const ROOT = path.join(__dirname, '..');
 const PUBLIC = path.join(ROOT, 'public');
 const read = (rel) => fs.readFileSync(path.join(PUBLIC, rel), 'utf8');
-const PAGES = ['index.html', 'admin.html'];
+const PAGES = ['index.html', 'admin.html', 'guide.html'];
 
 function walk(dir, match, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

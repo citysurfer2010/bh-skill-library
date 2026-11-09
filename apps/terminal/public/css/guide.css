@@ -1,0 +1,44 @@
+/* Guide page: table of contents and readable text column. */
+.guide { display: grid; grid-template-columns: 200px minmax(0, 680px); gap: 40px; max-width: 960px; margin: 0 auto; padding: 24px; }
+.guide-toc { position: sticky; top: 16px; align-self: start; display: grid; gap: 2px; font-size: 14px; }
+.guide-toc-title { margin-bottom: 6px; color: var(--bh-muted); font-size: 13px; font-weight: 600; }
+.guide-toc a { padding: 6px 8px; border-radius: var(--bh-radius-sm); color: var(--bh-text); text-decoration: none; }
+.guide-toc a:hover { background: var(--bh-bg-subtle); color: var(--bh-primary); }
+.guide-body { min-width: 0; font-size: 15px; line-height: 1.6; color: var(--bh-text); }
+.guide-head h1 { margin: 0; font-size: 26px; }
+.guide-head p { margin: 4px 0 0; color: var(--bh-muted); }
+.guide-body > section { margin-top: 36px; scroll-margin-top: 16px; }
+.guide .guide-body h2 { margin: 0 0 10px; padding-top: 16px; border-top: 1px solid var(--bh-border); font-size: 20px; font-weight: 700; }
+.guide .guide-body h3 { margin: 28px 0 6px; color: var(--bh-text); font-size: 16px; font-weight: 600; }
+.guide-body p { margin: 0 0 12px; }
+.guide-note { padding: 10px 14px; border-radius: var(--bh-radius-sm); border: 1px solid color-mix(in srgb, var(--bh-primary) 40%, transparent); background: color-mix(in srgb, var(--bh-primary) 12%, var(--bh-surface)); color: var(--bh-text); }
+.guide-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.guide-body ul, .guide-body ol { margin: 0 0 12px; padding-left: 22px; }
+.guide-body li { margin-bottom: 4px; }
+.guide-body a { color: var(--bh-primary); }
+.guide-body a:focus-visible, .guide-toc a:focus-visible { outline: 2px solid var(--bh-primary); outline-offset: 2px; border-radius: 2px; }
+.guide-body code { padding: 1px 5px; border-radius: 4px; background: var(--bh-bg-subtle); border: 1px solid var(--bh-border); font: 13px ui-monospace, "SF Mono", Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.guide-body blockquote { margin: 0 0 12px; padding: 10px 14px; border-left: 3px solid var(--bh-primary); border-radius: 0 var(--bh-radius-sm) var(--bh-radius-sm) 0; background: var(--bh-bg-subtle); }
+.guide-code { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 10px 10px 10px 14px; border: 1px solid var(--bh-border); border-radius: var(--bh-radius); background: var(--bh-surface); }
+.guide-code pre { flex: 1; min-width: 0; margin: 0; overflow-x: auto; line-height: 1.5; }
+.guide-code code { padding: 0; border: 0; background: none; overflow-wrap: normal; }
+.guide-copy { flex: none; font-size: 13px; }
+.guide-body td code { white-space: nowrap; }
+.guide-body td { overflow-wrap: normal; }
+.guide-body .app-list { margin: 0 0 12px; overflow-x: auto; }
+.guide-body .app-list table { font-size: 14px; }
+.guide-body .app-list th, .guide-body .app-list td { padding: 8px 10px; border-bottom: 1px solid var(--bh-border); text-align: left; vertical-align: top; }
+.guide-body .app-list th { position: static; background: none; color: var(--bh-muted); font-size: 13px; font-weight: 600; }
+.guide-toc a[aria-current="true"] { background: var(--bh-bg-subtle); color: var(--bh-primary); font-weight: 600; }
+.guide-toc-title:not(:first-child) { margin-top: 12px; }
+@media (max-width: 760px) {
+  .guide { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 12px; }
+  .guide-toc { top: 0; z-index: 1; display: flex; flex-wrap: nowrap; gap: 4px; margin: -8px 0 0; padding: 8px 0; overflow-x: auto; background: var(--bh-bg); }
+  .guide-toc-title { display: none; }
+  .guide-toc a { flex: none; min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; background: var(--bh-bg-subtle); }
+  .guide-body > section { scroll-margin-top: 72px; }
+  .guide-toc { mask-image: linear-gradient(to right, black 88%, transparent); }
+  .guide-code { align-items: flex-start; }
+  .guide-code pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .guide-copy { min-height: 44px; padding: 0 10px; }
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Anleitung · Terminal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <link rel="icon" type="image/svg+xml" href="/terminal/favicon.svg?v=2">
+  <link rel="apple-touch-icon" href="/terminal/branding/apple-touch-icon.png?v=2">
+  <link rel="manifest" href="/terminal/manifest.webmanifest">
+  <meta name="theme-color" content="#1d4ed8">
+  <!-- Set the theme before the stylesheets, otherwise the page flashes white. -->
+  <script>(function(){var s;try{s=localStorage.getItem('bh-theme');}catch(e){}var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=s||(d?'dark':'light');})();</script>
+  <!-- No style= attributes: helper classes in css/utilities.css or a dedicated class in css/*.css. -->
+  <link rel="stylesheet" href="/terminal/bh-styles.css">
+  <link rel="stylesheet" href="/terminal/app.css">
+</head>
+<body>
+  <!-- Navbar.render() builds the frame around #page-host. Every page draws its own page header. -->
+  <div id="page-host"></div>
+
+  <script>window.APP_BASE = "/terminal";</script>
+  <!-- All components as one bundle: 1 request instead of N. -->
+  <script src="/terminal/app.js"></script>
+  <script src="/terminal/build-version-check.js"></script>
+  <script src="/terminal/components/pages/guide-page.js"></script>
+</body>
+</html>
