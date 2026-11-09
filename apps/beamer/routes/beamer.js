@@ -3,7 +3,7 @@
 const express = require('express');
 const gateway = require('../lib/gateway');
 const bridge = require('../lib/menu-bridge');
-const { MOODS, STATIONS, APPS, KEYS, publicCatalog } = require('../lib/catalog');
+const { MOODS, STATIONS, APPS, KEYS, publicCatalog, videoOf } = require('../lib/catalog');
 
 const clip = (v, n) => String(v ?? '').trim().slice(0, n);
 const byId = (list, id) => list.find((x) => x.id === id);
@@ -41,7 +41,7 @@ function buildRouter() {
   // Läuft schon Radio oder eine Stimmung, kommt das Neue dazu: Feuer knistert, Radio spielt.
   const currentRadio = () => (now?.kind === 'radio' ? byId(STATIONS, now.id) : now?.radio ? byId(STATIONS, now.radio.id) : null);
   function ambient(mood, station) {
-    const args = { video: mood.video, title: mood.label, ...(station ? { radio_url: station.url, station: station.label } : {}) };
+    const args = { video: videoOf(mood), title: mood.label, ...(station ? { radio_url: station.url, station: station.label } : {}) };
     const next = { kind: 'mood', id: mood.id, label: station ? `${mood.label} + ${station.label}` : mood.label, ...(station ? { radio: { id: station.id, label: station.label } } : {}) };
     return play('beamer_play_ambient', args, next);
   }

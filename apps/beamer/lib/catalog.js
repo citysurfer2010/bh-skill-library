@@ -4,10 +4,14 @@ const MOODS = [
   { id: 'kamin', label: 'Kaminfeuer', video: '6VB4bgiB0yA' },
   { id: 'strand', label: 'Strand am Abend', video: 'dh4KtUdVuYc' },
   { id: 'schnee', label: 'Schneefall', video: 'VYUAqNCt0Lo' },
-  { id: 'lagerfeuer', label: 'Lagerfeuer am Abend', video: 'PNfjp3e_2oM' },
+  { id: 'lagerfeuer', label: 'Lagerfeuer am Abend', video: 'eoYHOtzuq6s', winterVideo: 'PNfjp3e_2oM' },
   { id: 'aquarium', label: 'Aquarium', video: 'H_swbFgSROs', frame: 2 },
   { id: 'regen', label: 'Regen am Fenster', video: 'cjrZwn7JQvc' },
 ];
+
+// Das Schnee-Video passt nur im Winter (November bis Februar).
+const isWinter = (now = new Date()) => [10, 11, 0, 1].includes(now.getMonth());
+const videoOf = (mood, now = new Date()) => (mood.winterVideo && isWinter(now) ? mood.winterVideo : mood.video);
 
 const rndfnk = (p) => `https://dispatcher.rndfnk.com/${p}/live/mp3/mid`;
 const STATIONS = [
@@ -31,16 +35,16 @@ const APPS = ['YouTube', 'Prime Video', 'Netflix', 'Disney+', 'Apple TV', 'Spoti
 const KEYS = ['KEY_UP', 'KEY_DOWN', 'KEY_LEFT', 'KEY_RIGHT', 'KEY_ENTER', 'KEY_RETURN', 'KEY_HOME', 'KEY_VOLUP', 'KEY_VOLDOWN', 'KEY_MUTE', 'KEY_PLAY', 'KEY_PAUSE'];
 
 const publicCatalog = () => ({
-  moods: MOODS.map(({ id, label, video, frame }) => ({ id, label, thumb: `https://i.ytimg.com/vi/${video}/hq${frame || 1}.jpg`, hero: `https://i.ytimg.com/vi/${video}/maxres${frame || 1}.jpg` })),
+  moods: MOODS.map((m) => { const video = videoOf(m); const f = m.frame || 1; return { id: m.id, label: m.label, thumb: `https://i.ytimg.com/vi/${video}/hq${f}.jpg`, hero: `https://i.ytimg.com/vi/${video}/maxres${f}.jpg` }; }),
   stations: STATIONS.map(({ id, label, sub }) => ({ id, name: label.replace(/ Kultur$/, ''), sub })),
   apps: APPS,
 });
 
 // Menue fuer die App auf dem Beamer: Sie spielt Sender selbst und braucht darum die Adressen.
-const byIdVideo = (id) => MOODS.find((m) => m.id === id).video;
+const byIdVideo = (id) => videoOf(MOODS.find((m) => m.id === id));
 const beamerMenu = () => ({
   radio: STATIONS.map(({ id, label, sub, url }) => ({ id, name: label.replace(/ Kultur$/, ''), sub, url })),
   mood: publicCatalog().moods.map((m) => ({ id: m.id, label: m.label, thumb: m.thumb, video: byIdVideo(m.id) })),
 });
 
-module.exports = { beamerMenu, MOODS, STATIONS, APPS, KEYS, publicCatalog };
+module.exports = { beamerMenu, videoOf, MOODS, STATIONS, APPS, KEYS, publicCatalog };
