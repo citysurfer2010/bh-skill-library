@@ -30,26 +30,76 @@
   function showVideo(id) {
     setView('video');
     if (id === shownVideo) return;
+    var first = !shownVideo;
     shownVideo = id;
+    if (first && playingUrl) { try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* kein Player */ } startWeb(playingUrl); }
     frame.src = window.BH_SCREEN_URL + '/player?v=' + id;
   }
   function stopVideo() {
     if (!shownVideo) return;
     shownVideo = null; frame.src = 'about:blank';
+    stopWeb();
+    if (playingUrl) { player.src = playingUrl; var p = player.play(); if (p && p.catch) p.catch(function () {}); }
   }
-    // Der Beamer spielt nur eine Tonquelle: Mit Radio laeuft das Video stumm, sonst wuerde er es anhalten.
-  function videoVolume() { if (playingUrl) ytCommand('mute'); else { ytCommand('unMute'); ytCommand('setVolume', [100]); } }
-  // Das stumme Video belegt keinen Ton: Das Radio wird danach wieder angestossen.
-  function resumeRadio() { if (playingUrl && shownVideo && player.paused) { var p = player.play(); if (p && p.catch) p.catch(function (e) { caps = 'radio-' + e.name; }); } }
-  setInterval(resumeRadio, 3000);
+    // Mit Radio laeuft das Video leise weiter, das Knistern bleibt zu hoeren.
+  function videoVolume() { ytCommand('unMute'); ytCommand('setVolume', [playingUrl ? 30 : 100]); }
+  // Der Beamer laesst nur einen Medien-Player zu. Neben dem Video laeuft das Radio deshalb ueber Web Audio.
+  var web = null; var CHUNK = 64000;
+  function stopWeb() {
+    if (!web) return;
+    web.stop = true;
+    try { web.reader.cancel(); } catch (e) { /* schon zu */ }
+    try { web.ctx.close(); } catch (e) { /* schon zu */ }
+    web = null;
+  }
+  function playChunk(w, bytes) {
+    w.chain = w.chain.then(function () {
+      return new Promise(function (done) {
+        w.ctx.decodeAudioData(bytes.buffer, function (buf) {
+          if (!w.stop) {
+            var src = w.ctx.createBufferSource(); src.buffer = buf; src.connect(w.ctx.destination);
+            var at = Math.max(w.next, w.ctx.currentTime + 0.3);
+            src.start(at); w.next = at + buf.duration; w.n++; caps = 'web-' + w.n;
+          }
+          done();
+        }, function () { caps = 'web-decode'; done(); });
+      });
+    });
+  }
+  // Schneidet an einer MP3-Rahmengrenze, damit zwischen den Stuecken nichts knackt.
+  function cutAt(b) { for (var i = b.length - 2; i > b.length - 3000 && i > 0; i--) if (b[i] === 255 && (b[i + 1] & 224) === 224) return i; return b.length; }
+  function startWeb(url) {
+    stopWeb();
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { caps = 'web-kein-audio'; return; }
+    var w = { ctx: new AC(), next: 0, stop: false, n: 0, chain: Promise.resolve() };
+    web = w;
+    if (w.ctx.resume) w.ctx.resume();
+    var buf = new Uint8Array(CHUNK * 2); var size = 0;
+    fetch(url).then(function (res) {
+      w.reader = res.body.getReader();
+      function pump() {
+        return w.reader.read().then(function (r) {
+          if (w.stop || r.done) return null;
+          if (size + r.value.length > buf.length) size = 0;
+          buf.set(r.value, size); size += r.value.length;
+          if (size >= CHUNK) {
+            var view = buf.subarray(0, size); var cut = cutAt(view);
+            playChunk(w, view.slice(0, cut));
+            var rest = view.slice(cut); buf.set(rest, 0); size = rest.length;
+          }
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function (e) { if (!w.stop) caps = 'web-' + e.name; });
+  }
   window.addEventListener('message', function (e) {
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (d.event === 'onError') caps = 'yt-error-' + d.info;
     if (d.event === 'onReady' || d.event === 'initialDelivery') videoVolume();
     if (d.event === 'infoDelivery' && d.info && d.info.playerState !== undefined) {
-      caps = 'yt-' + d.info.playerState + '-a' + (player.paused ? 0 : 1); videoVolume();
-      if (d.info.playerState === 2 && shownVideo) ytCommand('playVideo');
-      resumeRadio();
+      caps = 'yt-' + d.info.playerState + '-w' + (web ? web.n : 0); videoVolume();
     }
   });
   var view = 'home';
@@ -59,6 +109,7 @@
   function stopAudio() {
     if (!playingUrl) return;
     playingUrl = null;
+    stopWeb();
     try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* kein Player */ }
     BHHome.setPlaying(null);
   }
@@ -71,6 +122,7 @@
     playingUrl = url;
     audioState('load');
     noteEl.textContent = 'Verbinde …';
+    if (shownVideo) { startWeb(url); return; }
     player.src = url;
     var p = player.play();
     if (p && p.catch) p.catch(function () { audioState('fail'); noteEl.textContent = 'Wiedergabe nicht möglich'; });
