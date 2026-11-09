@@ -4,7 +4,7 @@ const MOODS = [
   { id: 'kamin', label: 'Kaminfeuer', video: '6VB4bgiB0yA' },
   { id: 'strand', label: 'Strand am Abend', video: 'dh4KtUdVuYc' },
   { id: 'schnee', label: 'Schneefall', video: 'VYUAqNCt0Lo' },
-  { id: 'lagerfeuer', label: 'Lagerfeuer', video: 'zdkOAN6nI4s' },
+  { id: 'lagerfeuer', label: 'Lagerfeuer am Abend', video: 'PNfjp3e_2oM' },
   { id: 'aquarium', label: 'Aquarium', video: 'H_swbFgSROs', frame: 2 },
   { id: 'regen', label: 'Regen am Fenster', video: 'cjrZwn7JQvc' },
 ];
