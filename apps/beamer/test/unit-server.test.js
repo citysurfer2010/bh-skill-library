@@ -149,6 +149,7 @@ test('Gesichtsindex: nur nachts, pausiert waehrend der Slideshow', async () => {
     assert.equal(await indexer.round(day), 300000); assert.equal(calls, 0);
     assert.equal(await indexer.round(night), 1500); assert.equal(calls, 1);
     stream.handle('all');
+    await new Promise(setImmediate);
     calls = 0; assert.equal(await indexer.round(night), 300000); assert.equal(calls, 0);
     stream.reset();
     gateway.setCaller(async () => '{"done":true}');
