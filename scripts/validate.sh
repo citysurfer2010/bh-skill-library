@@ -23,15 +23,21 @@ for p in skills/*/server/package.json; do
   grep -q serverInfo "$s" 2>/dev/null || continue
   grep -q "version: *'$(ver "$m")'" "$s" || { echo "FEHLER $s: Version weicht vom Manifest ab"; fail=1; }
 done
+# Services keep their code in services/ and their version in the manifest of the matching skill.
+for p in services/*/package.json; do
+  m="skills/$(basename "$(dirname "$p")")/manifest.json"
+  [ -f "$m" ] || { echo "FEHLER $p: $m fehlt"; fail=1; continue; }
+  [ "$(ver "$p")" = "$(ver "$m")" ] || { echo "FEHLER $p: Version weicht vom Manifest ab"; fail=1; }
+done
 c=$(sed -nE 's/.*[^a-z]version="([^"]+)" viewmodes.*/\1/p' skills/bh-beamer/app/config.xml | head -1)
 [ "$c" = "$(ver skills/bh-beamer/manifest.json)" ] || { echo "FEHLER BH Screen: Version '$c' weicht vom Manifest ab"; fail=1; }
 # Icons: see "Icons und Favicon" in skills/bh-webapp-skeleton/SKILL.md
 logo=skills/bh-styleguide/assets/logo/bh-logo.svg
 tpl=skills/bh-webapp-skeleton/templates/new-web-app/app/public
-for d in "$tpl" skills/bh-auth/server/public apps/*/public; do
+for d in "$tpl" services/bh-auth/public apps/*/public; do
   cmp -s "$d/favicon.svg" "$logo" || { echo "FEHLER $d/favicon.svg weicht vom Logo ab"; fail=1; }
 done
-for d in "$tpl" skills/bh-auth/server/public apps/*/public; do
+for d in "$tpl" services/bh-auth/public apps/*/public; do
   for f in favicon.svg branding/icon-192.png branding/icon-512.png branding/icon-maskable-512.png branding/apple-touch-icon.png; do
     [ -f "$d/$f" ] || { echo "FEHLER $d/$f fehlt"; fail=1; }
   done

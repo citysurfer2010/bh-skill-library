@@ -17,7 +17,7 @@ ENV=/srv/bh-platform/.env; val() { sed -n "s/^$1=//p" "$ENV" | tail -1; }
   printf 'BH_CONNECT_SECRET=%s\n' "$(val BH_CONNECT_SECRET)" >>"$D/nas.env"
   printf 'BH_NETATMO_USER=%s\nBH_NETATMO_PASSWORD=%s\nBH_FAMILY_DIR=/var/lib/mcp-gateway/family\n' "$(val BH_NETATMO_USER)" "$(val BH_NETATMO_PASSWORD)" >>"$D/nas.env"
   printf 'BH_SCREEN_URL=%s/screen/%s\nBH_SCREEN_WRITE=%s\nBH_AUTH_INTERNAL=http://bh-auth:3337\n' "$(val BH_PUBLIC_URL)" "$(val BH_SCREEN_READ)" "$(val BH_SCREEN_WRITE)" >>"$D/nas.env")
-docker build -q -t mcp-gateway:current "$S/bh-mcp-gateway"
+docker build -q -t mcp-gateway:current /opt/bh-skill-library/services/bh-mcp-gateway
 docker network inspect mcp-gateway-net >/dev/null 2>&1 || docker network create mcp-gateway-net >/dev/null
 docker rm -f mcp-gateway >/dev/null 2>&1 || true
 # gw-priority: outgoing traffic leaves the container through its own network, only that has the firewall exception.
@@ -32,6 +32,7 @@ docker run -d --name mcp-gateway --network name=mcp-gateway-net,gw-priority=100 
   --cap-drop ALL --security-opt no-new-privileges \
   --memory 512m --memory-swap 768m --cpus 0.5 --pids-limit 256 \
   -v "$S:/opt/skills:ro" \
+  -v /opt/bh-skill-library/services/bh-mcp-gateway:/opt/services/bh-mcp-gateway:ro \
   -v "$D/google:/etc/mcp-gateway/google:ro" \
   -v /srv/llm-gateway/config:/etc/mcp-gateway/tokens:ro \
   -v "$D/users:/var/lib/mcp-gateway/users" \

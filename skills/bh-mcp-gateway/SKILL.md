@@ -14,15 +14,15 @@ Zugangsdaten (Google, GitHub) liegen je User auf dem Gateway, nie im User-Contai
 
 | Baustein | Aufgabe |
 |---|---|
-| `server/gateway.mjs` | HTTP-Endpunkt `/mcp`, Anmeldung per User-Token |
-| `server/lib/backend.mjs` | Je User und Server ein Prozess mit eigenem Home |
-| `server/lib/registry.mjs` | Fuehrt Werkzeuge zusammen: `<server>_<werkzeug>` |
-| `servers.json` | Liste der angebundenen Server |
+| `services/bh-mcp-gateway/server/gateway.mjs` | HTTP-Endpunkt `/mcp`, Anmeldung per User-Token |
+| `services/bh-mcp-gateway/server/lib/backend.mjs` | Je User und Server ein Prozess mit eigenem Home |
+| `services/bh-mcp-gateway/server/lib/registry.mjs` | Fuehrt Werkzeuge zusammen: `<server>_<werkzeug>` |
+| `services/bh-mcp-gateway/servers.json` | Liste der angebundenen Server |
 
 ## Neuen Server anbinden
 
 1. Server als `skills/bh-<name>/server/` anlegen (stdio-MCP, keine Abhaengigkeit ausserhalb des Ordners).
-2. Eintrag in `servers.json`, zugehoerigen Skill mit `SKILL.md` schreiben.
+2. Eintrag in `services/bh-mcp-gateway/servers.json`, zugehoerigen Skill mit `SKILL.md` schreiben.
 3. Auf dem Server `docker restart mcp-gateway`.
 
 ## Grenzen

@@ -95,7 +95,7 @@ export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLog
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const servers = JSON.parse(readFileSync(process.env.MCP_SERVERS_FILE || "/opt/skills/bh-mcp-gateway/servers.json", "utf8"))
+  const servers = JSON.parse(readFileSync(process.env.MCP_SERVERS_FILE || "/opt/services/bh-mcp-gateway/servers.json", "utf8"))
     .map((s) => ({ ...s, env: { ...s.env, ...Object.fromEntries((s.envFrom || []).map((k) => [k, process.env[k]])) } }));
   createGateway({
     servers,
