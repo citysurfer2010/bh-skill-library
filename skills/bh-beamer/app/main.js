@@ -116,6 +116,7 @@
     if (!playingUrl) return;
     playingUrl = null;
     stopWeb();
+    stationEl.textContent = 'Radio'; stationEl.className = ''; noteEl.textContent = 'CH ▲ ▼ startet';
     try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* kein Player */ }
     BHHome.setPlaying(null);
   }
