@@ -26,7 +26,7 @@ Vorlage für neue Web-Apps. `setup/init.sh` kopiert `new-web-app/app/`, ersetzt 
 
 ## Icons neu erzeugen
 
-`node scripts/make-app-icons.mjs --out public` zeichnet die Marke „BH“ ohne Browser in `favicon.svg` und `branding/*`. Die Testsuite `branding` prüft das Ergebnis. Wenn sich ein Icon ändert, `?v=` in `index.html`, `admin.html`, `manifest.webmanifest` und `navbar.js` hochzählen.
+`node scripts/make-app-icons.mjs --out public` zeichnet das Logo ohne Browser in `favicon.svg` und `branding/*`. Die Testsuite `branding` prüft das Ergebnis. Wenn sich ein Icon ändert, `?v=` in `index.html`, `admin.html`, `manifest.webmanifest` und `navbar.js` hochzählen.
 
 ## Tests in der Vorlage
 
