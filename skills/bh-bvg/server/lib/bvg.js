@@ -51,7 +51,7 @@ async function alerts(watch = WATCH) {
 }
 
 const SCHOOL_STOP = { id: '900024104', name: 'Amtsgerichtsplatz' };
-const berlinHour = (now) => Number(new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', hourCycle: 'h23' }).format(now));
+const berlinHour = (now) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', hourCycle: 'h23' }).format(now));
 
 /** Abfahrtstafel fürs Startbild: morgens nur Richtung Westen zum Herder-Gymnasium. */
 async function board(now = new Date(), stop = SCHOOL_STOP) {
