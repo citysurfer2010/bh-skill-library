@@ -11,7 +11,8 @@ let alerts = [];
 let board = null;
 let birthdays = [];
 let onThisDay = null;
-const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay } });
+let rooms = [];
+const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay, rooms } });
 
 // Bis 7 Uhr ist der Vertretungsplan eingestellt; um 16:05 springt die Anzeige auf den nächsten Schultag.
 const SCHEDULE_AT = ['06:30', '06:45', '07:00', '10:00', '13:00', '16:05'];
@@ -54,6 +55,13 @@ async function refreshBirthdays() {
   birthdays = next; onThisDay = facts;
   await pushMenu();
 }
+// Raumwerte über den Skill netatmo, alle 10 Minuten; gesendet wird nur bei Änderung. Bei Fehlern bleiben die letzten Werte.
+async function refreshRooms() {
+  const next = JSON.parse(await gateway.call('netatmo_rooms'));
+  if (JSON.stringify(next) === JSON.stringify(rooms)) return;
+  rooms = next;
+  await pushMenu();
+}
 const berlinTime = (d = new Date()) => new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
 
 async function tick(commands) {
@@ -73,6 +81,8 @@ function start(commands) {
   menu();
   const fetchBirthdays = () => refreshBirthdays().catch((e) => console.error(`[geburtstag] ${e.message}`));
   fetchBirthdays();
+  const fetchRooms = () => refreshRooms().catch((e) => console.error(`[netatmo] ${e.message}`));
+  fetchRooms(); setInterval(fetchRooms, 600_000);
   const fetchPlan = () => refreshIfStale(true).catch((e) => console.error(`[stundenplan] ${e.message}`));
   fetchPlan();
   const fetchBoard = () => refreshBoard().catch((e) => console.error(`[bvg] ${e.message}`));
@@ -84,4 +94,4 @@ function start(commands) {
   loop();
 }
 
-module.exports = { start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, SCHEDULE_AT };
+module.exports = { start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, SCHEDULE_AT };

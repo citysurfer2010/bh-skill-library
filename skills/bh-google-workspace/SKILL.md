@@ -42,8 +42,7 @@ Bei `Access token expired or revoked` zuerst `auth.refreshToken()` aufrufen.
 
 | Tool | Zweck |
 |---|---|
-| `auth.loginStart` | Startet die Google-Anmeldung und liefert den Link. |
-| `auth.loginFinish` | Schliesst die Anmeldung mit der Adresse aus dem Browser ab. |
+| `auth.loginStart` | Sagt dem User, wo er Google verbindet: BH-Profil, „Verbundene Dienste“. |
 | `auth.clear` | Löscht gespeicherte Google Credentials (Neuauthentifizierung erforderlich). |
 | `auth.refreshToken` | Erneuert den Google OAuth Access Token manuell. |
 
@@ -201,9 +200,8 @@ Bei `Access token expired or revoked` zuerst `auth.refreshToken()` aufrufen.
 Voraussetzung ist der OAuth-Client der Firma auf dem Gateway (Typ **Desktop-App**, APIs fuer Gmail, Drive,
 Calendar, Docs, Sheets, Slides und Tasks aktiviert).
 
-1. `google_auth_loginStart` aufrufen, bei reinen Auswertungen mit `readOnly: true`.
-2. Den Link dem User zeigen. Nach der Zustimmung zeigt der Browser eine Fehlerseite auf `localhost`.
-3. Die komplette Adresse dieser Seite vom User erfragen und an `google_auth_loginFinish` geben.
+1. Den User bitten, im BH-Profil unter „Verbundene Dienste“ auf Verbinden zu klicken.
+2. Nach der Zustimmung liegt die Freigabe je User auf dem Gateway; ein Einfügen von Adressen entfällt.
 
 `withChat: true` ergaenzt Google Chat (nur Workspace-Konten). Der Server erneuert Token selbst direkt bei Google.
 Anmeldedaten nie ausgeben oder speichern.

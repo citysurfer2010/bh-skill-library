@@ -1,13 +1,15 @@
 // Startbild des Beamers: Menue links, Uhr, Wetter, Schultag, Radio und Stimmungen. Bewusst altes JavaScript fuer Tizen 5.5.
 window.BHHome = (function () {
   'use strict';
-  var LAT = 52.52; var LON = 13.41; var PLACE = 'Berlin'; var COLS = { radio: 4, mood: 3 };
+  var LAT = 52.52; var LON = 13.41; var PLACE = 'Berlin'; var COLS = { radio: 4, mood: 3, rooms: 3 };
   var DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
   var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
   var homeEl = document.getElementById('home');
-  var PAGES = ['start', 'radio', 'mood'];
+  var PAGES = ['start', 'radio', 'mood', 'rooms'];
   var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
   var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = ''; var party = null; var partyView = true; var tight = false;
+  var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
+  try { room = localStorage.getItem('bh-room') || room; } catch (e) { /* ohne Speicher bleibt das Wohnzimmer */ }
   var api = { onTune: function () {}, onMood: function () {}, isRadioOn: function () { return false; } };
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); };
@@ -146,6 +148,7 @@ window.BHHome = (function () {
       for (var k = 0; k < tiles.length; k++) {
         tiles[k].className = tiles[k].className.replace(/ (focus|playing)/g, '');
         if (zone === 'content' && page === name && k === g.at) tiles[k].className += ' focus';
+        if (name === 'rooms' && g.items[k].name === shownRoom().name) tiles[k].className += ' playing';
         if (name === 'radio') {
           var on = g.items[k].id === playingId;
           if (on && audio === 'ok') tiles[k].className += ' playing';
@@ -154,6 +157,34 @@ window.BHHome = (function () {
         }
       }
     });
+  }
+
+  var deg = function (v) { return v === null || v === undefined ? '–' : String(v).replace('.', ',') + '°'; };
+  function shownRoom() {
+    var hit = rooms.filter(function (r) { return r.name === room; })[0];
+    return hit || rooms.filter(function (r) { return r.name === 'Wohnzimmer'; })[0] || rooms[0] || {};
+  }
+  // Ein Raum auf dem Startbild; Warnungen gelten fuer die ganze Wohnung.
+  function renderIndoor() {
+    var el = document.getElementById('indoor'); var r = shownRoom();
+    if (!r.name) { el.innerHTML = ''; return; }
+    var open = rooms.filter(function (x) { return x.windowOpen; })[0]; var low = rooms.filter(function (x) { return x.batteryLow; })[0];
+    var warn = open ? 'Fenster offen: ' + open.name : low ? 'Batterie schwach: ' + low.name : '';
+    el.innerHTML = esc(r.name) + ' <b>' + deg(r.temp) + '</b>' + (r.heating ? ' · heizt' : '') + (warn ? '<span class="warn">' + esc(warn) + '</span>' : '');
+  }
+  function renderRooms(list) {
+    var sig = JSON.stringify(list);
+    if (sig === roomsSig) return;
+    roomsSig = sig;
+    rooms = list.slice().sort(function (a, b) { return (b.name === 'Wohnzimmer') - (a.name === 'Wohnzimmer'); });
+    var at = grids.rooms ? grids.rooms.at : 0;
+    buildGrid('rooms', 'Räume<span class="g-hint"><kbd>OK</kbd> Aufs Startbild <kbd>Zurück</kbd> Schließen</span>', rooms, function (r) {
+      var note = !r.reachable ? 'Nicht erreichbar' : r.windowOpen ? 'Fenster offen' : r.batteryLow ? 'Batterie schwach' : r.heating ? 'Heizt auf ' + deg(r.target) : 'Soll ' + deg(r.target);
+      var cls = !r.reachable || r.windowOpen || r.batteryLow ? 'alarm' : r.heating ? 'heat' : '';
+      return '<div class="tile room"><b>' + esc(r.name) + '</b><span class="t">' + deg(r.temp) + '</span><small class="' + cls + '">' + esc(note) + '</small></div>';
+    });
+    grids.rooms.at = Math.min(at, Math.max(list.length - 1, 0));
+    renderIndoor(); paint();
   }
 
   function buildGrid(name, title, items, tile) {
@@ -195,6 +226,7 @@ window.BHHome = (function () {
     alertsEl.innerHTML = alerts.slice(0, 2).map(function (a) { return '<div class="alert"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><b>' + esc(a.label) + '</b><span>' + esc(a.text) + '</span></div>'; }).join('');
     board = menu.board || null; renderBoard();
     renderBirthdays(menu.birthdays || [], menu.onThisDay);
+    renderRooms(menu.rooms || []);
     var next = JSON.stringify([menu.radio, menu.mood]);
     if (next === signature) return;
     signature = next;
@@ -254,13 +286,18 @@ window.BHHome = (function () {
     setZone('side');
     if (key !== 38 && key !== 40) return;
     var i = PAGES.indexOf(page) + (key === 40 ? 1 : -1);
-    if (i >= 0 && i < PAGES.length) { page = PAGES[i]; paint(); }
+    if (i >= 0 && i < PAGES.length) { page = PAGES[i]; if (page === 'rooms' && grids.rooms) grids.rooms.at = Math.max(rooms.indexOf(shownRoom()), 0); paint(); }
   }
   function enter() {
     if (zone === 'side') { setZone('content'); return; }
     if (page === 'start') { if (api.onPause) api.onPause(); return; }
     clearTimeout(tuneTimer); tuneTimer = null;
     var g = grids[page]; if (!g) return;
+    if (page === 'rooms') {
+      var chosen = g.items[g.at]; if (!chosen) return;
+      room = chosen.name; try { localStorage.setItem('bh-room', room); } catch (e) { /* gilt dann bis zum Neustart */ }
+      renderIndoor(); paint(); return;
+    }
     if (page === 'radio') api.onTune(g.items[g.at]); else api.onMood(g.items[g.at]);
   }
 

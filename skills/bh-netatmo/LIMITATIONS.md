@@ -4,4 +4,4 @@
 - Im Konto sind nur Thermostatventile und Relais, keine Wetterstation. Außen-, CO2- und Luftfeuchtewerte gibt es deshalb nicht.
 - Es wird nur das erste Zuhause mit Räumen gelesen.
 - Das Sitzungstoken liegt auf dem Server in `/srv/mcp-gateway/family/netatmo.json`, nur für den Dienst lesbar.
-- Auf dem Startbild werden die Werte noch nicht angezeigt.
+- Die Beamer-App fragt alle 10 Minuten ab, auch wenn der Beamer aus ist.

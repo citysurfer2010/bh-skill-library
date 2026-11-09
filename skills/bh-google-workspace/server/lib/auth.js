@@ -7,7 +7,7 @@
  * refreshen.
  *
  * Refresh direkt gegen oauth2.googleapis.com mit dem eigenen OAuth-Client der Firma.
- * credentials.json entsteht ueber auth.loginStart und auth.loginFinish.
+ * credentials.json entsteht ueber das BH-Profil (Verbundene Dienste) und liegt je User auf dem Gateway.
  */
 'use strict';
 

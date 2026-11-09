@@ -34,11 +34,21 @@ function googleRow(user, enabled) {
   return row({ icon: googleIcon, title: "Google", status: tag(linked, "Verknüpft", "Nicht verknüpft"), sub, action, panel });
 }
 
-export function profileView({ user, notice, error, passwordError, openPassword, googleEnabled, min }) {
+function servicesCard(state) {
+  if (!state) return "";
+  const { connected, email } = state;
+  const connect = `<a class="p-btn${connected ? "" : " p-primary"}" href="/oauth/google/services">${connected ? "Neu verbinden" : "Verbinden"}</a>`;
+  const action = connected ? `<button type="button" class="p-btn" data-toggle="servicesConfirm" aria-expanded="false" aria-controls="servicesConfirm">Trennen</button> ${connect}` : connect;
+  const panel = connected ? `<form id="servicesConfirm" class="p-panel p-confirm" method="post" action="/profile/google/services/disconnect" hidden><p>Buddy und Beamer verlieren den Zugriff auf deine Google-Daten.</p><div class="p-buttons"><button type="submit" class="p-btn p-danger">Ja, trennen</button><button type="button" class="p-btn" data-cancel="servicesConfirm">Abbrechen</button></div></form>` : "";
+  const sub = connected && email ? `Verbunden als ${esc(email)}` : "Kalender, Drive, Gmail, Docs, Tabellen, Präsentationen und Aufgaben";
+  return `<section class="p-card"><div class="p-card-head"><h2>Verbundene Dienste</h2><p>Damit Buddy und Beamer deine Google-Daten nutzen können. Das ist unabhängig von der Anmeldung mit Google.</p></div><div class="p-list">${row({ icon: googleIcon, title: "Google-Dienste", status: tag(connected, "Verbunden", "Nicht verbunden"), sub, action, panel })}</div></section>`;
+}
+
+export function profileView({ user, notice, error, passwordError, openPassword, googleEnabled, googleServices, min }) {
   const open = !!(openPassword || passwordError);
   return shell(user, "Profil", `<div class="p-wrap"><header class="p-head"><span class="p-avatar" aria-hidden="true">${avatarInner(user)}</span><div class="p-who"><h1>${esc(user.name)}</h1><div class="p-mail">${esc(user.email)}</div><div class="p-meta"><span class="p-role">${user.isAdmin ? "Admin" : "Benutzer"}</span><span>Letzte Anmeldung: ${when(user.lastLogin)}</span></div></div></header>
 ${notice ? `<p class="alert ok" role="status">${esc(notice)}</p>` : ""}${error ? `<p class="alert error" role="alert">${esc(error)}</p>` : ""}
 <section class="p-card"><div class="p-card-head"><h2>Persönliche Daten</h2><p>So erscheinst du in allen Apps.</p></div><form class="p-name" method="post" action="/profile"><label>Anzeigename<input name="name" value="${esc(user.name)}" maxlength="80" required></label><button type="submit">Speichern</button></form></section>
-<section class="p-card"><div class="p-card-head"><h2>Anmeldung</h2><p>Wege, mit denen du dich bei der BH Platform anmeldest.</p></div><div class="p-list">${passwordRow(user, min, open, passwordError)}${googleRow(user, googleEnabled)}</div></section>
+<section class="p-card"><div class="p-card-head"><h2>Anmeldung</h2><p>Wege, mit denen du dich bei der BH Platform anmeldest.</p></div><div class="p-list">${passwordRow(user, min, open, passwordError)}${googleRow(user, googleEnabled)}</div></section>${servicesCard(googleServices)}
 <section class="p-card"><div class="p-card-head"><h2>Sicherheit</h2></div><div class="p-list">${row({ icon: SHIELD, title: "Andere Geräte", sub: "Beendet deine Anmeldung überall außer auf diesem Gerät.", action: `<form method="post" action="/profile/sessions"><button type="submit" class="p-btn">Abmelden</button></form>` })}</div></section></div>`, { css: ["/profile.css"], js: ["/profile.js"] });
 }

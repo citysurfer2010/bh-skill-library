@@ -88,5 +88,7 @@ export class BackendPool {
     for (const b of this.backends.values()) if (Date.now() - b.lastUsed > IDLE_MS) b.stop();
   }
 
+  stopUser(user) { for (const [key, b] of this.backends) if (key.startsWith(`${user}/`)) b.stop(); }
+
   stopAll() { clearInterval(this.reaper); for (const b of this.backends.values()) b.stop(); }
 }

@@ -169,3 +169,26 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 /* Abends und nachts bleibt alles gedämpft, auch Störungen */
 #home[data-time="night"] { --panel: #101c3a; --plate: #101c3a; }
 #home[data-time="evening"] .alert, #home[data-time="night"] .alert { background: #4a2a1c; color: #fed7aa; box-shadow: inset 0 0 0 2px #fb923c, 0 6px 18px rgba(0, 0, 0, .3); }
+/* Raumklima: ein Raum auf dem Startbild, alle auf der Seite Räume */
+#indoor { margin-top: 6px; font-size: 32px; }
+#indoor b { font-weight: 800; }
+#indoor .warn { display: inline-block; margin: 0 0 0 14px; padding: 0 12px; border-radius: 8px; background: #ffedd5; color: #7c2d12; font-size: 28px; font-weight: 700; text-shadow: none; }
+#home[data-time="evening"] #indoor .warn, #home[data-time="night"] #indoor .warn { background: #4a2a1c; color: #fed7aa; }
+#home[data-page="rooms"] #grid-rooms { display: block; }
+.tile.room { width: 564px; padding: 18px 28px; }
+.grid h2 .g-hint { margin-left: 36px; font-size: 32px; font-weight: 500; }
+.g-hint kbd { display: inline-block; margin: 0 8px 0 18px; padding: 0 10px; border: 2px solid currentColor; border-radius: 8px; font: inherit; line-height: 1.25; }
+.g-hint kbd:first-child { margin-left: 0; }
+.tile.room b { display: block; font-size: 36px; }
+.tile.room .t { display: block; margin: 4px 0; font-size: 92px; font-weight: 800; line-height: 1.1; }
+.tile.room small { display: block; font-size: 30px; font-weight: 400; color: var(--sub); }
+.tile.room.playing { background: var(--card); color: var(--ink); }
+.tile.room.playing:not(.focus) { box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
+.tile.room.playing small { color: var(--sub); }
+.tile.room.playing b::after { content: "Startbild"; margin-left: 14px; padding: 2px 12px; border-radius: 8px; background: var(--chip); color: var(--chip-ink); font-size: 26px; font-weight: 700; vertical-align: 3px; }
+.tile.room small.heat { color: #c2410c; font-weight: 700; }
+#home[data-time="evening"] .tile.room small.heat, #home[data-time="night"] .tile.room small.heat { color: #fb923c; }
+.tile.room small.alarm { display: table; padding: 0 12px; border-radius: 8px; background: #ffedd5; color: #7c2d12; font-weight: 700; }
+.tile.room.focus { transform: scale(1.02); }
+#home[data-time="evening"] .tile.room.focus, #home[data-time="night"] .tile.room.focus { box-shadow: 0 0 0 6px #7db4ff, 0 12px 30px rgba(0, 0, 0, .35); }
+#home[data-page="rooms"] #indoor .warn { display: none; }

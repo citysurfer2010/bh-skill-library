@@ -56,3 +56,8 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 ## Geburtstage
 
 - Vorschau oben in der Mitte in den 7 Tagen davor, am Tag ein eigener Reiter „Geburtstag“ vor dem Stundenplan. Details: Skill `bh-birthdays`.
+
+## Raumklima
+
+- Der gewählte Raum wird auf dem Gerät gemerkt. Details: Skill `bh-netatmo`.
+- Absichtlich eine eigene Menüseite und keine Tasten auf dem Startbild, denn ▲▼ und CH steuern dort schon das Radio.
