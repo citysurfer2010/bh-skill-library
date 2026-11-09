@@ -24,6 +24,8 @@ function tlsOptions() {
   const fingerprint = process.env.BH_NAS_FP;
   return {
     ca: Buffer.from(process.env.BH_NAS_CA_B64 || '', 'base64').toString('utf8'),
+    // The Synology does not send its CA: trust the pinned certificate itself, the fingerprint check still applies.
+    allowPartialTrustChain: true,
     checkServerIdentity: (_host, cert) => (cert.fingerprint256 === fingerprint ? undefined : new Error('Zertifikat der Synology stimmt nicht')),
   };
 }

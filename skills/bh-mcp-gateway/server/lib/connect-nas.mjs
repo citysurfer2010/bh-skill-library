@@ -14,6 +14,7 @@ export function nasLogin(user, password) {
   return new Promise((resolve, reject) => {
     const req = https.request(url, {
       method: "POST", timeout: 20_000, ca: Buffer.from(process.env.BH_NAS_CA_B64 || "", "base64").toString("utf8"),
+      allowPartialTrustChain: true,
       checkServerIdentity: (_h, cert) => (cert.fingerprint256 === fingerprint ? undefined : new Error("Zertifikat der Synology stimmt nicht")),
       headers: { "content-type": "application/x-www-form-urlencoded", "content-length": Buffer.byteLength(body) },
     }, (res) => {
