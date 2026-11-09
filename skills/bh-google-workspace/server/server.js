@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * bh-google-workspace MCP Server v1.0.0
+ * bh-google-workspace MCP Server v26.11.1
  *
  * Direkte Google REST API.
  *
@@ -35,7 +35,7 @@ rl.on('line', async (line) => {
       result: {
         protocolVersion: params?.protocolVersion || '2024-11-05',
         capabilities:    { tools: {} },
-        serverInfo:      { name: 'bh-google-workspace', version: '1.0.0' },
+        serverInfo:      { name: 'bh-google-workspace', version: '26.11.1' },
       },
     });
     return;
@@ -71,4 +71,4 @@ rl.on('line', async (line) => {
 rl.on('close', () => process.exit(0));
 process.stdin.on('error', () => {});
 
-process.stderr.write(`[bh-google-workspace] v1.0.0 started — ${TOOL_NAMES.length} Tools registriert.\n`);
+process.stderr.write(`[bh-google-workspace] v26.11.1 started — ${TOOL_NAMES.length} Tools registriert.\n`);

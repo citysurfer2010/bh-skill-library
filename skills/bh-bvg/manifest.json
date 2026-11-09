@@ -1,7 +1,7 @@
 {
   "skill_id": "bh-bvg",
   "name": "bh-bvg",
-  "version": "1.0.0",
+  "version": "26.11.1",
   "description": "Haltestellen und Abfahrten der BVG",
   "author": "bh-platform",
   "schema_version": "2.0"
