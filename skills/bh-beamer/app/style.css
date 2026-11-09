@@ -11,17 +11,19 @@ body.video #ambient { display: block; background: #000; }
 h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap: break-word; max-width: 100%; }
 #text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
 #text:empty, #title:empty { display: none; }
-/* Menue: schwebt ueber dem Bild, faehrt nur bei Bedarf herein. */
-#side { position: absolute; z-index: 10; left: 28px; top: 28px; bottom: 28px; width: 340px; box-sizing: border-box; padding: 34px 22px; border-radius: 32px; background: #fff; box-shadow: 0 24px 60px rgba(15, 31, 61, .34); transform: translateX(-420px); transition: transform 180ms ease-out; }
-#home.menu #side { transform: none; }
-#side-hint { position: absolute; z-index: 5; left: 0; top: 490px; padding: 22px 12px 22px 6px; border-radius: 0 20px 20px 0; background: rgba(255, 255, 255, .78); color: #1e3a8a; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
-#side-hint svg { display: block; }
+/* Menue: schmale Dock-Leiste wie bei modernen TV-Oberflaechen. Nur das fokussierte Element zeigt seinen Namen. */
+#side { position: absolute; z-index: 10; left: 34px; top: 540px; box-sizing: border-box; padding: 14px; border-radius: 58px; background: rgba(12, 22, 48, .82); box-shadow: 0 24px 60px rgba(15, 31, 61, .45); opacity: 0; transform: translate(-150px, -50%); transition: transform 200ms ease-out, opacity 160ms ease-out; }
+#home.menu #side { opacity: 1; transform: translate(0, -50%); }
+#side-hint { position: absolute; z-index: 5; left: 0; top: 500px; padding: 18px 8px 18px 2px; border-radius: 0 16px 16px 0; background: rgba(12, 22, 48, .55); color: #fff; }
+#side-hint svg { display: block; width: 28px; height: 28px; }
 #home.menu #side-hint { display: none; }
-.mark { display: inline-block; margin: 0 0 34px 14px; padding: 8px 14px; border-radius: 12px; background: #1d4ed8; color: #fff; font-size: 30px; font-weight: 800; }
-.side-item { display: flex; align-items: center; margin-bottom: 10px; padding: 20px 22px; border-radius: 18px; font-size: 38px; font-weight: 700; color: #33415c; }
-.side-item svg { flex: none; margin-right: 20px; }
-.side-item.current { background: #e8effb; color: #1e3a8a; }
-.side-item.focus { background: #1d4ed8; color: #fff; transform: scale(1.03); }
+.side-item { display: flex; align-items: center; box-sizing: border-box; height: 88px; min-width: 88px; margin-bottom: 10px; padding: 0 24px; border-radius: 44px; color: rgba(255, 255, 255, .72); font-size: 36px; font-weight: 700; transition: background 140ms, color 140ms, transform 140ms; }
+.side-item:last-child { margin-bottom: 0; }
+.side-item svg { flex: none; }
+.side-item span { max-width: 0; overflow: hidden; white-space: nowrap; transition: max-width 180ms ease-out, margin 180ms ease-out; }
+.side-item.current { background: rgba(255, 255, 255, .16); color: #fff; }
+.side-item.focus { background: #fff; color: #0f1f3d; transform: scale(1.05); }
+.side-item.focus span { max-width: 320px; margin: 0 8px 0 18px; }
 .top { position: absolute; left: 90px; right: 90px; top: 56px; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
 #clock { font-size: 120px; font-weight: 700; line-height: 1; }
 #date { margin-top: 8px; font-size: 40px; }
@@ -105,3 +107,10 @@ body.audio #today { top: 432px; }
 .dep i { font-style: normal; font-weight: 700; color: #1e3a8a; margin-left: 8px; }
 .dep.late i { color: #9a3412; }
 .dep.off { color: #b91c1c; text-decoration: line-through; }
+/* Stoerungen */
+#alerts { display: none; position: absolute; left: 90px; right: 90px; bottom: 122px; }
+#home[data-page="start"] #alerts.on { display: block; }
+.alert { display: flex; align-items: center; margin-top: 10px; padding: 14px 24px; border-radius: 18px; background: #ffedd5; color: #7c2d12; font-size: 32px; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
+.alert svg { flex: none; margin-right: 16px; }
+.alert b { flex: none; margin-right: 18px; }
+.alert span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

@@ -4,7 +4,7 @@ const clean = (name) => name.replace(/[^a-zA-Z0-9_-]/g, "_");
 // Ohne users-Liste steht ein Server allen offen; mit Liste nur den Genannten.
 // Dienst-Konten (bh-*) bekommen nur ausdruecklich freigegebene Server: Jeder andere waere ein unnoetiger Prozess.
 const isService = (user) => user.startsWith("bh-");
-const allowed = (server, user) => (server.users ? server.users.includes(user) : !isService(user));
+const allowed = (server, user) => (server.users ? server.users.includes(user) : isService(user) ? (server.services || []).includes(user) : true);
 
 export class Registry {
   constructor(servers, pool) {

@@ -7,7 +7,8 @@ const { beamerMenu } = require('./catalog');
 const WAIT_S = 20; const IDLE_MS = 5000;
 
 let schedule = null;
-const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule } });
+let alerts = [];
+const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts } });
 
 // Bis 7 Uhr ist der Vertretungsplan eingestellt; um 16:05 springt die Anzeige auf den nächsten Schultag.
 const SCHEDULE_AT = ['06:30', '06:45', '07:00', '10:00', '13:00', '16:05'];
@@ -24,6 +25,13 @@ function refreshIfStale(force = false) {
   lastFetch = Date.now();
   running = refreshSchedule().then(() => schedule).finally(() => { running = null; });
   return running;
+}
+// Störungen alle 5 Minuten; gesendet wird nur, wenn sich etwas ändert.
+async function refreshAlerts() {
+  const next = JSON.parse(await gateway.call('bvg_alerts'));
+  if (JSON.stringify(next) === JSON.stringify(alerts)) return;
+  alerts = next;
+  await pushMenu();
 }
 const berlinTime = (d = new Date()) => new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
 
@@ -44,9 +52,11 @@ function start(commands) {
   menu();
   const fetchPlan = () => refreshIfStale(true).catch((e) => console.error(`[stundenplan] ${e.message}`));
   fetchPlan();
+  const fetchAlerts = () => { const t = berlinTime(); if (t >= '05:30' && t < '23:00') refreshAlerts().catch((e) => console.error(`[bvg] ${e.message}`)); };
+  fetchAlerts(); setInterval(fetchAlerts, 300_000);
   let last = '';
   setInterval(() => { const t = berlinTime(); if (t !== last && SCHEDULE_AT.includes(t)) fetchPlan(); last = t; }, 20_000);
   loop();
 }
 
-module.exports = { start, tick, pushMenu, refreshSchedule, refreshIfStale, SCHEDULE_AT };
+module.exports = { start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, SCHEDULE_AT };

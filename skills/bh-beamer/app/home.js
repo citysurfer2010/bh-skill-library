@@ -77,13 +77,15 @@ window.BHHome = (function () {
     if (!transitStop || document.body.className.indexOf('home') < 0 || page !== 'start') return;
     transitAt = Date.now();
     var x = new XMLHttpRequest();
-    x.open('GET', 'https://v6.bvg.transport.rest/stops/' + transitStop.id + '/departures?duration=45&results=3&remarks=false');
+    x.open('GET', 'https://v6.bvg.transport.rest/stops/' + transitStop.id + '/departures?duration=60&results=9&remarks=false');
     x.timeout = 12000;
     x.onload = function () {
       try {
-        var list = JSON.parse(x.responseText).departures || [];
+        var hour = new Date().getHours(); var morning = hour >= 5 && hour < 10;
+        // Morgens zaehlt nur der Schulweg Richtung Westen.
+        var list = (JSON.parse(x.responseText).departures || []).filter(function (d) { return !morning || !/Zoologischer|Zoo\b/.test(d.direction || ''); }).slice(0, 3);
         el.className = list.length ? 'on' : '';
-        el.innerHTML = '<span class="stop">' + esc(transitStop.name) + '</span>' + list.map(function (d) {
+        el.innerHTML = '<span class="stop">' + esc(transitStop.name) + (morning ? ' · Westen' : '') + '</span>' + list.map(function (d) {
           var when = new Date(d.when || d.plannedWhen); var min = Math.max(0, Math.round((when - Date.now()) / 60000));
           var late = (d.delay || 0) >= 180;
           return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line && d.line.name || '?') + '</b><span>' + esc(String(d.direction || '')) + '</span><i>' + (d.cancelled ? 'fällt aus' : (min ? min + ' Min' : 'jetzt') + (late ? ' (+' + Math.round(d.delay / 60) + ')' : '')) + '</i></span>';
@@ -144,6 +146,9 @@ window.BHHome = (function () {
   function setMenu(menu) {
     if (!menu) return;
     plan = menu.schedule || null; renderDay();
+    var alertsEl = document.getElementById('alerts'); var alerts = menu.alerts || [];
+    alertsEl.className = alerts.length ? 'on' : '';
+    alertsEl.innerHTML = alerts.slice(0, 2).map(function (a) { return '<div class="alert"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><b>' + esc(a.label) + '</b><span>' + esc(a.text) + '</span></div>'; }).join('');
     if (menu.transit && (!transitStop || transitStop.id !== menu.transit.id)) { transitStop = menu.transit; departures(); }
     var next = JSON.stringify([menu.radio, menu.mood]);
     if (next === signature) return;

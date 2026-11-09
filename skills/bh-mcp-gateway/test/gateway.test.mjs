@@ -125,3 +125,10 @@ test("Dienst-Konto startet nur ausdruecklich freigegebene Server", async () => {
   assert.deepEqual(list.map((t) => t.name), ["beamer_x"]);
   assert.deepEqual(started, ["beamer"]);
 });
+
+test("Dienst-Konto darf offene Server nur mit Freigabe nutzen", async () => {
+  const { Registry } = await import("../server/lib/registry.mjs");
+  const pool = { get: () => ({ request: async () => ({ tools: [{ name: "x" }] }) }) };
+  const reg = new Registry([{ id: "bvg", services: ["bh-apps"] }, { id: "offen" }], pool);
+  assert.deepEqual((await reg.list("bh-apps")).map((t) => t.name), ["bvg_x"]);
+});
