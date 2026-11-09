@@ -39,11 +39,18 @@
   }
     // Der Beamer spielt nur eine Tonquelle: Mit Radio laeuft das Video stumm, sonst wuerde er es anhalten.
   function videoVolume() { if (playingUrl) ytCommand('mute'); else { ytCommand('unMute'); ytCommand('setVolume', [100]); } }
+  // Das stumme Video belegt keinen Ton: Das Radio wird danach wieder angestossen.
+  function resumeRadio() { if (playingUrl && shownVideo && player.paused) { var p = player.play(); if (p && p.catch) p.catch(function (e) { caps = 'radio-' + e.name; }); } }
+  setInterval(resumeRadio, 3000);
   window.addEventListener('message', function (e) {
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (d.event === 'onError') caps = 'yt-error-' + d.info;
     if (d.event === 'onReady' || d.event === 'initialDelivery') videoVolume();
-    if (d.event === 'infoDelivery' && d.info && d.info.playerState !== undefined) { caps = 'yt-state-' + d.info.playerState; videoVolume(); if (d.info.playerState === 2 && shownVideo) ytCommand('playVideo'); }
+    if (d.event === 'infoDelivery' && d.info && d.info.playerState !== undefined) {
+      caps = 'yt-' + d.info.playerState + '-a' + (player.paused ? 0 : 1); videoVolume();
+      if (d.info.playerState === 2 && shownVideo) ytCommand('playVideo');
+      resumeRadio();
+    }
   });
   var view = 'home';
   function setView(name) { view = name; document.body.className = name; }
