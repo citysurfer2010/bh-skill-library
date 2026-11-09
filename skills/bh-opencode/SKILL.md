@@ -28,6 +28,7 @@ Jeder User bekommt dasselbe OpenCode: gleicher Kontext, gleiche Regeln, gleiche 
 | Hook | Wirkung |
 |---|---|
 | `config` | Lädt Kontext und Regeln |
+| `experimental.chat.system.transform` | Nennt OpenCode in jeder Runde den User, seine Adresse und die aktuellen Routen mit vollständiger URL |
 | `tool.execute.before` (Pre) | Sperrt `git push --force`, Pushes auf ein bestehendes `main`/`master`, `--no-verify`, `git reset --hard`, `git clean -f`, `git checkout .`, `git restore .`, das Lesen von Tokens und Commit-Nachrichten außerhalb des Formats |
 | `tool.execute.after` (Post) | Erinnert einmal je App an `npm test` und die Version `JJ.M.N`, merkt sich berührte Repos |
 | `event: session.idle` | Pusht fertige Commits des Branches automatisch, nie `main`/`master`, nie mit gefundenem Geheimnis |

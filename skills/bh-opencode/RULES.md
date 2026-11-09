@@ -24,7 +24,19 @@ These rules apply to every task.
 - Add or adapt tests with every behaviour change and run them before you commit. Report honestly if something fails or was not verified.
 - Versions follow `YY.M.N` as described in the coding rules, raised in the same commit.
 
+## Data
+- Default database is SQLite through `node:sqlite`: one file per app, WAL mode, `PRAGMA foreign_keys = ON`. It fits this small server and needs no extra process.
+- Do not start database servers such as PostgreSQL, MySQL or Redis in the container, there is neither memory nor Docker. Use a hosted database over the internet only if the app must really serve many concurrent writers, and ask the user first.
+- Keep the path in `DATA_DIR`, outside Git. For public apps the database and `.env` must stay outside the app folder, in `~/app-data/<app>/`, otherwise the guard revokes the release.
+- Change schemas through numbered, forward-only migrations in the repository. Group related writes in transactions, add indexes for real queries, use bound parameters only.
+- Store times as UTC ISO 8601 and money as integer cents. Files go on disk with their path in the database, not as blobs. JSON files are only for small settings.
+- Back up with `VACUUM INTO` or the SQLite backup API. Never copy a live database file, the WAL holds recent writes. Backups are not automatic.
+
+## User accounts
+- Apps for platform users use the platform login and need no accounts. Public apps that need accounts follow the skill `bh-app-accounts`.
+
 ## Building web apps
 - The skill `bh-webapp-skeleton` is an offer for classic web apps, it brings design, login, database and tests.
 - Games and other free applications may ignore it and have their own look, menus and navigation.
+- An app that becomes a platform app needs its own icon in the platform style: blue gradient tile, white motif that fits the app, set in `scripts/app-icon.json`. The letter B belongs to the platform.
 - Keep AI calls on the central LLM gateway and tools on the MCP gateway. Never call a model provider directly or ask for API keys.

@@ -88,6 +88,22 @@ test('post hook reminds once per app about tests', async () => {
   assert.match(first.output, /npm test/); assert.equal(second.output, 'ok');
 });
 
+test('system prompt names the user, the site and complete route URLs', async () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-home-')); const old = process.env.HOME;
+  fs.mkdirSync(path.join(home, '.config/bh-apps'), { recursive: true });
+  fs.writeFileSync(path.join(home, '.config/bh-apps/routes.json'), JSON.stringify({ routes: [{ path: '/spiel', port: 3001, public: true }, { path: '/', port: 3002 }] }));
+  process.env.HOME = home;
+  try {
+    const hooks = await (await load())({ directory: home });
+    const output = { system: [] };
+    await hooks['experimental.chat.system.transform']({}, output);
+    const host = os.hostname();
+    assert.match(output.system[0], new RegExp(`Current user: ${host}`));
+    assert.ok(output.system[0].includes(`https://${host}.familiebiskup.de/spiel (port 3001, public)`));
+    assert.ok(output.system[0].includes(`https://${host}.familiebiskup.de/ (port 3002)`));
+  } finally { process.env.HOME = old; }
+});
+
 test('only the plugin itself is exported', async () => {
   assert.deepEqual(Object.keys(await import('../plugin/bh-guard.js')), ['BhGuard']);
 });
