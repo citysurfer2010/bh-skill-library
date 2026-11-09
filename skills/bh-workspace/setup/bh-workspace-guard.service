@@ -1,0 +1,7 @@
+[Unit]
+Description=Oeffentliche Apps der User auf Leaks pruefen
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/bh-workspace-guard

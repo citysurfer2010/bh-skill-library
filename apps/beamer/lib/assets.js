@@ -8,7 +8,7 @@ const path = require('path');
 
 const PUBLIC = path.join(__dirname, '..', 'public');
 const DESIGN_MODULES = ['tokens', 'bh-controls', 'bh-shell', 'bh-table', 'bh-user-menu'];
-const CSS_MODULES = ['base', 'layout', 'forms', 'components', 'bh-select', 'utilities', 'beamer'];
+const CSS_MODULES = ['base', 'layout', 'forms', 'components', 'bh-select', 'heute', 'utilities', 'beamer'];
 
 const css = (names) => names.map((name) => `\n/* ─── ${name}.css ─── */\n${fs.readFileSync(path.join(PUBLIC, 'css', `${name}.css`), 'utf8')}`).join('\n');
 

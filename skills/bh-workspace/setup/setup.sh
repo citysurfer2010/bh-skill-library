@@ -16,6 +16,11 @@ for pair in "$@"; do jq --arg e "${pair%%=*}" --arg n "${pair#*=}" '. + {($e): $
 
 install -m 755 "$R/platform/bin/devbox" /usr/local/sbin/devbox
 install -m 755 "$W/setup/reconcile.sh" /usr/local/sbin/bh-workspace-reconcile
+install -m 755 "$W/setup/guard.sh" /usr/local/sbin/bh-workspace-guard
+install -D -m 644 "$W/setup/gitleaks.toml" /usr/local/share/bh-workspace/gitleaks.toml
+docker pull -q zricethezav/gitleaks:v8.24.0 >/dev/null
+[ -f /srv/edge/conf/public-routes.map ] || : >/srv/edge/conf/public-routes.map
+install -d -m 755 "$S/state/guard"
 (cd "$R/platform" && docker build -q -t devbox:current image >/dev/null)
 
 B=$(mktemp -d /srv/bh-terminal/.build.XXXX); chmod 755 "$B"
@@ -63,6 +68,6 @@ docker exec bh-edge nginx -s reload >/dev/null
 bash "$R/platform/auth/setup-auth.sh" | tail -1
 docker exec bh-auth node bin/register-app.js add "Terminal" "/terminal/" "Web-Terminal in deine Arbeitsumgebung" </dev/null || true
 
-install -m 644 "$W/setup/bh-workspace.service" "$W/setup/bh-workspace.timer" /etc/systemd/system/
-systemctl daemon-reload; systemctl enable --now bh-workspace.timer >/dev/null
+install -m 644 "$W"/setup/bh-workspace*.service "$W"/setup/bh-workspace*.timer /etc/systemd/system/
+systemctl daemon-reload; systemctl enable --now bh-workspace.timer bh-workspace-guard.timer >/dev/null
 echo "bh-workspace läuft"

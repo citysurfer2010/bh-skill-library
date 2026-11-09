@@ -69,6 +69,14 @@ label.term-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; 
 .term-up { font-size: 13px; color: var(--bh-muted); }
 .term-up.on { color: var(--bh-warm); font-weight: 600; }
 .term-up.off { color: var(--bh-danger); }
+.term-pub { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.term-pub > span { flex: 1 1 0; min-width: 0; }
+.term-state { font-size: 13px; font-weight: 600; color: var(--bh-muted); }
+.term-state.ok { color: var(--bh-ok); }
+.term-state.off { color: var(--bh-danger); }
+.term-finds { display: grid; gap: 8px; margin: 0; padding: 0; color: var(--bh-danger); font-size: 13px; }
+.term-routes .term-finds li { padding: 0; border: 0; gap: 2px; }
+.term-finds code { color: var(--bh-text); overflow-wrap: anywhere; }
 .term-light { position: absolute; inset: 0; z-index: 7; display: flex; align-items: center; justify-content: center; background: var(--bh-term-scrim); }
 .term-light img { max-width: 92%; max-height: 88%; }
 .term-light .term-btn { position: absolute; top: 12px; right: 12px; }

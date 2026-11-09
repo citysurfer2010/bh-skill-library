@@ -6,6 +6,12 @@ resolver 127.0.0.11 valid=30s;
 absolute_redirect off;
 
 map $http_upgrade $conn_upgrade { default upgrade; "" close; }
+# Nur Routen, die der Sicherheits-Waechter freigegeben hat (Skill bh-workspace).
+map "$host$uri" $bh_public {
+  default 0;
+  include /etc/nginx/conf.d/public-routes.map;
+}
+limit_req_zone $http_cf_connecting_ip zone=bh_public:10m rate=20r/s;
 # Die Sitzung der Plattform geht nie an Apps, die User selbst betreiben.
 map $http_cookie $bh_no_session {
   default $http_cookie;
@@ -39,6 +45,8 @@ server {
     return 302 /login?next=$request_uri;
   }
 
+  location = /heute { return 302 /beamer/heute; }
+
   include /etc/nginx/conf.d/apps/*.inc;
 
   location / {
@@ -67,7 +75,28 @@ server {
     return 302 https://apps.__DOMAIN__/login?next=https://$host$request_uri;
   }
 
+  location @public {
+    # Der Pfad geht roh an den Container: Tricks mit .. oder Kodierung dürfen die Freigabe nicht umgehen.
+    if ($request_uri ~* "/\.\./|/\.\.$|/\.\.\?|%2e|%2f|%5c|\\") { return 400; }
+    limit_req zone=bh_public burst=40 nodelay;
+    set $up http://devbox-$box:8088;
+    proxy_pass $up;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $conn_upgrade;
+    proxy_set_header Host $host;
+    proxy_set_header Cookie $bh_no_session;
+    proxy_set_header X-User-Email "";
+    proxy_set_header X-User-Name "";
+    proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_read_timeout 1h;
+    client_max_body_size 10m;
+  }
+
   location / {
+    error_page 418 = @public;
+    if ($bh_public) { return 418; }
     auth_request /_auth;
     auth_request_set $u_email $upstream_http_x_auth_email;
     auth_request_set $u_name $upstream_http_x_auth_name;

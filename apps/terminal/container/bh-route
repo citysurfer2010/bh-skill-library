@@ -1,6 +1,7 @@
 #!/bin/bash
 # Legt fest, unter welchem Pfad eine App auf der eigenen Subdomain erreichbar ist.
 #   bh-route add /spiel 3001 | bh-route rm /spiel | bh-route list
+#   bh-route public /spiel ~/projects/spiel | bh-route private /spiel
 set -eu
 F=$HOME/.config/bh-apps/routes.json
 mkdir -p "$(dirname "$F")"; [ -s "$F" ] || echo '{"routes":[]}' >"$F"
@@ -11,6 +12,12 @@ case "${1:-list}" in
     [[ $port =~ ^[0-9]+$ ]] && [ "$port" -ge 1024 ] && [ "$port" -le 65535 ] && [ "$port" != 2222 ] && [ "$port" != 8088 ] || { echo "Port von 1024 bis 65535, nicht 2222 oder 8088" >&2; exit 1; }
     jq --arg p "$p" --argjson n "$port" '.routes |= (map(select(.path != $p)) + [{path: $p, port: $n}])' "$F" >"$F.new"; mv "$F.new" "$F"
     echo "$p -> Port $port" ;;
+  public)
+    d=$(realpath -m "${3:-}"); case "$d" in "$HOME"/*) d=${d#"$HOME"/} ;; *) echo "Ordner muss in deinem Home liegen" >&2; exit 1 ;; esac
+    [ -d "$HOME/$d" ] || { echo "Ordner nicht gefunden: ${3:-}" >&2; exit 1; }
+    jq --arg p "${2:-}" --arg d "$d" '.routes |= map(if .path == $p then . + {public: true, dir: $d} else . end)' "$F" >"$F.new"; mv "$F.new" "$F"
+    echo "${2:-} wird geprüft. Das Ergebnis siehst du in wenigen Minuten im Web-Terminal unter Meine Apps." ;;
+  private) jq --arg p "${2:-}" '.routes |= map(if .path == $p then del(.public, .dir) else . end)' "$F" >"$F.new"; mv "$F.new" "$F" ;;
   rm) jq --arg p "${2:-}" '.routes |= map(select(.path != $p))' "$F" >"$F.new"; mv "$F.new" "$F" ;;
   list) jq -r '.routes[] | "\(.path)\t\(.port)"' "$F" ;;
   *) sed -n '3p' "$0" >&2; exit 1 ;;

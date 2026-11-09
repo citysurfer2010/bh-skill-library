@@ -8,6 +8,8 @@ import path from 'node:path';
 const FILE = path.join(process.env.HOME, '.config/bh-apps/routes.json');
 const PORT = 8088;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// Pfadtricks wie /privat/../spiel würden die Freigabe am Web-Eingang umgehen.
+const unsafe = (url) => /(^|\/)\.\.(\/|$)|%2e|%2f|%5c|\\/i.test(url.split('?')[0]);
 function routes() {
   try { return JSON.parse(fs.readFileSync(FILE, 'utf8')).routes.filter((r) => /^\/[a-z0-9-/]*$/.test(r.path) && r.port > 0).sort((a, b) => b.path.length - a.path.length); } catch { return []; }
 }
@@ -25,6 +27,7 @@ function landing(res) {
 }
 
 const server = http.createServer((req, res) => {
+  if (unsafe(req.url)) { res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('Ungültiger Pfad.'); }
   const r = match(req.url);
   if (!r) { if (req.url.split('?')[0] === '/') return landing(res); res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('Keine App unter diesem Pfad.'); }
   const up = http.request({ host: '127.0.0.1', port: r.port, path: target(r, req.url), method: req.method, headers: headers(req, r) }, (a) => { res.writeHead(a.statusCode, a.headers); a.pipe(res); });
@@ -34,7 +37,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.on('upgrade', (req, socket, head) => {
-  const r = match(req.url);
+  const r = unsafe(req.url) ? null : match(req.url);
   if (!r) return socket.destroy();
   const up = net.connect(r.port, '127.0.0.1', () => {
     const lines = Object.entries(headers(req, r)).map(([k, v]) => `${k}: ${v}`).join('\r\n');
@@ -44,4 +47,4 @@ server.on('upgrade', (req, socket, head) => {
   return undefined;
 });
 if (process.argv[1] === new URL(import.meta.url).pathname) server.listen(PORT, '0.0.0.0');
-export { server, match, target };
+export { server, match, target, unsafe };

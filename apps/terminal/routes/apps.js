@@ -1,11 +1,12 @@
 'use strict';
 /** Die eigenen Apps: welcher Pfad auf der Subdomain zu welchem Port im Container gehört. */
 const express = require('express');
-const { statusOf } = require('../lib/workspace');
+const { statusOf, guardOf } = require('../lib/workspace');
 const { withSftp } = require('../lib/ssh');
 const { HOME } = require('../lib/bootstrap');
 
 const FILE = `${HOME}/.config/bh-apps/routes.json`;
+const DIR_OK = /^[A-Za-z0-9._-]+(\/[A-Za-z0-9._-]+)*$/;
 const PATH_OK = /^\/([a-z0-9-]+(\/[a-z0-9-]+)*)?$/;
 const portOk = (p) => Number.isInteger(p) && p >= 1024 && p <= 65535 && p !== 2222 && p !== 8088;
 const load = (s) => new Promise((ok) => s.readFile(FILE, (e, b) => { try { ok(e ? [] : JSON.parse(b).routes || []); } catch { ok([]); } }));
@@ -36,7 +37,7 @@ function buildRouter() {
   };
   r.get('/apps', ready, async (req, res, next) => {
     try {
-      const routes = await withSftp(req.box.name, async (s, conn) => { const list = await load(s); const up = await openPorts(conn, list); return list.map((x) => ({ ...x, up: up.has(x.port) })); });
+      const routes = await withSftp(req.box.name, async (s, conn) => { const list = await load(s); const up = await openPorts(conn, list); const guard = guardOf(req.box.name); return list.map((x) => ({ ...x, up: up.has(x.port), guard: guard[x.path] ? { state: guard[x.path].state, findings: guard[x.path].findings } : null })); });
       res.json({ subdomain: req.box.subdomain, routes });
     } catch (e) { next(e); }
   });
@@ -48,6 +49,20 @@ function buildRouter() {
       return res.json({ routes });
     } catch (e) { return next(e); }
   });
+  // Öffentlich schalten fordert nur die Prüfung an; freigeben kann allein der Wächter auf dem Server.
+  r.post('/apps/public', ready, async (req, res, next) => {
+    const { path, dir, on } = req.body || {};
+    if (!PATH_OK.test(String(path))) return res.status(400).json({ error: 'Ungültiger Pfad' });
+    const folder = String(dir || '').replace(/^~\//, '').replace(/^\/home\/dev\//, '').replace(/\/+$/, '');
+    if (on && (!DIR_OK.test(folder) || folder.split('/').includes('..'))) return res.status(400).json({ error: 'Ordner wie projects/spiel angeben' });
+    try {
+      await withSftp(req.box.name, async (s) => {
+        const list = (await load(s)).map((x) => { if (x.path !== path) return x; const { public: _p, dir: _d, ...rest } = x; return on ? { ...rest, public: true, dir: folder } : rest; });
+        await save(s, list);
+      });
+      return res.json({ ok: true });
+    } catch (e) { return next(e); }
+  });
   r.delete('/apps', ready, async (req, res, next) => {
     try {
       const routes = await withSftp(req.box.name, async (s) => { const next_ = (await load(s)).filter((x) => x.path !== req.query.path); await save(s, next_); return next_; });
@@ -56,4 +71,4 @@ function buildRouter() {
   });
   return r;
 }
-module.exports = { buildRouter, PATH_OK, portOk };
+module.exports = { buildRouter, PATH_OK, DIR_OK, portOk };
