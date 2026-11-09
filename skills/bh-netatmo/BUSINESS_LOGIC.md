@@ -18,3 +18,4 @@
 - Das Startbild zeigt standardmäßig das Wohnzimmer. Quelle: Matti, 09.11.2026.
 - Auf der Seite „Räume“ im Menü stehen alle Räume; OK legt den Raum für das Startbild fest.
 - Offene Fenster und schwache Batterien erscheinen für die ganze Wohnung, nicht nur für den gewählten Raum.
+- Die große Zahl ist der gemessene Ist-Wert. Der Soll-Wert steht in Klammern dahinter, sobald er um mindestens 0,5 Grad abweicht. Quelle: Matti, 09.11.2026.

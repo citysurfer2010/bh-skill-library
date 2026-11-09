@@ -186,7 +186,8 @@ window.BHHome = (function () {
     if (!r.name) { el.innerHTML = ''; return; }
     var open = rooms.filter(function (x) { return x.windowOpen; })[0]; var low = rooms.filter(function (x) { return x.batteryLow; })[0];
     var warn = open ? 'Fenster offen: ' + open.name : low ? 'Batterie schwach: ' + low.name : '';
-    el.innerHTML = esc(r.name) + ' <b>' + deg(r.temp) + '</b>' + (r.heating ? ' · heizt' : '') + (warn ? '<span class="warn">' + esc(warn) + '</span>' : '');
+    var differs = typeof r.temp === 'number' && typeof r.target === 'number' && Math.abs(r.temp - r.target) >= 0.5;
+    el.innerHTML = esc(r.name) + ' <b>' + deg(r.temp) + '</b>' + (differs ? ' (Soll ' + deg(r.target) + ')' : '') + (r.heating ? ' · heizt' : '') + (warn ? '<span class="warn">' + esc(warn) + '</span>' : '');
   }
   function renderRooms(list) {
     var sig = JSON.stringify(list);
