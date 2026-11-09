@@ -50,3 +50,9 @@ test('Tag: abgelehnte Anmeldung wird gemeldet und nicht weiter versucht', async 
   await assert.rejects(w.day('2026-11-09'), /Anmeldung/);
   assert.equal(calls, 2);
 });
+
+test('Hausaufgaben: je Kind am Fälligkeitstag, erledigte nicht', () => {
+  const idx = w.homeworkIndex({ lessons: [{ id: 5, subject: 'Mathe' }], records: [{ homeworkId: 1, elementIds: [7] }, { homeworkId: 2, elementIds: [7] }], homeworks: [{ id: 1, lessonId: 5, dueDate: 20261109, text: 'S. 12', completed: false }, { id: 2, lessonId: 5, dueDate: 20261109, text: 'alt', completed: true }] });
+  assert.deepEqual(idx.get('7:2026-11-09'), [{ subject: 'Mathe', text: 'S. 12' }]);
+  assert.deepEqual(w.nextSchoolDates(3, '2026-11-13'), ['2026-11-13', '2026-11-16', '2026-11-17']);
+});

@@ -7,8 +7,9 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="home">
-<div id="home">
+<div id="home" data-page="start">
   <svg class="hills" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true"><path fill="#f8ecd9" d="M0 500 C 380 440 820 560 1220 490 S 1720 440 1920 490 V1080 H0Z"/><path fill="#f1dfc2" d="M0 720 C 500 680 930 750 1410 705 S 1790 690 1920 715 V1080 H0Z"/></svg>
+  <aside id="side"><div class="mark">BH</div><div class="side-item" data-page="start">Start</div><div class="side-item" data-page="radio">Radio</div><div class="side-item" data-page="mood">Stimmung</div></aside>
   <header class="top">
     <div><div id="clock">--:--</div><div id="date"></div></div>
     <div class="weather"><div id="temp"></div><div id="sky"></div></div>
@@ -18,7 +19,8 @@
     <div class="now"><div id="station"></div><div id="note"></div></div>
   </section>
   <section id="today"></section>
-  <nav id="menu"></nav>
+  <section id="grid-radio" class="grid"></section>
+  <section id="grid-mood" class="grid"></section>
 </div>
 <main id="screen"><h1 id="title"></h1><p id="text"></p></main>
 <audio id="player" preload="none"></audio>

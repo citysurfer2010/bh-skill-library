@@ -13,7 +13,7 @@ const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu()
 const SCHEDULE_AT = ['06:30', '06:45', '07:00', '10:00', '13:00', '16:05'];
 const MIN_GAP_MS = 120_000;
 async function refreshSchedule() {
-  schedule = JSON.parse(await gateway.call('webuntis_day'));
+  schedule = JSON.parse(await gateway.call('webuntis_days', { count: 5 }));
   await pushMenu();
 }
 // Beim Öffnen der Seite frisch holen, aber nie öfter als alle 2 Minuten anmelden.

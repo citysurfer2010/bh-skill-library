@@ -1,60 +1,72 @@
 html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #2563eb; color: #0f1f3d; font-family: "Samsung One", "SamsungOne", sans-serif; }
-#home, #screen, #share { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
+#home, #screen, #share, #ambient { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
 body.home #home { display: block; background: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); }
 body.text #screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 45%, #fdf3e3 100%); color: #fff; }
 body.share #share { display: block; background: #000; object-fit: contain; }
+body.video #ambient { display: block; background: #000; }
+#player-frame { width: 1920px; height: 1080px; border: 0; pointer-events: none; }
+#vbar { position: absolute; left: 90px; bottom: 70px; padding: 18px 30px; border-radius: 16px; background: rgba(11, 23, 48, .72); color: #fff; font-size: 40px; font-weight: 700; opacity: 0; transition: opacity 200ms; }
+#vbar.on { opacity: 1; }
 .hills { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
 h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap: break-word; max-width: 100%; }
 #text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
 #text:empty, #title:empty { display: none; }
-.top { position: absolute; left: 90px; right: 90px; top: 60px; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
-#clock { font-size: 128px; font-weight: 700; line-height: 1; }
+/* Linke Leiste: Hauptmenue fuer die Fernbedienung */
+#side { position: absolute; left: 0; top: 0; width: 300px; height: 1080px; box-sizing: border-box; padding: 52px 26px; background: rgba(255, 255, 255, .94); box-shadow: 4px 0 24px rgba(15, 31, 61, .16); }
+.mark { display: inline-block; margin: 0 0 40px 14px; padding: 10px 16px; border-radius: 12px; background: #1d4ed8; color: #fff; font-size: 34px; font-weight: 800; }
+.side-item { margin-bottom: 12px; padding: 22px 24px; border-radius: 14px; font-size: 40px; font-weight: 700; color: #33415c; }
+.side-item.current { background: #dbeafe; color: #1e3a8a; }
+.side-item.focus { box-shadow: 0 0 0 6px #1d4ed8; }
+.top { position: absolute; left: 360px; right: 90px; top: 56px; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
+#clock { font-size: 120px; font-weight: 700; line-height: 1; }
 #date { margin-top: 8px; font-size: 40px; }
 .weather { text-align: right; }
 #temp { font-size: 96px; font-weight: 700; line-height: 1; }
 #sky { margin-top: 12px; font-size: 40px; }
-#playing { display: none; position: absolute; left: 90px; top: 266px; align-items: center; color: #0f1f3d; background: #fdf3e3; padding: 24px 44px; border-radius: 24px; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
+/* Radio-Platte */
+#playing { display: none; position: absolute; left: 360px; top: 256px; max-width: 1010px; box-sizing: border-box; align-items: center; background: #fdf3e3; padding: 20px 40px; border-radius: 24px; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); color: #0f1f3d; }
+#home[data-page="start"] #playing { display: none; }
+body.audio #home[data-page="start"] #playing { display: flex; }
 #playing[data-s="load"] .bar { animation-play-state: paused; opacity: .45; }
 #playing[data-s="fail"] #radio { display: none; }
-body.audio #playing { display: flex; }
-#radio { flex: none; height: 120px; margin-right: 44px; white-space: nowrap; }
-#radio .bar { display: inline-block; width: 22px; height: 120px; margin: 0 9px; border-radius: 11px; background: #c2410c; transform-origin: bottom; animation: pulse 1.2s ease-in-out infinite; }
+#radio { flex: none; height: 90px; margin-right: 36px; white-space: nowrap; }
+#radio .bar { display: inline-block; width: 18px; height: 90px; margin: 0 7px; border-radius: 9px; background: #c2410c; transform-origin: bottom; animation: pulse 1.2s ease-in-out infinite; }
 #radio .bar:nth-child(2) { animation-delay: .15s; } #radio .bar:nth-child(3) { animation-delay: .3s; } #radio .bar:nth-child(4) { animation-delay: .45s; } #radio .bar:nth-child(5) { animation-delay: .6s; }
 @keyframes pulse { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
-#station { font-size: 88px; font-weight: 700; line-height: 1.1; }
-#note { margin-top: 6px; font-size: 36px; color: #1e3a8a; }
-#menu { position: absolute; left: 90px; right: 0; bottom: 56px; }
-.row { margin-top: 28px; }
-.row h2 { margin: 0 0 14px; font-size: 38px; font-weight: 700; color: #0f1f3d; }
-.track { white-space: nowrap; transition: transform 160ms ease-out; }
-.tile { display: inline-block; vertical-align: top; margin-right: 22px; box-sizing: border-box; border-radius: 16px; background: #fff; color: #0f1f3d; font-size: 34px; font-weight: 700; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); border: 0; overflow: hidden; transition: transform 120ms ease-out; }
-.tile.station { width: 336px; padding: 22px 20px; }
-.tile.station small { display: block; margin-top: 4px; font-size: 30px; font-weight: 400; color: #3f4f6e; }
-.tile.mood { position: relative; width: 336px; height: 189px; }
-.tile.mood img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
-.tile.mood span { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 18px 12px; color: #fff; font-size: 30px; background: linear-gradient(to top, rgba(11, 23, 48, .86), rgba(11, 23, 48, .6) 50%, transparent); }
-.tile.playing { background: #ffedd5; color: #9a3412; box-shadow: 0 0 0 5px #c2410c; }
-.tile.playing small { color: #9a3412; }
-.tile.focus { transform: scale(1.06); box-shadow: 0 0 0 6px #1d4ed8, 0 12px 30px rgba(15, 31, 61, .32); }
-#ambient { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; }
-body.video #ambient { display: block; }
-#player-frame { width: 1920px; height: 1080px; border: 0; pointer-events: none; }
-#vbar { position: absolute; left: 90px; bottom: 70px; padding: 18px 30px; border-radius: 16px; background: rgba(11, 23, 48, .72); color: #fff; font-size: 40px; font-weight: 700; opacity: 0; transition: opacity 200ms; }
-#vbar.on { opacity: 1; }
-#today { display: none; position: absolute; right: 90px; top: 266px; width: 690px; box-sizing: border-box; padding: 18px 18px; border-radius: 24px; background: #fdf3e3; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
-#today.on { display: block; }
-#today h3 { margin: 0 0 10px; font-size: 30px; font-weight: 700; color: #1e3a8a; }
+.now { min-width: 0; }
+#station { font-size: 64px; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#station.long { font-size: 52px; }
+#note { margin-top: 4px; font-size: 32px; color: #1e3a8a; white-space: nowrap; }
+/* Schultag */
+#today { display: none; position: absolute; left: 360px; right: 90px; top: 256px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #fdf3e3; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
+#home[data-page="start"] #today.on { display: block; }
+body.audio #today { top: 432px; }
+.day-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.day-head h3 { margin: 0; font-size: 42px; font-weight: 700; color: #1e3a8a; }
+.day-head span { font-size: 30px; color: #3f4f6e; }
 .kids { display: flex; }
-.kid { flex: 1 1 0; min-width: 0; margin-right: 14px; padding: 12px 14px; border-radius: 14px; background: #fff; }
+.kid { flex: 1 1 0; min-width: 0; margin-right: 18px; padding: 16px 20px; border-radius: 16px; background: #fff; }
 .kid:last-child { margin-right: 0; }
-.kid-head { font-size: 36px; font-weight: 700; line-height: 1.1; }
-.kid-time { font-size: 26px; color: #3f4f6e; }
-.kid-plan { margin-top: 4px; }
-.lb { display: inline-block; margin: 6px 6px 0 0; padding: 4px 12px; border-radius: 8px; background: #e8effb; color: #0f1f3d; font-size: 28px; font-weight: 700; }
+.kid-head { font-size: 44px; font-weight: 700; line-height: 1.1; }
+.kid-head span { margin-left: 14px; font-size: 32px; font-weight: 400; color: #3f4f6e; }
+.kid-plan { margin-top: 6px; }
+.lb { display: inline-block; margin: 8px 8px 0 0; padding: 6px 16px; border-radius: 10px; background: #e8effb; color: #0f1f3d; font-size: 34px; font-weight: 700; }
 .lb.cancelled { background: #fee2e2; color: #b91c1c; text-decoration: line-through; }
 .lb.changed { background: #ffedd5; color: #9a3412; }
 .lb.exam { background: #dbeafe; color: #1e3a8a; }
-#playing { max-width: 980px; box-sizing: border-box; }
-.now { min-width: 0; }
-#station { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#station.long { font-size: 60px; }
+.hw { margin-top: 14px; padding-top: 10px; border-top: 2px solid #e7edf8; font-size: 30px; line-height: 1.25; color: #33415c; overflow: hidden; }
+.hw b { color: #0f1f3d; }
+.hw div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Raster fuer Radio und Stimmung */
+.grid { display: none; position: absolute; left: 360px; right: 0; top: 262px; }
+#home[data-page="radio"] #grid-radio, #home[data-page="mood"] #grid-mood { display: block; }
+.grid h2 { margin: 0 0 22px; font-size: 44px; font-weight: 700; color: #fff; }
+.tile { display: inline-block; vertical-align: top; margin: 0 22px 22px 0; box-sizing: border-box; border-radius: 16px; background: #fff; color: #0f1f3d; font-size: 34px; font-weight: 700; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; transition: transform 120ms ease-out; }
+.tile.station { width: 342px; padding: 18px 20px; }
+.tile.station small { display: block; margin-top: 2px; font-size: 30px; font-weight: 400; color: #3f4f6e; }
+.tile.mood { position: relative; width: 462px; height: 260px; }
+.tile.mood img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
+.tile.mood span { position: absolute; left: 0; right: 0; bottom: 0; padding: 44px 20px 14px; color: #fff; font-size: 34px; background: linear-gradient(to top, rgba(11, 23, 48, .86), rgba(11, 23, 48, .6) 50%, transparent); }
+.tile.playing { background: #ffedd5; color: #9a3412; box-shadow: 0 0 0 5px #c2410c; }
+.tile.playing small { color: #9a3412; }
+.tile.focus { transform: scale(1.04); box-shadow: 0 0 0 6px #1d4ed8, 0 12px 30px rgba(15, 31, 61, .32); }

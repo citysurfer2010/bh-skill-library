@@ -58,7 +58,7 @@
 
   function playAudio(url, title, id) {
     stationEl.textContent = title || '';
-    stationEl.className = (title || '').length > 15 ? 'long' : '';
+    stationEl.className = (title || '').length > 13 ? 'long' : '';
     BHHome.setPlaying(id || null);
     if (url === playingUrl && !failed) return;
     playingUrl = url;
@@ -82,13 +82,14 @@
     if (e.defaultPrevented) return; // Das Menue hat die Taste schon behandelt
     var back = e.keyCode === 10009 || e.keyCode === 8;
     if (back && view === 'video') { localAt = Date.now(); stopVideo(); homeView(); sendRequest('back', 'x'); e.preventDefault(); return; }
+    if (back && view.indexOf('home') === 0 && BHHome.back()) { e.preventDefault(); return; }
     if (back && (playingUrl || view.indexOf('home') < 0)) { stopShare(); stopAudio(); homeView(); sendRequest('stop', 'x'); e.preventDefault(); return; }
     if (view !== 'video') return;
     if (e.keyCode === 37 || e.keyCode === 39) { var st = BHHome.step(e.keyCode === 39 ? 1 : -1); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); showBar(st.name); sendRequest('radio', st.id); } }
     else if (e.keyCode === 13 && playingUrl) { localAt = Date.now(); stopAudio(); videoVolume(); showBar('Radio aus'); sendRequest('radiooff', 'x'); }
   });
 
-  player.addEventListener('playing', function () { audioState('ok'); noteEl.textContent = '◀ ▶ Sender wechseln · Zurück beendet'; });
+  player.addEventListener('playing', function () { audioState('ok'); noteEl.textContent = '▲ ▼ Sender · Zurück beendet'; });
   player.addEventListener('waiting', function () { audioState('load'); noteEl.textContent = 'Puffert …'; });
   player.addEventListener('error', function () { if (playingUrl) { audioState('fail'); noteEl.textContent = 'Stream nicht erreichbar'; if (view === 'video') showBar('Stream nicht erreichbar'); } });
 

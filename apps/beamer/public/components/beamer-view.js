@@ -18,13 +18,22 @@ window.BeamerView = (() => {
   const appTile = (a) => `<button type="button" class="bm-app" data-send="/app" data-label="${esc(a)}" data-body="${data({ app: a })}" data-now="app:${esc(a)}"><span class="bm-mono" aria-hidden="true">${esc(a[0])}</span><span>${esc(a)}</span></button>`;
   const form = (id, label, name, placeholder, cta, type = 'text') => `<form class="bm-form" data-form="${id}"><label class="bh-label" for="f-${id}">${label}</label><input id="f-${id}" class="bh-input" name="${name}" type="${type}" placeholder="${placeholder}" required autocomplete="off"><button class="bh-btn">${cta}</button></form>`;
 
-  function schedule(plan) {
-    if (!plan) return scheduleError();
-    const kids = (plan.kids || []).filter((k) => k.lessons.length);
+  const DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  function dayLabel(date) {
+    const n = new Date(); const today = iso(n); n.setDate(n.getDate() + 1);
+    return date === today ? 'Heute' : date === iso(n) ? 'Morgen' : `${DAYS[new Date(`${date}T12:00:00`).getDay()]}, ${date.slice(8)}.${date.slice(5, 7)}.`;
+  }
+  function schedule(plan, index = 0) {
+    const day = plan?.days?.[index];
+    if (!day) return scheduleError();
+    const kids = day.kids.filter((k) => k.lessons.length);
     const merged = (list) => list.filter((l, i) => !i || list[i - 1].subject !== l.subject || list[i - 1].state !== l.state || list[i - 1].exam !== l.exam);
-    const tag = (l) => `<span class="bm-l ${l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state}" title="${esc(l.title || '')}">${esc(l.subject)}${l.exam ? ' Klausur' : l.state === 'changed' ? ' geändert' : ''}</span>`;
-    const kid = (k) => { const live = k.lessons.filter((l) => l.state !== 'cancelled'); return `<div class="bm-kid"><span class="bm-mono" aria-hidden="true">${esc(k.name[0])}</span><b>${esc(k.name)}</b><small>${live.length ? `${esc(live[0].from)} – ${esc(live[live.length - 1].to)}` : 'alles fällt aus'}</small><div class="bm-blocks">${merged(k.lessons).map(tag).join('')}</div></div>`; };
-    return `<h2>Schultag · ${esc(plan.label)}</h2><div class="bm-kids">${kids.length ? kids.map(kid).join('') : '<div class="bm-kid"><b>Schulfrei</b></div>'}</div>`;
+    const tag = (l) => `<span class="bm-l ${l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state}" title="${esc(l.title || '')}">${esc(l.subject)}${l.exam ? ' Klausur' : l.state === 'changed' ? ' geändert' : ''}${l.state === 'cancelled' ? '<span class="bm-sr"> fällt aus</span>' : ''}</span>`;
+    const hw = (h) => `<li><b>${esc(h.subject)}</b> ${esc(h.text)}</li>`;
+    const kid = (k) => { const live = k.lessons.filter((l) => l.state !== 'cancelled'); return `<div class="bm-kid"><span class="bm-mono" aria-hidden="true">${esc(k.name[0])}</span><b>${esc(k.name)}</b><small>${live.length ? `${esc(live[0].from)} – ${esc(live[live.length - 1].to)}` : 'alles fällt aus'}</small><div class="bm-blocks">${merged(k.lessons).map(tag).join('')}</div>${k.homework.length ? `<ul class="bm-hw" aria-label="Hausaufgaben">${k.homework.map(hw).join('')}</ul>` : ''}</div>`; };
+    const nav = `<div class="bm-daynav"><button type="button" class="bh-btn bh-btn-sm" data-day="-1" aria-label="Vorheriger Tag" ${index ? '' : 'disabled'}>${I.left}</button><button type="button" class="bh-btn bh-btn-sm" data-day="1" aria-label="Nächster Tag" ${index < plan.days.length - 1 ? '' : 'disabled'}>${I.right}</button></div>`;
+    return `<div class="bm-head"><h2>Schultag · ${esc(dayLabel(day.date))}</h2>${nav}</div><div class="bm-kids">${kids.length ? kids.map(kid).join('') : '<div class="bm-kid"><b>Schulfrei</b></div>'}</div>`;
   }
 
   const scheduleError = () => '<h2>Schultag</h2><p class="bm-hint">Plan gerade nicht abrufbar.</p>';

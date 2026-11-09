@@ -13,6 +13,7 @@ Holt über das zentrale MCP-Gateway den Tagesplan aller Kinder des Eltern-Kontos
 
 | Tool | Zweck |
 |---|---|
+| `webuntis_days` | Die nächsten Schultage (`count`, Standard 5) mit Plan und offenen Hausaufgaben, immer frisch |
 | `webuntis_day` | Plan eines Tages (`date` als JJJJ-MM-TT). Ohne Datum: der nächste relevante Schultag, ab 16 Uhr und am Wochenende der folgende |
 
 ## Zugang
