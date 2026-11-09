@@ -28,3 +28,12 @@ test('Störungen: nur beobachtete Linien, Ausfälle und Warnungen, keine Hinweis
   const a = await b.alerts([{ id: '1', label: 'Stadtbahn', lines: /^S(5|7)$/, products: 'suburban' }]);
   assert.deepEqual(a, [{ label: 'Stadtbahn', text: 'S5 fällt aus' }, { label: 'Stadtbahn', text: 'Bauarbeiten am Zoo' }]);
 });
+
+test('Tafel: morgens nur Richtung Westen, sonst beide Richtungen', async () => {
+  const deps = [{ line: { name: 'M49' }, direction: 'S+U Zoologischer Garten', when: 'a' }, { line: { name: 'M49' }, direction: 'Staaken, Reimerweg', when: 'b' }];
+  b.setFetch(async () => res({ departures: deps }));
+  const am = await b.board(new Date('2026-11-09T07:10:00+01:00'));
+  assert.equal(am.morning, true); assert.deepEqual(am.departures.map((d) => d.direction), ['Staaken, Reimerweg']);
+  const pm = await b.board(new Date('2026-11-09T15:10:00+01:00'));
+  assert.equal(pm.morning, false); assert.equal(pm.departures.length, 2);
+});

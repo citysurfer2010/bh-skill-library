@@ -39,7 +39,6 @@ const publicCatalog = () => ({
 // Menue fuer die App auf dem Beamer: Sie spielt Sender selbst und braucht darum die Adressen.
 const byIdVideo = (id) => MOODS.find((m) => m.id === id).video;
 const beamerMenu = () => ({
-  transit: { id: '900024104', name: 'Amtsgerichtsplatz' },
   radio: STATIONS.map(({ id, label, sub, url }) => ({ id, name: label.replace(/ Kultur$/, ''), sub, url })),
   mood: publicCatalog().moods.map((m) => ({ id: m.id, label: m.label, thumb: m.thumb, video: byIdVideo(m.id) })),
 });

@@ -186,3 +186,11 @@ test('Störungen: nur bei Änderung ans Menü', async () => {
   assert.equal(pushes, 1);
   list = []; await bridge.refreshAlerts(); assert.equal(pushes, 2);
 });
+
+test('Abfahrten: Tafel kommt über den Skill und nur bei Änderung', async () => {
+  const bridge = require('../lib/menu-bridge');
+  let pushes = 0; const b = { stop: 'A', morning: false, departures: [] };
+  gateway.setCaller(async (name, args) => { if (name === 'bvg_board') return JSON.stringify(b); if (name === 'beamer_menu_set') { pushes++; assert.equal(args.menu.board.stop, 'A'); } return 'ok'; });
+  await bridge.refreshBoard(); await bridge.refreshBoard();
+  assert.equal(pushes, 1);
+});
