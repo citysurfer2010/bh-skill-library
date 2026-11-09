@@ -86,6 +86,7 @@ async function refreshAlbums() {
 // Work appointments stay out of the beamer menu; only the owner's page reads them.
 async function refreshWork() { work = JSON.parse(await gateway.call('workcal_upcoming')); }
 const workFor = (email) => (work && work.owner === String(email).toLowerCase() ? work.events : []);
+const isWorkOwner = (email) => !!work?.owner && work.owner === String(email || '').toLowerCase();
 const berlinTime = (d = new Date()) => new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
 
 async function tick(commands) {
@@ -126,4 +127,4 @@ function start(commands) {
 
 const snapshot = () => ({ schedule, alerts, board, birthdays, onThisDay, rooms, heating, events, eventsLoaded });
 
-module.exports = { snapshot, refreshWork, workFor, start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, refreshEvents, refreshAlbums, SCHEDULE_AT };
+module.exports = { snapshot, refreshWork, workFor, isWorkOwner, start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, refreshEvents, refreshAlbums, SCHEDULE_AT };
