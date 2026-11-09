@@ -383,6 +383,17 @@ window.BHHome = (function () {
     if (party && !partyView) { partyView = true; renderDay(); return true; }
     return false;
   };
+  // Zeigt die installierte Version: vom System, sonst aus dem Paket selbst.
+  (function showVersion() {
+    var el = document.getElementById('side-ver');
+    var put = function (v) { if (v) el.textContent = 'BH Screen ' + v; };
+    try { put(tizen.application.getAppInfo().version); return; } catch (e) { /* weiter mit config.xml */ }
+    try {
+      var x = new XMLHttpRequest(); x.open('GET', 'config.xml');
+      x.onload = function () { var m = /<widget[^>]*\sversion="([^"]+)"/.exec(x.responseText); if (m) put(m[1]); };
+      x.send();
+    } catch (e) { /* ohne Anzeige weiter */ }
+  })();
   tick(); setInterval(tick, 5000);
   weather(); setInterval(weather, 900000);
   setInterval(renderBoard, 20000);

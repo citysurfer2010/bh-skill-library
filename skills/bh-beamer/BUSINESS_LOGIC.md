@@ -61,3 +61,7 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 
 - Der gewählte Raum wird auf dem Gerät gemerkt. Details: Skill `bh-netatmo`.
 - Absichtlich eine eigene Menüseite und keine Tasten auf dem Startbild, denn ▲▼ und CH steuern dort schon das Radio.
+
+## Versionsanzeige
+
+- Unten in der Seitenleiste steht die installierte Version von BH Screen, damit man sieht, was ausgerollt ist. Quelle: Matti, 09.11.2026.

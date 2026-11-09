@@ -215,3 +215,5 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .grid.is-editing .g-plan { display: none; }
 .grid h2 { text-shadow: 0 2px 6px rgba(15, 31, 61, .75), 0 0 26px rgba(15, 31, 61, .6); }
 .grid h2 .g-plan { text-shadow: none; }
+/* Installierte Version unten in der Seitenleiste */
+#side-ver { position: absolute; left: 44px; bottom: 54px; font-size: 26px; color: rgba(255, 255, 255, .62); }
