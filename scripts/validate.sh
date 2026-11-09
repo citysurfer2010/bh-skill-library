@@ -34,8 +34,15 @@ c=$(sed -nE 's/.*[^a-z]version="([^"]+)" viewmodes.*/\1/p' skills/bh-beamer/app/
 # Icons: see "Icons und Favicon" in skills/bh-webapp-skeleton/SKILL.md
 logo=skills/bh-styleguide/assets/logo/bh-logo.svg
 tpl=skills/bh-webapp-skeleton/templates/new-web-app/app/public
-for d in "$tpl" services/bh-auth/public apps/*/public; do
-  cmp -s "$d/favicon.svg" "$logo" || { echo "FEHLER $d/favicon.svg weicht vom Logo ab"; fail=1; }
+cmp -s services/bh-auth/public/favicon.svg "$logo" || { echo "FEHLER: Favicon der Plattform weicht vom Logo ab"; fail=1; }
+# Every app has its own motif on the shared tile; the B stays with the platform.
+seen=" "
+for d in apps/*/public; do
+  grep -q 'stop-color="#172554"' "$d/favicon.svg" || { echo "FEHLER $d/favicon.svg: Kachel im Plattform-Stil fehlt"; fail=1; }
+  cmp -s "$d/favicon.svg" "$logo" && { echo "FEHLER $d/favicon.svg: App braucht ein eigenes Motiv"; fail=1; }
+  h=$(sha256sum "$d/favicon.svg" | cut -c1-16)
+  case "$seen" in *" $h "*) echo "FEHLER $d/favicon.svg: gleiches Motiv wie eine andere App"; fail=1 ;; esac
+  seen="$seen$h "
 done
 for d in "$tpl" services/bh-auth/public apps/*/public; do
   for f in favicon.svg branding/icon-192.png branding/icon-512.png branding/icon-maskable-512.png branding/apple-touch-icon.png; do

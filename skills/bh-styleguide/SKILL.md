@@ -161,7 +161,7 @@ Marke: kräftiges B, Variante „V1“. Dateien in `assets/logo/` (SVG, 64er Ras
 
 | Datei | Einsatz |
 |---|---|
-| `bh-logo.svg` | Standard: App-Icon, Favicon, Login, helle Flächen |
+| `bh-logo.svg` | Standard: Plattform-Favicon, Login, helle Flächen |
 | `bh-logo-white.svg` | Auf Blau, dunklen Flächen und Fotos: Navbar, Beamer |
 | `bh-logo-blue.svg` | Auf hellem Grund, Briefpapier, Dokumente |
 | `bh-logo-navy.svg` | Einfarbiger Druck, Stempel |
@@ -170,7 +170,7 @@ Marke: kräftiges B, Variante „V1“. Dateien in `assets/logo/` (SVG, 64er Ras
 | `bh-logo-round.svg` | Profilbild, Avatar, Social Media |
 - `bh-logo-tv.svg`: quadratisch ohne runde Ecken, für das App-Icon auf dem Beamer
 
-Favicon und App-Icons jeder Web-App entstehen aus `bh-logo.svg`; Dateien, Größen und Einbindung stehen im Skill `bh-webapp-skeleton` unter „Icons und Favicon“.
+Apps bekommen ein eigenes Icon im selben Stil: gleiche Verlaufskachel, eigenes weißes Motiv statt des B. Dateien, Größen und Einbindung stehen im Skill `bh-webapp-skeleton` unter „Icons und Favicon“.
 
 Regeln: Mindestgröße 20 px. Rundherum mindestens ein Viertel der Logobreite frei. Das B nie verzerren, drehen oder mit Verlauf versehen; der Verlauf gehört nur in die Kachel. Neben dem Logo steht „Biskup Home“ in der Systemschrift.
 
