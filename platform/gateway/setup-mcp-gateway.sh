@@ -16,6 +16,11 @@ docker build -q -t mcp-gateway:current "$S/bh-mcp-gateway"
 docker network inspect mcp-gateway-net >/dev/null 2>&1 || docker network create mcp-gateway-net >/dev/null
 docker rm -f mcp-gateway >/dev/null 2>&1 || true
 # gw-priority: Ausgehender Verkehr verlaesst den Container ueber sein eigenes Netz, nur das hat die Firewall-Ausnahme.
+# Google-Zugang der Skills aus der .env ableiten; dieselbe OAuth-App wie der Login (Redirect http://localhost:8765/ eingetragen).
+if [ -n "$(val GOOGLE_CLIENT_ID)" ]; then
+  (umask 077; jq -n --arg i "$(val GOOGLE_CLIENT_ID)" --arg s "$(val GOOGLE_CLIENT_SECRET)" '{web: {client_id: $i, client_secret: $s}}' >"$D/google/client_secret.json.new")
+  chown "$U:$U" "$D/google/client_secret.json.new"; chmod 400 "$D/google/client_secret.json.new"; mv "$D/google/client_secret.json.new" "$D/google/client_secret.json"
+fi
 docker run -d --name mcp-gateway --network name=mcp-gateway-net,gw-priority=100 --restart unless-stopped --env-file "$D/nas.env" \
   --read-only --tmpfs /tmp:rw,nosuid,nodev,size=256m \
   --cap-drop ALL --security-opt no-new-privileges \
