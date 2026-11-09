@@ -202,3 +202,15 @@ test('Lagerfeuer: Schnee-Video nur im Winter', () => {
   assert.equal(videoOf(fire, new Date('2026-07-15T20:00:00Z')), fire.video);
   assert.notEqual(fire.video, fire.winterVideo);
 });
+
+test('Räume: gesendet wird nur bei Änderung, Fehler behalten die letzten Werte', async () => {
+  const bridge = require('../lib/menu-bridge');
+  const room = (temp) => JSON.stringify([{ name: 'Wohnzimmer', temp, target: 21, heating: false, windowOpen: false, reachable: true, batteryLow: false }]);
+  const sets = []; let answer = room(21); let broken = false;
+  gateway.setCaller(async (name, args) => { if (name === 'beamer_menu_set') { sets.push(args.menu); return 'ok'; } if (broken) throw new Error('weg'); return answer; });
+  await bridge.refreshRooms(); assert.equal(sets.length, 1); assert.equal(sets[0].rooms[0].temp, 21);
+  await bridge.refreshRooms(); assert.equal(sets.length, 1);
+  broken = true; await assert.rejects(bridge.refreshRooms()); assert.equal(sets.length, 1);
+  broken = false; answer = room(21.5); await bridge.refreshRooms(); assert.equal(sets.length, 2);
+  await bridge.pushMenu(); assert.equal(sets[2].rooms[0].temp, 21.5);
+});

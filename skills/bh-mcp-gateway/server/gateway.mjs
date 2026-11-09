@@ -7,6 +7,7 @@ import { BackendPool } from "./lib/backend.mjs";
 import { Registry } from "./lib/registry.mjs";
 import { storeGithubToken } from "./lib/connect.mjs";
 import { storeNasLogin, nasLogin } from "./lib/connect-nas.mjs";
+import { secretOk, storeGoogle, googleStatus, removeGoogle } from "./lib/connect-google.mjs";
 
 const MAX_BODY = 16 * 1024 * 1024;
 
@@ -41,12 +42,21 @@ async function handleRpc(registry, user, msg) {
   }
 }
 
-export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLogin }) {
+export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLogin, connectSecret = "", fetchGoogle = fetch }) {
   const pool = new BackendPool(usersDir);
   const registry = new Registry(servers, pool);
   const server = http.createServer(async (req, res) => {
     try {
       if (req.url === "/health") return send(res, 200, { ok: true });
+      if (req.method === "POST" && ["/connect/google", "/connect/google/status", "/connect/google/remove"].includes(req.url)) {
+        if (!secretOk(connectSecret, req.headers["x-connect-secret"])) return send(res, 401, { error: "unauthorized" });
+        const body = JSON.parse(await readBody(req));
+        if (req.url === "/connect/google/status") { const { status, ...rest } = googleStatus(usersDir, body); return send(res, status, rest); }
+        const { status, ...rest } = req.url === "/connect/google" ? storeGoogle(usersDir, body) : await removeGoogle(usersDir, body, fetchGoogle);
+        // Laufende Werkzeuge halten die alte Freigabe im Speicher.
+        if (status === 200) pool.stopUser(body.user);
+        return send(res, status, rest);
+      }
       const user = userFromRequest(req, tokensFile);
       if (!user) return send(res, 401, { error: "unauthorized" });
       if (req.method === "POST" && req.url === "/connect/github") {
@@ -81,5 +91,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     servers,
     tokensFile: process.env.MCP_TOKENS_FILE || "/etc/mcp-gateway/tokens/user-tokens.json",
     usersDir: process.env.MCP_USERS_DIR || "/var/lib/mcp-gateway/users",
+    connectSecret: process.env.BH_CONNECT_SECRET || "",
   }).listen(18800, "0.0.0.0", () => console.log("bh-mcp-gateway auf :18800"));
 }

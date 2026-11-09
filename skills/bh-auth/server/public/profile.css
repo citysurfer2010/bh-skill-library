@@ -36,11 +36,14 @@ button.p-btn.p-danger { border-color: var(--bh-danger); background: none; color:
 .p-hint { color: var(--bh-muted); font-size: 13px; }
 .p-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .p-buttons button[type=submit]:not(.p-btn) { height: 36px; padding: 0 14px; font-size: 13px; }
-.p-wrap > .alert { margin: 0; }
+.p-wrap > .alert { margin: 0; padding: 10px 25px; border-radius: 12px; }
 @media (max-width: 560px) {
+  button.p-btn, a.p-btn { height: 44px; }
+  .p-wrap > .alert { padding: 10px 17px; }
   .p-head { gap: 14px; } .p-avatar { width: 64px; height: 64px; font-size: 22px; } .p-who h1 { font-size: 20px; }
   .p-card-head { padding: 16px 16px 0; } .p-name { flex-direction: column; align-items: stretch; padding: 14px 16px 16px; }
   .p-row { grid-template-columns: 40px minmax(0, 1fr); padding: 14px 16px; column-gap: 12px; }
   .p-action { grid-column: 2; margin-top: 10px; }
   .p-panel { grid-column: 1 / -1; max-width: none; }
 }
+.p-action .p-btn + .p-btn { margin-left: 8px; }

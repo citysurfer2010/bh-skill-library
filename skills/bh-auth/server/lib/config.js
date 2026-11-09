@@ -24,6 +24,7 @@ export function loadConfig(env = process.env) {
     returnOrigins: (env.RETURN_ORIGINS || "").split(/\s+/).filter(Boolean),
     secure: publicUrl.startsWith("https://"),
     key: sessionKey(dataDir),
+    connect: { url: (env.BH_CONNECT_URL || "http://mcp-gateway:18800").replace(/\/$/, ""), secret: env.BH_CONNECT_SECRET || "" },
     fetch: globalThis.fetch,
   };
 }
