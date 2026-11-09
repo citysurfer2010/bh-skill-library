@@ -1,7 +1,10 @@
+:root { --sky: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); --hill1: #f8ecd9; --hill2: #f1dfc2; --panel: #f0ebe2; --plate: #fdf3e3; --card: #ffffff; --card-line: #e3dccf; --ink: #0f1f3d; --sub: #3f4f6e; --tab: #4a4336; --chip: #e8effb; --chip-ink: #0f1f3d; --accent: #1e3a8a; --bar: #c2410c; }
+#home[data-time="evening"] { --sky: linear-gradient(180deg, #1e1b4b 0%, #3b2478 22%, #7c3a7f 40%, #c8626a 56%, #f09a5f 72%, #f7c58a 86%); --hill1: #6a4560; --hill2: #47304f; --panel: rgba(38, 28, 66, .9); --plate: rgba(38, 28, 66, .92); --card: #322a58; --card-line: #463c72; --ink: #f6f0fb; --sub: #d0c4e4; --tab: #d0c4e4; --chip: #453b70; --chip-ink: #f6f0fb; --accent: #f7c58a; --bar: #f7a35c; }
+#home[data-time="night"] { --sky: linear-gradient(180deg, #040916 0%, #0a1430 45%, #14244d 78%); --hill1: #0f1c3c; --hill2: #0a142e; --panel: rgba(16, 28, 58, .92); --plate: rgba(16, 28, 58, .94); --card: #182a52; --card-line: #27406a; --ink: #e6eefc; --sub: #9fb2d1; --tab: #9fb2d1; --chip: #24396a; --chip-ink: #e6eefc; --accent: #93c5fd; --bar: #93c5fd; }
 html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #2563eb; color: #0f1f3d; font-family: "Samsung One", "SamsungOne", sans-serif; }
 #home, #screen, #share, #ambient { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
 body.home #home { display: block; background: #0b1730; }
-#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); z-index: 1; transition: transform 340ms cubic-bezier(.32, .72, 0, 1), box-shadow 340ms ease; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--sky); z-index: 1; transition: transform 340ms cubic-bezier(.32, .72, 0, 1), box-shadow 340ms ease; }
 #home.menu #stage { transform: translateX(340px); box-shadow: -18px 0 50px rgba(0, 0, 0, .4); }
 body.text #screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 45%, #fdf3e3 100%); color: #fff; }
 body.share #share { display: block; background: #000; object-fit: contain; }
@@ -9,6 +12,7 @@ body.video #ambient { display: block; background: #000; }
 #player-frame { width: 1920px; height: 1080px; border: 0; pointer-events: none; }
 #vbar { position: absolute; left: 90px; bottom: 70px; padding: 18px 30px; border-radius: 16px; background: rgba(11, 23, 48, .72); color: #fff; font-size: 40px; font-weight: 700; opacity: 0; transition: opacity 200ms; }
 #vbar.on { opacity: 1; }
+.hill1 { fill: var(--hill1); } .hill2 { fill: var(--hill2); }
 .hills { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
 h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap: break-word; max-width: 100%; }
 #text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
@@ -34,46 +38,46 @@ h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap:
 #wx svg { display: block; width: 132px; height: 110px; overflow: visible; }
 #sky { margin-top: 12px; font-size: 40px; }
 /* Radio-Platte */
-#playing { display: none; position: absolute; left: 90px; top: 238px; max-width: 980px; box-sizing: border-box; align-items: center; background: #fdf3e3; padding: 10px 24px; border-radius: 16px; box-shadow: 0 4px 14px rgba(15, 31, 61, .18); color: #0f1f3d; }
+#playing { display: none; position: absolute; left: 90px; top: 238px; max-width: 980px; box-sizing: border-box; align-items: center; background: var(--plate); padding: 10px 24px; border-radius: 16px; box-shadow: 0 4px 14px rgba(15, 31, 61, .18); color: var(--ink); }
 #home[data-page="start"] #playing { display: flex; }
 body:not(.audio) #radio { display: none; }
 #playing[data-s="load"] .bar { animation-play-state: paused; opacity: .45; }
 #playing[data-s="fail"] #radio { display: none; }
 #radio { flex: none; height: 46px; margin-right: 20px; white-space: nowrap; }
-#radio .bar { display: inline-block; width: 8px; height: 46px; margin: 0 3px; border-radius: 4px; background: #c2410c; transform-origin: bottom; animation: pulse 1.2s ease-in-out infinite; }
+#radio .bar { display: inline-block; width: 8px; height: 46px; margin: 0 3px; border-radius: 4px; background: var(--bar); transform-origin: bottom; animation: pulse 1.2s ease-in-out infinite; }
 #radio .bar:nth-child(2) { animation-delay: .15s; } #radio .bar:nth-child(3) { animation-delay: .3s; } #radio .bar:nth-child(4) { animation-delay: .45s; } #radio .bar:nth-child(5) { animation-delay: .6s; }
 @keyframes pulse { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
 .now { display: flex; align-items: baseline; min-width: 0; }
 #station { font-size: 38px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #station.long { font-size: 36px; }
-#note { margin-left: 22px; font-size: 28px; color: #1e3a8a; white-space: nowrap; }
+#note { margin-left: 22px; font-size: 28px; color: var(--accent); white-space: nowrap; }
 /* Schultag */
-#today { display: none; position: absolute; left: 90px; right: 90px; top: 326px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #f0ebe2; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
+#today { display: none; position: absolute; left: 90px; right: 90px; top: 326px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: var(--panel); box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
 #home[data-page="start"] #today.on { display: block; }
 .day-tabs { display: flex; align-items: center; margin-bottom: 14px; }
-.day-tabs span { margin-right: 10px; padding: 8px 22px; border-radius: 12px; font-size: 34px; font-weight: 700; color: #4a4336; }
+.day-tabs span { margin-right: 10px; padding: 8px 22px; border-radius: 12px; font-size: 34px; font-weight: 700; color: var(--tab); }
 .day-tabs span.on { background: #1e40af; color: #fff; }
-.day-tabs em { margin-left: auto; font-style: normal; font-size: 28px; color: #4a4336; }
+.day-tabs em { margin-left: auto; font-style: normal; font-size: 28px; color: var(--tab); }
 .kids { display: flex; }
-.kid { flex: 1 1 0; min-width: 0; margin-right: 18px; padding: 16px 20px; border-radius: 16px; background: #fff; border: 1px solid #e3dccf; box-shadow: 0 4px 14px rgba(60, 50, 30, .14); }
+.kid { flex: 1 1 0; min-width: 0; margin-right: 18px; padding: 16px 20px; border-radius: 16px; background: var(--card); border: 1px solid var(--card-line); color: var(--ink); box-shadow: 0 4px 14px rgba(60, 50, 30, .14); }
 .kid:last-child { margin-right: 0; }
 .kid-head { font-size: 44px; font-weight: 700; line-height: 1.1; }
-.kid-head span { margin-left: 14px; font-size: 32px; font-weight: 400; color: #3f4f6e; }
+.kid-head span { margin-left: 14px; font-size: 32px; font-weight: 400; color: var(--sub); }
 .kid-plan { margin-top: 6px; }
-.lb { display: inline-block; margin: 8px 8px 0 0; padding: 6px 16px; border-radius: 10px; background: #e8effb; color: #0f1f3d; font-size: 34px; font-weight: 700; }
+.lb { display: inline-block; margin: 8px 8px 0 0; padding: 6px 16px; border-radius: 10px; background: var(--chip); color: var(--chip-ink); font-size: 34px; font-weight: 700; }
 .lb.cancelled { background: #fee2e2; color: #b91c1c; text-decoration: line-through; }
 .lb.changed { background: #ffedd5; color: #9a3412; }
 .lb.exam { background: #dbeafe; color: #1e3a8a; }
-.hw { margin-top: 14px; padding-top: 10px; border-top: 2px solid #e7edf8; font-size: 30px; line-height: 1.25; color: #33415c; overflow: hidden; }
-.hw b { color: #0f1f3d; }
+.hw { margin-top: 14px; padding-top: 10px; border-top: 2px solid var(--card-line); font-size: 30px; line-height: 1.25; color: var(--sub); overflow: hidden; }
+.hw b { color: var(--ink); }
 .hw div { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 /* Raster fuer Radio und Stimmung */
 .grid { display: none; position: absolute; left: 90px; right: 0; top: 262px; }
 #home[data-page="radio"] #grid-radio, #home[data-page="mood"] #grid-mood { display: block; }
 .grid h2 { margin: 0 0 22px; font-size: 44px; font-weight: 700; color: #fff; }
-.tile { display: inline-block; vertical-align: top; margin: 0 24px 24px 0; box-sizing: border-box; border-radius: 16px; background: #fff; color: #0f1f3d; font-size: 34px; font-weight: 700; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; transition: transform 120ms ease-out; }
+.tile { display: inline-block; vertical-align: top; margin: 0 24px 24px 0; box-sizing: border-box; border-radius: 16px; background: var(--card); color: var(--ink); font-size: 34px; font-weight: 700; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; transition: transform 120ms ease-out; }
 .tile.station { width: 417px; padding: 18px 20px; }
-.tile.station small { display: block; margin-top: 2px; font-size: 30px; font-weight: 400; color: #3f4f6e; }
+.tile.station small { display: block; margin-top: 2px; font-size: 30px; font-weight: 400; color: var(--sub); }
 .tile.mood { position: relative; width: 564px; height: 317px; }
 .tile.mood img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
 .tile.mood span { position: absolute; left: 0; right: 0; bottom: 0; padding: 44px 20px 14px; color: #fff; font-size: 34px; background: linear-gradient(to top, rgba(11, 23, 48, .86), rgba(11, 23, 48, .6) 50%, transparent); }
@@ -99,17 +103,17 @@ body:not(.audio) #radio { display: none; }
 @keyframes wflash { 0%, 90%, 94%, 100% { opacity: 0; } 91%, 93% { opacity: .25; } }
 .weather { position: relative; text-shadow: 0 2px 6px rgba(15, 31, 61, .75), 0 0 26px rgba(15, 31, 61, .6); }
 /* Abfahrten */
-#transit { display: none; position: absolute; left: 90px; right: 90px; bottom: 34px; box-sizing: border-box; padding: 16px 24px; border-radius: 20px; background: #fff; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; }
+#transit { display: none; position: absolute; left: 90px; right: 90px; bottom: 34px; box-sizing: border-box; padding: 16px 24px; border-radius: 20px; background: var(--card); box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; }
 #home[data-page="start"] #transit.on { display: flex; align-items: center; }
-.stop { flex: none; margin-right: 34px; font-size: 32px; font-weight: 700; color: #1e3a8a; }
-.dep { display: flex; align-items: center; min-width: 0; flex: 1 1 0; margin-right: 34px; font-size: 32px; color: #0f1f3d; white-space: nowrap; }
+.stop { flex: none; margin-right: 34px; font-size: 32px; font-weight: 700; color: var(--accent); }
+.dep { display: flex; align-items: center; min-width: 0; flex: 1 1 0; margin-right: 34px; font-size: 32px; color: var(--ink); white-space: nowrap; }
 .dep:last-child { margin-right: 0; }
 .dep span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dep b, .dep i { flex: none; }
 .dep b { display: inline-block; margin-right: 10px; padding: 2px 12px; border-radius: 8px; background: #1e40af; color: #fff; font-size: 30px; }
 .dep em { flex: none; margin-right: 10px; padding: 2px 10px; border-radius: 8px; background: #e8effb; color: #1e3a8a; font-style: normal; font-size: 28px; font-weight: 700; }
 .dep em.w { background: #ffedd5; color: #9a3412; }
-.dep i { font-style: normal; font-weight: 700; color: #1e3a8a; margin-left: 8px; }
+.dep i { font-style: normal; font-weight: 700; color: var(--accent); margin-left: 8px; }
 .dep.late i { color: #9a3412; }
 .dep.off { color: #b91c1c; text-decoration: line-through; }
 /* Stoerungen */
@@ -119,3 +123,8 @@ body:not(.audio) #radio { display: none; }
 .alert svg { flex: none; margin-right: 16px; }
 .alert b { flex: none; margin-right: 18px; }
 .alert span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* Nachthimmel */
+#stars { position: absolute; left: 0; top: 0; width: 1920px; height: 520px; display: none; }
+#home[data-time="night"] #stars { display: block; }
+#stars i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; animation: twinkle 4s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }

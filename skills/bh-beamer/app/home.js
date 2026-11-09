@@ -23,8 +23,15 @@ window.BHHome = (function () {
     return out;
   }
 
+  // Morgens und tagsueber hell, abends warm, nachts dunkel.
+  function dayPhase(h) { return h >= 5 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night'; }
+  var stars = document.getElementById('stars'); var si = '';
+  for (var n = 0; n < 70; n++) si += '<i style="left:' + ((n * 277) % 1900) + 'px;top:' + ((n * 89) % 500) + 'px;animation-delay:' + ((n * 0.31) % 4).toFixed(2) + 's"></i>';
+  stars.innerHTML = si;
+
   function tick() {
     var d = new Date();
+    homeEl.setAttribute('data-time', dayPhase(d.getHours()));
     document.getElementById('clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
     document.getElementById('date').textContent = DAYS[d.getDay()] + ', ' + d.getDate() + '. ' + MONTHS[d.getMonth()];
     if (iso(d) !== lastDay) { lastDay = iso(d); renderDay(); }
@@ -57,6 +64,7 @@ window.BHHome = (function () {
     var storm = code >= 95; var fog = code > 3 && code <= 48;
     var count = code <= 1 ? 1 : code === 2 ? 3 : 6;
     var fill = rain || storm ? '#dbe4f3' : '#ffffff';
+    if (homeEl.getAttribute('data-time') === 'night') fill = '#64748b';
     var html = code <= 2 ? (day ? '<div class="wsun"><svg class="wrays" viewBox="0 0 240 240"><g stroke="#fde68a" stroke-width="10" stroke-linecap="round"><path d="M120 8v28M120 204v28M8 120h28M204 120h28M41 41l20 20M179 179l20 20M41 199l20-20M179 61l20-20"/></g></svg><span></span></div>' : '<div class="wmoon"></div>') : '';
     for (var i = 0; i < count; i++) html += cloud(SPOTS[i], fill);
     if (fog) html += '<u class="wfog"></u><u class="wfog f2"></u><u class="wfog f3"></u>';
