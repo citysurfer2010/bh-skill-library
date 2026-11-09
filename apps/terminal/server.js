@@ -26,6 +26,7 @@ const HOST = process.env.HOST || '127.0.0.1';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const INDEX_HTML = path.join(PUBLIC_DIR, 'index.html');
 const ADMIN_HTML = path.join(PUBLIC_DIR, 'admin.html');
+const GUIDE_HTML = path.join(PUBLIC_DIR, 'guide.html');
 
 // New on every process start: the cache buster invalidates old assets after a deploy.
 const BUILD_ID = Date.now().toString(36);
@@ -81,6 +82,7 @@ app.use(express.static(PUBLIC_DIR, { index: false, setHeaders: (res) => res.set(
 
 // Every view is a real path.
 app.get('/', (_req, res) => sendPage(res, INDEX_HTML));
+app.get(['/guide', '/guide/'], (_req, res) => sendPage(res, GUIDE_HTML));
 
 app.get('/api/me', (req, res) => {
   const { email, name, role } = req.user;

@@ -10,6 +10,7 @@ const { startApp, resetAuthEnv } = require('./helpers');
 // [method, path, required role]
 const PROTECTED = [
   ['GET', '/', 'user'],
+  ['GET', '/guide', 'user'],
   ['GET', '/api/status', 'user'],
   ['GET', '/api/me', 'user'],
   ['GET', '/api/me/api-keys', 'user'],
