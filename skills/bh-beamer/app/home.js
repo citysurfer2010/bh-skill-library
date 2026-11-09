@@ -7,7 +7,7 @@ window.BHHome = (function () {
   var homeEl = document.getElementById('home');
   var PAGES = ['start', 'radio', 'mood'];
   var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
-  var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = '';
+  var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = ''; var party = null; var partyView = true; var tight = false;
   var api = { onTune: function () {}, onMood: function () {}, isRadioOn: function () { return false; } };
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); };
@@ -26,7 +26,12 @@ window.BHHome = (function () {
   // Morgens und tagsueber hell, abends warm, nachts dunkel.
   function dayPhase(h) { return h >= 5 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night'; }
   var stars = document.getElementById('stars'); var si = '';
-  for (var n = 0; n < 70; n++) si += '<i style="left:' + ((n * 277) % 1900) + 'px;top:' + ((n * 89) % 500) + 'px;animation-delay:' + ((n * 0.31) % 4).toFixed(2) + 's"></i>';
+  for (var n = 0; n < 70; n++) {
+    var sx = (n * 277) % 1900; var sy = (n * 89) % 500;
+    // Keine Sterne hinter Uhr, Datum und Wettertext: Dort lesen sie sich wie Satzzeichen.
+    if ((sx >= 70 && sx <= 540 && sy >= 40 && sy <= 310) || (sx >= 1420 && sx <= 1860 && sy >= 150 && sy <= 260)) continue;
+    si += '<i style="left:' + sx + 'px;top:' + sy + 'px;animation-delay:' + ((n * 0.31) % 4).toFixed(2) + 's"></i>';
+  }
   stars.innerHTML = si;
 
   function tick() {
@@ -104,14 +109,17 @@ window.BHHome = (function () {
     }).join('');
   }
 
+  function notable(d) { return d.kids.some(function (k) { return k.lessons.some(function (l) { return l.state !== 'regular' || l.exam; }); }); }
+
   function renderDay() {
     var el = document.getElementById('today');
     var days = plan && plan.days ? plan.days.filter(function (d) { return d.date >= iso(new Date()); }) : [];
-    if (!days.length) { el.className = ''; return; }
+    var tabs = function (isParty) { return (party ? '<span class="' + (isParty ? 'on' : '') + '">Geburtstag</span>' : '') + days.map(function (d, i) { return '<span class="' + (!isParty && i === dayIndex ? 'on' : '') + '">' + esc(dayLabel(d.date)) + (isParty && i === 0 && notable(d) ? '<i class="tabdot"></i>' : '') + '</span>'; }).join('') + (days.length ? '<em>◀ ▶ ' + (isParty ? 'Stundenplan' : 'Tag wechseln') + '</em>' : ''); };
+    if (party && partyView) { paintOnce(el, 'on party', '<div class="day-tabs">' + tabs(true) + '</div>' + partyHtml()); return; }
+    if (!days.length) { el.className = ''; el.innerHTML = ''; el.bhHtml = ''; return; }
     dayIndex = Math.min(dayIndex, days.length - 1);
     var day = days[dayIndex]; var kids = day.kids.filter(function (k) { return k.lessons.length; });
-    el.className = 'on';
-    el.innerHTML = '<div class="day-tabs">' + days.map(function (d, i) { return '<span class="' + (i === dayIndex ? 'on' : '') + '">' + esc(dayLabel(d.date)) + '</span>'; }).join('') + '<em>◀ ▶ Tag wechseln</em></div><div class="kids">' + (kids.length ? kids.map(function (k) {
+    paintOnce(el, 'on', '<div class="day-tabs">' + tabs(false) + '</div><div class="kids">' + (kids.length ? kids.map(function (k) {
       var live = k.lessons.filter(function (l) { return l.state !== 'cancelled'; });
       var time = live.length ? live[0].from + ' – ' + live[live.length - 1].to : 'alles fällt aus';
       var homework = k.homework && k.homework.length ? '<div class="hw">' + k.homework.slice(0, 3).map(function (h) { return '<div><b>' + esc(h.subject) + '</b> ' + esc(h.text) + '</div>'; }).join('') + '</div>' : '';
@@ -119,8 +127,11 @@ window.BHHome = (function () {
         var cls = l.state === 'regular' ? (l.exam ? 'exam' : '') : l.state;
         return '<span class="lb ' + cls + '">' + esc(l.subject) + (l.exam ? ' Klausur' : l.state === 'changed' ? ' geändert' : '') + '</span>';
       }).join('') + '</div>' + homework + '</div>';
-    }).join('') : '<div class="kid"><div class="kid-head">Schulfrei</div></div>') + '</div>';
+    }).join('') : '<div class="kid"><div class="kid-head">Schulfrei</div></div>') + '</div>');
   }
+
+  // Nur neu zeichnen, wenn sich etwas aendert: sonst startet das Konfetti bei jedem Menue-Update von vorn.
+  function paintOnce(el, cls, html) { el.className = cls + (tight ? ' tight' : ''); if (el.bhHtml !== html) { el.innerHTML = html; el.bhHtml = html; } }
 
   function paint() {
     homeEl.setAttribute('data-page', page);
@@ -139,7 +150,7 @@ window.BHHome = (function () {
           var on = g.items[k].id === playingId;
           if (on && audio === 'ok') tiles[k].className += ' playing';
           var sub = g.items[k].sub || '';
-          tiles[k].querySelector('small').textContent = !on ? sub : audio === 'fail' ? 'Nicht erreichbar' : (audio === 'ok' ? 'Läuft · ' : 'Verbinde · ') + sub;
+          tiles[k].querySelector('small').textContent = !on ? sub : audio === 'fail' ? 'Nicht erreichbar' : (audio === 'ok' ? 'Läuft · ' : audio === 'paused' ? 'Pausiert · ' : 'Verbinde · ') + sub;
         }
       }
     });
@@ -152,26 +163,38 @@ window.BHHome = (function () {
   }
 
   var CAKE = '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21h16v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2zM4 16c2 2 4 2 6 0s4-2 6 0 4 2 4 0M12 11V7M12 3v.5"/></svg>';
-  function renderBirthdays(list) {
+  function renderBirthdays(list, facts) {
     var el = document.getElementById('bday');
-    if (!list.length) { el.className = ''; el.innerHTML = ''; return; }
-    var party = list[0].inDays === 0; var colors = ['#c2410c', '#1d4ed8', '#16a34a', '#db2777'];
-    var conf = ''; if (party) for (var i = 0; i < 16; i++) conf += '<i class="cf" style="left:' + (i * 37 % 560) + 'px;background:' + colors[i % 4] + ';animation-delay:' + (i * .17).toFixed(2) + 's"></i>';
-    el.className = 'on' + (party ? ' party' : '');
-    el.innerHTML = conf + list.slice(0, 2).map(function (b) {
-      var when = b.inDays === 0 ? 'Heute' : b.inDays === 1 ? 'Morgen' : 'In ' + b.inDays + ' Tagen';
-      return '<div class="bd">' + CAKE + '<small>' + when + '</small>' + esc(b.name) + ' wird ' + b.age + (b.inDays === 0 ? '!' : '') + '</div>';
+    var kids = list.filter(function (b) { return b.inDays === 0; });
+    var had = !!party;
+    party = kids.length ? { kids: kids, facts: facts || { facts: [], born: null } } : null;
+    if (party && !had) partyView = true;
+    var soon = party ? [] : list.slice(0, 2);
+    el.className = soon.length ? 'on' : '';
+    el.innerHTML = soon.map(function (b) {
+      return '<div class="bd">' + CAKE + '<small>' + (b.inDays === 1 ? 'Morgen' : 'In ' + b.inDays + ' Tagen') + ' wird</small>' + esc(b.name) + ' ' + b.age + '</div>';
     }).join('');
+    renderDay();
+  }
+  function partyHtml() {
+    var colors = ['#ffffff', '#1e40af', '#be185d', '#fef3c7']; var conf = ''; var cfX = [480, 600, 455, 560, 470, 612, 525, 450, 585, 505, 465, 595];
+    for (var i = 0; i < 12; i++) conf += '<i class="cf" style="left:' + cfX[i] + 'px;background:' + colors[i % 4] + ';animation-delay:-' + (i * .75).toFixed(2) + 's"></i>';
+    var plain = party.kids.map(function (b) { return b.name; }).join(' und ');
+    var ages = party.kids.map(function (b) { return b.age; }).join(' und ');
+    var f = party.facts.facts.map(function (x) { return '<div class="fact"><b>' + x.year + '</b><span>' + esc(x.text) + '</span></div>'; }).join('');
+    var born = party.facts.born ? '<div class="fact born"><b>' + party.facts.born.year + '</b><span>Auch Geburtstag: ' + esc(party.facts.born.text) + '</span></div>' : '';
+    return '<div class="p-wrap"><div class="p-hero"><div class="confetti" aria-hidden="true">' + conf + '</div><small>Alles Gute zum Geburtstag</small><strong' + (plain.length > 7 ? ' class="long"' : '') + '>' + esc(plain) + '</strong><span>' + (party.kids.length > 1 ? 'werden' : 'wird') + ' heute ' + ages + '</span></div>' +
+      (f || born ? '<div class="p-facts"><h2>An diesem Tag</h2>' + f + born + '</div>' : '') + '</div>';
   }
 
   function setMenu(menu) {
     if (!menu) return;
     plan = menu.schedule || null; renderDay();
-    var alertsEl = document.getElementById('alerts'); var alerts = menu.alerts || [];
+    var alertsEl = document.getElementById('alerts'); var alerts = menu.alerts || []; tight = alerts.length > 1;
     alertsEl.className = alerts.length ? 'on' : '';
     alertsEl.innerHTML = alerts.slice(0, 2).map(function (a) { return '<div class="alert"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><b>' + esc(a.label) + '</b><span>' + esc(a.text) + '</span></div>'; }).join('');
     board = menu.board || null; renderBoard();
-    renderBirthdays(menu.birthdays || []);
+    renderBirthdays(menu.birthdays || [], menu.onThisDay);
     var next = JSON.stringify([menu.radio, menu.mood]);
     if (next === signature) return;
     signature = next;
@@ -215,8 +238,9 @@ window.BHHome = (function () {
   }
   function moveStart(key) {
     var count = plan && plan.days ? plan.days.length : 0;
-    if (key === 37) { if (dayIndex > 0) { dayIndex--; renderDay(); } else { setZone('side'); } }
-    else if (key === 39) { if (dayIndex < count - 1) { dayIndex++; renderDay(); } }
+    var onParty = party && partyView;
+    if (key === 37) { if (!onParty && dayIndex > 0) { dayIndex--; renderDay(); } else if (!onParty && party) { partyView = true; renderDay(); } else { setZone('side'); } }
+    else if (key === 39) { if (onParty) { partyView = false; dayIndex = 0; renderDay(); } else if (dayIndex < count - 1) { dayIndex++; renderDay(); } }
     else if (api.isRadioOn()) { var st = step(key === 40 ? 1 : -1); if (st) tuneSoon(st); }
   }
   // Das Menue schliesst sich von selbst, wenn nichts mehr gedrueckt wird.
@@ -234,7 +258,7 @@ window.BHHome = (function () {
   }
   function enter() {
     if (zone === 'side') { setZone('content'); return; }
-    if (page === 'start') return;
+    if (page === 'start') { if (api.onPause) api.onPause(); return; }
     clearTimeout(tuneTimer); tuneTimer = null;
     var g = grids[page]; if (!g) return;
     if (page === 'radio') api.onTune(g.items[g.at]); else api.onMood(g.items[g.at]);
@@ -257,6 +281,7 @@ window.BHHome = (function () {
     if (zone === 'side') { setZone('content'); return true; }
     if (page !== 'start') { page = 'start'; dayIndex = 0; renderDay(); paint(); return true; }
     if (dayIndex) { dayIndex = 0; renderDay(); return true; }
+    if (party && !partyView) { partyView = true; renderDay(); return true; }
     return false;
   };
   tick(); setInterval(tick, 5000);
@@ -264,6 +289,7 @@ window.BHHome = (function () {
   setInterval(renderBoard, 20000);
   // Kanal-Wippe: Bei laufendem Radio blaettern, sonst den ersten Sender starten.
   api.channel = function (dir) { var st = step(dir); if (!st) return; if (api.isRadioOn()) tuneSoon(st); else api.onTune(st); };
+  api.currentId = function () { return playingId; };
   api.step = step; api.setState = function (s) { audio = s; paint(); };
   api.setMenu = setMenu; api.setPlaying = setPlaying;
   paint();

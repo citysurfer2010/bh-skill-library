@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-birthdays",
+  "name": "bh-birthdays",
+  "version": "1.0.0",
+  "description": "Geburtstage der Familie und schöne Ereignisse vom selben Tag",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}

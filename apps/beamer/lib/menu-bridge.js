@@ -2,7 +2,6 @@
 /** Verbindet das Menü auf dem Beamer mit der App: Menü hinschieben, Auswahl der Fernbedienung abholen und ausführen. */
 const gateway = require('./gateway');
 const { beamerMenu } = require('./catalog');
-const birthdays = require('./birthdays');
 
 // Eine einzige wartende Anfrage statt Dauerabfragen: Das Gateway antwortet, sobald jemand etwas wählt.
 const WAIT_S = 20; const IDLE_MS = 5000;
@@ -10,7 +9,9 @@ const WAIT_S = 20; const IDLE_MS = 5000;
 let schedule = null;
 let alerts = [];
 let board = null;
-const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays: birthdays.upcoming() } });
+let birthdays = [];
+let onThisDay = null;
+const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay } });
 
 // Bis 7 Uhr ist der Vertretungsplan eingestellt; um 16:05 springt die Anzeige auf den nächsten Schultag.
 const SCHEDULE_AT = ['06:30', '06:45', '07:00', '10:00', '13:00', '16:05'];
@@ -42,6 +43,17 @@ async function refreshBoard() {
   board = next;
   await pushMenu();
 }
+// Geburtstage über den Skill birthdays, einmal pro Stunde; die Tagesfakten holt der Skill höchstens einmal am Tag.
+async function refreshBirthdays() {
+  const next = JSON.parse(await gateway.call('birthdays_upcoming'));
+  let facts = null;
+  if (next.some((b) => b.inDays === 0)) {
+    try { facts = JSON.parse(await gateway.call('birthdays_on_this_day')); } catch (e) { console.error(`[geburtstag] ${e.message}`); }
+  }
+  if (JSON.stringify([next, facts]) === JSON.stringify([birthdays, onThisDay])) return;
+  birthdays = next; onThisDay = facts;
+  await pushMenu();
+}
 const berlinTime = (d = new Date()) => new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
 
 async function tick(commands) {
@@ -59,6 +71,8 @@ function start(commands) {
   };
   const menu = () => pushMenu().catch((e) => console.error(`[menu] ${e.message}`));
   menu();
+  const fetchBirthdays = () => refreshBirthdays().catch((e) => console.error(`[geburtstag] ${e.message}`));
+  fetchBirthdays();
   const fetchPlan = () => refreshIfStale(true).catch((e) => console.error(`[stundenplan] ${e.message}`));
   fetchPlan();
   const fetchBoard = () => refreshBoard().catch((e) => console.error(`[bvg] ${e.message}`));
@@ -66,8 +80,8 @@ function start(commands) {
   const fetchAlerts = () => refreshAlerts().catch((e) => console.error(`[bvg] ${e.message}`));
   fetchAlerts(); setInterval(fetchAlerts, 300_000);
   let last = '';
-  setInterval(() => { const t = berlinTime(); if (t !== last && SCHEDULE_AT.includes(t)) fetchPlan(); if (t !== last && t === '00:01') menu(); last = t; }, 20_000);
+  setInterval(() => { const t = berlinTime(); if (t !== last && SCHEDULE_AT.includes(t)) fetchPlan(); if (t !== last && t.endsWith(':01')) fetchBirthdays(); last = t; }, 20_000);
   loop();
 }
 
-module.exports = { start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, SCHEDULE_AT };
+module.exports = { start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, SCHEDULE_AT };

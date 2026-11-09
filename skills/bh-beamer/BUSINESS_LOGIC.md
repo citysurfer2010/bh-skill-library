@@ -46,3 +46,13 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 - Samsungs Anmeldeablauf (Code-Tausch gegen Token) nicht nachbauen; das ist Samsungs interner Weg und wurde hier bewusst abgebrochen.
 - Keine Tastenfolgen blind an den Beamer schicken, ohne dass jemand das Bild sieht: Enter öffnet sonst zufällige Kacheln.
 - Nach der Einrichtung bleiben nur Tizen Studio, die Zertifikate unter `/home/tizen/SamsungCertificate/BH` und das Profil; virtueller Bildschirm, Browser und Installer werden wieder entfernt.
+
+## Radio auf dem Startbild
+
+- OK oder die Pause-Taste halten das Radio an und merken den Sender. Noch einmal OK spielt ihn weiter.
+- Pause beendet den Stream wirklich, damit nichts im Hintergrund lädt. Laut und leise bleibt bei den Tasten der Fernbedienung.
+- Zurück verwirft die Pause. Nach ▲▼ oder CH läuft der nächste Sender.
+
+## Geburtstage
+
+- Vorschau oben in der Mitte in den 7 Tagen davor, am Tag ein eigener Reiter „Geburtstag“ vor dem Stundenplan. Details: Skill `bh-birthdays`.

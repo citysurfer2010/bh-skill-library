@@ -3,8 +3,6 @@
 const express = require('express');
 const gateway = require('../lib/gateway');
 const bridge = require('../lib/menu-bridge');
-const birthdays = require('../lib/birthdays');
-const { requireRole } = require('../lib/auth');
 const { MOODS, STATIONS, APPS, KEYS, publicCatalog, videoOf } = require('../lib/catalog');
 
 const clip = (v, n) => String(v ?? '').trim().slice(0, n);
@@ -31,16 +29,6 @@ function buildRouter() {
   router.get('/schedule', async (_req, res) => {
     try { res.json(await bridge.refreshIfStale()); } catch (e) { res.status(502).json({ error: e.message }); }
   });
-
-  // Geburtstage pflegen nur Admins; die Daten bleiben in DATA_DIR.
-  router.get('/birthdays', requireRole('admin'), (_req, res) => res.json(birthdays.load()));
-  router.post('/birthdays', requireRole('admin'), requireJson, async (req, res) => {
-    const saved = birthdays.add(req.body?.name, req.body?.date);
-    if (!saved) return res.status(400).json({ error: 'Name und Datum (JJJJ-MM-TT) nötig' });
-    bridge.pushMenu().catch(() => {});
-    return res.json(saved);
-  });
-  router.delete('/birthdays/:name', requireRole('admin'), (req, res) => { birthdays.remove(req.params.name); bridge.pushMenu().catch(() => {}); res.json({ ok: true }); });
 
   router.get('/catalog', (_req, res) => res.json(publicCatalog()));
 

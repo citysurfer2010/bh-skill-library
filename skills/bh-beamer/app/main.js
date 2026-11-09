@@ -112,16 +112,18 @@
   function setView(name) { view = name; document.body.className = name; }
   function homeView() { setView(playingUrl ? 'home audio' : 'home'); }
 
+  var IDLE_NOTE = '<kbd>CH</kbd> Radio starten'; var paused = null;
   function stopAudio() {
     if (!playingUrl) return;
     playingUrl = null;
     stopWeb();
-    stationEl.textContent = 'Radio'; stationEl.className = ''; noteEl.textContent = 'CH ▲ ▼ startet';
+    stationEl.textContent = 'Radio'; stationEl.className = ''; noteEl.innerHTML = IDLE_NOTE;
     try { player.pause(); player.removeAttribute('src'); player.load(); } catch (e) { /* kein Player */ }
     BHHome.setPlaying(null);
   }
 
   function playAudio(url, title, id) {
+    paused = null;
     stationEl.textContent = title || '';
     stationEl.className = (title || '').length > 13 ? 'long' : '';
     BHHome.setPlaying(id || null);
@@ -143,9 +145,23 @@
   }
   // Sofort umschalten, die App erfaehrt es parallel und zeigt denselben Stand.
   BHHome.onTune = function (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
-  BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); showBar(playingUrl ? 'Radio: ' + stationEl.textContent + ' · CH wechselt' : 'CH ▲ ▼ Radio dazu · Zurück beendet'); sendRequest('mood', m.id); };
+  BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); showBar(playingUrl ? 'Radio: ' + stationEl.textContent + ' · CH wechselt' : 'CH ▲ ▼ Radio dazu · Zurück zum Start'); sendRequest('mood', m.id); };
   // Kanal-Wippe der Fernbedienung wechselt den Sender. Die Tasten muessen eigens angemeldet werden.
   try { tizen.tvinputdevice.registerKey('ChannelUp'); tizen.tvinputdevice.registerKey('ChannelDown'); } catch (e) { caps = 'ch-' + e.name; }
+  // Pause heisst: Stream wirklich anhalten und den Sender merken. OK oder die Pause-Taste spielen ihn wieder ab.
+  BHHome.onPause = function () {
+    if (playingUrl) {
+      var st = { url: playingUrl, name: stationEl.textContent, id: BHHome.currentId() };
+      localAt = Date.now(); stopAudio(); paused = st;
+      stationEl.textContent = st.name; stationEl.className = st.name.length > 13 ? 'long' : ''; noteEl.innerHTML = '<b>Pausiert</b> <kbd>OK</kbd> Weiter';
+      BHHome.setPlaying(st.id); audioState('paused'); homeView(); sendRequest('radiooff', 'x');
+    } else if (paused) { var p = paused; paused = null; BHHome.onTune(p); }
+  };
+  function clearPause() { paused = null; audioState('idle'); stationEl.textContent = 'Radio'; stationEl.className = ''; noteEl.innerHTML = IDLE_NOTE; BHHome.setPlaying(null); }
+  try { tizen.tvinputdevice.registerKey('MediaPlayPause'); } catch (e) { /* nicht jede Fernbedienung hat sie */ }
+  document.addEventListener('keydown', function (e) {
+    if (e.keyCode === 10252 && view.indexOf('home') === 0) { e.preventDefault(); BHHome.onPause(); }
+  });
   document.addEventListener('keydown', function (e) {
     if (e.keyCode !== 427 && e.keyCode !== 428) return;
     e.preventDefault();
@@ -158,6 +174,7 @@
     var back = e.keyCode === 10009 || e.keyCode === 8;
     if (back && view === 'video') { localAt = Date.now(); stopVideo(); homeView(); sendRequest('back', 'x'); e.preventDefault(); return; }
     if (back && view.indexOf('home') === 0 && BHHome.back()) { e.preventDefault(); return; }
+    if (back && paused && view.indexOf('home') === 0) { clearPause(); e.preventDefault(); return; }
     if (back && (playingUrl || view.indexOf('home') < 0)) { stopShare(); stopAudio(); homeView(); sendRequest('stop', 'x'); e.preventDefault(); return; }
     if (view !== 'video') return;
     if (e.keyCode >= 37 && e.keyCode <= 40) { var st = BHHome.step(e.keyCode === 39 || e.keyCode === 40 ? 1 : -1); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); barStation = st.name; showBar('Radio: ' + st.name); sendRequest('radio', st.id); } }
@@ -167,7 +184,7 @@
   BHHome.isRadioOn = function () { return !!playingUrl; };
   BHHome.onPreview = function (st) { stationEl.textContent = st.name; stationEl.className = st.name.length > 13 ? 'long' : ''; noteEl.textContent = 'Wechsle …'; };
 
-  player.addEventListener('playing', function () { audioState('ok'); noteEl.textContent = 'CH ▲ ▼ Sender · Zurück beendet'; });
+  player.addEventListener('playing', function () { audioState('ok'); noteEl.innerHTML = '<kbd>▲▼</kbd> Sender <kbd>OK</kbd> Pause'; });
   player.addEventListener('waiting', function () { audioState('load'); noteEl.textContent = 'Puffert …'; });
   player.addEventListener('error', function () { if (playingUrl) { audioState('fail'); noteEl.textContent = 'Stream nicht erreichbar'; if (view === 'video') showBar('Stream nicht erreichbar'); } });
 
