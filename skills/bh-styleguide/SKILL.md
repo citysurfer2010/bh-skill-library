@@ -155,6 +155,22 @@ Jede App hat von oben nach unten dieselben Zonen. Sie entstehen über `BHAppShel
 
 **Zustände:** Jede Aktion zeigt sofort, was passiert: lädt (`aria-busy`), Erfolg oder Fehler als Toast, aktiver Inhalt mit Rahmen und Text „Läuft“, nie allein über Farbe. Daten laden mit Platzhalter (`AppShell.loading`), leere Listen mit `.empty`.
 
+## Logo
+
+Marke: kräftiges B, Variante „V1“. Dateien in `assets/logo/` (SVG, 64er Raster).
+
+| Datei | Einsatz |
+|---|---|
+| `bh-logo.svg` | Standard: App-Icon, Favicon, Login, helle Flächen |
+| `bh-logo-weiss.svg` | Auf Blau, dunklen Flächen und Fotos: Navbar, Beamer |
+| `bh-logo-blau.svg` | Auf hellem Grund, Briefpapier, Dokumente |
+| `bh-logo-navy.svg` | Einfarbiger Druck, Stempel |
+| `bh-logo-kachel-weiss.svg` | Auf bunten Hintergründen und Fotos |
+| `bh-logo-kachel-dunkel.svg` | Dunkelmodus, Nacht-Stimmung |
+| `bh-logo-rund.svg` | Profilbild, Avatar, Social Media |
+
+Regeln: Mindestgröße 20 px. Rundherum mindestens ein Viertel der Logobreite frei. Das B nie verzerren, drehen oder mit Verlauf versehen; der Verlauf gehört nur in die Kachel. Neben dem Logo steht „Biskup Home“ in der Systemschrift.
+
 ## Teil 5: Qualitätscheckliste
 
 **Prüfung ist Pflicht:** Jede sichtbare Änderung prüfen ein UI/UX-Agent und ein Design-Experte getrennt, mit Screenshots in Hell, Dunkel, 390 px und mit echtem Zustand. Befunde umsetzen, erneut prüfen, bis beide freigeben. Ziel ist ein Erlebnis auf Weltklasse-Niveau, nicht „funktioniert“.
