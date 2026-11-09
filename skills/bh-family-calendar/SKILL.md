@@ -20,5 +20,5 @@ Einmalige Termine der nächsten 14 Tage über das zentrale MCP-Gateway. Das Star
 
 - Arbeitet nur mit einem Kalender (`BH_FAMILY_CALENDAR_ID` in der `.env`).
 - Einladungen verschickt Google sofort per E-Mail. Mit Gästen deshalb immer zuerst `dryRun` zeigen und den User bestätigen lassen.
-- `familycal_new_event` darf nur Matti, die Beamer-App kann nur lesen.
+- Beide Werkzeuge stehen allen Nutzern offen, die Beamer-App kann nur lesen.
 - Nutzt die Google-Freigabe von Matti. Die Beamer-App bekommt so nur dieses eine Werkzeug, nicht den ganzen Google-Zugang.

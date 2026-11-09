@@ -9,6 +9,7 @@
 ## Termine anlegen
 
 - Termine werden im Family-Kalender angelegt, Gäste aus verschiedenen Parteien per E-Mail eingeladen. Quelle: Matti, 09.11.2026.
+- Der Family-Kalender ist global: Alle Nutzer dürfen lesen und anlegen. Eine spätere Einschränkung ist möglich. Quelle: Matti, 09.11.2026.
 - Ohne Gäste geht keine E-Mail raus.
 - Ohne Ende dauert ein Termin eine Stunde, Uhrzeiten gelten in Berliner Zeit.
 - Bei mehrtägigen Terminen ist `endDate` der letzte Tag.

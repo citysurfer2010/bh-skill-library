@@ -6,4 +6,4 @@
 - Gäste werden nur per E-Mail-Adresse eingeladen, ein Adressbuch gibt es noch nicht.
 - Termine lassen sich nur anlegen, nicht ändern oder löschen; das geht über `bh-google-workspace` oder im Kalender.
 - Wiederkehrende Termine legt das Werkzeug nicht an.
-- Eingeladen wird immer im Namen des Kontos von Matti.
+- Alle Nutzer arbeiten über die Google-Freigabe von Matti: Anlegen und Einladen läuft immer in seinem Namen, auch wenn jemand anderes es auslöst.
