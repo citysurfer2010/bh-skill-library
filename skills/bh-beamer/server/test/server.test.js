@@ -225,3 +225,8 @@ test('Stream: Steueradresse wird gefunden, Adresse maskiert, Fehler gemeldet', a
   await assert.rejects(d.stop(), /keine Medienwiedergabe/);
 });
 
+
+test('BH Screen: Menü kennt den Radio-Zustand und alle Rückrufe', () => {
+  const main = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'main.js'), 'utf8');
+  for (const hook of ['BHHome.onTune =', 'BHHome.onMood =', 'BHHome.isRadioOn =', 'BHHome.onPreview =']) assert.ok(main.includes(hook), hook);
+});

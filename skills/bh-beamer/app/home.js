@@ -71,12 +71,13 @@ window.BHHome = (function () {
   }
 
   // Abfahrten direkt von der BVG: nur wenn der Start-Bildschirm sichtbar ist, einmal pro Minute.
-  var transitStop = null;
+  var transitStop = null; var transitAt = 0;
   function departures() {
     var el = document.getElementById('transit');
     if (!transitStop || document.body.className.indexOf('home') < 0 || page !== 'start') return;
+    transitAt = Date.now();
     var x = new XMLHttpRequest();
-    x.open('GET', 'https://v6.bvg.transport.rest/stops/' + transitStop.id + '/departures?duration=45&results=4&remarks=false');
+    x.open('GET', 'https://v6.bvg.transport.rest/stops/' + transitStop.id + '/departures?duration=45&results=3&remarks=false');
     x.timeout = 12000;
     x.onload = function () {
       try {
@@ -85,7 +86,7 @@ window.BHHome = (function () {
         el.innerHTML = '<span class="stop">' + esc(transitStop.name) + '</span>' + list.map(function (d) {
           var when = new Date(d.when || d.plannedWhen); var min = Math.max(0, Math.round((when - Date.now()) / 60000));
           var late = (d.delay || 0) >= 180;
-          return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line && d.line.name || '?') + '</b>' + esc(String(d.direction || '').slice(0, 22)) + '<i>' + (d.cancelled ? 'fällt aus' : min ? min + ' Min' : 'jetzt') + '</i></span>';
+          return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line && d.line.name || '?') + '</b><span>' + esc(String(d.direction || '')) + '</span><i>' + (d.cancelled ? 'fällt aus' : (min ? min + ' Min' : 'jetzt') + (late ? ' (+' + Math.round(d.delay / 60) + ')' : '')) + '</i></span>';
         }).join('');
       } catch (e) { el.className = ''; }
     };
@@ -163,6 +164,7 @@ window.BHHome = (function () {
     paint();
   }
   function tuneSoon(st) {
+    if (api.onPreview) api.onPreview(st);
     clearTimeout(tuneTimer);
     tuneTimer = setTimeout(function () { tuneTimer = null; if (api.isRadioOn()) api.onTune(st); }, 500);
   }
@@ -178,10 +180,11 @@ window.BHHome = (function () {
     var g = grids[page]; if (!g) return;
     var cols = COLS[page]; var col = g.at % cols;
     if (dx < 0 && col === 0) { setZone('side'); return; }
+    if (dx > 0 && col === cols - 1) return;
     var to = g.at + dx + dy * cols;
+    if (dy > 0 && to >= g.items.length && Math.floor(g.at / cols) < Math.floor((g.items.length - 1) / cols)) to = g.items.length - 1;
     if (to < 0 || to >= g.items.length) return;
     g.at = to; paint();
-    if (page === 'radio' && api.isRadioOn()) tuneSoon(g.items[to]);
   }
   function moveStart(key) {
     var count = plan && plan.days ? plan.days.length : 0;
@@ -231,7 +234,7 @@ window.BHHome = (function () {
   };
   tick(); setInterval(tick, 5000);
   weather(); setInterval(weather, 900000);
-  setInterval(departures, 60000);
+  setInterval(function () { if (Date.now() - transitAt >= 60000) departures(); }, 5000);
   api.step = step; api.setState = function (s) { audio = s; paint(); };
   api.setMenu = setMenu; api.setPlaying = setPlaying;
   paint();
