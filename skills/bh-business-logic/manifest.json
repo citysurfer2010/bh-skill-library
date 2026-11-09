@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-business-logic",
+  "name": "bh-business-logic",
+  "version": "26.11.1",
+  "description": "Prozesse und Absprachen der Biskup Home Plattform, zum Nachschlagen",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}

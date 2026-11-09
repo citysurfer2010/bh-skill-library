@@ -1,0 +1,1 @@
+{ "name": "bh-business-logic", "version": "26.11.1", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }

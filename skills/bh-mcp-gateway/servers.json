@@ -5,6 +5,8 @@
   {"id": "photos", "command": ["node", "/opt/skills/bh-nas/server/server.js"], "users": ["bh-apps"], "env": {"BH_NAS_TOOLS": "photos", "BH_NAS_PHOTO_ROOT": "/Bilder", "HOME": "/var/lib/mcp-gateway/users/matti"}, "envFrom": ["BH_NAS_URL", "BH_NAS_CA_B64", "BH_NAS_FP", "BH_AUTH_INTERNAL", "BH_SCREEN_WRITE"]},
   {"id": "icloud", "command": ["node", "/opt/skills/bh-icloud/server/server.js"]},
   {"id": "faces", "command": ["node", "/opt/skills/bh-faces/server/server.js"], "users": ["bh-apps"], "env": {"BH_NAS_PHOTO_ROOT": "/Bilder", "BH_FACES_URL": "http://bh-faces:8000", "HOME": "/var/lib/mcp-gateway/users/matti"}, "envFrom": ["BH_NAS_URL", "BH_NAS_CA_B64", "BH_NAS_FP", "BH_FAMILY_DIR"]},
+  {"id": "business_logic", "command": ["node", "/opt/skills/bh-business-logic/server/server.js"], "services": ["bh-apps"]},
+  {"id": "actions", "command": ["node", "/opt/skills/bh-agent-actions/server/server.js"], "services": ["bh-apps"]},
   {"id": "bvg", "command": ["node", "/opt/skills/bh-bvg/server/server.js"], "services": ["bh-apps"]},
   {"id": "webuntis", "command": ["node", "/opt/skills/bh-webuntis/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_WEBUNTIS_SERVER", "BH_WEBUNTIS_SCHOOL", "BH_WEBUNTIS_USER", "BH_WEBUNTIS_PASSWORD"]},
   {"id": "beamer", "command": ["node", "/opt/skills/bh-beamer/server/server.js"], "users": ["matti", "bh-apps"], "envFrom": ["BH_BEAMER_IP", "BH_BEAMER_MAC", "BH_BEAMER_CA_B64", "BH_BEAMER_FP", "BH_SCREEN_URL", "BH_SCREEN_WRITE", "BH_AUTH_INTERNAL"]},
