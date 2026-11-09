@@ -29,9 +29,17 @@
   let pickTimer = null;
   let data = null; let stale = false; let dayIndex = 0; let picked = false; let wx = null; let at = null; let scene = null; let wxSig = '';
 
+  // Innen klein unter dem Wetter: Ist-Werte aller Räume, Hinweise nur wenn etwas zu tun ist.
+  function indoor() {
+    const list = [...(data.rooms || [])].sort((a, b) => (b.name === 'Wohnzimmer') - (a.name === 'Wohnzimmer'));
+    if (!list.length) return '';
+    const plan = data.heating?.mode || data.heating?.plan || '';
+    const issue = list.map((r) => (!r.reachable ? `${r.name} nicht erreichbar` : r.windowOpen ? `Fenster offen: ${r.name}` : r.batteryLow ? `Batterie schwach: ${r.name}` : '')).filter(Boolean)[0];
+    return `<div class="hx-indoor"><span class="hx-tag">Innen${plan ? ` · ${esc(plan)}` : ''}</span>${list.map((r) => `<span class="hx-rm">${esc(r.name)} <b class="${r.heating ? 'heat' : ''}">${deg(r.temp)}</b></span>`).join('')}${issue ? `<span class="hx-issue">${esc(issue)}</span>` : ''}</div>`;
+  }
   function weatherBox() {
-    if (!wx) return '';
-    return `<div class="hx-wx"><div class="hx-temp-big">${deg(Math.round(wx.t))}</div><p>${esc(SKY(wx.c))} · Berlin</p><p>Heute bis ${deg(Math.round(wx.max))} · Regen ${wx.rain} %</p></div>`;
+    const outside = wx ? `<div class="hx-temp-big">${deg(Math.round(wx.t))}</div><p>${esc(SKY(wx.c))} · Berlin</p><p>Heute bis ${deg(Math.round(wx.max))} · Regen ${wx.rain} %</p>` : '';
+    return outside || (data.rooms || []).length ? `<div class="hx-wx">${outside}${indoor()}</div>` : '';
   }
   // Wetter als bewegter Hintergrund, wie auf dem Beamer. Bleibt beim Aktualisieren der Daten stehen.
   const fall = (cls, count, dur) => Array.from({ length: count }, (_, i) => `<i class="${cls}" style="left:${((120 + (i * 137) % 960) / 11.8).toFixed(1)}%;top:${(i * 53) % 120 - 20}px;animation-delay:${((i * 0.17) % dur).toFixed(2)}s"></i>`).join('');
@@ -86,12 +94,6 @@
     for (const d of up) if (shown.size < 2) shown.add(d);
     return `<section class="hx-strip" aria-label="Abfahrten"><span class="hx-stop">${esc(b.stop)}</span>${up.map((d) => { const m = Math.max(0, Math.round((new Date(d.when) - Date.now()) / 60000)); return `<div class="hx-dep ${shown.has(d) ? '' : 'hx-more'}"><span class="hx-line ${d.cancelled ? 'hx-gone' : ''}">${esc(d.line)}</span>${d.towards ? `<span class="hx-way">${d.towards === 'Westen' ? '← Westen' : 'Zoo →'}</span>` : ''}<span class="hx-grow ${d.cancelled ? 'hx-gone' : ''}">${esc(d.direction || '')}</span><span class="hx-min ${d.cancelled ? 'off' : d.delayMinutes >= 3 ? 'late' : ''}">${d.cancelled ? `${new Date(d.when).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} fällt aus` : `${m === 0 ? 'jetzt' : `${m} Min`}${d.delayMinutes >= 3 ? ` (+${d.delayMinutes})` : ''}`}</span></div>`; }).join('')}</section>`;
   }
-  function rooms() {
-    const list = data.rooms || []; const plan = data.heating?.mode || (data.heating?.plan ? `Plan: ${data.heating.plan}` : '');
-    if (!list.length) return '<section class="hx-strip"><p class="hx-empty">Raumwerte gerade nicht abrufbar.</p></section>';
-    const sorted = [...list].sort((a, b) => (b.name === 'Wohnzimmer') - (a.name === 'Wohnzimmer'));
-    return `<section class="hx-strip" aria-label="Räume">${plan ? `<span class="hx-stop">${esc(plan)}</span>` : ''}${sorted.map((r) => { const note = !r.reachable ? ['Nicht erreichbar', 'alarm'] : r.windowOpen ? ['Fenster offen', 'alarm'] : r.batteryLow ? ['Batterie schwach', 'alarm'] : r.heating ? [`Heizt auf ${deg(r.target)}`, 'heat'] : [`Soll ${deg(r.target)}`, '']; return `<div class="hx-room"><span class="hx-grow">${esc(r.name)}</span><b>${deg(r.temp)}</b><small class="hx-note ${note[1]}">${esc(note[0])}</small></div>`; }).join('')}</section>`;
-  }
   const HILLS = '<svg class="hx-hills" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true"><path class="a" d="M0 500 C 380 440 820 560 1220 490 S 1720 440 1920 490 V1080 H0Z"/><path class="b" d="M0 720 C 500 680 930 750 1410 705 S 1790 690 1920 715 V1080 H0Z"/></svg>';
   function ensureScene() {
     if (scene) return;
@@ -110,7 +112,7 @@
     if (!data) { host.innerHTML = '<div class="hx-scene"><div class="hx-inner"><section class="hx-panel" role="alert"><p class="hx-empty">Heute konnte nicht geladen werden. Bitte prüfe die Verbindung.</p><button class="hx-day" onclick="location.reload()">Nochmal versuchen</button></section></div></div>'; return; }
     ensureScene(); scene.setAttribute('data-time', phase()); weatherScene();
     const d = new Date(); const y = window.scrollY; const focusDay = document.activeElement?.dataset?.day;
-    scene.querySelector('.hx-inner').innerHTML = `<header class="hx-top"><div><div class="hx-clock">${clock()}</div><div class="hx-date">${DAYS[d.getDay()]}, ${d.getDate()}. ${d.toLocaleString('de-DE', { month: 'long' })}</div></div>${pill()}${weatherBox()}</header>${stale ? `<p class="hx-stale" role="status">Keine Verbindung. Stand ${esc(at || '')}.</p>` : ''}${school()}${events()}${alerts()}${transit()}${rooms()}`;
+    scene.querySelector('.hx-inner').innerHTML = `<header class="hx-top"><div><div class="hx-clock">${clock()}</div><div class="hx-date">${DAYS[d.getDay()]}, ${d.getDate()}. ${d.toLocaleString('de-DE', { month: 'long' })}</div></div>${pill()}${weatherBox()}</header>${stale ? `<p class="hx-stale" role="status">Keine Verbindung. Stand ${esc(at || '')}.</p>` : ''}${school()}${events()}${alerts()}${transit()}`;
     fit(); window.scrollTo(0, y); if (focusDay) scene.querySelector(`[data-day="${focusDay}"]`)?.focus();
   }
   async function load(fresh) {
