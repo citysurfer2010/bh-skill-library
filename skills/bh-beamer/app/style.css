@@ -219,16 +219,18 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 /* Installed version at the bottom of the sidebar */
 #side-ver { position: absolute; left: 44px; bottom: 54px; font-size: 26px; color: rgba(255, 255, 255, .62); }
 #home[data-page="photos"] #grid-photos { display: block; }
-#grid-photos > div { height: 700px; padding: 10px 0 0 10px; margin-left: -10px; overflow: hidden; }
-.tile.album { width: 417px; height: 148px; padding: 20px 24px; }
-.tile.album b { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 36px; }
-.tile.album small { display: block; margin-top: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 30px; font-weight: 400; color: var(--sub); }
-.tile.album.all { background: #1d4ed8; color: #fff; }
-.tile.album.all small { color: #dbeafe; }
+#grid-photos > div { height: 672px; padding: 16px 0 0 16px; margin: -16px 0 0 -16px; overflow: hidden; }
+.g-empty { margin: 0; color: #fff; font-size: 36px; text-shadow: 0 2px 6px rgba(15, 31, 61, .75); }
+.tile.album { width: 417px; height: 112px; padding: 18px 20px; }
+.tile.album b { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 34px; line-height: 40px; }
+.tile.album small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 30px; font-weight: 400; line-height: 36px; color: var(--sub); }
+.tile.album.all { background: var(--chip); }
+.tile.album.all b { color: var(--accent); }
+#home[data-time="evening"] .tile.album.focus, #home[data-time="night"] .tile.album.focus { box-shadow: 0 0 0 6px #7db4ff, 0 12px 30px rgba(0, 0, 0, .35); }
 .ph { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: contain; opacity: 0; transition: opacity 1200ms ease-in-out; }
 .ph.on { opacity: 1; }
-#ph-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 120px 90px 56px; color: #fff; font-size: 40px; font-weight: 700; background: linear-gradient(to top, rgba(0, 0, 0, .72), transparent); opacity: 0; transition: opacity 600ms; }
+#ph-cap { position: absolute; left: 0; right: 0; bottom: 56px; box-sizing: border-box; width: fit-content; max-width: 1240px; margin: 0 auto; padding: 14px 28px; border-radius: 14px; background: rgba(0, 0, 0, .72); color: #fff; font-size: 36px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity 600ms; }
 #ph-cap.on { opacity: 1; }
-#ph-note { position: absolute; right: 90px; bottom: 56px; padding: 14px 28px; border-radius: 14px; background: rgba(0, 0, 0, .72); color: #fff; font-size: 36px; font-weight: 700; opacity: 0; transition: opacity 200ms; }
+#ph-note { position: absolute; right: 90px; top: 56px; padding: 14px 28px; border-radius: 14px; background: rgba(0, 0, 0, .72); color: #fff; font-size: 36px; font-weight: 700; opacity: 0; transition: opacity 200ms; }
 #ph-note.on { opacity: 1; }
-#ph-msg { position: absolute; left: 0; right: 0; top: 480px; text-align: center; color: #fff; font-size: 52px; font-weight: 700; }
+#ph-msg { position: absolute; left: 0; right: 0; top: 517px; text-align: center; color: #9fb2d1; font-size: 40px; font-weight: 400; }

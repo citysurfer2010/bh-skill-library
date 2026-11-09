@@ -73,3 +73,5 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 - Fernbedienung: OK pausiert, ▶ springt weiter, CH wechselt das Radio, Zurück beendet. Radio läuft weiter.
 - Ein einzelnes Album endet mit „Album zu Ende“ und führt zurück zum Menü. „Alle Alben“ läuft endlos.
 - Bildschirm teilen unterbricht die Slideshow.
+- Das letzte Bild eines Albums behält seine volle Standzeit. Die Bildunterschrift blendet nach 8 Sekunden aus, in der Pause bleibt sie stehen. Die Tasten erscheinen einmal zu Beginn und bei ▲ ▼ ◀.
+- Wird `platform/beamer-dev/bh-screen-deploy` geändert, muss die Kopie nach `/usr/local/sbin` neu installiert werden, sonst wirkt die Änderung nicht.

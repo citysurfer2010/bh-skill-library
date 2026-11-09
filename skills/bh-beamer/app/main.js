@@ -175,7 +175,7 @@
     if (e.defaultPrevented) return; // The menu has already handled the key
     var back = e.keyCode === 10009 || e.keyCode === 8;
     if (back && view === 'photos') { BHPhotos.stop(); homeView(); e.preventDefault(); return; }
-    if (view === 'photos') { if (e.keyCode === 13) BHPhotos.togglePause(); else if (e.keyCode === 39) BHPhotos.skip(); e.preventDefault(); return; }
+    if (view === 'photos') { if (e.keyCode === 13) BHPhotos.togglePause(); else if (e.keyCode === 39) BHPhotos.skip(); else if (e.keyCode === 37 || e.keyCode === 38 || e.keyCode === 40) BHPhotos.help(); e.preventDefault(); return; }
     if (back && view === 'video') { localAt = Date.now(); stopVideo(); homeView(); sendRequest('back', 'x'); e.preventDefault(); return; }
     if (back && view.indexOf('home') === 0 && BHHome.back()) { e.preventDefault(); return; }
     if (back && paused && view.indexOf('home') === 0) { clearPause(); e.preventDefault(); return; }
