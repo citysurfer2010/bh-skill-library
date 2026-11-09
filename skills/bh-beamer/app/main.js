@@ -143,6 +143,15 @@
   // Sofort umschalten, die App erfaehrt es parallel und zeigt denselben Stand.
   BHHome.onTune = function (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); homeView(); sendRequest('radio', st.id); };
   BHHome.onMood = function (m) { localAt = Date.now(); showVideo(m.video); videoVolume(); showBar('◀ ▶ Radio · Zurück beendet'); sendRequest('mood', m.id); };
+  // Kanal-Wippe der Fernbedienung wechselt den Sender. Die Tasten muessen eigens angemeldet werden.
+  try { tizen.tvinputdevice.registerKey('ChannelUp'); tizen.tvinputdevice.registerKey('ChannelDown'); } catch (e) { caps = 'ch-' + e.name; }
+  document.addEventListener('keydown', function (e) {
+    if (e.keyCode !== 427 && e.keyCode !== 428) return;
+    e.preventDefault();
+    var dir = e.keyCode === 427 ? -1 : 1;
+    if (view === 'video') { var st = BHHome.step(dir); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); showBar(st.name); sendRequest('radio', st.id); } }
+    else if (view.indexOf('home') === 0) BHHome.channel(dir);
+  });
   document.addEventListener('keydown', function (e) {
     if (e.defaultPrevented) return; // Das Menue hat die Taste schon behandelt
     var back = e.keyCode === 10009 || e.keyCode === 8;
@@ -157,7 +166,7 @@
   BHHome.isRadioOn = function () { return !!playingUrl; };
   BHHome.onPreview = function (st) { stationEl.textContent = st.name; stationEl.className = st.name.length > 13 ? 'long' : ''; noteEl.textContent = 'Wechsle …'; };
 
-  player.addEventListener('playing', function () { audioState('ok'); noteEl.textContent = '▲ ▼ Sender · Zurück beendet'; });
+  player.addEventListener('playing', function () { audioState('ok'); noteEl.textContent = 'CH ▲ ▼ Sender · Zurück beendet'; });
   player.addEventListener('waiting', function () { audioState('load'); noteEl.textContent = 'Puffert …'; });
   player.addEventListener('error', function () { if (playingUrl) { audioState('fail'); noteEl.textContent = 'Stream nicht erreichbar'; if (view === 'video') showBar('Stream nicht erreichbar'); } });
 
