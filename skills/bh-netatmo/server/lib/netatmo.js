@@ -8,18 +8,21 @@ const setFetch = (f) => { doFetch = f; };
 const AUTH = 'https://auth.netatmo.com'; const API = 'https://app.netatmo.net';
 const NEXT = encodeURIComponent('https://home.netatmo.com/control/dashboard');
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130 Safari/537.36';
+const ACCESS = 'netatmocomaccess_token';
 const TOKEN_MS = 150 * 60_000; const LOCK_MS = 30 * 60_000; const ROOMS_MS = 5 * 60_000;
 
 const file = () => path.join(process.env.BH_FAMILY_DIR || '/tmp/bh-family', 'netatmo.json');
 function read() { try { return JSON.parse(fs.readFileSync(file(), 'utf8')); } catch { return {}; } }
 function write(patch) { fs.mkdirSync(path.dirname(file()), { recursive: true }); fs.writeFileSync(file(), JSON.stringify({ ...read(), ...patch }), { mode: 0o600 }); }
 
-function jar() {
-  const c = {};
+function jar(initial = {}) {
+  const c = { ...initial };
   return {
     eat(res) { for (const l of res.headers.getSetCookie?.() || []) { const p = l.split(';')[0]; const i = p.indexOf('='); c[p.slice(0, i)] = p.slice(i + 1); } },
     head: () => Object.entries(c).map(([k, v]) => `${k}=${v}`).join('; '),
     get: (k) => c[k],
+    drop: (k) => { delete c[k]; },
+    dump: () => ({ ...c }),
   };
 }
 async function go(j, url, init = {}) {
@@ -42,12 +45,25 @@ async function login() {
   const { token: formToken } = await csrf.json();
   const body = new URLSearchParams({ _token: formToken, email: process.env.BH_NETATMO_USER || '', password: process.env.BH_NETATMO_PASSWORD || '', stay_logged: 'on' });
   await go(j, `${AUTH}/access/postlogin?next_url=${NEXT}`, { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded', referer: page, origin: AUTH } });
-  const token = decodeURIComponent(j.get('netatmocomaccess_token') || '');
+  const token = decodeURIComponent(j.get(ACCESS) || '');
   if (!token) { write({ lockedUntil: Date.now() + LOCK_MS }); throw new Error('Netatmo lehnt die Anmeldung ab'); }
-  write({ token, tokenUntil: Date.now() + TOKEN_MS, lockedUntil: 0 });
+  write({ token, tokenUntil: Date.now() + TOKEN_MS, lockedUntil: 0, cookies: j.dump(), logins: (s.logins || 0) + 1 });
   return token;
 }
-const currentToken = async () => { const s = read(); return s.token && s.tokenUntil > Date.now() ? s.token : login(); };
+/** Führt die bestehende Sitzung weiter. Neu anmelden muss sich der Skill nur, wenn das nicht mehr geht. */
+async function resume() {
+  const s = read();
+  if (!s.cookies) return null;
+  try {
+    const j = jar(s.cookies); j.drop(ACCESS);
+    await go(j, `${AUTH}/en-us/access/login?next_url=${NEXT}`);
+    const token = decodeURIComponent(j.get(ACCESS) || '');
+    if (!token) return null;
+    write({ token, tokenUntil: Date.now() + TOKEN_MS, cookies: j.dump(), resumes: (s.resumes || 0) + 1 });
+    return token;
+  } catch { return null; }
+}
+const currentToken = async () => { const s = read(); return s.token && s.tokenUntil > Date.now() ? s.token : (await resume()) || login(); };
 
 async function api(p, payload) {
   for (let retry = 0; ; retry++) {

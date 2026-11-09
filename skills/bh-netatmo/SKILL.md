@@ -21,5 +21,5 @@ Raumweise Temperaturen der Netatmo-Thermostate über das zentrale MCP-Gateway. D
 
 - `netatmo_set_room` steuert die echte Heizung, immer nur befristet. Heizpläne werden nicht verändert.
 - Zugang liegt in der `.env` (`BH_NETATMO_USER`, `BH_NETATMO_PASSWORD`).
-- Schonend: Werte 5 Minuten zwischengespeichert, Anmeldung höchstens alle 2,5 Stunden.
+- Schonend: Werte 5 Minuten zwischengespeichert, die bestehende Sitzung wird weitergeführt statt neu anzumelden.
 - Nach einer abgelehnten Anmeldung 30 Minuten Sperre, damit das Konto nicht gesperrt wird.
