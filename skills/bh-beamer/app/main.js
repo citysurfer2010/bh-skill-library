@@ -48,6 +48,7 @@
   function stopWeb() {
     if (!web) return;
     web.stop = true;
+    try { if (web.abort) web.abort.abort(); } catch (e) { /* schon zu */ }
     try { web.reader.cancel(); } catch (e) { /* schon zu */ }
     try { web.ctx.close(); } catch (e) { /* schon zu */ }
     web = null;
@@ -68,6 +69,7 @@
   }
   // Schneidet an einer MP3-Rahmengrenze, damit zwischen den Stuecken nichts knackt.
   function cutAt(b) { for (var i = b.length - 2; i > b.length - 3000 && i > 0; i--) if (b[i] === 255 && (b[i + 1] & 224) === 224) return i; return b.length; }
+  function webFailed(w) { if (w.stop) return; audioState('fail'); noteEl.textContent = 'Stream nicht erreichbar'; showBar('Radio nicht erreichbar'); }
   function startWeb(url) {
     stopWeb();
     var AC = window.AudioContext || window.webkitAudioContext;
@@ -77,11 +79,14 @@
     web = w;
     if (w.ctx.resume) w.ctx.resume();
     var buf = new Uint8Array(CHUNK * 2); var size = 0;
-    fetch(url).then(function (res) {
+    var ac = window.AbortController ? new AbortController() : null; w.abort = ac;
+    fetch(url, ac ? { signal: ac.signal } : {}).then(function (res) {
+      if (!res.ok) throw new Error('http');
       w.reader = res.body.getReader();
       function pump() {
         return w.reader.read().then(function (r) {
-          if (w.stop || r.done) return null;
+          if (w.stop) return null;
+          if (r.done) { webFailed(w); return null; }
           if (size + r.value.length > buf.length) size = 0;
           buf.set(r.value, size); size += r.value.length;
           if (size >= CHUNK) {
@@ -93,7 +98,7 @@
         });
       }
       return pump();
-    }).catch(function (e) { if (!w.stop) caps = 'web-' + e.name; });
+    }).catch(function (e) { if (!w.stop) { caps = 'web-' + e.name; webFailed(w); } });
   }
   window.addEventListener('message', function (e) {
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
