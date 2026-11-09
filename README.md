@@ -15,6 +15,7 @@ Kanonische Skills und Server-Einrichtung der BH Platform. Dieses Repo ist oeffen
 |---|---|
 | `bh-auth` | Anmeldedienst mit Login-Seite und Benutzerverwaltung |
 | `bh-mcp-gateway` | Zentrales MCP-Gateway, ueber das alle Werkzeuge laufen |
+| `bh-opencode` | Gleicher Kontext, gleiche Regeln und Hooks für OpenCode bei jedem User |
 | `bh-github` | Git, GitHub und Pull Requests |
 | `bh-google-workspace` | Gmail, Drive, Docs, Sheets, Slides, Kalender und Chat |
 | `bh-webapp-skeleton` | Neue Web-App im BH-Standard anlegen |

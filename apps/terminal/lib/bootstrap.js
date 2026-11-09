@@ -26,12 +26,16 @@ else printf '\\e]1337;File=name=%s;size=%s;inline=1:%s\\a' "$name" "$size" "$dat
 echo
 `;
 const CONF = `${HOME}/.config/bh-terminal/tmux.conf`;
+// Links, not copies: a change in the skill reaches every user at once.
+const GUARD = '/etc/devbox/skills/bh-opencode/plugin/bh-guard.js';
 const mkdir = (s, p) => new Promise((ok) => s.mkdir(p, () => ok()));
+const link = (s, target, p) => new Promise((ok) => s.unlink(p, () => s.symlink(target, p, () => ok())));
 const write = (s, p, data, mode) => new Promise((ok, no) => s.writeFile(p, data, { mode }, (e) => (e ? no(e) : ok())));
 
 async function prepare(sftp) {
-  for (const d of ['.config', '.config/bh-terminal', '.config/bh-apps', '.local', '.local/bin', 'uploads']) await mkdir(sftp, `${HOME}/${d}`);
+  for (const d of ['.config', '.config/bh-terminal', '.config/bh-apps', '.config/opencode', '.config/opencode/plugins', '.local', '.local/bin', 'uploads']) await mkdir(sftp, `${HOME}/${d}`);
   await write(sftp, CONF, TMUX, 0o644);
+  await link(sftp, GUARD, `${HOME}/.config/opencode/plugins/bh-guard.js`);
   await write(sftp, `${HOME}/.local/bin/bh-show`, SHOW, 0o755);
   await write(sftp, `${HOME}/.local/bin/bh-route`, file('bh-route'), 0o755);
   await write(sftp, `${HOME}/.local/bin/bh-router.mjs`, file('bh-router.mjs'), 0o755);

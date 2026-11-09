@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-opencode",
+  "name": "bh-opencode",
+  "version": "26.11.1",
+  "description": "Einheitliche OpenCode-Konfiguration fuer jeden User: Kontext, Regeln und Hooks",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}
