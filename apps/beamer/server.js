@@ -84,6 +84,8 @@ app.get('/api/me', (req, res) => {
   res.json({ id: email, email, name, role });
 });
 app.use('/api/me/api-keys', apiKeyRoutes.buildRouter());
+const icloudLogin = require('./routes/icloud-login');
+app.use('/icloud-login', icloudLogin.requireOwner, icloudLogin.proxy);
 const beamer = beamerRoutes.buildRouter();
 app.use('/api', require('./routes/today').buildRouter());
 app.use('/api', beamer);

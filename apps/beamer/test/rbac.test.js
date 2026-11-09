@@ -41,6 +41,11 @@ for (const [method, url, role] of PROTECTED) {
   }
 }
 
+test('GET /icloud-login/: ohne Anmeldung 401, sonst nur der Besitzer (siehe unit-server)', async () => {
+  assert.equal((await t.call('/icloud-login/')).status, 401);
+  assert.equal((await t.call('/icloud-login/', { as: 'u@beispiel.de', role: 'admin' })).status, 403);
+});
+
 test('ohne TRUST_PROXY_AUTH=1 werden die Kopfzeilen ignoriert', async () => {
   for (const flag of [undefined, '0', 'true', '']) {
     resetAuthEnv(flag === undefined ? {} : { TRUST_PROXY_AUTH: flag });
