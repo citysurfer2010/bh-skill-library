@@ -1,6 +1,7 @@
 /** Access to the Synology through its web API, per user with their own account. */
 'use strict';
 
+const crypto = require('crypto');
 const fs    = require('fs');
 const https = require('https');
 const os    = require('os');
@@ -53,6 +54,24 @@ let transport = realPost;
 let sid = null;
 const setTransport = (t) => { transport = t; sid = null; };
 
+function realUpload(query, fields, file) {
+  const url = new URL(`/webapi/entry.cgi?${new URLSearchParams(query)}`, process.env.BH_NAS_URL);
+  const boundary = `----bh${crypto.randomBytes(12).toString('hex')}`;
+  const head = Object.entries(fields).map(([k, v]) => `--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`).join('');
+  const safeName = file.name.replace(/["\r\n]/g, '_');
+  const body = Buffer.concat([Buffer.from(`${head}--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${safeName}"\r\nContent-Type: application/octet-stream\r\n\r\n`), file.data, Buffer.from(`\r\n--${boundary}--\r\n`)]);
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, { ...tlsOptions(), method: 'POST', timeout: 180_000, headers: { 'content-type': `multipart/form-data; boundary=${boundary}`, 'content-length': body.length } }, (res) => {
+      const parts = []; res.on('data', (c) => parts.push(c)); res.on('end', () => { try { resolve(JSON.parse(Buffer.concat(parts).toString('utf8'))); } catch (e) { reject(e); } }); res.on('error', reject);
+    });
+    req.on('timeout', () => req.destroy(new Error('Synology antwortet nicht')));
+    req.on('error', reject);
+    req.end(body);
+  });
+}
+let uploadTransport = realUpload;
+const setUploadTransport = (t) => { uploadTransport = t || realUpload; };
+
 function fail(code) { return Object.assign(new Error(MESSAGES[code] || `Synology-Fehler ${code}`), { code }); }
 const parse = (r) => JSON.parse(r.body.toString('utf8'));
 
@@ -87,6 +106,15 @@ async function download(file, maxBytes) {
   return res;
 }
 
+/** Writes one file; the caller decides the folder. Existing files stay untouched. */
+async function upload(dir, name, data) {
+  if (!sid) await login();
+  const send = () => uploadTransport({ api: 'SYNO.FileStation.Upload', version: '2', method: 'upload', _sid: sid }, { path: dir, create_parents: 'true', overwrite: 'false' }, { name, data });
+  let r = await send();
+  if (!r.success && RELOGIN.has(r.error?.code)) { await login(); r = await send(); }
+  return r;
+}
+
 function checkPath(p) {
   if (typeof p !== 'string' || !p.startsWith('/') || p.split('/').includes('..') || /[\0\r\n]/.test(p)) throw new Error('Pfad muss absolut sein, zum Beispiel /Backup/ordner');
   return p;
@@ -97,4 +125,4 @@ const TLS_CODES = new Set(['UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'SELF_SIGNED_CERT_
 const failed = (e) => ({ content: [{ type: 'text', text: TLS_CODES.has(e.code) ? 'Das Zertifikat der Synology ist noch nicht eingerichtet (siehe LIMITATIONS.md im Skill bh-nas).' : e.message }], isError: true });
 const guarded = (fn) => async (args) => { try { return ok(await fn(args || {})); } catch (e) { return failed(e); } };
 
-module.exports = { call, download, checkPath, guarded, setTransport, tlsOptions };
+module.exports = { upload, setUploadTransport, call, download, checkPath, guarded, setTransport, tlsOptions };
