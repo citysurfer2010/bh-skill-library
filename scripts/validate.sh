@@ -28,7 +28,7 @@ c=$(sed -nE 's/.*[^a-z]version="([^"]+)" viewmodes.*/\1/p' skills/bh-beamer/app/
 # Icons: see "Icons und Favicon" in skills/bh-webapp-skeleton/SKILL.md
 logo=skills/bh-styleguide/assets/logo/bh-logo.svg
 tpl=skills/bh-webapp-skeleton/templates/new-web-app/app/public
-for d in "$tpl" skills/bh-auth/server/public; do
+for d in "$tpl" skills/bh-auth/server/public apps/*/public; do
   cmp -s "$d/favicon.svg" "$logo" || { echo "FEHLER $d/favicon.svg weicht vom Logo ab"; fail=1; }
 done
 for d in "$tpl" skills/bh-auth/server/public apps/*/public; do

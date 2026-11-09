@@ -1,7 +1,7 @@
 'use strict';
 /**
  * Ratchet: app icon, favicon, navbar icon and user menu. Everything comes from scripts/make-app-icons.mjs,
- * the mark is the letters "BH" on the blue tile. The PNG decoder reads real pixels without dependencies.
+ * the mark is the Biskup Home logo: white B on the blue gradient tile. The PNG decoder reads real pixels without dependencies.
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -13,7 +13,6 @@ const { pathToFileURL } = require('url');
 const APP = path.join(__dirname, '..');
 const PUB = path.join(APP, 'public');
 const BRAND = path.join(PUB, 'branding');
-const BLUE = [29, 78, 216];
 const THEME = '#1d4ed8';
 const read = (f) => fs.readFileSync(f, 'utf8');
 const gen = () => import(pathToFileURL(path.join(APP, 'scripts', 'make-app-icons.mjs')).href);
@@ -40,7 +39,7 @@ function decodePng(file) {
   }
   return { w, h, type, at: (x, y) => { const i = y * stride + x * bpp; return { r: px[i], g: px[i + 1], b: px[i + 2], a: bpp === 4 ? px[i + 3] : 255 }; } };
 }
-const isBlue = (p) => p.r === BLUE[0] && p.g === BLUE[1] && p.b === BLUE[2] && p.a === 255;
+const isBlue = (p) => p.a === 255 && p.b > p.r + 30 && p.b > p.g + 30;
 const isWhite = (p) => p.a > 200 && p.r > 235 && p.g > 235 && p.b > 235;
 function markBox(img) {
   let x0 = img.w, y0 = img.h, x1 = -1, y1 = -1;

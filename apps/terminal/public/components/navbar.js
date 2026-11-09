@@ -17,7 +17,7 @@
       root: document.getElementById('app-root') || document.body,
       // Navbar = "[BH tile] app name"; scripts/make-app-icons.mjs generates the icon.
       app: { name: 'Terminal', href: '/terminal/',
-        logo: '<img class="bhs-brand" src="/terminal/branding/nav-icon.svg?v=1" width="24" height="24" alt="">' },
+        logo: '<img class="bhs-brand" src="/terminal/branding/nav-icon.svg?v=2" width="24" height="24" alt="">' },
       tabs: TABS,
       adminHref: '/terminal/admin', // Gear for admins only
     });
