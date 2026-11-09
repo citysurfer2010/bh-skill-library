@@ -151,6 +151,19 @@ window.BHHome = (function () {
     grids[name] = { items: items, el: el, at: 0 };
   }
 
+  var CAKE = '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21h16v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2zM4 16c2 2 4 2 6 0s4-2 6 0 4 2 4 0M12 11V7M12 3v.5"/></svg>';
+  function renderBirthdays(list) {
+    var el = document.getElementById('bday');
+    if (!list.length) { el.className = ''; el.innerHTML = ''; return; }
+    var party = list[0].inDays === 0; var colors = ['#c2410c', '#1d4ed8', '#16a34a', '#db2777'];
+    var conf = ''; if (party) for (var i = 0; i < 16; i++) conf += '<i class="cf" style="left:' + (i * 37 % 560) + 'px;background:' + colors[i % 4] + ';animation-delay:' + (i * .17).toFixed(2) + 's"></i>';
+    el.className = 'on' + (party ? ' party' : '');
+    el.innerHTML = conf + list.slice(0, 2).map(function (b) {
+      var when = b.inDays === 0 ? 'Heute' : b.inDays === 1 ? 'Morgen' : 'In ' + b.inDays + ' Tagen';
+      return '<div class="bd">' + CAKE + '<small>' + when + '</small>' + esc(b.name) + ' wird ' + b.age + (b.inDays === 0 ? '!' : '') + '</div>';
+    }).join('');
+  }
+
   function setMenu(menu) {
     if (!menu) return;
     plan = menu.schedule || null; renderDay();
@@ -158,6 +171,7 @@ window.BHHome = (function () {
     alertsEl.className = alerts.length ? 'on' : '';
     alertsEl.innerHTML = alerts.slice(0, 2).map(function (a) { return '<div class="alert"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><b>' + esc(a.label) + '</b><span>' + esc(a.text) + '</span></div>'; }).join('');
     board = menu.board || null; renderBoard();
+    renderBirthdays(menu.birthdays || []);
     var next = JSON.stringify([menu.radio, menu.mood]);
     if (next === signature) return;
     signature = next;
