@@ -29,7 +29,7 @@ for (const [skill, folder] of [['bh-business-logic', 'topics'], ['bh-agent-actio
 }
 
 test('Rezepte nennen nur Werkzeuge, die es wirklich gibt', () => {
-  const servers = JSON.parse(fs.readFileSync(path.join(skills, 'bh-mcp-gateway/servers.json'), 'utf8'));
+  const servers = JSON.parse(fs.readFileSync(path.join(skills, '../services/bh-mcp-gateway/servers.json'), 'utf8'));
   const list = Array.isArray(servers) ? servers : servers.servers;
   const known = new Set();
   for (const s of list) {

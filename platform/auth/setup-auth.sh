@@ -10,7 +10,7 @@ for k in BH_SCREEN_READ BH_SCREEN_WRITE BH_CONNECT_SECRET; do [ -n "$(val $k)" ]
 (umask 077; printf 'SCREEN_READ=%s\nSCREEN_WRITE=%s\nBH_CONNECT_SECRET=%s\nBH_ICLOUD_PHOTOS_OWNER=%s\n' "$(val BH_SCREEN_READ)" "$(val BH_SCREEN_WRITE)" "$(val BH_CONNECT_SECRET)" "$(val BH_WORK_CALENDAR_OWNER)" >"$D/screen.env")
 (umask 077; printf 'PUBLIC_URL=%s\nAUTH_COOKIE_DOMAIN=%s\nRETURN_ORIGINS=%s\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\n' \
   "$(val BH_PUBLIC_URL)" "$(val BH_COOKIE_DOMAIN)" "$(val BH_RETURN_ORIGINS)" "$(val GOOGLE_CLIENT_ID)" "$(val GOOGLE_CLIENT_SECRET)" >"$D/env")
-docker build -q -t bh-auth:current /opt/bh-skill-library/skills/bh-auth/server
+docker build -q -t bh-auth:current /opt/bh-skill-library/services/bh-auth
 docker network inspect bh-apps-net >/dev/null 2>&1 || docker network create bh-apps-net >/dev/null
 docker rm -f bh-auth >/dev/null 2>&1 || true
 docker run -d --name bh-auth --network bh-apps-net --restart unless-stopped \

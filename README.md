@@ -9,6 +9,15 @@ Kanonische Skills und Server-Einrichtung der BH Platform. Dieses Repo ist oeffen
 | `platform/` | Einrichtung des Servers: User-Container, LLM-Gateway, Firewall |
 | `scripts/` | Pruefungen fuer dieses Repo |
 
+## Aufbau
+
+| Ordner | Inhalt |
+|---|---|
+| `apps/` | Anwendungen, die Nutzer öffnen |
+| `services/` | Infrastruktur, von der alles andere abhängt: `bh-auth`, `bh-mcp-gateway` |
+| `skills/` | Wissen und MCP-Werkzeuge, wird in die Container eingehängt |
+| `platform/` | Server-Einrichtung, Image, Edge |
+
 ## Skills
 
 | Skill | Zweck |
