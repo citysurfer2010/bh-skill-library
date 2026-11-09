@@ -36,6 +36,7 @@ async function prepare(sftp) {
   await write(sftp, `${HOME}/.local/bin/bh-route`, file('bh-route'), 0o755);
   await write(sftp, `${HOME}/.local/bin/bh-router.mjs`, file('bh-router.mjs'), 0o755);
 }
-const START_ROUTER = `pgrep -f bh-router.mjs >/dev/null || nohup node ${HOME}/.local/bin/bh-router.mjs >/tmp/bh-router.log 2>&1 &`;
+// Die eckige Klammer verhindert, dass pgrep seine eigene Shell als Treffer zählt.
+const START_ROUTER = `pgrep -f '[b]h-router.mjs' >/dev/null || nohup node ${HOME}/.local/bin/bh-router.mjs </dev/null >/tmp/bh-router.log 2>&1 &`;
 
 module.exports = { prepare, HOME, CONF, START_ROUTER };
