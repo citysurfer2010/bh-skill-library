@@ -25,11 +25,11 @@ These rules apply to every task.
 - Versions follow `YY.M.N` as described in the coding rules, raised in the same commit.
 
 ## Data
-- Default database is SQLite through `node:sqlite`: one file per app, WAL mode, `PRAGMA foreign_keys = ON`. It fits this small server and needs no extra process.
+- Data is always stored in SQLite through `node:sqlite`, never in JSON files: one database file per app, WAL mode, `PRAGMA foreign_keys = ON`, and an index for every column you filter, join or sort on.
 - Do not start database servers such as PostgreSQL, MySQL or Redis in the container, there is neither memory nor Docker. Use a hosted database over the internet only if the app must really serve many concurrent writers, and ask the user first.
 - Keep the path in `DATA_DIR`, outside Git. For public apps the database and `.env` must stay outside the app folder, in `~/app-data/<app>/`, otherwise the guard revokes the release.
 - Change schemas through numbered, forward-only migrations in the repository. Group related writes in transactions, add indexes for real queries, use bound parameters only.
-- Store times as UTC ISO 8601 and money as integer cents. Files go on disk with their path in the database, not as blobs. JSON files are only for small settings.
+- Store times as UTC ISO 8601 and money as integer cents. Files go on disk with their path in the database, not as blobs.
 - Back up with `VACUUM INTO` or the SQLite backup API. Never copy a live database file, the WAL holds recent writes. Backups are not automatic.
 
 ## User accounts

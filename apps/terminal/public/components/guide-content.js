@@ -123,7 +123,7 @@ window.GUIDE_SECTIONS = (() => {
       ${cmd('bh-route add /ideen 3050')}
       <p>Der Befehl zeigt dir die vollständige Adresse, etwa <strong>dein-name.familiebiskup.de/ideen</strong>. Alle Adressen siehst du mit ${c('bh-route list')}, und OpenCode kennt sie auch. Das geht auch im Terminal unter <strong>Meine Apps</strong>. Erlaubt sind die Ports 1024 bis 65535, außer 2222 und 8088.</p>
       <h3>Daten speichern</h3>
-      <p>Standard ist SQLite: eine Datei je App, kein eigener Datenbank-Server. Der Server ist dafür zu klein. Die Daten liegen in deinem Container und werden nicht automatisch gesichert.</p>` },
+      <p>Daten liegen immer in SQLite mit passenden Indizes, nie in JSON-Dateien: eine Datei je App, kein eigener Datenbank-Server. Der Server ist dafür zu klein. Die Daten liegen in deinem Container und werden nicht automatisch gesichert.</p>` },
 
     { id: 'publish', title: 'Veröffentlichen', html: `
       ${table(['Weg', 'Wer sieht es', 'Wie'], [
