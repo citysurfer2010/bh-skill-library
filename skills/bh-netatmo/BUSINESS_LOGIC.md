@@ -2,7 +2,8 @@
 
 ## Regeln
 
-- Nur lesen. Die Heizung wird nicht gesteuert.
+- Solltemperaturen lassen sich ändern, von 7 bis 30 Grad in halben Schritten und immer befristet. Quelle: Matti, 09.11.2026.
+- Der aktive Heizplan wird angezeigt, aber nicht umgeschaltet.
 - Zugang über den Web-Login des Familienkontos (`home.netatmo.com`), wie von Matti am 09.11.2026 vorgegeben. Zugangsdaten nur in der `.env`.
 - Ein Raum liefert Isttemperatur, Sollwert, Modus, Heizbetrieb, offenes Fenster, Erreichbarkeit und schwache Batterie.
 - Schwach heißt: Ein Ventil des Raums meldet `low` oder `very_low`.
