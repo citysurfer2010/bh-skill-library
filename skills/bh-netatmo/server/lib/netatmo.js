@@ -56,7 +56,7 @@ async function resume() {
   if (!s.cookies) return null;
   try {
     const j = jar(s.cookies); j.drop(ACCESS);
-    await go(j, `${AUTH}/en-us/access/login?next_url=${NEXT}`);
+    await go(j, `${AUTH}/access/checklogin?next_url=${NEXT}`);
     const token = decodeURIComponent(j.get(ACCESS) || '');
     if (!token) return null;
     write({ token, tokenUntil: Date.now() + TOKEN_MS, cookies: j.dump(), resumes: (s.resumes || 0) + 1 });
