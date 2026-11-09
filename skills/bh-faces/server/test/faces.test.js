@@ -57,3 +57,14 @@ test('Index: kaputtes Bild wird uebersprungen, ausgefallene Analyse bleibt offen
 test('Werkzeuge geben nie Fingerabdruecke oder Gesichter zurueck', () => {
   assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['index_step', 'status']);
 });
+
+test('Index: dasselbe Bild zweimal ergibt keine doppelten Gesichter', async () => {
+  reset();
+  nas({ '/Bilder': [{ name: '2010 A', isdir: true, additional: { time: { mtime: 1 } } }], '/Bilder/2010 A': [img('a.jpg', 500 * KB)] });
+  indexer.setAnalyzer(async () => ({ faces: [] }));
+  await indexer.step();
+  const face = { box: [0, 0, 1, 1], score: 0.9, sharpness: 50, fingerprint: fp, crop: null };
+  store.saveFaces('/Bilder/2010 A/a.jpg', [face, face]);
+  store.saveFaces('/Bilder/2010 A/a.jpg', [face, face]);
+  assert.equal(store.counts().faces, 2);
+});

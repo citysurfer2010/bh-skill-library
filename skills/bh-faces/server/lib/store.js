@@ -51,6 +51,7 @@ function saveFaces(photoPath, faces) {
   const insert = d.prepare('INSERT INTO face(photo, box, score, sharpness, fingerprint, crop) VALUES(?, ?, ?, ?, ?, ?)');
   d.exec('BEGIN');
   try {
+    d.prepare('DELETE FROM face WHERE photo = ?').run(photoPath); // analysing a picture twice must not count its faces twice
     for (const f of faces) insert.run(photoPath, JSON.stringify(f.box), f.score, f.sharpness, Buffer.from(f.fingerprint, 'base64'), f.crop ? Buffer.from(f.crop, 'base64') : null);
     d.prepare("UPDATE photo SET status = 'done', face_count = ? WHERE path = ?").run(faces.length, photoPath);
     d.exec('COMMIT');
