@@ -153,3 +153,16 @@ test('Router im Container: längster Pfad gewinnt, Präfix wird entfernt', async
   assert.equal(unsafe('/spiel/x.js?a=../b'), false);
   process.env.HOME = prev;
 });
+
+test('prepare links the shared OpenCode guard into the container', async () => {
+  const { prepare, HOME } = require('../lib/bootstrap');
+  const links = [];
+  const sftp = {
+    mkdir: (_p, cb) => cb(),
+    writeFile: (_p, _d, _o, cb) => cb(),
+    unlink: (_p, cb) => cb(new Error('missing')),
+    symlink: (target, p, cb) => { links.push([target, p]); cb(); },
+  };
+  await prepare(sftp);
+  assert.deepEqual(links, [['/etc/devbox/skills/bh-opencode/plugin/bh-guard.js', `${HOME}/.config/opencode/plugins/bh-guard.js`]]);
+});
