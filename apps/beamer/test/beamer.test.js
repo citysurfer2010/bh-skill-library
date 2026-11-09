@@ -194,3 +194,11 @@ test('Abfahrten: Tafel kommt über den Skill und nur bei Änderung', async () =>
   await bridge.refreshBoard(); await bridge.refreshBoard();
   assert.equal(pushes, 1);
 });
+
+test('Lagerfeuer: Schnee-Video nur im Winter', () => {
+  const { MOODS, videoOf } = require('../lib/catalog');
+  const fire = MOODS.find((m) => m.id === 'lagerfeuer');
+  assert.equal(videoOf(fire, new Date('2026-01-15T20:00:00Z')), fire.winterVideo);
+  assert.equal(videoOf(fire, new Date('2026-07-15T20:00:00Z')), fire.video);
+  assert.notEqual(fire.video, fire.winterVideo);
+});
