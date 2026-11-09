@@ -70,8 +70,8 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 
 - Menüpunkt „Fotos“: erste Kachel „Alle Alben“, danach alle Alben, neueste zuerst. Auswahl und Bildregeln stehen in `skills/bh-nas/BUSINESS_LOGIC.md`.
 - Ablauf: Die App bittet per `/request` um ein Bild, die Beamer-App ruft `photos_push_next`, das Bild geht verkleinert (1920×1080, gedreht nach EXIF) an `bh-auth` und liegt dort nur im Arbeitsspeicher, höchstens 3 Bilder für 3 Minuten. Die App holt es unter dem geheimen Anzeige-Link.
-- Fernbedienung: OK pausiert, ▶ springt weiter, CH wechselt das Radio, Zurück beendet. Radio läuft weiter.
+- Fernbedienung: OK pausiert, ▶ springt weiter, ▲ schneller und ▼ langsamer (4, 6, 8, 12 oder 20 Sekunden, bleibt gespeichert), CH wechselt das Radio, Zurück beendet. Radio läuft weiter.
 - Ein einzelnes Album endet mit „Album zu Ende“ und führt zurück zum Menü. „Alle Alben“ läuft endlos.
 - Bildschirm teilen unterbricht die Slideshow.
-- Das letzte Bild eines Albums behält seine volle Standzeit. Die Bildunterschrift blendet nach 8 Sekunden aus, in der Pause bleibt sie stehen. Die Tasten erscheinen einmal zu Beginn und bei ▲ ▼ ◀.
+- Das letzte Bild eines Albums behält seine volle Standzeit. Die Bildunterschrift blendet nach 8 Sekunden aus, in der Pause bleibt sie stehen. Die Tasten erscheinen einmal zu Beginn und bei ◀.
 - Wird `platform/beamer-dev/bh-screen-deploy` geändert, muss die Kopie nach `/usr/local/sbin` neu installiert werden, sonst wirkt die Änderung nicht.

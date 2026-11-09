@@ -1,8 +1,11 @@
 // Photo slideshow: asks for one picture at a time, loads it invisibly and cross-fades. Deliberately old JavaScript for Tizen 5.5.
 window.BHPhotos = (function () {
   'use strict';
-  var DWELL_MS = 15000; var RETRY_MS = 8000; var MAX_FAILS = 2; var END_MS = 5000; var RESUME_MS = 3000; var START_DELAY_MS = 600; var CAP_MS = 8000; var NOTE_MS = 3000; var FIRST_HELP_MS = 8000;
-  var HELP = 'OK Pause  ·  ▶ Nächstes Foto  ·  Zurück Beenden';
+  var SPEEDS = [4, 6, 8, 12, 20]; var RETRY_MS = 8000; var MAX_FAILS = 2; var END_MS = 5000; var RESUME_MS = 3000; var START_DELAY_MS = 600; var CAP_MS = 8000; var NOTE_MS = 3000; var FIRST_HELP_MS = 8000;
+  var HELP = 'OK Pause  ·  ▶ Nächstes  ·  ▲▼ Tempo  ·  Zurück Beenden';
+  var speed = 2;
+  try { var saved = SPEEDS.indexOf(Number(localStorage.getItem('bh-photo-seconds'))); if (saved >= 0) speed = saved; } catch (e) { /* without storage the default applies */ }
+  function dwell() { return SPEEDS[speed] * 1000; }
   var PAUSED = 'Pausiert  ·  OK Weiter  ·  ▶ Nächstes Foto  ·  Zurück Beenden';
   var imgs = document.querySelectorAll('#photos .ph');
   var capEl = document.getElementById('ph-cap'); var noteEl = document.getElementById('ph-note'); var msgEl = document.getElementById('ph-msg');
@@ -46,7 +49,7 @@ window.BHPhotos = (function () {
     if (ready && skipWanted) { skipWanted = false; clearTimeout(timer); swap(); return; }
     if (!ready || paused) return;
     clearTimeout(timer);
-    timer = setTimeout(swap, shownAt ? Math.max(0, DWELL_MS - (Date.now() - shownAt)) : 0);
+    timer = setTimeout(swap, shownAt ? Math.max(0, dwell() - (Date.now() - shownAt)) : 0);
   }
   function load(mine, photo) {
     var img = imgs[1 - front];
@@ -86,7 +89,7 @@ window.BHPhotos = (function () {
     if (!shownAt || over) return;
     paused = !paused; clearTimeout(timer);
     if (paused) { note(PAUSED, true); clearTimeout(capTimer); capEl.className = capEl.textContent ? 'on' : ''; return; }
-    note('Weiter'); fadeCaptionLater(); shownAt = Date.now() - DWELL_MS + RESUME_MS; showWhenDue();
+    note('Weiter'); fadeCaptionLater(); shownAt = Date.now() - dwell() + RESUME_MS; showWhenDue();
   }
   function skip() {
     if (!shownAt || over) return;
@@ -94,5 +97,14 @@ window.BHPhotos = (function () {
     skipWanted = true; note('Nächstes Foto wird geladen …', true);
   }
 
-  return { start: start, stop: stop, togglePause: togglePause, skip: skip, note: note, help: function () { note(HELP); } };
+  // Up is faster, down is slower; the choice stays for the next show.
+  function changeSpeed(dir) {
+    if (!shownAt || over) return;
+    speed = Math.min(SPEEDS.length - 1, Math.max(0, speed + dir));
+    try { localStorage.setItem('bh-photo-seconds', String(SPEEDS[speed])); } catch (e) { /* then it applies until the app restarts */ }
+    note('Bildwechsel alle ' + SPEEDS[speed] + ' Sekunden');
+    showWhenDue();
+  }
+
+  return { start: start, speed: changeSpeed, stop: stop, togglePause: togglePause, skip: skip, note: note, help: function () { note(HELP); } };
 })();

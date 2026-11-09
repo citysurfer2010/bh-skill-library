@@ -13,7 +13,7 @@
 - Keine doppelten Bilder: Dieselbe Dateigröße zählt innerhalb eines Laufs als dasselbe Bild, auch über Alben hinweg. Serienbilder (höchstens 5 Sekunden und 3 % Größe auseinander) werden auf eines reduziert. Quelle: Matti, 09.11.2026.
 - Passende Auswahl: Ein einzelnes Album zeigt höchstens 60 Bilder, gleichmäßig über das Album verteilt. „Alle Alben“ nimmt 12 Bilder je Album und geht alle Alben in zufälliger Folge durch, bevor eines wieder drankommt.
 - Dateien unter 150 KB sind meist Vorschauen und bleiben draußen.
-- Ein Bild steht 15 Sekunden. Geholt wird immer nur das nächste, die Synology wird also geschont. Ohne laufende Slideshow gibt es keine Bildabrufe.
+- Ein Bild steht standardmäßig 8 Sekunden, einstellbar von 4 bis 20 Sekunden. Quelle: Matti, 09.11.2026. Geholt wird immer nur das nächste, die Synology wird also geschont. Ohne laufende Slideshow gibt es keine Bildabrufe.
 - Die Albenliste wird alle 6 Stunden neu gelesen.
 
 ## Zustand der Synology
