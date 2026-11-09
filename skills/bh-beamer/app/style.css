@@ -37,6 +37,7 @@ h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap:
 #wx { display: inline-block; vertical-align: middle; width: 132px; height: 110px; margin-right: 14px; }
 #wx svg { display: block; width: 132px; height: 110px; overflow: visible; }
 #sky { margin-top: 12px; font-size: 40px; }
+#wxday { margin-top: 2px; font-size: 32px; }
 /* Radio-Platte */
 #playing { display: none; position: absolute; left: 90px; top: 238px; max-width: 980px; box-sizing: border-box; align-items: center; background: var(--plate); padding: 10px 24px; border-radius: 16px; box-shadow: 0 4px 14px rgba(15, 31, 61, .18); color: var(--ink); }
 #home[data-page="start"] #playing { display: flex; }
