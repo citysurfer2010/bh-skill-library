@@ -1,6 +1,6 @@
 {
   "name": "terminal",
-  "version": "26.11.1",
+  "version": "26.11.2",
   "private": true,
   "description": "Web-Terminal in deine Arbeitsumgebung",
   "main": "server.js",
