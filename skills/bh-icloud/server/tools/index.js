@@ -18,8 +18,11 @@ const path = require('path');
 const TOOLS_DIR = __dirname;
 const TOOL_LIST = [];
 
+// The photo upload runs as its own server with its own tools.
+const ONLY = process.env.BH_ICLOUD_TOOLS || 'icloud';
+
 for (const entry of fs.readdirSync(TOOLS_DIR, { withFileTypes: true })) {
-  if (!entry.isDirectory()) continue;
+  if (!entry.isDirectory() || entry.name !== ONLY) continue;
   const dir = path.join(TOOLS_DIR, entry.name);
   for (const f of fs.readdirSync(dir)) {
     if (!f.endsWith('.js')) continue;

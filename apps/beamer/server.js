@@ -84,8 +84,6 @@ app.get('/api/me', (req, res) => {
   res.json({ id: email, email, name, role });
 });
 app.use('/api/me/api-keys', apiKeyRoutes.buildRouter());
-const icloudLogin = require('./routes/icloud-login');
-app.use('/icloud-login', icloudLogin.requireOwner, icloudLogin.proxy);
 const beamer = beamerRoutes.buildRouter();
 app.use('/api', require('./routes/today').buildRouter());
 app.use('/api', beamer);
@@ -97,7 +95,6 @@ if (require.main === module) {
   getDb();
   require('./lib/menu-bridge').start(beamer.commands);
   require('./lib/face-indexer').start();
-  require('./lib/icloud-uploader').start();
   const server = app.listen(PORT, HOST, () => console.log(`[${APP_ID}] läuft auf http://${HOST}:${PORT} (Pfad: "${APP_BASE}")`));
   const stop = () => server.close(() => { closeDb(); process.exit(0); });
   process.on('SIGTERM', stop);

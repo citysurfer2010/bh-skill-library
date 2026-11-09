@@ -1,6 +1,6 @@
 ---
 name: bh-icloud
-description: Liest iCloud-Kalender, Kontakte und E-Mails mit dem eigenen Konto des Users. Nutzen, wenn eine Aufgabe Apple-Kalender, iCloud-Kontakte oder iCloud-Mail betrifft.
+description: Liest iCloud-Kalender, Kontakte und E-Mails mit dem eigenen Konto des Users und holt Mattis iCloud-Fotos auf die Synology. Nutzen, wenn eine Aufgabe Apple-Kalender, iCloud-Kontakte, iCloud-Mail, iCloud-Fotos oder deren Anmeldung betrifft.
 ---
 
 # Skill: BH iCloud
@@ -38,3 +38,28 @@ Liefert `icloud_events` bei einem Termin das Feld `recurrence`, ist das eine nic
 ## Betrieb
 
 Die Anmeldung liegt je User auf dem Gateway unter `.config/bh-icloud/.env`. Nach einem Wechsel des Apple-Passworts widerruft Apple die app-spezifischen Passwörter, dann ist neues Verbinden im Profil nötig.
+
+## iCloud-Fotos
+
+Bilder kommen auf zwei Wegen nach `/photo/iCloud-Matti` auf der Synology.
+
+| Weg | Wofür | Stand |
+|---|---|---|
+| Mac-Skript `platform/home-link/mac-icloud-photos.sh` | Altbestand und täglicher Abgleich, solange der Mac läuft | aktiv |
+| Container `bh-icloud-photos` auf dem VPS | Neue Fotos ohne Mac | Download aktiv, Hochladen noch nicht (siehe `LIMITATIONS.md`) |
+
+### Anleitung: Anmeldung auf dem VPS
+
+1. https://apps.familiebiskup.de/profile öffnen, unter „Verbundene Dienste“ bei **iCloud-Fotos** auf **Anmelden** gehen.
+2. Apple-Passwort und 2FA-Code dort eingeben. Nie im Chat danach fragen.
+3. Nötig nach einem Neustart des Containers und etwa alle zwei Monate.
+
+Die Zeile sieht nur der Besitzer (`BH_WORK_CALENDAR_OWNER`).
+
+### Anleitung: Mac
+
+Einmal im Terminal `bash mac-icloud-photos.sh` starten. Fortschritt: `tail -f ~/Library/Logs/bh-icloud-photos.log`. Ausschalten: `launchctl bootout gui/$(id -u)/de.familiebiskup.icloud-photos`.
+
+### Betrieb
+
+Einrichten mit `photo-sync/setup.sh`, Apple-ID in der `.env` als `BH_ICLOUD_PHOTOS_USER`. Dateien liegen auf dem VPS unter `/srv/icloud-photos/inbox`. Werkzeuge `icloudphotos_upload_step` und `icloudphotos_status`, nur für die Beamer-App freigegeben.

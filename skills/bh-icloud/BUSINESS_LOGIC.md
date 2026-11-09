@@ -21,3 +21,16 @@
 ## Kontakte
 
 Das Adressbuch wird je Suche in Blöcken von 100 Karten geladen und auf dem Gateway durchsucht. Fotos werden nicht angefordert, Gruppen übersprungen. Telefonnummern werden ab 4 Ziffern verglichen.
+
+## Fotos
+
+Für Fotos gelten eigene Regeln, weil Apple dafür keine offizielle Schnittstelle bietet.
+
+- Neue iCloud-Fotos sollen über den VPS kommen, nicht über den Mac. Quelle: Matti, 09.11.2026. Den Altbestand holt das Mac-Skript.
+- Der Foto-Abgleich braucht anders als Kalender und Mail das echte Apple-Passwort. Es wird nur auf der Anmeldeseite im Profil eingegeben und liegt nur im Arbeitsspeicher des Containers. Die Sitzung liegt in `/srv/icloud-photos/cookies`.
+- Die Anmeldeseite öffnet nur der Besitzer.
+- Geholt werden täglich die neuesten 500 Fotos ohne Videos, damit die Platte des VPS nicht volläuft.
+- In iCloud wird nie etwas gelöscht.
+- Der Container hat Internet, aber keinen Zugang zur Synology, zum Gateway oder zu anderen Diensten außer `bh-auth`, das seine Anmeldeseite durchreicht.
+- Hochgeladen wird nur nach `/photo/iCloud-Matti`, vorhandene Dateien werden nicht überschrieben.
+- Auf dem Server bleiben die neuesten 700 Dateien liegen, damit der tägliche Download sie wiedererkennt. Ältere gehen erst nach dem Hochladen weg.

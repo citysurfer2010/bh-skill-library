@@ -1,7 +1,7 @@
 {
   "skill_id": "bh-mcp-gateway",
   "name": "bh-mcp-gateway",
-  "version": "26.11.10",
+  "version": "26.11.11",
   "description": "Zentrales MCP-Gateway der BH Platform, ueber das alle Werkzeuge laufen. Nutzen, wenn ein Werkzeug fehlt, ein neuer MCP-Server angebunden werden soll oder Gateway-Fehler auftreten.",
   "author": "bh-platform",
   "schema_version": "2.0"

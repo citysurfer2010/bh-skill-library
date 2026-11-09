@@ -157,22 +157,6 @@ test('Gesichtsindex: nur nachts, pausiert waehrend der Slideshow', async () => {
   } finally { gateway.setCaller(null); stream.reset(); }
 });
 
-test('iCloud-Anmeldung: nur der Besitzer, nur eigene Herkunft, Seite wird angepasst', async () => {
-  const gateway = require('../lib/gateway');
-  const bridge = require('../lib/menu-bridge');
-  const { rewriteHtml } = require('../routes/icloud-login');
-  process.env.BH_ICLOUD_LOGIN_HOST = '127.0.0.1'; process.env.BH_ICLOUD_LOGIN_PORT = '9';
-  gateway.setCaller(async () => JSON.stringify({ owner: 'chef@beispiel.de', events: [] }));
-  try {
-    await bridge.refreshWork();
-    assert.equal((await t.call('/icloud-login/', { as: 'u@beispiel.de', role: 'user' })).status, 403);
-    assert.equal((await t.call('/icloud-login/', { as: 'chef@beispiel.de', role: 'user' })).status, 502);
-    assert.equal((await t.call('/icloud-login/password', { as: 'chef@beispiel.de', role: 'user', method: 'POST' })).status, 403);
-    assert.equal(rewriteHtml('<a hx-get="/status"><script src="/static/a.js"></script><a href="//x.de">'), '<a hx-get="/beamer/icloud-login/status"><script src="/beamer/icloud-login/static/a.js"></script><a href="//x.de">');
-    assert.equal(rewriteHtml('<link rel="stylesheet" href="https://cdn.jsdelivr.net/x.css">'), '');
-  } finally { gateway.setCaller(null); delete process.env.BH_ICLOUD_LOGIN_HOST; delete process.env.BH_ICLOUD_LOGIN_PORT; }
-});
-
 test('iCloud-Upload: pausiert waehrend der Slideshow, wartet wenn nichts offen ist', async () => {
   const gateway = require('../lib/gateway');
   const stream = require('../lib/photo-stream');

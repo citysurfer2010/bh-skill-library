@@ -7,7 +7,7 @@
 
 ## Nicht enthalten
 
-- **iCloud Drive, Fotos, Notizen:** Apple bietet dafür keine offizielle Schnittstelle. Inoffizielle Wege brauchen das echte Apple-Passwort samt Zwei-Faktor-Sitzung und brechen ohne Vorwarnung.
+- **iCloud Drive, Notizen:** Apple bietet dafür keine offizielle Schnittstelle. Fotos laufen deshalb über das eigene Werkzeug icloudpd (siehe unten).
 - **Erinnerungen:** Neuere Erinnerungslisten sind über CalDAV nicht mehr vollständig lesbar. Darum gibt es dafür kein Werkzeug.
 - **Schreiben:** Termine anlegen, Mails senden, Kontakte ändern gibt es bewusst nicht.
 
@@ -16,3 +16,13 @@
 - Mails werden bis 2 MB geladen, Text bis 64 KB ausgegeben (`truncated: true`). Anhänge erscheinen nur mit Name, Typ und Größe.
 - Ordnernamen mit Umlauten erscheinen in IMAP-Schreibweise (zum Beispiel `&APw-`). Sie funktionieren, wenn man sie genau so weitergibt.
 - Die Antwort von iCloud ist auf 24 MB begrenzt. Sehr große Kalender in langen Zeiträumen schlagen dann mit einer Meldung fehl.
+
+## Fotos
+
+- **Das Hochladen vom VPS auf die Synology funktioniert noch nicht.** `SYNO.FileStation.Upload` antwortet auf der DS215j (DSM 7.0.1) mit Fehler 102, auch mit Version 3 und anderen Pfaden. Der Antrieb in der Beamer-App ist deshalb aus (`apps/beamer/lib/icloud-uploader.js`). Bis dahin bringt nur das Mac-Skript Fotos auf die Synology.
+- Ob Apple Anmeldungen aus dem Rechenzentrum dauerhaft akzeptiert, ist noch nicht erprobt. Die erste Anmeldung am 09.11.2026 hat geklappt.
+- Etwa alle zwei Monate läuft die Apple-Sitzung ab, nach einem Neustart des Containers ist die Anmeldung nötig. Benachrichtigt wird darüber noch nicht.
+- Die Anmeldeseite stammt von icloudpd und folgt nicht dem Plattform-Design.
+- Mehr als 500 neue Fotos zwischen zwei Läufen würden nicht vollständig erfasst.
+- Das Hochladen würde mit Mattis Synology-Konto schreiben. Auf einen Ordner begrenzt ist es durch den Code, nicht durch die Rechte des Kontos.
+- `bh-faces` und die Slideshow nehmen die iCloud-Fotos noch nicht auf (HEIC).

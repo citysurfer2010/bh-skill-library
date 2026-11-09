@@ -174,3 +174,28 @@ test("Fotos: nur mit Schluessel einlieferbar, nur mit Link lesbar, nicht auf Vor
     assert.equal((await (await fetch(`${g.base}/screen/lesen/photo-wait`)).json()).done, true);
   } finally { await g.stop(); }
 });
+
+test("iCloud-Fotos: Anmeldeseite nur fuer den Besitzer, Formular kommt an, Pfade passen", async () => {
+  const http = await import("node:http");
+  const { rewriteHtml } = await import("../routes/icloud-photos-login.js");
+  const seen = [];
+  const upstream = http.createServer((req, res) => { let b = ""; req.on("data", (c) => { b += c; }); req.on("end", () => { seen.push({ m: req.method, u: req.url, b }); res.setHeader("content-type", "text/html"); res.end('<a hx-get="/status">x</a>'); }); }).listen(0, "127.0.0.1");
+  await new Promise((r) => upstream.once("listening", r));
+  process.env.BH_ICLOUD_LOGIN_HOST = "127.0.0.1"; process.env.BH_ICLOUD_LOGIN_PORT = String(upstream.address().port); process.env.BH_ICLOUD_PHOTOS_OWNER = "Chef@Beispiel.de";
+  const g = await start();
+  try {
+    assert.equal((await g.client()("/profile/icloud-photos/")).status, 302);
+    await g.addUser("u@beispiel.de"); await g.addUser("chef@beispiel.de");
+    const other = g.client(); await g.login(other, "u@beispiel.de");
+    assert.equal((await other("/profile/icloud-photos/")).status, 403);
+    const chef = g.client(); await g.login(chef, "chef@beispiel.de");
+    const page = await chef("/profile/icloud-photos/");
+    assert.equal(page.status, 200); assert.match(await page.text(), /hx-get="\/profile\/icloud-photos\/status"/);
+    assert.match(page.headers.get("content-security-policy"), /unsafe-inline/);
+    await chef("/profile/icloud-photos/password", { form: { password: "x y" } });
+    assert.deepEqual(seen.at(-1), { m: "POST", u: "/password", b: "password=x+y" });
+    assert.match(await (await chef("/profile")).text(), /href="\/profile\/icloud-photos\/"/);
+    assert.doesNotMatch(await (await other("/profile")).text(), /icloud-photos/);
+    assert.equal(rewriteHtml('<link href="https://cdn.jsdelivr.net/x.css">'), "");
+  } finally { await g.stop(); upstream.close(); delete process.env.BH_ICLOUD_LOGIN_HOST; delete process.env.BH_ICLOUD_LOGIN_PORT; delete process.env.BH_ICLOUD_PHOTOS_OWNER; }
+});

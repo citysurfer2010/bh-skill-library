@@ -10,7 +10,7 @@ process.env.HOME = dir; process.env.BH_ICLOUD_SYNC_DB = path.join(dir, 's.db'); 
 fs.mkdirSync(path.join(dir, '.config/bh-nas'), { recursive: true });
 fs.writeFileSync(path.join(dir, '.config/bh-nas/.env'), 'BH_NAS_USER=a\nBH_NAS_PASSWORD=b\n');
 const dsm = require('../../../bh-nas/server/lib/dsm.js');
-const sync = require('../lib/sync.js');
+const sync = require('../lib/photo-sync.js');
 const json = (o) => ({ type: 'application/json', body: Buffer.from(JSON.stringify(o)), truncated: false });
 const put = (rel, mtime = 1000) => { const f = path.join(process.env.BH_ICLOUD_INBOX, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, 'x'); fs.utimesSync(f, mtime, mtime); return f; };
 function setup(reply) {
