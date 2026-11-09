@@ -1,7 +1,7 @@
 // OpenCode plugin of the BH Platform: loads context and rules, guards risky commands, pushes finished work.
 // OpenCode calls every export of this file as a plugin, so helpers hang off BhGuard.internals.
 import { execFile } from 'node:child_process';
-import { appendFile, mkdir, stat } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -12,6 +12,7 @@ const SECRET_TEXT = /BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0
 const SUBJECT = /^(feat|fix|chore|docs|test|refactor|perf|style|build|ci)(\([a-z0-9-]+\))?!?: \S/;
 const GERMAN = /[äöüÄÖÜß]|\b(und|nicht|wird|werden|für|fuer|mit|oder)\b/;
 const EDIT_TOOLS = new Set(['edit', 'write', 'multiedit', 'patch']);
+const DOMAIN = process.env.BH_DOMAIN || 'familiebiskup.de';
 
 function git(args, cwd) {
   return new Promise((resolve) => {
@@ -85,6 +86,16 @@ async function autoPush(repo) {
   return { state: (await git(['push', '-u', 'origin', 'HEAD'], repo)) === null ? 'failed' : 'pushed', branch };
 }
 
+// Who the user is and where their apps live, freshly read for every turn: routes change while OpenCode runs.
+async function whereAmI() {
+  const user = os.hostname();
+  const base = `https://${user}.${DOMAIN}`;
+  let routes = [];
+  try { routes = JSON.parse(await readFile(path.join(os.homedir(), '.config/bh-apps/routes.json'), 'utf8')).routes || []; } catch { /* no routes yet */ }
+  const list = routes.map((r) => `- ${base}${r.path} (port ${r.port}${r.public ? ', public' : ''})`).join('\n') || '- none yet';
+  return `Current user: ${user}. Their apps are at ${base}. Current routes:\n${list}\nAlways give the user complete URLs like these, never a bare path or port.`;
+}
+
 export const BhGuard = async ({ client, directory }) => {
   const repos = new Set();
   const reminded = new Set();
@@ -97,6 +108,8 @@ export const BhGuard = async ({ client, directory }) => {
 
   return {
     config: async (config) => { config.instructions = [...new Set([...(config.instructions || []), `${SKILL}/CONTEXT.md`, `${SKILL}/RULES.md`])]; },
+
+    'experimental.chat.system.transform': async (_input, output) => { output.system.push(await whereAmI()); },
 
     'tool.execute.before': async ({ tool }, { args }) => {
       if (tool === 'read' && SECRET_FILES.test(args?.filePath || '')) throw new Error('Tokens und Zugangsdaten werden nicht gelesen.');
@@ -130,4 +143,4 @@ export const BhGuard = async ({ client, directory }) => {
   };
 };
 
-BhGuard.internals = { inspect, autoPush, protectedPush, workdirOf };
+BhGuard.internals = { inspect, autoPush, protectedPush, workdirOf, whereAmI };

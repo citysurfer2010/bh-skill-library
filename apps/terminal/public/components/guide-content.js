@@ -121,7 +121,9 @@ window.GUIDE_SECTIONS = (() => {
       <p>Nach einem Neustart deines Containers startest du die App mit dem zweiten Befehl erneut.</p>
       <h3>4. Adresse festlegen</h3>
       ${cmd('bh-route add /ideen 3050')}
-      <p>Deine App ist jetzt unter <strong>dein-name.familiebiskup.de/ideen</strong> erreichbar. Das geht auch im Terminal unter <strong>Meine Apps</strong>. Erlaubt sind die Ports 1024 bis 65535, außer 2222 und 8088.</p>` },
+      <p>Der Befehl zeigt dir die vollständige Adresse, etwa <strong>dein-name.familiebiskup.de/ideen</strong>. Alle Adressen siehst du mit ${c('bh-route list')}, und OpenCode kennt sie auch. Das geht auch im Terminal unter <strong>Meine Apps</strong>. Erlaubt sind die Ports 1024 bis 65535, außer 2222 und 8088.</p>
+      <h3>Daten speichern</h3>
+      <p>Standard ist SQLite: eine Datei je App, kein eigener Datenbank-Server. Der Server ist dafür zu klein. Die Daten liegen in deinem Container und werden nicht automatisch gesichert.</p>` },
 
     { id: 'publish', title: 'Veröffentlichen', html: `
       ${table(['Weg', 'Wer sieht es', 'Wie'], [
@@ -149,7 +151,7 @@ window.GUIDE_SECTIONS = (() => {
       <p>Apps aus dem Gerüst nutzen das automatisch, sobald ${c('TRUST_PROXY_AUTH=1')} gesetzt ist. Der angemeldete Mensch steht dort in ${c('req.user')}.</p>
       <ul>
         <li>Alle angemeldeten User können deine App öffnen, wenn sie die Adresse kennen. Private Daten musst du in der App selbst nach ${c('req.user.email')} trennen.</li>
-        <li>Bei öffentlichen Routen gibt es keine dieser Angaben, die Besucher sind unbekannt.</li>
+        <li>Bei öffentlichen Routen gibt es keine dieser Angaben, die Besucher sind unbekannt. Braucht eine öffentliche App eigene Konten, baut OpenCode sie nach dem Skill ${c('bh-app-accounts')}: Passwörter nur als Hash, sichere Sitzungen, Schutz vor Durchprobieren.</li>
         <li>Das Sitzungs-Cookie der Plattform erreicht deine App nie.</li>
       </ul>` },
 
