@@ -37,6 +37,6 @@ async function prepare(sftp) {
   await write(sftp, `${HOME}/.local/bin/bh-router.mjs`, file('bh-router.mjs'), 0o755);
 }
 // Geprüft wird der Port: Ein Prozess-Suchmuster fände auch die Shell, die diesen Befehl gerade ausführt.
-const START_ROUTER = `(exec 3<>/dev/tcp/127.0.0.1/8088) 2>/dev/null || nohup node ${HOME}/.local/bin/bh-router.mjs </dev/null >/tmp/bh-router.log 2>&1 &`;
+const START_ROUTER = `( (exec 3<>/dev/tcp/127.0.0.1/8088) 2>/dev/null || exec nohup node ${HOME}/.local/bin/bh-router.mjs ) </dev/null >/tmp/bh-router.log 2>&1 &`;
 
 module.exports = { prepare, HOME, CONF, START_ROUTER };
