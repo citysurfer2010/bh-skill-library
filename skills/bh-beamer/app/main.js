@@ -85,9 +85,12 @@
     if (back && view.indexOf('home') === 0 && BHHome.back()) { e.preventDefault(); return; }
     if (back && (playingUrl || view.indexOf('home') < 0)) { stopShare(); stopAudio(); homeView(); sendRequest('stop', 'x'); e.preventDefault(); return; }
     if (view !== 'video') return;
-    if (e.keyCode === 37 || e.keyCode === 39) { var st = BHHome.step(e.keyCode === 39 ? 1 : -1); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); showBar(st.name); sendRequest('radio', st.id); } }
+    if (e.keyCode >= 37 && e.keyCode <= 40) { var st = BHHome.step(e.keyCode === 39 || e.keyCode === 40 ? 1 : -1); if (st) { localAt = Date.now(); playAudio(st.url, st.name, st.id); videoVolume(); showBar(st.name); sendRequest('radio', st.id); } }
     else if (e.keyCode === 13 && playingUrl) { localAt = Date.now(); stopAudio(); videoVolume(); showBar('Radio aus'); sendRequest('radiooff', 'x'); }
   });
+
+  BHHome.isRadioOn = function () { return !!playingUrl; };
+  BHHome.onPreview = function (st) { stationEl.textContent = st.name; stationEl.className = st.name.length > 13 ? 'long' : ''; noteEl.textContent = 'Wechsle …'; };
 
   player.addEventListener('playing', function () { audioState('ok'); noteEl.textContent = '▲ ▼ Sender · Zurück beendet'; });
   player.addEventListener('waiting', function () { audioState('load'); noteEl.textContent = 'Puffert …'; });

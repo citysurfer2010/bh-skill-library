@@ -12,7 +12,7 @@ h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap:
 #text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
 #text:empty, #title:empty { display: none; }
 /* Menue: schwebt ueber dem Bild, faehrt nur bei Bedarf herein. */
-#side { position: absolute; z-index: 10; left: 28px; top: 28px; bottom: 28px; width: 340px; box-sizing: border-box; padding: 34px 22px; border-radius: 32px; background: rgba(255, 255, 255, .95); box-shadow: 0 24px 60px rgba(15, 31, 61, .34); transform: translateX(-420px); transition: transform 180ms ease-out; }
+#side { position: absolute; z-index: 10; left: 28px; top: 28px; bottom: 28px; width: 340px; box-sizing: border-box; padding: 34px 22px; border-radius: 32px; background: #fff; box-shadow: 0 24px 60px rgba(15, 31, 61, .34); transform: translateX(-420px); transition: transform 180ms ease-out; }
 #home.menu #side { transform: none; }
 #side-hint { position: absolute; z-index: 5; left: 0; top: 490px; padding: 22px 12px 22px 6px; border-radius: 0 20px 20px 0; background: rgba(255, 255, 255, .78); color: #1e3a8a; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
 #side-hint svg { display: block; }
@@ -64,13 +64,13 @@ body.audio #today { top: 432px; }
 .lb.exam { background: #dbeafe; color: #1e3a8a; }
 .hw { margin-top: 14px; padding-top: 10px; border-top: 2px solid #e7edf8; font-size: 30px; line-height: 1.25; color: #33415c; overflow: hidden; }
 .hw b { color: #0f1f3d; }
-.hw div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hw div { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 /* Raster fuer Radio und Stimmung */
 .grid { display: none; position: absolute; left: 90px; right: 0; top: 262px; }
 #home[data-page="radio"] #grid-radio, #home[data-page="mood"] #grid-mood { display: block; }
 .grid h2 { margin: 0 0 22px; font-size: 44px; font-weight: 700; color: #fff; }
-.tile { display: inline-block; vertical-align: top; margin: 0 22px 22px 0; box-sizing: border-box; border-radius: 16px; background: #fff; color: #0f1f3d; font-size: 34px; font-weight: 700; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; transition: transform 120ms ease-out; }
-.tile.station { width: 414px; padding: 18px 20px; }
+.tile { display: inline-block; vertical-align: top; margin: 0 24px 24px 0; box-sizing: border-box; border-radius: 16px; background: #fff; color: #0f1f3d; font-size: 34px; font-weight: 700; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; transition: transform 120ms ease-out; }
+.tile.station { width: 417px; padding: 18px 20px; }
 .tile.station small { display: block; margin-top: 2px; font-size: 30px; font-weight: 400; color: #3f4f6e; }
 .tile.mood { position: relative; width: 564px; height: 317px; }
 .tile.mood img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
@@ -79,10 +79,10 @@ body.audio #today { top: 432px; }
 .tile.playing small { color: #9a3412; }
 .tile.focus { transform: scale(1.04); box-shadow: 0 0 0 6px #1d4ed8, 0 12px 30px rgba(15, 31, 61, .32); }
 /* Wetter: nur das kleine Symbol oben rechts bewegt sich. */
-.sun-rays { transform-origin: 66px 50px; animation: spin 24s linear infinite; }
+.sun-rays { transform-origin: 66px 50px; animation: spin 14s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.cloud-a { animation: drift 7s ease-in-out infinite alternate; }
-@keyframes drift { from { transform: translateX(-4px); } to { transform: translateX(5px); } }
+.cloud-a { animation: drift 4.5s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: translateX(-10px); } to { transform: translateX(12px); } }
 .drop { animation: fall 1.1s linear infinite; }
 .drop.d2 { animation-delay: .35s; } .drop.d3 { animation-delay: .7s; }
 @keyframes fall { 0% { transform: translateY(-6px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(22px); opacity: 0; } }
@@ -94,10 +94,13 @@ body.audio #today { top: 432px; }
 .fog { animation: drift 5s ease-in-out infinite alternate; }
 .fog.d2 { animation-delay: 1.4s; }
 /* Abfahrten */
-#transit { display: none; position: absolute; left: 90px; right: 90px; bottom: 34px; box-sizing: border-box; padding: 16px 24px; border-radius: 20px; background: #fff; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); white-space: nowrap; overflow: hidden; }
-#home[data-page="start"] #transit.on { display: block; }
-.stop { display: inline-block; margin-right: 34px; font-size: 32px; font-weight: 700; color: #1e3a8a; }
-.dep { display: inline-block; margin-right: 34px; font-size: 32px; color: #0f1f3d; }
+#transit { display: none; position: absolute; left: 90px; right: 90px; bottom: 34px; box-sizing: border-box; padding: 16px 24px; border-radius: 20px; background: #fff; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; }
+#home[data-page="start"] #transit.on { display: flex; align-items: center; }
+.stop { flex: none; margin-right: 34px; font-size: 32px; font-weight: 700; color: #1e3a8a; }
+.dep { display: flex; align-items: center; min-width: 0; flex: 1 1 0; margin-right: 34px; font-size: 32px; color: #0f1f3d; white-space: nowrap; }
+.dep:last-child { margin-right: 0; }
+.dep span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dep b, .dep i { flex: none; }
 .dep b { display: inline-block; margin-right: 10px; padding: 2px 12px; border-radius: 8px; background: #1e40af; color: #fff; font-size: 30px; }
 .dep i { font-style: normal; font-weight: 700; color: #1e3a8a; margin-left: 8px; }
 .dep.late i { color: #9a3412; }
