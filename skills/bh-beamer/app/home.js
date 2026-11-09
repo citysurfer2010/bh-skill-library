@@ -15,7 +15,7 @@ window.BHHome = (function () {
 
   function dayLabel(date) {
     var n = new Date(); var t = iso(n); n.setDate(n.getDate() + 1);
-    return date === t ? 'Heute' : date === iso(n) ? 'Morgen' : DAYS[new Date(date + 'T12:00:00').getDay()] + ', ' + date.slice(8) + '.' + date.slice(5, 7) + '.';
+    return date === t ? 'Heute' : date === iso(n) ? 'Morgen' : DAYS[new Date(date + 'T12:00:00').getDay()].slice(0, 2) + ' ' + Number(date.slice(8)) + '.';
   }
   function merged(lessons) {
     var out = [];
@@ -39,21 +39,30 @@ window.BHHome = (function () {
     if (code <= 77 || code === 85 || code === 86) return 'Schnee';
     return 'Gewitter';
   }
-  var CLOUD = '<path class="cloud-a" fill="#fff" d="M30 80h60a20 20 0 0 0 4-39 29 29 0 0 0-55-7 23 23 0 0 0-9 46z"/>';
-  var RAYS = '<g class="sun-rays" stroke="#fde68a" stroke-width="6" stroke-linecap="round"><path d="M66 6v10M66 84v10M22 50h10M100 50h10M35 19l7 7M90 74l7 7M35 81l7-7M90 26l7-7"/></g>';
-  var SUN = RAYS + '<circle cx="66" cy="50" r="24" fill="#fcd34d"/>';
-  var MOON = '<path fill="#fde68a" d="M78 16a36 36 0 1 0 22 56 30 30 0 0 1-22-56z"/>';
-  function drops(cls, draw) { return [34, 60, 86].map(function (x, i) { return draw(x, cls + (i ? ' d' + (i + 1) : '')); }).join(''); }
-  function icon(code, day) {
-    var clear = day ? SUN : MOON; var body;
-    if (code <= 1) body = clear;
-    else if (code === 2) body = '<g transform="translate(22 -14) scale(.72)">' + clear + '</g>' + CLOUD;
-    else if (code === 3) body = CLOUD;
-    else if (code <= 48) body = [30, 52, 74].map(function (y, i) { return '<rect class="fog' + (i === 1 ? ' d2' : '') + '" x="' + (14 + i * 8) + '" y="' + y + '" width="92" height="9" rx="4.5" fill="#fff"/>'; }).join('');
-    else if (code >= 95) body = CLOUD + '<path class="bolt" fill="#fde047" d="M62 76l-14 22h13l-6 18 21-26H62l9-14z"/>';
-    else if ((code >= 71 && code <= 77) || code === 85 || code === 86) body = CLOUD + drops('flake', function (x, c) { return '<circle class="' + c + '" cx="' + x + '" cy="92" r="5" fill="#fff"/>'; });
-    else body = CLOUD + drops('drop', function (x, c) { return '<path class="' + c + '" d="M' + x + ' 86l-6 16" stroke="#dbeafe" stroke-width="6" stroke-linecap="round"/>'; });
-    return '<svg viewBox="0 0 132 110" aria-hidden="true">' + body + '</svg>';
+  // Wetter als bewegter Hintergrund der rechten oberen Ecke.
+  var CLOUD_PATH = 'M30 80h60a20 20 0 0 0 4-39 29 29 0 0 0-55-7 23 23 0 0 0-9 46z';
+  var SPOTS = [[660, 6, 330, .46, 24], [330, 44, 430, .36, 34], [840, 110, 270, .34, 19], [90, 8, 340, .26, 40], [520, 150, 380, .3, 28], [900, -24, 330, .42, 22]];
+  function cloud(s, fill) {
+    return '<svg class="wc" viewBox="0 0 120 90" style="left:' + s[0] + 'px;top:' + s[1] + 'px;width:' + s[2] + 'px;opacity:' + s[3] + ';animation-duration:' + s[4] + 's"><path fill="' + fill + '" d="' + CLOUD_PATH + '"/></svg>';
+  }
+  function fall(cls, count, dur) {
+    var out = '';
+    for (var i = 0; i < count; i++) out += '<i class="' + cls + '" style="left:' + (120 + (i * 137) % 960) + 'px;top:' + ((i * 53) % 120 - 20) + 'px;animation-delay:' + ((i * 0.17) % dur).toFixed(2) + 's"></i>';
+    return out;
+  }
+  function scene(code, day) {
+    var rain = code >= 51 && code <= 67 || (code >= 80 && code <= 82);
+    var snow = (code >= 71 && code <= 77) || code === 85 || code === 86;
+    var storm = code >= 95; var fog = code > 3 && code <= 48;
+    var count = code <= 1 ? 1 : code === 2 ? 3 : 6;
+    var fill = rain || storm ? '#dbe4f3' : '#ffffff';
+    var html = code <= 2 ? (day ? '<div class="wsun"><svg class="wrays" viewBox="0 0 240 240"><g stroke="#fde68a" stroke-width="10" stroke-linecap="round"><path d="M120 8v28M120 204v28M8 120h28M204 120h28M41 41l20 20M179 179l20 20M41 199l20-20M179 61l20-20"/></g></svg><span></span></div>' : '<div class="wmoon"></div>') : '';
+    for (var i = 0; i < count; i++) html += cloud(SPOTS[i], fill);
+    if (fog) html += '<u class="wfog"></u><u class="wfog f2"></u><u class="wfog f3"></u>';
+    if (rain || storm) html += fall('wr', 34, 1);
+    if (snow) html += fall('ws', 30, 4);
+    if (storm) html += '<b class="wflash"></b>';
+    return html;
   }
 
   function weather() {
@@ -64,36 +73,23 @@ window.BHHome = (function () {
         var now = JSON.parse(x.responseText).current;
         document.getElementById('temp').textContent = Math.round(now.temperature_2m) + '°';
         document.getElementById('sky').textContent = sky(now.weather_code) + ' · ' + PLACE;
-        document.getElementById('wx').innerHTML = icon(now.weather_code, now.is_day !== 0);
+        document.getElementById('wxbg').innerHTML = scene(now.weather_code, now.is_day !== 0);
       } catch (e) { /* naechster Versuch */ }
     };
     x.send();
   }
 
-  // Abfahrten direkt von der BVG: nur wenn der Start-Bildschirm sichtbar ist, einmal pro Minute.
-  var transitStop = null; var transitAt = 0;
-  function departures() {
+  // Abfahrten kommen ueber die App vom Skill bvg; die Minuten rechnet der Beamer selbst weiter.
+  var board = null;
+  function renderBoard() {
     var el = document.getElementById('transit');
-    if (!transitStop || document.body.className.indexOf('home') < 0 || page !== 'start') return;
-    transitAt = Date.now();
-    var x = new XMLHttpRequest();
-    x.open('GET', 'https://v6.bvg.transport.rest/stops/' + transitStop.id + '/departures?duration=60&results=9&remarks=false');
-    x.timeout = 12000;
-    x.onload = function () {
-      try {
-        var hour = new Date().getHours(); var morning = hour >= 5 && hour < 10;
-        // Morgens zaehlt nur der Schulweg Richtung Westen.
-        var list = (JSON.parse(x.responseText).departures || []).filter(function (d) { return !morning || !/Zoologischer|Zoo\b/.test(d.direction || ''); }).slice(0, 3);
-        el.className = list.length ? 'on' : '';
-        el.innerHTML = '<span class="stop">' + esc(transitStop.name) + (morning ? ' · Westen' : '') + '</span>' + list.map(function (d) {
-          var when = new Date(d.when || d.plannedWhen); var min = Math.max(0, Math.round((when - Date.now()) / 60000));
-          var late = (d.delay || 0) >= 180;
-          return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line && d.line.name || '?') + '</b><span>' + esc(String(d.direction || '')) + '</span><i>' + (d.cancelled ? 'fällt aus' : (min ? min + ' Min' : 'jetzt') + (late ? ' (+' + Math.round(d.delay / 60) + ')' : '')) + '</i></span>';
-        }).join('');
-      } catch (e) { el.className = ''; }
-    };
-    x.onerror = x.ontimeout = function () { el.className = ''; };
-    x.send();
+    if (!board || !board.departures || !board.departures.length) { el.className = ''; return; }
+    el.className = 'on';
+    el.innerHTML = '<span class="stop">' + esc(board.stop) + (board.morning ? ' · Westen' : '') + '</span>' + board.departures.map(function (d) {
+      var min = Math.max(0, Math.round((new Date(d.when) - Date.now()) / 60000));
+      var late = d.delayMinutes >= 3;
+      return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line) + '</b><span>' + esc(d.direction) + '</span><i>' + (d.cancelled ? 'fällt aus' : (min ? min + ' Min' : 'jetzt') + (late ? ' (+' + d.delayMinutes + ')' : '')) + '</i></span>';
+    }).join('');
   }
 
   function renderDay() {
@@ -103,7 +99,7 @@ window.BHHome = (function () {
     dayIndex = Math.min(dayIndex, days.length - 1);
     var day = days[dayIndex]; var kids = day.kids.filter(function (k) { return k.lessons.length; });
     el.className = 'on';
-    el.innerHTML = '<div class="day-head"><h3>' + esc(dayLabel(day.date)) + '</h3><span>' + (dayIndex ? '◀ ' : '') + (dayIndex < days.length - 1 ? 'Nächster Tag ▶' : '') + '</span></div><div class="kids">' + (kids.length ? kids.map(function (k) {
+    el.innerHTML = '<div class="day-tabs">' + days.map(function (d, i) { return '<span class="' + (i === dayIndex ? 'on' : '') + '">' + esc(dayLabel(d.date)) + '</span>'; }).join('') + '<em>◀ ▶ Tag wechseln</em></div><div class="kids">' + (kids.length ? kids.map(function (k) {
       var live = k.lessons.filter(function (l) { return l.state !== 'cancelled'; });
       var time = live.length ? live[0].from + ' – ' + live[live.length - 1].to : 'alles fällt aus';
       var homework = k.homework && k.homework.length ? '<div class="hw">' + k.homework.slice(0, 3).map(function (h) { return '<div><b>' + esc(h.subject) + '</b> ' + esc(h.text) + '</div>'; }).join('') + '</div>' : '';
@@ -149,7 +145,7 @@ window.BHHome = (function () {
     var alertsEl = document.getElementById('alerts'); var alerts = menu.alerts || [];
     alertsEl.className = alerts.length ? 'on' : '';
     alertsEl.innerHTML = alerts.slice(0, 2).map(function (a) { return '<div class="alert"><svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></svg><b>' + esc(a.label) + '</b><span>' + esc(a.text) + '</span></div>'; }).join('');
-    if (menu.transit && (!transitStop || transitStop.id !== menu.transit.id)) { transitStop = menu.transit; departures(); }
+    board = menu.board || null; renderBoard();
     var next = JSON.stringify([menu.radio, menu.mood]);
     if (next === signature) return;
     signature = next;
@@ -239,7 +235,7 @@ window.BHHome = (function () {
   };
   tick(); setInterval(tick, 5000);
   weather(); setInterval(weather, 900000);
-  setInterval(function () { if (Date.now() - transitAt >= 60000) departures(); }, 5000);
+  setInterval(renderBoard, 20000);
   api.step = step; api.setState = function (s) { audio = s; paint(); };
   api.setMenu = setMenu; api.setPlaying = setPlaying;
   paint();

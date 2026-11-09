@@ -37,13 +37,13 @@
     if (!shownVideo) return;
     shownVideo = null; frame.src = 'about:blank';
   }
-  // Mit Radio laeuft das Video leise weiter, das Knistern bleibt zu hoeren.
-  function videoVolume() { ytCommand('setVolume', [playingUrl ? 25 : 100]); }
+    // Der Beamer spielt nur eine Tonquelle: Mit Radio laeuft das Video stumm, sonst wuerde er es anhalten.
+  function videoVolume() { if (playingUrl) ytCommand('mute'); else { ytCommand('unMute'); ytCommand('setVolume', [100]); } }
   window.addEventListener('message', function (e) {
     var d; try { d = JSON.parse(e.data); } catch (x) { return; }
     if (d.event === 'onError') caps = 'yt-error-' + d.info;
     if (d.event === 'onReady' || d.event === 'initialDelivery') videoVolume();
-    if (d.event === 'infoDelivery' && d.info && d.info.playerState !== undefined) { caps = 'yt-state-' + d.info.playerState; videoVolume(); }
+    if (d.event === 'infoDelivery' && d.info && d.info.playerState !== undefined) { caps = 'yt-state-' + d.info.playerState; videoVolume(); if (d.info.playerState === 2 && shownVideo) ytCommand('playVideo'); }
   });
   var view = 'home';
   function setView(name) { view = name; document.body.className = name; }

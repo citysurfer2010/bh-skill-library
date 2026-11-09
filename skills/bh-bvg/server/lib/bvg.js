@@ -50,4 +50,14 @@ async function alerts(watch = WATCH) {
   return out;
 }
 
-module.exports = { stops, departures, alerts, setFetch };
+const SCHOOL_STOP = { id: '900024104', name: 'Amtsgerichtsplatz' };
+const berlinHour = (now) => Number(new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', hourCycle: 'h23' }).format(now));
+
+/** Abfahrtstafel fürs Startbild: morgens nur Richtung Westen zum Herder-Gymnasium. */
+async function board(now = new Date(), stop = SCHOOL_STOP) {
+  const hour = berlinHour(now); const morning = hour >= 5 && hour < 10;
+  const list = await departures(stop.id, { minutes: 60, results: 9 });
+  return { stop: stop.name, morning, departures: list.filter((d) => !morning || !/Zoologischer|\bZoo\b/.test(d.direction)).slice(0, 3) };
+}
+
+module.exports = { stops, departures, alerts, board, setFetch };
