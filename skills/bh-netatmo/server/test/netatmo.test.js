@@ -67,7 +67,8 @@ test('Sitzung wird weitergeführt statt neu angemeldet', async () => {
   n.setFetch(async (u, init) => {
     if (u.includes('/access/csrf')) return reply({ token: 't' });
     if (u.includes('/access/postlogin')) { logins += 1; return reply({}, ['netatmocomaccess_token=abc%7C1; path=/', 'authnetatmocomrefresh_token=r; path=/']); }
-    if (u.includes('/access/login')) { if (/refresh_token=r/.test(init.headers.cookie)) { resumed += 1; return reply({}, ['netatmocomaccess_token=neu; path=/']); } return reply({}); }
+    if (u.includes('/access/checklogin')) { assert.match(init.headers.cookie, /refresh_token=r/); resumed += 1; return reply({}, ['netatmocomaccess_token=neu; path=/']); }
+    if (u.includes('/access/login')) return reply({});
     if (u.includes('homesdata')) return reply(body);
     return reply({ body: { home: { rooms: [], modules: [] } } });
   });
