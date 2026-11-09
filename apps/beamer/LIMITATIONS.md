@@ -28,6 +28,8 @@ Details zu einem Modul: `docs/limitations/<modul>.md`.
 
 ## Backlog
 
+- Einmalige Termine aus dem Family-Kalender auf dem Startbild (Matti, 09.11.2026). Wartet auf den Google-Login; die App braucht dazu Lesezugriff auf den Kalender.
+
 - Ruhebild mit Uhr und Wetter, wenn nichts läuft.
 - BH Screen mit der echten Fernbedienung bedienen (Senderwahl per Pfeiltasten).
 - Szenen und Zeitpläne, z. B. „Abend“ = Kamin + Radio leise.
