@@ -94,6 +94,7 @@ app.use(errorPage.errorHandler);
 if (require.main === module) {
   getDb();
   require('./lib/menu-bridge').start(beamer.commands);
+  require('./lib/face-indexer').start();
   const server = app.listen(PORT, HOST, () => console.log(`[${APP_ID}] läuft auf http://${HOST}:${PORT} (Pfad: "${APP_BASE}")`));
   const stop = () => server.close(() => { closeDb(); process.exit(0); });
   process.on('SIGTERM', stop);

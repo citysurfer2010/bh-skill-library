@@ -135,3 +135,23 @@ test('Fotos: Anfragen werden gedrosselt, Start geht immer durch', async () => {
     assert.deepEqual(calls, [['photos_push_next', 'all'], ['photos_push_next', 'a0123456789ab']]);
   } finally { gateway.setCaller(null); stream.reset(); }
 });
+
+test('Gesichtsindex: nur nachts, pausiert waehrend der Slideshow', async () => {
+  const gateway = require('../lib/gateway');
+  const stream = require('../lib/photo-stream');
+  const indexer = require('../lib/face-indexer');
+  assert.equal(indexer.inWindow(23), true); assert.equal(indexer.inWindow(6), true); assert.equal(indexer.inWindow(7), false); assert.equal(indexer.inWindow(14), false);
+  const night = new Date('2026-11-10T01:00:00+01:00'); const day = new Date('2026-11-10T14:00:00+01:00');
+  let calls = 0;
+  gateway.setCaller(async () => { calls++; return '{"faces":1}'; });
+  try {
+    stream.reset();
+    assert.equal(await indexer.round(day), 300000); assert.equal(calls, 0);
+    assert.equal(await indexer.round(night), 1500); assert.equal(calls, 1);
+    stream.handle('all');
+    calls = 0; assert.equal(await indexer.round(night), 300000); assert.equal(calls, 0);
+    stream.reset();
+    gateway.setCaller(async () => '{"done":true}');
+    assert.equal(await indexer.round(night), 21600000);
+  } finally { gateway.setCaller(null); stream.reset(); }
+});

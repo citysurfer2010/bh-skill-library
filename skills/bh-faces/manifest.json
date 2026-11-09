@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-faces",
+  "name": "bh-faces",
+  "version": "26.11.1",
+  "description": "Lokale Gesichtserkennung fuer die Familienfotos auf der Synology",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}
