@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Nur der Web-Eingang darf mit der App sprechen. Die Container der User liegen im selben Netz,
- * ohne dieses Geheimnis könnten sie sich als jemand anderes ausgeben.
+ * Only the web entry point may talk to the app. User containers sit on the same network;
+ * without this secret they could impersonate someone else.
  */
 const crypto = require('crypto');
 const hash = (s) => crypto.createHash('sha256').update(String(s)).digest();
@@ -11,11 +11,11 @@ const fromEdge = (headers) => {
   return !!headers['x-edge-secret'] && crypto.timingSafeEqual(hash(secret), hash(headers['x-edge-secret']));
 };
 const edgeGuard = (req, res, next) => (fromEdge(req.headers) ? next() : res.status(403).json({ error: 'Kein Zugriff' }));
-// Apps der User liegen auf Subdomains derselben Website: Schreibzugriffe nur von dieser Seite selbst.
+// User apps live on subdomains of the same site: write access only from this page itself.
 const sameOriginWrites = (req, res, next) => {
   const origin = req.headers.origin;
   if (req.method === 'GET' || !origin) return next();
-  try { if (new URL(origin).host === req.headers.host) return next(); } catch { /* ungültig */ }
+  try { if (new URL(origin).host === req.headers.host) return next(); } catch { /* invalid */ }
   return res.status(403).json({ error: 'Fremde Herkunft' });
 };
 module.exports = { fromEdge, edgeGuard, sameOriginWrites };

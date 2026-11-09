@@ -1,5 +1,5 @@
 'use strict';
-/** Liest die Netatmo-Heizung über den Web-Login des Familienkontos, nur lesend. Anmeldung selten, Fehlversuche gesperrt. */
+/** Reads the Netatmo heating via the web login of the family account, read-only. Rare logins, failed attempts locked out. */
 const fs = require('fs');
 const path = require('path');
 
@@ -50,7 +50,7 @@ async function login() {
   write({ token, tokenUntil: Date.now() + TOKEN_MS, lockedUntil: 0, cookies: j.dump(), logins: (s.logins || 0) + 1 });
   return token;
 }
-/** Führt die bestehende Sitzung weiter. Neu anmelden muss sich der Skill nur, wenn das nicht mehr geht. */
+/** Continues the existing session. The skill only has to log in again when that no longer works. */
 async function resume() {
   const s = read();
   if (!s.cookies) return null;
@@ -108,7 +108,7 @@ async function status() {
 const rooms = async () => (await status()).rooms;
 
 const MIN_TEMP = 7; const MAX_TEMP = 30; const DEFAULT_MINUTES = 180;
-/** Setzt die Solltemperatur eines Raums für begrenzte Zeit oder gibt ihn an den Heizplan zurück. */
+/** Sets the target temperature of a room for a limited time or returns it to the heating schedule. */
 async function setRoom({ room, temp, minutes, backToPlan }, now = Date.now()) {
   const home = await homeData();
   const target = (home.rooms || []).find((r) => r.name === room || String(r.id) === String(room));

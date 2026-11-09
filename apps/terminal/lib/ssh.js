@@ -1,5 +1,5 @@
 'use strict';
-/** SSH in den eigenen Container: Schlüssel des Dienstes, Hostschlüssel wird immer geprüft. */
+/** SSH into the user's own container: service key, host key is always verified. */
 const fs = require('fs');
 const { hostKey } = require('./workspace');
 

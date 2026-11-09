@@ -1,9 +1,9 @@
 'use strict';
-/** Verbindet das Menü auf dem Beamer mit der App: Menü hinschieben, Auswahl der Fernbedienung abholen und ausführen. */
+/** Connects the Beamer menu to the app: pushes the menu, picks up the remote control selection and executes it. */
 const gateway = require('./gateway');
 const { beamerMenu } = require('./catalog');
 
-// Eine einzige wartende Anfrage statt Dauerabfragen: Das Gateway antwortet, sobald jemand etwas wählt.
+// A single waiting request instead of constant polling: the gateway answers as soon as someone picks something.
 const WAIT_S = 20; const IDLE_MS = 5000;
 
 let schedule = null;
@@ -15,16 +15,17 @@ let rooms = [];
 let heating = null;
 let events = [];
 let eventsLoaded = false;
+let work = null;
 const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay, rooms, heating, events } });
 
-// Bis 7 Uhr ist der Vertretungsplan eingestellt; um 16:05 springt die Anzeige auf den nächsten Schultag.
+// Until 7:00 the substitution plan is set; at 16:05 the display jumps to the next school day.
 const SCHEDULE_AT = ['06:30', '06:45', '07:00', '10:00', '13:00', '16:05'];
 const MIN_GAP_MS = 120_000;
 async function refreshSchedule() {
   schedule = JSON.parse(await gateway.call('webuntis_days', { count: 5 }));
   await pushMenu();
 }
-// Beim Öffnen der Seite frisch holen, aber nie öfter als alle 2 Minuten anmelden.
+// Fetch fresh when the page is opened, but never register more often than every 2 minutes.
 let lastFetch = 0; let running = null;
 function refreshIfStale(force = false) {
   if (running) return running;
@@ -33,21 +34,21 @@ function refreshIfStale(force = false) {
   running = refreshSchedule().then(() => schedule).finally(() => { running = null; });
   return running;
 }
-// Störungen alle 5 Minuten; gesendet wird nur, wenn sich etwas ändert.
+// Disruptions every 5 minutes; sent only when something changes.
 async function refreshAlerts() {
   const next = JSON.parse(await gateway.call('bvg_alerts'));
   if (JSON.stringify(next) === JSON.stringify(alerts)) return;
   alerts = next;
   await pushMenu();
 }
-// Abfahrten über den Skill bvg, gesendet nur bei Änderung. Die Minuten rechnet der Beamer selbst.
+// Departures via the bvg skill, sent only on change. The Beamer calculates the minutes itself.
 async function refreshBoard() {
   const next = JSON.parse(await gateway.call('bvg_board'));
   if (JSON.stringify(next) === JSON.stringify(board)) return;
   board = next;
   await pushMenu();
 }
-// Geburtstage über den Skill birthdays, einmal pro Stunde; die Tagesfakten holt der Skill höchstens einmal am Tag.
+// Birthdays via the birthdays skill, once per hour; the skill fetches the daily facts at most once a day.
 async function refreshBirthdays() {
   const next = JSON.parse(await gateway.call('birthdays_upcoming'));
   let facts = null;
@@ -58,7 +59,7 @@ async function refreshBirthdays() {
   birthdays = next; onThisDay = facts;
   await pushMenu();
 }
-// Raumwerte über den Skill netatmo, alle 10 Minuten; gesendet wird nur bei Änderung. Bei Fehlern bleiben die letzten Werte.
+// Room values via the netatmo skill, every 10 minutes; sent only on change. On errors the last values remain.
 async function refreshRooms() {
   const status = JSON.parse(await gateway.call('netatmo_status'));
   const nextHeating = { plan: status.plan, mode: status.mode };
@@ -66,7 +67,7 @@ async function refreshRooms() {
   rooms = status.rooms; heating = nextHeating;
   await pushMenu();
 }
-// Einmalige Termine über den Skill familycal, alle 30 Minuten; gesendet wird nur bei Änderung.
+// One-off events via the familycal skill, every 30 minutes; sent only on change.
 async function refreshEvents() {
   const next = JSON.parse(await gateway.call('familycal_upcoming'));
   eventsLoaded = true;
@@ -74,6 +75,9 @@ async function refreshEvents() {
   events = next; eventsLoaded = true;
   await pushMenu();
 }
+// Work appointments stay out of the beamer menu; only the owner's page reads them.
+async function refreshWork() { work = JSON.parse(await gateway.call('workcal_upcoming')); }
+const workFor = (email) => (work && work.owner === String(email).toLowerCase() ? work.events : []);
 const berlinTime = (d = new Date()) => new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
 
 async function tick(commands) {
@@ -97,6 +101,8 @@ function start(commands) {
   fetchRooms(); setInterval(fetchRooms, 600_000);
   const fetchEvents = () => refreshEvents().catch((e) => console.error(`[kalender] ${e.message}`));
   fetchEvents(); setInterval(fetchEvents, 1_800_000);
+  const fetchWork = () => refreshWork().catch((e) => console.error(`[workcal] ${e.message}`));
+  fetchWork(); setInterval(fetchWork, 1_800_000);
   const fetchPlan = () => refreshIfStale(true).catch((e) => console.error(`[stundenplan] ${e.message}`));
   fetchPlan();
   const fetchBoard = () => refreshBoard().catch((e) => console.error(`[bvg] ${e.message}`));
@@ -110,4 +116,4 @@ function start(commands) {
 
 const snapshot = () => ({ schedule, alerts, board, birthdays, onThisDay, rooms, heating, events, eventsLoaded });
 
-module.exports = { snapshot, start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, refreshEvents, SCHEDULE_AT };
+module.exports = { snapshot, refreshWork, workFor, start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, refreshEvents, SCHEDULE_AT };

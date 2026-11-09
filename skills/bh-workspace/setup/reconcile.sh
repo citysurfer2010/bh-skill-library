@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Baut für jeden User, der seine Einladung angenommen hat, die Arbeitsumgebung. Läuft alle 15 Sekunden als root.
-# Der Web-Dienst bekommt dadurch keinerlei Docker-Rechte: Er liest nur das Ergebnis.
+# Builds the workspace for every user who has accepted their invitation. Runs every 15 seconds as root.
+# This way the web service gets no Docker rights at all: it only reads the result.
 set -uo pipefail
 S=/srv/bh-terminal; ST=$S/state; U=/srv/devbox/users; PUB=$S/ssh/id_ed25519.pub
 DOMAIN=$(sed -n 's/^EDGE_DOMAIN=//p' /srv/bh-platform/.env | head -1)
@@ -24,7 +24,7 @@ status() { # name state
   new=$(jq -n --arg s "$2" --arg d "$1.$DOMAIN" --argjson at "$(date +%s)" '{state: $s, subdomain: $d, at: $at}')
   [ "$(jq -r .state "$f" 2>/dev/null)" = "$2" ] || { printf '%s\n' "$new" >"$f.new"; chmod 644 "$f.new"; mv "$f.new" "$f"; }
 }
-ensure_key() { # Zugang des Web-Terminals, ohne Weiterleitungen; übersteht auch "devbox set-key".
+ensure_key() { # Web terminal access, without forwarding; also survives "devbox set-key".
   local a=$U/$1/ssh/authorized_keys line
   line="restrict,pty $(cat "$PUB")"
   grep -qxF "$line" "$a" && return

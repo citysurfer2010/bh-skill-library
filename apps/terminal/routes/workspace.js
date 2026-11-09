@@ -1,5 +1,5 @@
 'use strict';
-/** Status der Umgebung, Bilder und Dateien im Ordner uploads des eigenen Containers. */
+/** Workspace status, images and files in the uploads folder of the user's own container. */
 const express = require('express');
 const multer = require('multer');
 const { statusOf } = require('../lib/workspace');
@@ -45,7 +45,7 @@ function buildRouter() {
     } catch (e) { next(e); }
   });
 
-  // Nur echte Bildtypen, nie SVG: Inhalte der User dürfen hier kein Skript ausführen.
+  // Only real image types, never SVG: user content must not execute scripts here.
   r.get('/files/:name', ready, name, async (req, res, next) => {
     const type = TYPES[ext(req.params.name)];
     if (!type) return res.status(415).json({ error: 'Kein Bild' });

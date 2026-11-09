@@ -1,5 +1,5 @@
 'use strict';
-/** Einmalige Termine aus genau einem Kalender. Serientermine wie Geburtstage bleiben bewusst draußen. */
+/** One-off events from exactly one calendar. Recurring events such as birthdays are deliberately left out. */
 const WINDOW_DAYS = 14; const MAX = 6;
 
 const berlin = (iso) => {
@@ -7,7 +7,7 @@ const berlin = (iso) => {
   return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` };
 };
 
-/** Rein, damit sie testbar bleibt. */
+/** Pure, so it stays testable. */
 function select(items, now = new Date()) {
   const today = berlin(now).date;
   return (items || [])

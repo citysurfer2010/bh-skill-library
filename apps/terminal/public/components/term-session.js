@@ -1,5 +1,5 @@
 'use strict';
-/** Ein Terminal-Tab: xterm im Browser, per WebSocket an eine tmux-Sitzung im eigenen Container. */
+/** A terminal tab: xterm in the browser, connected by WebSocket to a tmux session in the user's own container. */
 window.TermSession = (() => {
   const BASE = window.APP_BASE;
   const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -16,11 +16,11 @@ window.TermSession = (() => {
     term.loadAddon(new window.Unicode11Addon.Unicode11Addon()); term.unicode.activeVersion = '11';
     term.open(view);
     term.loadAddon(new window.ImageAddon.ImageAddon({ sixelSupport: true, iipSupport: true, storageLimit: 128 }));
-    try { const gl = new window.WebglAddon.WebglAddon(); gl.onContextLoss(() => gl.dispose()); term.loadAddon(gl); } catch (e) { /* Darstellung ohne WebGL */ }
+    try { const gl = new window.WebglAddon.WebglAddon(); gl.onContextLoss(() => gl.dispose()); term.loadAddon(gl); } catch (e) { /* render without WebGL */ }
 
     let ws = null; let closed = false; let tries = 0; let queue = [];
     const raw = (m) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); else queue.push(m); };
-    const refit = () => { if (view.hidden) return; try { fit.fit(); raw({ t: 'r', c: term.cols, r: term.rows }); } catch (e) { /* noch nicht sichtbar */ } };
+    const refit = () => { if (view.hidden) return; try { fit.fit(); raw({ t: 'r', c: term.cols, r: term.rows }); } catch (e) { /* not visible yet */ } };
 
     function connect() {
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -48,7 +48,7 @@ window.TermSession = (() => {
       find: (q, back) => (back ? search.findPrevious(q) : search.findNext(q)),
       font(n) { term.options.fontSize = n; refit(); },
       retheme() { term.options.theme = theme(); },
-      kill() { closed = true; raw({ t: 'k' }); setTimeout(() => { try { ws.close(); } catch (e) { /* zu */ } term.dispose(); view.remove(); }, 150); },
+      kill() { closed = true; raw({ t: 'k' }); setTimeout(() => { try { ws.close(); } catch (e) { /* closed */ } term.dispose(); view.remove(); }, 150); },
     };
   }
   return { create };

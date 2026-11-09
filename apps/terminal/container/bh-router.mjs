@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Verteilt die Subdomain des Users auf seine Apps: Pfad -> Port, gepflegt mit bh-route oder im Web-Terminal.
+// Routes the user's subdomain to their apps: path -> port, maintained with bh-route or in the web terminal.
 import http from 'node:http';
 import net from 'node:net';
 import fs from 'node:fs';
@@ -8,7 +8,7 @@ import path from 'node:path';
 const FILE = path.join(process.env.HOME, '.config/bh-apps/routes.json');
 const PORT = 8088;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-// Pfadtricks wie /privat/../spiel würden die Freigabe am Web-Eingang umgehen.
+// Path tricks like /privat/../spiel would bypass the approval at the web entry point.
 const unsafe = (url) => /(^|\/)\.\.(\/|$)|%2e|%2f|%5c|\\/i.test(url.split('?')[0]);
 function routes() {
   try { return JSON.parse(fs.readFileSync(FILE, 'utf8')).routes.filter((r) => /^\/[a-z0-9-/]*$/.test(r.path) && r.port > 0).sort((a, b) => b.path.length - a.path.length); } catch { return []; }

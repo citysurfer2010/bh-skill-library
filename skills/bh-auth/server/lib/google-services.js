@@ -1,4 +1,4 @@
-// Reicht die Google-Freigabe an das Gateway weiter. Die Werkzeuge laufen dort, je User getrennt.
+// Passes the Google grant on to the gateway. The tools run there, separated per user.
 const gatewayUser = (user) => String(user.email || "").split("@")[0].toLowerCase();
 
 function post(config, path, body) {
@@ -14,7 +14,7 @@ export async function removeServices(config, user) {
   try { return (await post(config, "/connect/google/remove", { user: gatewayUser(user) })).ok; } catch { return false; }
 }
 
-/** { connected, email }; null, wenn das Gateway nicht antwortet oder nichts eingerichtet ist. */
+/** { connected, email }; null if the gateway does not answer or nothing is set up. */
 export async function servicesStatus(config, user) {
   if (!config.google || !config.connect.secret) return null;
   try {

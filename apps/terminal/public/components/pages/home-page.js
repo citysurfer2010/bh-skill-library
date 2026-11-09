@@ -1,5 +1,5 @@
 'use strict';
-/** Web-Terminal: wartet auf die Umgebung, lädt xterm und startet die Oberfläche. */
+/** Web terminal: waits for the workspace, loads xterm and starts the UI. */
 (async () => {
   const BASE = window.APP_BASE; const host = document.getElementById('page-host');
   const VENDOR = ['xterm/lib/xterm', 'addon-fit/lib/addon-fit', 'addon-webgl/lib/addon-webgl', 'addon-search/lib/addon-search', 'addon-web-links/lib/addon-web-links', 'addon-image/lib/addon-image', 'addon-unicode11/lib/addon-unicode11', 'addon-clipboard/lib/addon-clipboard'];

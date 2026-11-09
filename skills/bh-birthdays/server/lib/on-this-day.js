@@ -1,5 +1,5 @@
 'use strict';
-/** „An diesem Tag": wählt aus Wikipedia nur Schönes für den Geburtstags-Screen. Gesendet wird allein Monat und Tag. */
+/** "On this day": picks only nice items from Wikipedia for the birthday screen. Only month and day are sent. */
 const fs = require('fs');
 const path = require('path');
 
@@ -13,7 +13,7 @@ const MAX_FACT = 125; const MAX_BORN = 80;
 const clean = (t) => String(t || '').replace(/­/g, '').replace(/\s*\(Bild(?:, [^)]*)?\)/g, '').replace(/\s+/g, ' ').trim();
 const good = (t) => (t.match(GOOD) || []).length;
 
-/** Drei schöne Ereignisse und eine bekannte Person vom selben Tag. Rein, damit sie testbar bleibt. */
+/** Three nice events and one famous person from the same day. Pure, so it stays testable. */
 function select(feed) {
   const seen = new Set(); const facts = [];
   const pool = [...(feed.selected || []).map((e) => ({ ...e, boost: 2 })), ...(feed.events || []).map((e) => ({ ...e, boost: 0 }))]
@@ -36,7 +36,7 @@ const berlinDate = (now) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe
 function read() { try { return JSON.parse(fs.readFileSync(FILE(), 'utf8')); } catch { return null; } }
 function forToday(now = new Date()) { const c = read(); return c && c.date === berlinDate(now) ? c.data : null; }
 
-/** Holt die Daten höchstens einmal am Tag. Liefert true, wenn etwas Neues da ist. */
+/** Fetches the data at most once a day. Returns true when there is something new. */
 async function prepare(now = new Date(), load = fetch) {
   if (forToday(now)) return false;
   const date = berlinDate(now);

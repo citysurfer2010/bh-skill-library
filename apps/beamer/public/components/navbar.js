@@ -9,7 +9,7 @@
   // Modul-Tabs: beim Anlegen neuer Seiten ergänzen. `id` ist der Wert für Navbar.render().
   var TABS = [
     { id: 'home', href: '/beamer/', label: 'Beamer' },
-    { id: 'today', href: '/beamer/heute', label: 'Heute' },
+    { id: 'today', href: '/beamer/today', label: 'Heute' },
   ];
   var shell = null;
 

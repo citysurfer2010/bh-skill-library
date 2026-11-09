@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Richtet Web-Terminal, automatischen Aufbau und Subdomains ein (idempotent). Nur root auf dem VPS.
-#   setup.sh [email=name ...]   Bestehende Umgebungen ihren Usern zuordnen
+# Sets up the web terminal, automatic builds and subdomains (idempotent). Root on the VPS only.
+#   setup.sh [email=name ...]   Assign existing workspaces to their users
 set -euo pipefail
 R=/opt/bh-skill-library; W=$R/skills/bh-workspace; A=$R/apps/terminal
 S=/srv/bh-terminal; U=101000; ENV=/srv/bh-platform/.env; EDGE=/srv/edge/conf/apps

@@ -1,5 +1,5 @@
 'use strict';
-/** Heute: reiner Anzeige-Screen wie das Startbild des Beamers, ohne Navigation. Daten aus der Beamer-App. */
+/** Today: pure display screen like the Beamer home image, without navigation. Data from the Beamer app. */
 (async () => {
   const BASE = window.APP_BASE; const host = document.getElementById('page-host'); const esc = AppShell.esc;
   const DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
@@ -20,7 +20,7 @@
 
   document.body.classList.add('hx-body');
   AppShell.loading(host, 'Heute', 'cards');
-  // Tag von Sonnenaufgang bis Sonnenuntergang, Abend bis 21 Uhr; ohne Wetterdaten feste Stunden.
+  // Day from sunrise to sunset, evening until 21:00; without weather data, fixed hours.
   const phase = () => {
     const now = new Date(); const h = now.getHours();
     if (wx?.rise && wx?.set && wx.set.slice(0, 10) === iso(now)) { if (now >= new Date(wx.rise) && now < new Date(wx.set)) return 'day'; return now >= new Date(wx.set) && h < 21 ? 'evening' : 'night'; }
@@ -29,7 +29,7 @@
   let pickTimer = null;
   let data = null; let stale = false; let dayIndex = 0; let picked = false; let wx = null; let at = null; let scene = null; let wxSig = '';
 
-  // Innen klein unter dem Wetter: Ist-Werte aller Räume, Hinweise nur wenn etwas zu tun ist.
+  // Indoors, small below the weather: actual values of all rooms, notices only when something needs doing.
   function indoor() {
     const list = [...(data.rooms || [])].sort((a, b) => (b.name === 'Wohnzimmer') - (a.name === 'Wohnzimmer'));
     if (!list.length) return '';
@@ -41,7 +41,7 @@
     const outside = wx ? `<div class="hx-temp-big">${deg(Math.round(wx.t))}</div><p>${esc(SKY(wx.c))} · Berlin</p><p>Heute bis ${deg(Math.round(wx.max))} · Regen ${wx.rain} %</p>` : '';
     return outside || (data.rooms || []).length ? `<div class="hx-wx">${outside}${indoor()}</div>` : '';
   }
-  // Wetter als bewegter Hintergrund, wie auf dem Beamer. Bleibt beim Aktualisieren der Daten stehen.
+  // Weather as animated background, as on the Beamer. Stays in place when the data refreshes.
   const fall = (cls, count, dur) => Array.from({ length: count }, (_, i) => `<i class="${cls}" style="left:${((120 + (i * 137) % 960) / 11.8).toFixed(1)}%;top:${(i * 53) % 120 - 20}px;animation-delay:${((i * 0.17) % dur).toFixed(2)}s"></i>`).join('');
   const cloud = (s, fill) => `<svg class="wc" viewBox="0 0 120 90" style="left:${(s[0] / 11.8).toFixed(1)}%;top:calc(var(--u) * ${s[1]});width:min(calc(var(--u) * ${s[2]}), 62%);opacity:${s[3]};animation-duration:${s[4]}s" aria-hidden="true"><path fill="${fill}" d="${CLOUD_PATH}"/></svg>`;
   function weatherScene() {
@@ -65,7 +65,7 @@
   function school() {
     const today = iso(new Date()); const days = (data.schedule?.days || []).filter((d) => d.date >= today);
     if (!days.length) return `<section class="hx-panel"><p class="hx-empty">${data.schedule ? 'Keine Schultage in Sicht.' : 'Stundenplan gerade nicht abrufbar.'}</p></section>`;
-    // Nach der letzten Stunde interessiert der nächste Tag, solange niemand selbst gewählt hat.
+    // After the last lesson the next day matters, as long as nobody has picked one.
     if (!picked) { const ends = days[0].kids.flatMap((k) => k.lessons.filter((l) => l.state !== 'cancelled').map((l) => l.to)).sort().pop(); dayIndex = days[0].date === today && days.length > 1 && (!ends || clock() > ends) ? 1 : 0; }
     dayIndex = Math.min(dayIndex, days.length - 1);
     const tabs = `<div class="hx-days">${days.map((d, i) => `<button class="hx-day" aria-pressed="${i === dayIndex}" data-day="${i}">${esc(dayLabel(d.date))}</button>`).join('')}</div>`;
@@ -76,6 +76,12 @@
       return `<div class="hx-kid"><h3>${esc(k.name)}<small>${esc(time)}</small></h3><div class="hx-chips">${merged(k.lessons).map((l) => `<span class="hx-chip ${l.state === 'regular' ? (l.exam ? 'exam' : '') : esc(l.state)}">${l.state === 'cancelled' ? `<span class="hx-gone">${esc(l.subject)}</span> fällt aus` : `${l.state === 'changed' ? `${esc(l.from)} ` : ''}${esc(l.subject)}${l.exam ? ' Klausur' : l.state === 'changed' ? ' geändert' : ''}`}</span>`).join('')}</div>${hw}</div>`;
     }).join('');
     return `<section class="hx-panel">${tabs}<div class="hx-kids">${kids || '<p class="hx-empty">Schulfrei.</p>'}</div></section>`;
+  }
+  function workEvents() {
+    const now = Date.now(); const list = (data.workEvents || []).filter((e) => !e.endAt || e.endAt > now);
+    if (!list.length) return '';
+    const today = iso(new Date());
+    return `<section class="hx-strip" aria-label="Termine aus A1"><span class="hx-stop">A1</span>${list.slice(0, 3).map((e) => { const running = e.startAt && e.startAt <= now; return `<div class="hx-ev"><b class="${running ? 'now' : e.date === today ? 'today' : ''}">${running ? 'Jetzt' : `${esc(dayLabel(e.date))}${e.time ? ` ${esc(e.time)}` : ''}`}</b><span class="hx-grow">${esc(e.title)}</span></div>`; }).join('')}</section>`;
   }
   function events() {
     const now = Date.now(); const list = (data.events || []).filter((e) => !e.endAt || e.endAt > now);
@@ -88,7 +94,7 @@
   function transit() {
     const b = data.board; const up = b?.departures ? b.departures.filter((d) => new Date(d.when) >= Date.now() - 60000) : [];
     if (!up.length) return `<section class="hx-strip"><p class="hx-empty">${b ? 'Gerade keine Abfahrten bekannt.' : 'Abfahrten gerade nicht abrufbar.'}</p></section>`;
-    // Auf dem großen Bild ist Platz für zwei: ein Ausfall zuerst, dann je Richtung die nächste Fahrt.
+    // The big screen has room for two: a cancellation first, then the next departure per direction.
     const shown = new Set(up.filter((d) => d.cancelled).slice(0, 1));
     for (const way of [...new Set(up.map((d) => d.towards))]) { if (shown.size < 2) { const next = up.find((d) => d.towards === way && !shown.has(d)); if (next && ![...shown].some((d) => d.towards === way)) shown.add(next); } }
     for (const d of up) if (shown.size < 2) shown.add(d);
@@ -101,7 +107,7 @@
     host.innerHTML = `<div class="hx-scene">${HILLS}<div class="hx-stars" aria-hidden="true">${stars}</div><div class="hx-wxbg" aria-hidden="true"></div><div class="hx-inner"></div></div>`;
     scene = host.firstChild;
   }
-  // Ein Anzeige-Screen wird nicht gescrollt: Bei viel Inhalt rückt alles etwas kleiner zusammen.
+  // A display screen does not scroll: with a lot of content everything shrinks a little to fit.
   function fit() {
     if (innerWidth < 961) { scene.style.removeProperty('--fit'); return; }
     let f = 1; scene.style.setProperty('--fit', f);
@@ -112,7 +118,7 @@
     if (!data) { host.innerHTML = '<div class="hx-scene"><div class="hx-inner"><section class="hx-panel" role="alert"><p class="hx-empty">Heute konnte nicht geladen werden. Bitte prüfe die Verbindung.</p><button class="hx-day" onclick="location.reload()">Nochmal versuchen</button></section></div></div>'; return; }
     ensureScene(); scene.setAttribute('data-time', phase()); weatherScene();
     const d = new Date(); const y = window.scrollY; const focusDay = document.activeElement?.dataset?.day;
-    scene.querySelector('.hx-inner').innerHTML = `<header class="hx-top"><div><div class="hx-clock">${clock()}</div><div class="hx-date">${DAYS[d.getDay()]}, ${d.getDate()}. ${d.toLocaleString('de-DE', { month: 'long' })}</div></div>${pill()}${weatherBox()}</header>${stale ? `<p class="hx-stale" role="status">Keine Verbindung. Stand ${esc(at || '')}.</p>` : ''}${school()}${events()}${alerts()}${transit()}`;
+    scene.querySelector('.hx-inner').innerHTML = `<header class="hx-top"><div><div class="hx-clock">${clock()}</div><div class="hx-date">${DAYS[d.getDay()]}, ${d.getDate()}. ${d.toLocaleString('de-DE', { month: 'long' })}</div></div>${pill()}${weatherBox()}</header>${stale ? `<p class="hx-stale" role="status">Keine Verbindung. Stand ${esc(at || '')}.</p>` : ''}${school()}<footer class="hx-foot">${workEvents()}${events()}${alerts()}${transit()}</footer>`;
     fit(); window.scrollTo(0, y); if (focusDay) scene.querySelector(`[data-day="${focusDay}"]`)?.focus();
   }
   async function load(fresh) {
@@ -126,7 +132,7 @@
   }
   host.addEventListener('click', (e) => { const b = e.target.closest('[data-day]'); if (b) { dayIndex = Number(b.dataset.day); picked = true; clearTimeout(pickTimer); pickTimer = setTimeout(() => { picked = false; render(); }, 120_000); render(); } });
   async function weather() {
-    try { const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,weather_code&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset&timezone=Europe%2FBerlin&forecast_days=1'); const j = await r.json(); wx = { t: j.current.temperature_2m, c: j.current.weather_code, max: j.daily.temperature_2m_max[0], rain: j.daily.precipitation_probability_max[0], rise: j.daily.sunrise?.[0], set: j.daily.sunset?.[0] }; if (data) render(); } catch (e) { /* ohne Wetter weiter */ }
+    try { const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,weather_code&daily=temperature_2m_max,precipitation_probability_max,sunrise,sunset&timezone=Europe%2FBerlin&forecast_days=1'); const j = await r.json(); wx = { t: j.current.temperature_2m, c: j.current.weather_code, max: j.daily.temperature_2m_max[0], rain: j.daily.precipitation_probability_max[0], rise: j.daily.sunrise?.[0], set: j.daily.sunset?.[0] }; if (data) render(); } catch (e) { /* continue without weather */ }
   }
   await load(true); weather(); setInterval(weather, 1_800_000);
   setInterval(() => { if (!document.hidden) load(false); }, 60_000);

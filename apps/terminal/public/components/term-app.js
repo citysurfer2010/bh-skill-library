@@ -1,8 +1,8 @@
 'use strict';
-/** Oberfläche des Terminals: Tabs, Hochladen, Seitenleisten und Tasten. */
+/** Terminal UI: tabs, upload, sidebars and keys. */
 window.TermApp = (() => {
   const BASE = window.APP_BASE;
-  const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(`bh-term-${k}`)) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(`bh-term-${k}`, JSON.stringify(v)); } catch (e) { /* nur Komfort */ } } };
+  const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(`bh-term-${k}`)) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(`bh-term-${k}`, JSON.stringify(v)); } catch (e) { /* convenience only */ } } };
   const KEYS = [['Esc', '\x1b'], ['Tab', '\t'], ['↑', '\x1b[A'], ['↓', '\x1b[B'], ['←', '\x1b[D'], ['→', '\x1b[C'], ['Strg+C', '\x03'], ['Strg+D', '\x04']];
   const LAYOUT = `<div class="term-page"><div class="term-bar"><div class="term-tabs" role="tablist" aria-label="Sitzungen"></div><button class="term-btn" data-a="new" aria-label="Neue Sitzung">+</button><span class="term-spacer"></span><button class="term-btn primary" data-a="opencode">opencode starten</button><button class="term-btn" data-a="files" aria-expanded="false">Dateien</button><button class="term-btn" data-a="apps" aria-expanded="false">Meine Apps</button><button class="term-btn term-more-only" data-a="more" aria-label="Mehr" aria-expanded="false">⋯</button><button class="term-btn term-extra" data-a="find">Suchen</button><button class="term-btn term-extra" data-a="smaller" aria-label="Schrift kleiner">A−</button><button class="term-btn term-extra" data-a="bigger" aria-label="Schrift größer">A+</button></div><div class="term-search" hidden><input aria-label="Im Terminal suchen" placeholder="Im Terminal suchen"><button class="term-btn" data-a="prev" aria-label="Vorheriger Treffer">↑</button><button class="term-btn" data-a="next" aria-label="Nächster Treffer">↓</button><button class="term-btn" data-a="find">Schließen</button></div><div class="term-banner" role="status" hidden>Verbindung unterbrochen, wird wiederhergestellt …</div><div class="term-stage"><div class="term-views"></div><aside class="term-panel" hidden></aside></div><div class="term-keys"></div><div class="term-toast" role="status" aria-live="polite" hidden></div><div class="term-toast undo" role="status" hidden></div></div>`;
 
@@ -25,11 +25,11 @@ window.TermApp = (() => {
     const setState = (id, s) => { if (meta.has(id)) { meta.get(id).state = s; drawTabs(); } };
     function focus(id) { active = id; sessions.forEach((s, k) => s.show(k === id)); drawTabs(); }
     function open(id = Math.random().toString(36).slice(2, 8), label = '') { meta.set(id, { label, state: 'connecting' }); sessions.set(id, TermSession.create({ id, parent: views, fontSize: font, onState: setState })); saveTabs(); focus(id); return sessions.get(id); }
-    // Fünf Sekunden Rückgängig, erst dann wird die Sitzung wirklich beendet.
+    // Five seconds to undo; only then is the session really ended.
     let pending = null;
     const finish = ({ id, timer }) => { clearTimeout(timer); sessions.get(id).kill(); sessions.delete(id); meta.delete(id); pending = null; };
     function kill(id) {
-      if (pending) finish(pending); // Es gibt immer nur ein Rückgängig, die ältere Sitzung endet sofort.
+      if (pending) finish(pending); // There is only ever one undo; the older session ends immediately.
       const m = meta.get(id); m.leaving = true; saveTabs();
       if (active === id) focus(visible().pop()[0]); else drawTabs();
       undoEl.innerHTML = `<span>${AppShell.esc(m.label || 'Sitzung')} wird beendet</span><button class="term-btn" data-undo>Rückgängig</button>`; undoEl.hidden = false;

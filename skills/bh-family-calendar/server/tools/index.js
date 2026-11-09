@@ -20,8 +20,8 @@ const TOOL_LIST = [];
 
 for (const entry of fs.readdirSync(TOOLS_DIR, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
-  // Lesen und Anlegen laufen als getrennte Server, damit die Beamer-App nur lesen kann.
-  if (entry.name !== (process.env.BH_FAMILY_CAL_WRITE ? 'write' : 'familycal')) continue;
+  // Read and create run as separate servers so the Beamer app can only read.
+  if (entry.name !== (process.env.BH_CAL_TOOLS || (process.env.BH_FAMILY_CAL_WRITE ? 'write' : 'familycal'))) continue;
   const dir = path.join(TOOLS_DIR, entry.name);
   for (const f of fs.readdirSync(dir)) {
     if (!f.endsWith('.js')) continue;
