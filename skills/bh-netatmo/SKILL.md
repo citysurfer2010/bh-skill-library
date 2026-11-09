@@ -1,6 +1,6 @@
 ---
 name: bh-netatmo
-description: Liest Raumtemperaturen und Heizbetrieb aus Netatmo, nur lesend. Nutzen, wenn jemand wissen möchte, wie warm es zu Hause ist.
+description: Liest Raumtemperaturen und Heizplan aus Netatmo und setzt Solltemperaturen. Nutzen, wenn jemand wissen möchte, wie warm es ist, oder die Heizung ändern will.
 ---
 
 # Skill: BH Netatmo
@@ -14,10 +14,12 @@ Raumweise Temperaturen der Netatmo-Thermostate über das zentrale MCP-Gateway. D
 | Tool | Zweck |
 |---|---|
 | `netatmo_rooms` | Temperatur, Sollwert, Heizbetrieb, offenes Fenster, schwache Batterie je Raum |
+| `netatmo_status` | Räume plus aktiver Heizplan und Sondermodus |
+| `netatmo_set_room` | Solltemperatur eines Raums setzen (`room`, `temp`, `minutes`) oder zurück zum Plan (`backToPlan`) |
 
 ## Regeln
 
-- Nur lesend, das Heizen wird nicht gesteuert.
+- `netatmo_set_room` steuert die echte Heizung, immer nur befristet. Heizpläne werden nicht verändert.
 - Zugang liegt in der `.env` (`BH_NETATMO_USER`, `BH_NETATMO_PASSWORD`).
 - Schonend: Werte 5 Minuten zwischengespeichert, Anmeldung höchstens alle 2,5 Stunden.
 - Nach einer abgelehnten Anmeldung 30 Minuten Sperre, damit das Konto nicht gesperrt wird.
