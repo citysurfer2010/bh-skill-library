@@ -98,8 +98,7 @@ body.audio #home[data-page="start"] #playing { display: flex; }
 .wfog.f2 { top: 170px; animation-duration: 19s; } .wfog.f3 { top: 250px; animation-duration: 24s; }
 .wflash { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #fff; opacity: 0; animation: wflash 7s linear infinite; }
 @keyframes wflash { 0%, 90%, 94%, 100% { opacity: 0; } 91%, 93% { opacity: .25; } }
-.weather { position: relative; z-index: 0; text-shadow: 0 2px 14px rgba(15, 31, 61, .6); }
-.weather::before { content: ""; position: absolute; z-index: -1; left: -60px; right: -40px; top: -20px; bottom: -16px; background: radial-gradient(ellipse farthest-side at 60% 50%, rgba(30, 64, 175, .78) 0%, rgba(30, 64, 175, .72) 65%, transparent 100%); }
+.weather { position: relative; text-shadow: 0 2px 6px rgba(15, 31, 61, .75), 0 0 26px rgba(15, 31, 61, .6); }
 /* Abfahrten */
 #transit { display: none; position: absolute; left: 90px; right: 90px; bottom: 34px; box-sizing: border-box; padding: 16px 24px; border-radius: 20px; background: #fff; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; }
 #home[data-page="start"] #transit.on { display: flex; align-items: center; }
