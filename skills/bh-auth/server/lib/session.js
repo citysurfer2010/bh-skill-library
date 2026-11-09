@@ -33,6 +33,8 @@ export function safeNext(next, origins = []) {
   if (n.startsWith("/") && !n.startsWith("//") && !n.startsWith("/\\")) return n;
   try {
     const u = new URL(n);
-    return origins.includes(u.origin) ? u.href : "/";
+    // "https://*.beispiel.de" erlaubt alle direkten Subdomains, nur für https.
+    const wild = origins.some((o) => o.startsWith("https://*.") && u.protocol === "https:" && u.hostname.endsWith(o.slice(9)) && !u.hostname.slice(0, -o.slice(9).length).includes("."));
+    return origins.includes(u.origin) || wild ? u.href : "/";
   } catch { return "/"; }
 }

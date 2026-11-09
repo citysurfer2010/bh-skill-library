@@ -5,6 +5,13 @@ resolver 127.0.0.11 valid=30s;
 # Weiterleitungen relativ: Sonst haengt nginx seinen internen Port 8080 an die Adresse.
 absolute_redirect off;
 
+map $http_upgrade $conn_upgrade { default upgrade; "" close; }
+# Die Sitzung der Plattform geht nie an Apps, die User selbst betreiben.
+map $http_cookie $bh_no_session {
+  default $http_cookie;
+  "~^(?<bh_c1>.*?)(?:^|; *)bh_session=[^;]*(?:; *)?(?<bh_c2>.*)$" "$bh_c1$bh_c2";
+}
+
 server {
   listen 8080 default_server;
   return 404;
@@ -40,5 +47,43 @@ server {
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
     proxy_set_header X-Forwarded-Proto https;
+  }
+}
+
+# Jeder User hat eine eigene Subdomain; bh-router im Container verteilt sie auf seine Apps.
+server {
+  listen 8080;
+  server_name "~^(?<box>[a-z][a-z0-9-]{1,30})\.__DOMAIN__$";
+
+  location = /_auth {
+    internal;
+    set $check http://bh-auth:3337/auth-headers;
+    proxy_pass $check;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+
+  location @login {
+    return 302 https://apps.__DOMAIN__/login?next=https://$host$request_uri;
+  }
+
+  location / {
+    auth_request /_auth;
+    auth_request_set $u_email $upstream_http_x_auth_email;
+    auth_request_set $u_name $upstream_http_x_auth_name;
+    error_page 401 = @login;
+    set $up http://devbox-$box:8088;
+    proxy_pass $up;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $conn_upgrade;
+    proxy_set_header Host $host;
+    proxy_set_header Cookie $bh_no_session;
+    proxy_set_header X-User-Email $u_email;
+    proxy_set_header X-User-Name $u_name;
+    proxy_set_header X-Forwarded-For $http_cf_connecting_ip;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_read_timeout 1h;
+    client_max_body_size 25m;
   }
 }

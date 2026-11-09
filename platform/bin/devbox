@@ -13,7 +13,7 @@ MEM=${DEVBOX_MEM:-2500m}; MEM_SWAP=${DEVBOX_MEM_SWAP:-3g}
 CPUS=${DEVBOX_CPUS:-0.9}; PIDS=${DEVBOX_PIDS:-512}
 PUBLIC_IP=${DEVBOX_PUBLIC_IP:-$(hostname -I | awk '{print $1}')}
 SKILLS=/opt/bh-skill-library/skills
-GATEWAYS="llm-gateway mcp-gateway"
+GATEWAYS="llm-gateway mcp-gateway bh-terminal bh-edge"
 
 die() { echo "Fehler: $*" >&2; exit 1; }
 check_name() { [[ $1 =~ ^[a-z][a-z0-9-]{1,30}$ ]] || die "ungueltiger Name: $1"; }

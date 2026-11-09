@@ -1,0 +1,152 @@
+'use strict';
+/** Unit: Die App läuft IN diesem Prozess, damit c8 server.js, routes und lib misst. HTTP-Suiten laufen in einem fremden Prozess. */
+const { test, before, after, beforeEach } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { startApp, resetAuthEnv, tmpDir } = require('./helpers');
+const llm = require('../lib/llm');
+const errorPage = require('../lib/error-page');
+
+let t;
+before(async () => { t = await startApp(); });
+after(() => t.close());
+beforeEach(() => resetAuthEnv({ TRUST_PROXY_AUTH: '1' }));
+
+const user = { as: 'u@beispiel.de', role: 'user' };
+
+test('GET /health → 200', async () => {
+  const r = await t.call('/health');
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).skill, 'terminal');
+});
+
+test('Öffentliche Bündel', async () => {
+  for (const u of ['/api/build-id', '/bh-styles.css', '/app.css', '/app.js', '/build-version-check.js']) {
+    assert.equal((await t.call(u)).status, 200, u);
+  }
+});
+
+test('GET / setzt Cache-Buster an lokale Assets', async () => {
+  assert.match(await (await t.call('/', user)).text(), /app\.js\?v=[a-z0-9]+/);
+});
+
+test('API-Keys: anlegen, auflisten, zurückziehen', async () => {
+  const create = await t.call('/api/me/api-keys', { method: 'POST', ...user, body: { label: 'unit' } });
+  assert.equal(create.status, 201);
+  const { key, id } = await create.json();
+  assert.ok(key.startsWith('bhter_'), 'Präfix');
+  const list = await (await t.call('/api/me/api-keys', user)).json();
+  assert.ok(list.keys.some((k) => k.id === id));
+  assert.ok(!JSON.stringify(list).includes(key), 'Klartext darf nie wieder auftauchen');
+  assert.equal((await t.call(`/api/me/api-keys/${id}`, { method: 'DELETE', ...user })).status, 200);
+  assert.equal((await t.call(`/api/me/api-keys/${id}`, { method: 'DELETE', ...user })).status, 404);
+});
+
+test('API-Keys: Eingaben werden geprüft', async () => {
+  assert.equal((await t.call('/api/me/api-keys', { method: 'POST', ...user, body: { label: ' ' } })).status, 400);
+  assert.equal((await t.call('/api/me/api-keys', { method: 'POST', ...user, body: { label: 'x', scopes: 'alles' } })).status, 400);
+});
+
+test('Kaputtes JSON → 400, kein Stacktrace', async () => {
+  const bad = await fetch(`${t.base}/api/me/api-keys`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-user-email': 'u@beispiel.de' }, body: '{kaputt' });
+  assert.equal(bad.status, 400);
+  assert.doesNotMatch(await bad.text(), /node_modules|at .*\.js/);
+});
+
+async function newKey(scopes) {
+  return (await (await t.call('/api/me/api-keys', { method: 'POST', ...user, body: { label: 'ext', scopes } })).json()).key;
+}
+
+test('Bearer-API: Scopes werden erzwungen', async () => {
+  const read = { Authorization: `Bearer ${await newKey('read')}` };
+  const submit = { Authorization: `Bearer ${await newKey('submit')}` };
+  assert.equal((await t.call('/api/external/records', { headers: read })).status, 200);
+  assert.equal((await t.call('/api/external/records', { headers: submit })).status, 403);
+  assert.equal((await t.call('/api/external/submit', { method: 'POST', headers: submit })).status, 201);
+  assert.equal((await t.call('/api/external/submit', { method: 'POST', headers: read })).status, 403);
+});
+
+test('Upload: erlaubter Typ wird gespeichert, ohne eigenen Dateinamen; fremder Typ abgelehnt', async () => {
+  const headers = { Authorization: `Bearer ${await newKey('submit')}` };
+  const form = (type, name) => { const f = new FormData(); f.append('file', new Blob(['inhalt'], { type }), name); return f; };
+  const ok = await fetch(`${t.base}/api/external/records/1/upload`, { method: 'POST', headers, body: form('application/pdf', '../../boese.pdf') });
+  assert.equal(ok.status, 201);
+  const { attachment } = await ok.json();
+  assert.match(attachment.storedAs, /^[0-9a-f]{20}\.pdf$/);
+  assert.ok(fs.existsSync(path.join(require('../lib/config').UPLOADS_DIR, attachment.storedAs)));
+  const no = await fetch(`${t.base}/api/external/records/1/upload`, { method: 'POST', headers, body: form('application/x-msdownload', 'a.exe') });
+  assert.equal(no.status, 400);
+});
+
+test('Fehlerbehandlung: 500 mit Vorgangsnummer, ohne Interna', () => {
+  const sent = {};
+  const res = { status(s) { sent.status = s; return this; }, json(b) { sent.body = b; return this; }, set() { return this; }, type() { return this; }, send(b) { sent.body = b; return this; } };
+  const original = console.error;
+  console.error = () => {};
+  try { errorPage.errorHandler(new Error('geheimes Detail'), { originalUrl: '/api/x' }, res, () => {}); } finally { console.error = original; }
+  assert.equal(sent.status, 500);
+  assert.match(sent.body.incident, /^[0-9a-f]{8}$/);
+  assert.doesNotMatch(JSON.stringify(sent.body), /geheimes Detail/);
+});
+
+test('Fehlerseite escaped die Meldung', () => {
+  let body = '';
+  const res = { status() { return this; }, set() { return this; }, type() { return this; }, send(b) { body = b; return this; } };
+  errorPage.sendError({ originalUrl: '/x' }, res, { status: 403, message: '<script>x</script>' });
+  assert.doesNotMatch(body, /<script>x<\/script>/);
+  assert.match(body, /&lt;script&gt;/);
+});
+
+test('LLM nur über das Gateway mit dem Token aus der Datei', async () => {
+  const dir = tmpDir();
+  const tokenFile = path.join(dir, 'token');
+  fs.writeFileSync(tokenFile, 'test-token\n');
+  let seen = null;
+  const fetchImpl = async (url, init) => { seen = { url, init }; return { ok: true, json: async () => ({ choices: [{ message: { content: 'hallo' } }] }) }; };
+  assert.equal(await llm.chat({ messages: [{ role: 'user', content: 'hi' }] }, { tokenFile, fetchImpl }), 'hallo');
+  assert.equal(seen.url, 'http://llm-gateway:18790/v1/chat/completions');
+  assert.equal(seen.init.headers.Authorization, 'Bearer test-token');
+  assert.equal(JSON.parse(seen.init.body).model, 'tier:balanced');
+});
+
+test('LLM: fehlendes Token und Gateway-Fehler sind klare Fehler ohne Token im Text', async () => {
+  const dir = tmpDir();
+  await assert.rejects(llm.chat({ messages: [{ role: 'user', content: 'x' }] }, { tokenFile: path.join(dir, 'fehlt') }), /LLM-Token nicht lesbar/);
+  const tokenFile = path.join(dir, 'token');
+  fs.writeFileSync(tokenFile, 'geheim');
+  await assert.rejects(
+    llm.chat({ messages: [{ role: 'user', content: 'x' }] }, { tokenFile, fetchImpl: async () => ({ ok: false, status: 502 }) }),
+    (e) => /502/.test(e.message) && !e.message.includes('geheim'),
+  );
+  await assert.rejects(llm.chat({ messages: [] }), /messages required/);
+});
+
+test('Terminal: Herkunft, Geheimnis, Dateinamen, Routen', async () => {
+  const { fromEdge } = require('../lib/edge');
+  const { sameOrigin, TAB } = require('../lib/terminal-ws');
+  const { safeName } = require('../routes/workspace');
+  const { PATH_OK, portOk } = require('../routes/apps');
+  const prev = process.env.BH_EDGE_SECRET; process.env.BH_EDGE_SECRET = 'geheim';
+  assert.equal(fromEdge({ 'x-edge-secret': 'geheim' }), true);
+  assert.equal(fromEdge({ 'x-edge-secret': 'falsch' }), false);
+  assert.equal(fromEdge({}), false);
+  if (prev === undefined) delete process.env.BH_EDGE_SECRET; else process.env.BH_EDGE_SECRET = prev;
+  assert.equal(sameOrigin({ headers: { origin: 'https://a.de', host: 'a.de' } }), true);
+  assert.equal(sameOrigin({ headers: { origin: 'https://matti.a.de', host: 'a.de' } }), false);
+  assert.match(safeName('../../etc/pass wd.png'), /^\d{14}-etc-pass-wd\.png$/);
+  assert.equal(TAB.test('abc123'), true); assert.equal(TAB.test('../x'), false);
+  assert.equal(PATH_OK.test('/spiel'), true); assert.equal(PATH_OK.test('/../x'), false); assert.equal(PATH_OK.test('/'), true);
+  assert.equal(portOk(3001), true); assert.equal(portOk(2222), false); assert.equal(portOk(80), false);
+});
+
+test('Router im Container: längster Pfad gewinnt, Präfix wird entfernt', async () => {
+  const fs = require('fs'); const os = require('os'); const path = require('path');
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'r-')); fs.mkdirSync(path.join(home, '.config/bh-apps'), { recursive: true });
+  fs.writeFileSync(path.join(home, '.config/bh-apps/routes.json'), JSON.stringify({ routes: [{ path: '/a', port: 3001 }, { path: '/a/b', port: 3002 }] }));
+  const prev = process.env.HOME; process.env.HOME = home;
+  const { match, target } = await import(`../container/bh-router.mjs?${Date.now()}`);
+  assert.equal(match('/a/b/c').port, 3002); assert.equal(match('/ab'), undefined);
+  assert.equal(target(match('/a/x?y=1'), '/a/x?y=1'), '/x?y=1'); assert.equal(target(match('/a'), '/a'), '/');
+  process.env.HOME = prev;
+});
