@@ -2,6 +2,7 @@ html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; backgro
 #home, #screen, #share, #ambient { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
 body.home #home { display: block; background: #0b1730; }
 #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); transform-origin: 100% 50%; transition: transform 260ms cubic-bezier(.22, .8, .24, 1), border-radius 260ms, box-shadow 260ms; }
+#home.menu { background: linear-gradient(180deg, #0b1730 0%, #14285a 100%); }
 #home.menu #stage { transform: scale(.8); border-radius: 44px; box-shadow: -30px 0 90px rgba(0, 0, 0, .55); }
 body.text #screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 45%, #fdf3e3 100%); color: #fff; }
 body.share #share { display: block; background: #000; object-fit: contain; }
@@ -14,7 +15,7 @@ h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap:
 #text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
 #text:empty, #title:empty { display: none; }
 /* Menue: liegt unter dem Bild ueber die volle Hoehe. Beim Oeffnen rueckt das ganze Bild verkleinert nach rechts und schwebt. */
-#side { position: absolute; left: 0; top: 0; width: 384px; height: 1080px; box-sizing: border-box; padding: 64px 34px; background: linear-gradient(180deg, #0b1730 0%, #14285a 100%); }
+#side { position: absolute; z-index: 2; left: 0; top: 0; width: 384px; height: 1080px; box-sizing: border-box; padding: 64px 34px; background: linear-gradient(180deg, #0b1730 0%, #14285a 100%); }
 .brand { margin: 0 0 56px 22px; font-size: 36px; font-weight: 800; letter-spacing: -.01em; color: #fff; }
 .side-item { display: flex; align-items: center; box-sizing: border-box; height: 100px; margin-bottom: 12px; padding: 0 26px; border-radius: 26px; color: rgba(255, 255, 255, .66); font-size: 40px; font-weight: 700; transition: background 140ms, color 140ms, transform 140ms; }
 .side-item svg { flex: none; margin-right: 22px; }
@@ -33,7 +34,7 @@ h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap:
 #wx svg { display: block; width: 132px; height: 110px; overflow: visible; }
 #sky { margin-top: 12px; font-size: 40px; }
 /* Radio-Platte */
-#playing { display: none; position: absolute; left: 90px; top: 256px; max-width: 1010px; box-sizing: border-box; align-items: center; background: #fdf3e3; padding: 20px 40px; border-radius: 24px; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); color: #0f1f3d; }
+#playing { display: none; position: absolute; left: 570px; top: 56px; max-width: 830px; box-sizing: border-box; align-items: center; background: #fdf3e3; padding: 20px 40px; border-radius: 24px; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); color: #0f1f3d; }
 #home[data-page="start"] #playing { display: none; }
 body.audio #home[data-page="start"] #playing { display: flex; }
 #playing[data-s="load"] .bar { animation-play-state: paused; opacity: .45; }
@@ -44,12 +45,11 @@ body.audio #home[data-page="start"] #playing { display: flex; }
 @keyframes pulse { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
 .now { min-width: 0; }
 #station { font-size: 64px; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#station.long { font-size: 52px; }
+#station.long { font-size: 46px; }
 #note { margin-top: 4px; font-size: 32px; color: #1e3a8a; white-space: nowrap; }
 /* Schultag */
 #today { display: none; position: absolute; left: 90px; right: 90px; top: 256px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #f0ebe2; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
 #home[data-page="start"] #today.on { display: block; }
-body.audio #today { top: 432px; }
 .day-tabs { display: flex; align-items: center; margin-bottom: 14px; }
 .day-tabs span { margin-right: 10px; padding: 8px 22px; border-radius: 12px; font-size: 34px; font-weight: 700; color: #4a4336; }
 .day-tabs span.on { background: #1e40af; color: #fff; }
@@ -90,14 +90,15 @@ body.audio #today { top: 432px; }
 @keyframes wspin { to { transform: rotate(360deg); } }
 .wmoon { position: absolute; right: 240px; top: 26px; width: 110px; height: 110px; border-radius: 50%; box-shadow: inset -30px -6px 0 0 #fde68a; }
 .wr { position: absolute; width: 4px; height: 34px; border-radius: 2px; background: rgba(219, 234, 254, .85); transform: rotate(12deg); animation: wrain 1s linear infinite; }
-@keyframes wrain { 0% { margin-top: -40px; opacity: 0; } 15% { opacity: 1; } 100% { margin-top: 400px; margin-left: -70px; opacity: 0; } }
+@keyframes wrain { 0% { transform: translate(0, -40px) rotate(12deg); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(-70px, 400px) rotate(12deg); opacity: 0; } }
 .ws { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #fff; animation: wsnow 4s linear infinite; }
-@keyframes wsnow { 0% { margin-top: -30px; opacity: 0; } 12% { opacity: 1; } 100% { margin-top: 410px; margin-left: 50px; opacity: 0; } }
+@keyframes wsnow { 0% { transform: translate(0, -30px); opacity: 0; } 12% { opacity: 1; } 100% { transform: translate(50px, 410px); opacity: 0; } }
 .wfog { position: absolute; left: 80px; right: 40px; top: 90px; height: 34px; border-radius: 17px; background: rgba(255, 255, 255, .4); animation: wdrift 14s ease-in-out infinite alternate; }
 .wfog.f2 { top: 170px; animation-duration: 19s; } .wfog.f3 { top: 250px; animation-duration: 24s; }
 .wflash { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #fff; opacity: 0; animation: wflash 7s linear infinite; }
-@keyframes wflash { 0%, 90%, 94%, 100% { opacity: 0; } 91%, 93% { opacity: .55; } }
-.weather { text-shadow: 0 2px 14px rgba(15, 31, 61, .6); }
+@keyframes wflash { 0%, 90%, 94%, 100% { opacity: 0; } 91%, 93% { opacity: .25; } }
+.weather { position: relative; z-index: 0; text-shadow: 0 2px 14px rgba(15, 31, 61, .6); }
+.weather::before { content: ""; position: absolute; z-index: -1; left: -60px; right: -40px; top: -20px; bottom: -16px; background: radial-gradient(ellipse farthest-side at 60% 50%, rgba(30, 64, 175, .78) 0%, rgba(30, 64, 175, .72) 65%, transparent 100%); }
 /* Abfahrten */
 #transit { display: none; position: absolute; left: 90px; right: 90px; bottom: 34px; box-sizing: border-box; padding: 16px 24px; border-radius: 20px; background: #fff; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); overflow: hidden; }
 #home[data-page="start"] #transit.on { display: flex; align-items: center; }

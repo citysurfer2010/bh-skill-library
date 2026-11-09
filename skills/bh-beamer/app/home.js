@@ -83,9 +83,10 @@ window.BHHome = (function () {
   var board = null;
   function renderBoard() {
     var el = document.getElementById('transit');
-    if (!board || !board.departures || !board.departures.length) { el.className = ''; return; }
+    var upcoming = board && board.departures ? board.departures.filter(function (d) { return new Date(d.when) >= Date.now() - 60000; }) : [];
+    if (!upcoming.length) { el.className = ''; return; }
     el.className = 'on';
-    el.innerHTML = '<span class="stop">' + esc(board.stop) + (board.morning ? ' · Westen' : '') + '</span>' + board.departures.map(function (d) {
+    el.innerHTML = '<span class="stop">' + esc(board.stop) + (board.morning ? ' · Westen' : '') + '</span>' + upcoming.map(function (d) {
       var min = Math.max(0, Math.round((new Date(d.when) - Date.now()) / 60000));
       var late = d.delayMinutes >= 3;
       return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line) + '</b><span>' + esc(d.direction) + '</span><i>' + (d.cancelled ? 'fällt aus' : (min ? min + ' Min' : 'jetzt') + (late ? ' (+' + d.delayMinutes + ')' : '')) + '</i></span>';
