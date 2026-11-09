@@ -24,7 +24,7 @@ command -v icloudpd >/dev/null || pipx install icloudpd
 ICLOUDPD=$(command -v icloudpd)
 
 echo "2/4 Synology verbinden. Im Fenster mit dem Synology-Konto anmelden und das Passwort im Schlüsselbund sichern."
-mounted || open "smb://$NAS/$SHARE"
+mounted || open "afp://$NAS/$SHARE"
 for _ in $(seq 1 120); do mounted && break; sleep 2; done
 mounted || die "Die Synology ist nicht verbunden. Bist du im Heimnetz?"
 mkdir -p "$MOUNT/$TARGET" || die "Keine Schreibrechte auf $MOUNT."
@@ -40,7 +40,7 @@ cat >"$RUNNER" <<RUN
 set -uo pipefail
 MOUNT="$MOUNT"; DONE="$HOME_DIR/first-run-done"
 mounted() { mount | grep -q " on \$MOUNT ("; }
-mounted || { open "smb://$NAS/$SHARE"; sleep 30; }
+mounted || { open "afp://$NAS/$SHARE"; sleep 30; }
 mounted || { echo "\$(date) Synology nicht erreichbar, nächster Versuch beim nächsten Lauf"; exit 0; }
 LIMIT=(); [ -f "\$DONE" ] && LIMIT=(--until-found 300)
 /usr/bin/caffeinate -i "$ICLOUDPD" --username "$APPLE_ID" --directory "\$MOUNT/$TARGET" --folder-structure "{:%Y/%Y-%m}" --size original --skip-videos --no-progress-bar "\${LIMIT[@]+"\${LIMIT[@]}"}" && touch "\$DONE"
