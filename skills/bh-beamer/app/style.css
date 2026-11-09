@@ -1,6 +1,8 @@
 html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #2563eb; color: #0f1f3d; font-family: "Samsung One", "SamsungOne", sans-serif; }
 #home, #screen, #share, #ambient { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
-body.home #home { display: block; background: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); }
+body.home #home { display: block; background: #0b1730; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: linear-gradient(180deg, #1e40af 0%, #2563eb 20%, #3b82f6 29%, #60a5fa 37%, #bfdbfe 48%, #fdf3e3 78%); transform-origin: 100% 50%; transition: transform 260ms cubic-bezier(.22, .8, .24, 1), border-radius 260ms, box-shadow 260ms; }
+#home.menu #stage { transform: scale(.8); border-radius: 44px; box-shadow: -30px 0 90px rgba(0, 0, 0, .55); }
 body.text #screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 45%, #fdf3e3 100%); color: #fff; }
 body.share #share { display: block; background: #000; object-fit: contain; }
 body.video #ambient { display: block; background: #000; }
@@ -11,19 +13,16 @@ body.video #ambient { display: block; background: #000; }
 h1 { margin: 0; font-size: 150px; font-weight: 700; line-height: 1.1; word-wrap: break-word; max-width: 100%; }
 #text { margin: 30px 0 0; font-size: 56px; white-space: pre-line; word-wrap: break-word; max-width: 100%; }
 #text:empty, #title:empty { display: none; }
-/* Menue: schmale Dock-Leiste wie bei modernen TV-Oberflaechen. Nur das fokussierte Element zeigt seinen Namen. */
-#side { position: absolute; z-index: 10; left: 34px; top: 540px; box-sizing: border-box; padding: 14px; border-radius: 58px; background: rgba(12, 22, 48, .82); box-shadow: 0 24px 60px rgba(15, 31, 61, .45); opacity: 0; transform: translate(-150px, -50%); transition: transform 200ms ease-out, opacity 160ms ease-out; }
-#home.menu #side { opacity: 1; transform: translate(0, -50%); }
+/* Menue: liegt unter dem Bild ueber die volle Hoehe. Beim Oeffnen rueckt das ganze Bild verkleinert nach rechts und schwebt. */
+#side { position: absolute; left: 0; top: 0; width: 384px; height: 1080px; box-sizing: border-box; padding: 64px 34px; background: linear-gradient(180deg, #0b1730 0%, #14285a 100%); }
+.brand { margin: 0 0 56px 22px; font-size: 36px; font-weight: 800; letter-spacing: -.01em; color: #fff; }
+.side-item { display: flex; align-items: center; box-sizing: border-box; height: 100px; margin-bottom: 12px; padding: 0 26px; border-radius: 26px; color: rgba(255, 255, 255, .66); font-size: 40px; font-weight: 700; transition: background 140ms, color 140ms, transform 140ms; }
+.side-item svg { flex: none; margin-right: 22px; }
+.side-item.current { color: #fff; }
+.side-item.focus { background: #fff; color: #0f1f3d; transform: scale(1.04); }
 #side-hint { position: absolute; z-index: 5; left: 0; top: 500px; padding: 18px 8px 18px 2px; border-radius: 0 16px 16px 0; background: rgba(12, 22, 48, .55); color: #fff; }
 #side-hint svg { display: block; width: 28px; height: 28px; }
 #home.menu #side-hint { display: none; }
-.side-item { display: flex; align-items: center; box-sizing: border-box; height: 88px; min-width: 88px; margin-bottom: 10px; padding: 0 24px; border-radius: 44px; color: rgba(255, 255, 255, .72); font-size: 36px; font-weight: 700; transition: background 140ms, color 140ms, transform 140ms; }
-.side-item:last-child { margin-bottom: 0; }
-.side-item svg { flex: none; }
-.side-item span { max-width: 0; overflow: hidden; white-space: nowrap; transition: max-width 180ms ease-out, margin 180ms ease-out; }
-.side-item.current { background: rgba(255, 255, 255, .16); color: #fff; }
-.side-item.focus { background: #fff; color: #0f1f3d; transform: scale(1.05); }
-.side-item.focus span { max-width: 320px; margin: 0 8px 0 18px; }
 .top { position: absolute; left: 90px; right: 90px; top: 56px; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
 #clock { font-size: 120px; font-weight: 700; line-height: 1; }
 #date { margin-top: 8px; font-size: 40px; }
@@ -48,15 +47,15 @@ body.audio #home[data-page="start"] #playing { display: flex; }
 #station.long { font-size: 52px; }
 #note { margin-top: 4px; font-size: 32px; color: #1e3a8a; white-space: nowrap; }
 /* Schultag */
-#today { display: none; position: absolute; left: 90px; right: 90px; top: 256px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #e6d2aa; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
+#today { display: none; position: absolute; left: 90px; right: 90px; top: 256px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #f0ebe2; box-shadow: 0 6px 18px rgba(15, 31, 61, .18); }
 #home[data-page="start"] #today.on { display: block; }
 body.audio #today { top: 432px; }
 .day-tabs { display: flex; align-items: center; margin-bottom: 14px; }
-.day-tabs span { margin-right: 10px; padding: 8px 22px; border-radius: 12px; font-size: 34px; font-weight: 700; color: #5a4416; }
+.day-tabs span { margin-right: 10px; padding: 8px 22px; border-radius: 12px; font-size: 34px; font-weight: 700; color: #4a4336; }
 .day-tabs span.on { background: #1e40af; color: #fff; }
-.day-tabs em { margin-left: auto; font-style: normal; font-size: 28px; color: #5a4416; }
+.day-tabs em { margin-left: auto; font-style: normal; font-size: 28px; color: #4a4336; }
 .kids { display: flex; }
-.kid { flex: 1 1 0; min-width: 0; margin-right: 18px; padding: 16px 20px; border-radius: 16px; background: #fff; box-shadow: 0 4px 14px rgba(92, 64, 20, .22); }
+.kid { flex: 1 1 0; min-width: 0; margin-right: 18px; padding: 16px 20px; border-radius: 16px; background: #fff; border: 1px solid #e3dccf; box-shadow: 0 4px 14px rgba(60, 50, 30, .14); }
 .kid:last-child { margin-right: 0; }
 .kid-head { font-size: 44px; font-weight: 700; line-height: 1.1; }
 .kid-head span { margin-left: 14px; font-size: 32px; font-weight: 400; color: #3f4f6e; }
