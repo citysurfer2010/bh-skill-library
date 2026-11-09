@@ -1,11 +1,11 @@
 ---
 name: bh-webapp-skeleton
-description: Pflicht-Scaffold für jede neue Web-App der BH Platform. Erzeugt per Skript eine App mit Express, SQLite, blauem BH-Design, Rollen, drei Pflicht-Dokus, fünf Pflicht-Test-Suiten und Pre-Commit-Gate. Nutzen, sobald eine neue App oder ein Tool mit Weboberfläche entstehen soll.
+description: Angebot für klassische Web-Apps der BH Platform, Spiele und freie Anwendungen dürfen abweichen. Erzeugt per Skript eine App mit Express, SQLite, blauem BH-Design, Rollen, drei Pflicht-Dokus, fünf Pflicht-Test-Suiten und Pre-Commit-Gate. Nutzen, sobald eine neue App oder ein Tool mit Weboberfläche entstehen soll.
 ---
 
 # BH Web-App-Skeleton
 
-Der einzige Weg, eine neue Web-App anzulegen. Neue Apps entstehen nie von Hand.
+Der empfohlene Weg für klassische Web-Apps. Spiele und andere freie Anwendungen dürfen ohne dieses Gerüst entstehen und eine eigene Oberfläche und Menüführung haben. Wer eine App später zur Plattform-App promoten will, braucht mindestens `server.js`, `package.json`, `const APP_BASE = '/<slug>'` und ein grünes `npm test`.
 
 ## Zweck
 
