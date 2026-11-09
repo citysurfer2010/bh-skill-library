@@ -22,7 +22,7 @@ test("valid login is checked, saved with mode 600 and clears old rejections", as
   assert.equal(r.status, 200);
   assert.equal(readFileSync(file(d, "anna"), "utf8"), `BH_ICLOUD_APPLE_ID=a@example.org\nBH_ICLOUD_PASSWORD=${PASS}\nBH_ICLOUD_MAIL_USER=a@icloud.com\n`);
   assert.equal(statSync(file(d, "anna")).mode & 0o777, 0o600);
-  assert.deepEqual(icloudStatus(d, { user: "anna" }), { status: 200, connected: true, appleId: "a@example.org", rejected: false });
+  assert.deepEqual(icloudStatus(d, { user: "anna" }), { status: 200, connected: true, appleId: "a@example.org", rejected: false, mailRejected: false });
 });
 
 test("mail address defaults to the Apple ID; users stay separate; removal deletes the login", async () => {
@@ -34,6 +34,24 @@ test("mail address defaults to the Apple ID; users stay separate; removal delete
   removeIcloud(d, { user: "anna" });
   assert.equal(existsSync(file(d, "anna")), false);
   assert.equal(icloudStatus(d, { user: "anna" }).connected, false);
+});
+
+test("reconnecting without a password keeps the stored one; a mail problem is reported separately", async () => {
+  const d = users("dora");
+  await storeIcloudLogin(d, { user: "dora", appleId: "a@b.de", password: PASS }, async () => true);
+  writeFileSync(path.join(path.dirname(file(d, "dora")), ".rejected-mail"), "");
+  const s = icloudStatus(d, { user: "dora" });
+  assert.deepEqual([s.rejected, s.mailRejected], [false, true]);
+  let used;
+  const r = await storeIcloudLogin(d, { user: "dora", appleId: "a@b.de", password: "", mailUser: "x@icloud.com" }, async (_a, p) => { used = p; return true; });
+  assert.equal(r.status, 200); assert.equal(used, PASS);
+  assert.match(readFileSync(file(d, "dora"), "utf8"), /BH_ICLOUD_MAIL_USER=x@icloud.com/);
+  assert.equal(icloudStatus(d, { user: "dora" }).mailRejected, false);
+});
+
+test("without a stored password an empty one is refused", async () => {
+  const d = users("eva");
+  assert.equal((await storeIcloudLogin(d, { user: "eva", appleId: "a@b.de", password: "" }, async () => assert.fail("no login expected"))).status, 400);
 });
 
 test("unknown or malformed user is refused", async () => {

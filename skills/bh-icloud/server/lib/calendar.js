@@ -15,7 +15,7 @@ async function listCalendars() {
   return responses(xml).filter((r) => has(first(r.props, 'resourcetype') || '', 'calendar')).map((r) => ({
     id: r.href.replace(/\/$/, '').split('/').pop(),
     name: text(first(r.props, 'displayname') || ''),
-    has_events: /name="VEVENT"/i.test(first(r.props, 'supported-calendar-component-set') || 'name="VEVENT"'),
+    has_events: /name=['"]VEVENT['"]/i.test(first(r.props, 'supported-calendar-component-set') || 'name="VEVENT"'),
     url: safeUrl(r.href, url),
   }));
 }
