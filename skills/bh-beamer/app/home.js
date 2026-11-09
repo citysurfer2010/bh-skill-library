@@ -6,7 +6,7 @@ window.BHHome = (function () {
   var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
   var homeEl = document.getElementById('home');
   var PAGES = ['start', 'radio', 'mood', 'photos', 'rooms'];
-  var ALBUM_ROW = 172; var ALL_ALBUMS = { id: 'all', label: 'Alle Alben', when: 'Zufällig, ohne Wiederholung' };
+  var ALBUM_ROW = 136; var ALL_ALBUMS = { id: 'all', label: 'Alle Alben', when: 'Zufällig gemischt' };
   var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
   var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = ''; var party = null; var partyView = true; var tight = false;
   var edit = null; var pending = null; var heating = null; var events = []; var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
@@ -193,6 +193,8 @@ window.BHHome = (function () {
   function scrollAlbums() {
     var g = grids.photos; if (!g) return;
     g.el.children[1].scrollTop = Math.max(0, Math.floor(g.at / COLS.photos) - 1) * ALBUM_ROW;
+    var it = g.items[g.at]; var total = g.items.length - 1;
+    g.el.querySelector('h2').innerHTML = 'Fotos' + (it ? '<span class="g-hint">' + (g.at ? 'Album ' + g.at + ' von ' + total + ' · ' + esc(it.label) : total + ' Alben') + '</span>' : '');
   }
 
   function paint() {
@@ -294,6 +296,7 @@ window.BHHome = (function () {
     signature = next;
     buildGrid('radio', 'Radio', menu.radio || [], function (x) { return '<div class="tile station">' + esc(x.name) + '<small>' + esc(x.sub || '') + '</small></div>'; });
     buildGrid('photos', 'Fotos', albums.length ? [ALL_ALBUMS].concat(albums) : [], function (x) { return '<div class="tile album' + (x.id === 'all' ? ' all' : '') + '"><b>' + esc(x.label) + '</b><small>' + esc(x.when || '') + '</small></div>'; });
+    if (!albums.length) grids.photos.el.children[1].innerHTML = '<p class="g-empty">Noch keine Alben verfügbar.</p>';
     buildGrid('mood', 'Stimmung', menu.mood || [], function (x) { return '<div class="tile mood"><img src="' + esc(x.thumb) + '" alt=""><span>' + esc(x.label) + '</span></div>'; });
     paint();
   }
@@ -333,6 +336,7 @@ window.BHHome = (function () {
     if (dx < 0 && col === 0) { setZone('side'); return; }
     if (dx > 0 && col === cols - 1) return;
     var to = g.at + dx + dy * cols;
+    if (dy < 0 && to < 0) to = col;
     if (dy > 0 && to >= g.items.length && Math.floor(g.at / cols) < Math.floor((g.items.length - 1) / cols)) to = g.items.length - 1;
     if (to < 0 || to >= g.items.length) return;
     g.at = to; paint();
@@ -378,7 +382,7 @@ window.BHHome = (function () {
     else if (k < 37 || k > 40) return;
     else if (zone === 'side') moveSide(k);
     else if (page === 'start') moveStart(k);
-    else moveGrid(k === 37 ? -1 : k === 39 ? 1 : 0, k === 38 ? -1 : k === 40 ? 1 : 0);
+    else { var fast = page === 'photos' && e.repeat ? 3 : 1; moveGrid(k === 37 ? -1 : k === 39 ? 1 : 0, (k === 38 ? -1 : k === 40 ? 1 : 0) * fast); }
     e.preventDefault();
   });
 
