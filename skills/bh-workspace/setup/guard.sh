@@ -5,6 +5,7 @@ set -uo pipefail
 S=/srv/bh-terminal; ST=$S/state; U=/srv/devbox/users; G=$ST/guard; MAP_OUT=/srv/edge/conf/public-routes.map
 IMAGE=zricethezav/gitleaks:v8.24.0; CFG=/usr/local/share/bh-workspace/gitleaks.toml
 DOMAIN=$(sed -n 's/^EDGE_DOMAIN=//p' /srv/bh-platform/.env | head -1)
+DOMAIN=${DOMAIN//./\\.}
 SECRET='BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9_-]{20}|ghp_[A-Za-z0-9]{20}|github_pat_[A-Za-z0-9_]{20}|AKIA[0-9A-Z]{16}|GOCSPX-[A-Za-z0-9_-]{10}|xox[baprs]-[0-9A-Za-z-]{20}'
 GATEWAY='/etc/devbox/llm/token|llm-gateway|mcp-gateway'
 exec 9>/run/bh-workspace-guard.lock; flock -n 9 || exit 0
