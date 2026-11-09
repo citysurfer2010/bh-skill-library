@@ -6,7 +6,7 @@ window.BHHome = (function () {
   var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
   var homeEl = document.getElementById('home');
   var PAGES = ['start', 'radio', 'mood'];
-  var page = 'start'; var zone = 'side'; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
+  var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
   var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = '';
   var api = { onTune: function () {}, onMood: function () {}, isRadioOn: function () { return false; } };
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
@@ -39,16 +39,57 @@ window.BHHome = (function () {
     if (code <= 77 || code === 85 || code === 86) return 'Schnee';
     return 'Gewitter';
   }
+  var CLOUD = '<path class="cloud-a" fill="#fff" d="M30 80h60a20 20 0 0 0 4-39 29 29 0 0 0-55-7 23 23 0 0 0-9 46z"/>';
+  var RAYS = '<g class="sun-rays" stroke="#fde68a" stroke-width="6" stroke-linecap="round"><path d="M66 6v10M66 84v10M22 50h10M100 50h10M35 19l7 7M90 74l7 7M35 81l7-7M90 26l7-7"/></g>';
+  var SUN = RAYS + '<circle cx="66" cy="50" r="24" fill="#fcd34d"/>';
+  var MOON = '<path fill="#fde68a" d="M78 16a36 36 0 1 0 22 56 30 30 0 0 1-22-56z"/>';
+  function drops(cls, draw) { return [34, 60, 86].map(function (x, i) { return draw(x, cls + (i ? ' d' + (i + 1) : '')); }).join(''); }
+  function icon(code, day) {
+    var clear = day ? SUN : MOON; var body;
+    if (code <= 1) body = clear;
+    else if (code === 2) body = '<g transform="translate(22 -14) scale(.72)">' + clear + '</g>' + CLOUD;
+    else if (code === 3) body = CLOUD;
+    else if (code <= 48) body = [30, 52, 74].map(function (y, i) { return '<rect class="fog' + (i === 1 ? ' d2' : '') + '" x="' + (14 + i * 8) + '" y="' + y + '" width="92" height="9" rx="4.5" fill="#fff"/>'; }).join('');
+    else if (code >= 95) body = CLOUD + '<path class="bolt" fill="#fde047" d="M62 76l-14 22h13l-6 18 21-26H62l9-14z"/>';
+    else if ((code >= 71 && code <= 77) || code === 85 || code === 86) body = CLOUD + drops('flake', function (x, c) { return '<circle class="' + c + '" cx="' + x + '" cy="92" r="5" fill="#fff"/>'; });
+    else body = CLOUD + drops('drop', function (x, c) { return '<path class="' + c + '" d="M' + x + ' 86l-6 16" stroke="#dbeafe" stroke-width="6" stroke-linecap="round"/>'; });
+    return '<svg viewBox="0 0 132 110" aria-hidden="true">' + body + '</svg>';
+  }
+
   function weather() {
     var x = new XMLHttpRequest();
-    x.open('GET', 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON + '&current=temperature_2m,weather_code&timezone=Europe%2FBerlin');
+    x.open('GET', 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON + '&current=temperature_2m,weather_code,is_day&timezone=Europe%2FBerlin');
     x.onload = function () {
       try {
         var now = JSON.parse(x.responseText).current;
         document.getElementById('temp').textContent = Math.round(now.temperature_2m) + '°';
         document.getElementById('sky').textContent = sky(now.weather_code) + ' · ' + PLACE;
+        document.getElementById('wx').innerHTML = icon(now.weather_code, now.is_day !== 0);
       } catch (e) { /* naechster Versuch */ }
     };
+    x.send();
+  }
+
+  // Abfahrten direkt von der BVG: nur wenn der Start-Bildschirm sichtbar ist, einmal pro Minute.
+  var transitStop = null;
+  function departures() {
+    var el = document.getElementById('transit');
+    if (!transitStop || document.body.className.indexOf('home') < 0 || page !== 'start') return;
+    var x = new XMLHttpRequest();
+    x.open('GET', 'https://v6.bvg.transport.rest/stops/' + transitStop.id + '/departures?duration=45&results=4&remarks=false');
+    x.timeout = 12000;
+    x.onload = function () {
+      try {
+        var list = JSON.parse(x.responseText).departures || [];
+        el.className = list.length ? 'on' : '';
+        el.innerHTML = '<span class="stop">' + esc(transitStop.name) + '</span>' + list.map(function (d) {
+          var when = new Date(d.when || d.plannedWhen); var min = Math.max(0, Math.round((when - Date.now()) / 60000));
+          var late = (d.delay || 0) >= 180;
+          return '<span class="dep' + (d.cancelled ? ' off' : late ? ' late' : '') + '"><b>' + esc(d.line && d.line.name || '?') + '</b>' + esc(String(d.direction || '').slice(0, 22)) + '<i>' + (d.cancelled ? 'fällt aus' : min ? min + ' Min' : 'jetzt') + '</i></span>';
+        }).join('');
+      } catch (e) { el.className = ''; }
+    };
+    x.onerror = x.ontimeout = function () { el.className = ''; };
     x.send();
   }
 
@@ -72,6 +113,7 @@ window.BHHome = (function () {
 
   function paint() {
     homeEl.setAttribute('data-page', page);
+    homeEl.className = zone === 'side' ? 'menu' : '';
     var items = document.querySelectorAll('.side-item');
     for (var i = 0; i < items.length; i++) {
       var p = items[i].getAttribute('data-page');
@@ -101,6 +143,7 @@ window.BHHome = (function () {
   function setMenu(menu) {
     if (!menu) return;
     plan = menu.schedule || null; renderDay();
+    if (menu.transit && (!transitStop || transitStop.id !== menu.transit.id)) { transitStop = menu.transit; departures(); }
     var next = JSON.stringify([menu.radio, menu.mood]);
     if (next === signature) return;
     signature = next;
@@ -134,7 +177,7 @@ window.BHHome = (function () {
   function moveGrid(dx, dy) {
     var g = grids[page]; if (!g) return;
     var cols = COLS[page]; var col = g.at % cols;
-    if (dx < 0 && col === 0) { zone = 'side'; paint(); return; }
+    if (dx < 0 && col === 0) { setZone('side'); return; }
     var to = g.at + dx + dy * cols;
     if (to < 0 || to >= g.items.length) return;
     g.at = to; paint();
@@ -142,18 +185,25 @@ window.BHHome = (function () {
   }
   function moveStart(key) {
     var count = plan && plan.days ? plan.days.length : 0;
-    if (key === 37) { if (dayIndex > 0) { dayIndex--; renderDay(); } else { zone = 'side'; paint(); } }
+    if (key === 37) { if (dayIndex > 0) { dayIndex--; renderDay(); } else { setZone('side'); } }
     else if (key === 39) { if (dayIndex < count - 1) { dayIndex++; renderDay(); } }
     else if (api.isRadioOn()) { var st = step(key === 40 ? 1 : -1); if (st) tuneSoon(st); }
   }
+  // Das Menue schliesst sich von selbst, wenn nichts mehr gedrueckt wird.
+  function setZone(z) {
+    zone = z; clearTimeout(sideTimer);
+    if (z === 'side') sideTimer = setTimeout(function () { setZone('content'); }, 8000);
+    paint();
+  }
   function moveSide(key) {
-    if (key === 39) { zone = 'content'; paint(); return; }
+    if (key === 39) { setZone('content'); return; }
+    setZone('side');
     if (key !== 38 && key !== 40) return;
     var i = PAGES.indexOf(page) + (key === 40 ? 1 : -1);
     if (i >= 0 && i < PAGES.length) { page = PAGES[i]; paint(); }
   }
   function enter() {
-    if (zone === 'side') { zone = 'content'; paint(); return; }
+    if (zone === 'side') { setZone('content'); return; }
     if (page === 'start') return;
     clearTimeout(tuneTimer); tuneTimer = null;
     var g = grids[page]; if (!g) return;
@@ -173,11 +223,15 @@ window.BHHome = (function () {
 
   // Zurueck: erst zurueck zum Start-Inhalt, danach entscheidet main.js.
   api.back = function () {
-    if (page !== 'start' || zone === 'content') { clearTimeout(tuneTimer); tuneTimer = null; page = 'start'; zone = 'side'; dayIndex = 0; renderDay(); paint(); return true; }
+    clearTimeout(tuneTimer); tuneTimer = null;
+    if (zone === 'side') { setZone('content'); return true; }
+    if (page !== 'start') { page = 'start'; dayIndex = 0; renderDay(); paint(); return true; }
+    if (dayIndex) { dayIndex = 0; renderDay(); return true; }
     return false;
   };
   tick(); setInterval(tick, 5000);
   weather(); setInterval(weather, 900000);
+  setInterval(departures, 60000);
   api.step = step; api.setState = function (s) { audio = s; paint(); };
   api.setMenu = setMenu; api.setPlaying = setPlaying;
   paint();
