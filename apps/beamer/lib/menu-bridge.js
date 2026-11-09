@@ -16,7 +16,8 @@ let heating = null;
 let events = [];
 let eventsLoaded = false;
 let work = null;
-const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay, rooms, heating, events } });
+let photoAlbums = [];
+const pushMenu = () => gateway.call('beamer_menu_set', { menu: { ...beamerMenu(), schedule, alerts, board, birthdays, onThisDay, rooms, heating, events, photoAlbums } });
 
 // Until 7:00 the substitution plan is set; at 16:05 the display jumps to the next school day.
 const SCHEDULE_AT = ['06:30', '06:45', '07:00', '10:00', '13:00', '16:05'];
@@ -75,6 +76,13 @@ async function refreshEvents() {
   events = next; eventsLoaded = true;
   await pushMenu();
 }
+// Albums for the slideshow, every 6 hours; sent only on change.
+async function refreshAlbums() {
+  const next = JSON.parse(await gateway.call('photos_albums'));
+  if (JSON.stringify(next) === JSON.stringify(photoAlbums)) return;
+  photoAlbums = next;
+  await pushMenu();
+}
 // Work appointments stay out of the beamer menu; only the owner's page reads them.
 async function refreshWork() { work = JSON.parse(await gateway.call('workcal_upcoming')); }
 const workFor = (email) => (work && work.owner === String(email).toLowerCase() ? work.events : []);
@@ -101,6 +109,8 @@ function start(commands) {
   fetchRooms(); setInterval(fetchRooms, 600_000);
   const fetchEvents = () => refreshEvents().catch((e) => console.error(`[kalender] ${e.message}`));
   fetchEvents(); setInterval(fetchEvents, 1_800_000);
+  const fetchAlbums = () => refreshAlbums().catch((e) => console.error(`[fotos] ${e.message}`));
+  fetchAlbums(); setInterval(fetchAlbums, 21_600_000);
   const fetchWork = () => refreshWork().catch((e) => console.error(`[workcal] ${e.message}`));
   fetchWork(); setInterval(fetchWork, 1_800_000);
   const fetchPlan = () => refreshIfStale(true).catch((e) => console.error(`[stundenplan] ${e.message}`));
@@ -116,4 +126,4 @@ function start(commands) {
 
 const snapshot = () => ({ schedule, alerts, board, birthdays, onThisDay, rooms, heating, events, eventsLoaded });
 
-module.exports = { snapshot, refreshWork, workFor, start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, refreshEvents, SCHEDULE_AT };
+module.exports = { snapshot, refreshWork, workFor, start, tick, pushMenu, refreshSchedule, refreshIfStale, refreshAlerts, refreshBoard, refreshBirthdays, refreshRooms, refreshEvents, refreshAlbums, SCHEDULE_AT };

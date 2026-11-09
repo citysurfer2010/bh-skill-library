@@ -2,13 +2,14 @@
 #home[data-time="evening"] { --sky: linear-gradient(180deg, #1e1b4b 0%, #3b2478 22%, #7c3a7f 40%, #c8626a 56%, #f09a5f 72%, #f7c58a 86%); --hill1: #6a4560; --hill2: #47304f; --panel: rgba(38, 28, 66, .9); --plate: rgba(38, 28, 66, .92); --card: #322a58; --card-line: #463c72; --ink: #f6f0fb; --sub: #d0c4e4; --tab: #d0c4e4; --chip: #453b70; --chip-ink: #f6f0fb; --accent: #f7c58a; --bar: #f7a35c; }
 #home[data-time="night"] { --sky: linear-gradient(180deg, #040916 0%, #0a1430 45%, #14244d 78%); --hill1: #0f1c3c; --hill2: #0a142e; --panel: rgba(16, 28, 58, .92); --plate: rgba(16, 28, 58, .94); --card: #182a52; --card-line: #27406a; --ink: #e6eefc; --sub: #9fb2d1; --tab: #9fb2d1; --chip: #24396a; --chip-ink: #e6eefc; --accent: #93c5fd; --bar: #93c5fd; }
 html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #2563eb; color: #0f1f3d; font-family: "Samsung One", "SamsungOne", sans-serif; }
-#home, #screen, #share, #ambient { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
+#home, #screen, #share, #ambient, #photos { display: none; position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
 body.home #home { display: block; background: #0b1730; }
 #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--sky); z-index: 1; transition: transform 340ms cubic-bezier(.32, .72, 0, 1), box-shadow 340ms ease; }
 #home.menu #stage { transform: translateX(340px); box-shadow: -18px 0 50px rgba(0, 0, 0, .4); }
 body.text #screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 120px; box-sizing: border-box; text-align: center; background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 45%, #fdf3e3 100%); color: #fff; }
 body.share #share { display: block; background: #000; object-fit: contain; }
 body.video #ambient { display: block; background: #000; }
+body.photos #photos { display: block; background: #000; overflow: hidden; }
 #player-frame { width: 1920px; height: 1080px; border: 0; pointer-events: none; }
 #vbar { position: absolute; left: 90px; bottom: 70px; padding: 18px 30px; border-radius: 16px; background: rgba(11, 23, 48, .72); color: #fff; font-size: 40px; font-weight: 700; opacity: 0; transition: opacity 200ms; }
 #vbar.on { opacity: 1; }
@@ -217,3 +218,17 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 .grid h2 .g-plan { text-shadow: none; }
 /* Installed version at the bottom of the sidebar */
 #side-ver { position: absolute; left: 44px; bottom: 54px; font-size: 26px; color: rgba(255, 255, 255, .62); }
+#home[data-page="photos"] #grid-photos { display: block; }
+#grid-photos > div { height: 700px; padding: 10px 0 0 10px; margin-left: -10px; overflow: hidden; }
+.tile.album { width: 417px; height: 148px; padding: 20px 24px; }
+.tile.album b { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 36px; }
+.tile.album small { display: block; margin-top: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 30px; font-weight: 400; color: var(--sub); }
+.tile.album.all { background: #1d4ed8; color: #fff; }
+.tile.album.all small { color: #dbeafe; }
+.ph { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: contain; opacity: 0; transition: opacity 1200ms ease-in-out; }
+.ph.on { opacity: 1; }
+#ph-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 120px 90px 56px; color: #fff; font-size: 40px; font-weight: 700; background: linear-gradient(to top, rgba(0, 0, 0, .72), transparent); opacity: 0; transition: opacity 600ms; }
+#ph-cap.on { opacity: 1; }
+#ph-note { position: absolute; right: 90px; bottom: 56px; padding: 14px 28px; border-radius: 14px; background: rgba(0, 0, 0, .72); color: #fff; font-size: 36px; font-weight: 700; opacity: 0; transition: opacity 200ms; }
+#ph-note.on { opacity: 1; }
+#ph-msg { position: absolute; left: 0; right: 0; top: 480px; text-align: center; color: #fff; font-size: 52px; font-weight: 700; }

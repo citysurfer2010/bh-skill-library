@@ -28,7 +28,7 @@ open(p, 'w').write(f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 PY
 chmod 600 $P
 # config.js (address with secret) stays in place, everything else always comes from the repo.
-for f in config.xml index.html main.js home.js style.css icon.png; do install -m 644 -o tizen -g tizen /opt/bh-skill-library/skills/bh-beamer/app/$f $H/bhscreen/$f; done
+for f in config.xml index.html main.js home.js photos.js style.css icon.png; do install -m 644 -o tizen -g tizen /opt/bh-skill-library/skills/bh-beamer/app/$f $H/bhscreen/$f; done
 rm -rf $H/bhscreen/.buildResult $H/bhscreen/*signature*.xml $H/bhscreen/BHScreen.wgt
 run "cd bhscreen && $T build-web -- ." >/dev/null 2>&1
 run "cd bhscreen && $T package -t wgt -s BH -- .buildResult" 2>&1 | grep -iE 'error|Package File' | tail -1 | cut -c1-120

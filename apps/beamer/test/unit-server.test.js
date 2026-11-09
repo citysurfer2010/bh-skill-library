@@ -121,3 +121,17 @@ test('LLM: fehlendes Token und Gateway-Fehler sind klare Fehler ohne Token im Te
   );
   await assert.rejects(llm.chat({ messages: [] }), /messages required/);
 });
+
+test('Fotos: Anfragen werden gedrosselt, Start geht immer durch', async () => {
+  const gateway = require('../lib/gateway');
+  const stream = require('../lib/photo-stream');
+  const calls = [];
+  gateway.setCaller(async (name, args) => { calls.push([name, args.start]); return '{}'; });
+  try {
+    stream.reset();
+    stream.handle('../boese'); stream.handle('all');
+    stream.handle('next');
+    stream.handle('a0123456789ab');
+    assert.deepEqual(calls, [['photos_push_next', 'all'], ['photos_push_next', 'a0123456789ab']]);
+  } finally { gateway.setCaller(null); stream.reset(); }
+});

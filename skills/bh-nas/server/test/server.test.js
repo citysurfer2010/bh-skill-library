@@ -21,7 +21,7 @@ function fake(handler) {
 }
 
 test('nur Lesewerkzeuge', () => {
-  assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['list', 'list_shares', 'read_text', 'search']);
+  assert.deepEqual([...require('../tools/index.js').TOOL_NAMES].sort(), ['health', 'list', 'list_shares', 'read_text', 'search']);
 });
 
 test('ohne Verbindung klare Meldung', async () => {
@@ -84,3 +84,89 @@ test('Fehlendes Zertifikat: verstaendliche Meldung statt TLS-Fehler', async () =
   assert.equal(r.isError, true); assert.match(text(r), /LIMITATIONS/);
 });
 
+
+const pick = require('../lib/photo-pick.js');
+const { summarize } = require('../lib/health.js');
+const photo = (name, size, mtime = 0) => ({ name, path: `/B/a/${name}`, isdir: false, additional: { size, time: { mtime } } });
+const KB = 1024;
+
+test('Alben: nur mit Jahreszahl, Beschriftung lesbar', () => {
+  assert.equal(pick.parseAlbum('Finn_Unsortiert'), null);
+  assert.equal(pick.parseAlbum('#recycle'), null);
+  const a = pick.parseAlbum('2006_07 Ägypten');
+  assert.equal(a.label, 'Ägypten'); assert.equal(a.when, 'Juli 2006');
+  assert.equal(pick.parseAlbum('2005-2006 Winter').when, '2005–2006');
+  assert.equal(pick.parseAlbum('2006-11 Geb').label, 'Geb');
+  assert.equal(pick.parseAlbum('2007 Sonstiges').when, '2007');
+  assert.match(a.id, /^a[0-9a-f]{12}$/);
+});
+
+test('Auswahl: keine Kopien, auch umbenannt und albenübergreifend', () => {
+  const seen = new Set([900 * KB]);
+  const kept = pick.withoutDuplicates([photo('a.jpg', 500 * KB), photo('kopie-von-a.JPG', 500 * KB), photo('alt.jpg', 900 * KB), photo('b.jpg', 700 * KB)], seen);
+  assert.deepEqual(kept.map((f) => f.name), ['a.jpg', 'b.jpg']);
+});
+
+test('Auswahl: Serienbilder, Vorschauen und fremde Formate fallen weg', () => {
+  const kept = pick.withoutDuplicates([photo('1.jpg', 1000 * KB, 100), photo('2.jpg', 1010 * KB, 102), photo('3.jpg', 1500 * KB, 103), photo('klein.jpg', 20 * KB), photo('x.png', 900 * KB), photo('y.db', 900 * KB), photo('.z.jpg', 900 * KB)], new Set());
+  assert.deepEqual(kept.map((f) => f.name), ['1.jpg', '3.jpg']);
+});
+
+test('Auswahl: grosse Alben gleichmaessig verteilt', () => {
+  const list = Array.from({ length: 100 }, (_, i) => i);
+  const s = pick.spread(list, 5);
+  assert.equal(s.length, 5); assert.equal(s[0], 0); assert.equal(s[4], 99);
+  assert.equal(new Set(s).size, 5);
+  assert.deepEqual(pick.spread([1, 2], 5), [1, 2]);
+});
+
+function fakeNas(albums) {
+  connect();
+  dsm.setTransport(async (p) => {
+    if (p.method === 'login') return json({ success: true, data: { sid: 'S' } });
+    if (p.api === 'SYNO.FileStation.Download') return { type: 'image/jpeg', body: Buffer.from([0xFF, 0xD8, 1]), truncated: false };
+    if (p.folder_path === '/Bilder') return json({ success: true, data: { files: Object.keys(albums).map((n) => ({ name: n, path: `/Bilder/${n}`, isdir: true })) } });
+    const n = p.folder_path.replace('/Bilder/', '');
+    return json({ success: true, data: { files: albums[n].map((f) => ({ ...f, path: `/Bilder/${n}/${f.name}` })) } });
+  });
+}
+
+test('Slideshow: Album laeuft ohne Doppelte und endet', async () => {
+  const photos = require('../lib/photos.js'); const got = [];
+  photos.reset(async (p) => { got.push(p); });
+  fakeNas({ '2006_07 Ägypten': [photo('a.jpg', 500 * KB), photo('b.jpg', 500 * KB), photo('c.jpg', 800 * KB)] });
+  const [album] = await photos.albums();
+  await photos.pushNext(album.id); await photos.pushNext('next');
+  const end = await photos.pushNext('next');
+  assert.deepEqual(end, { done: true, shown: 2 });
+  assert.equal(got.length, 3); assert.equal(got[0].caption, 'Ägypten · Juli 2006'); assert.equal(got[2].done, true);
+  assert.equal(got[0].data, Buffer.from([0xFF, 0xD8, 1]).toString('base64'));
+});
+
+test('Slideshow: ein Album ohne Fotos wird als leer gemeldet', async () => {
+  const photos = require('../lib/photos.js'); const got = [];
+  photos.reset(async (p) => { got.push(p); });
+  fakeNas({ '2001 Leer': [photo('x.db', 900 * KB)] });
+  const [album] = await photos.albums();
+  await photos.pushNext(album.id);
+  assert.deepEqual(got, [{ done: true, empty: true }]);
+});
+
+test('Slideshow: Ergebnis enthaelt nie Bilddaten, unbekanntes Album wird abgelehnt', async () => {
+  const photos = require('../lib/photos.js');
+  photos.reset(async () => {});
+  fakeNas({ '2006 A': [photo('a.jpg', 500 * KB)] });
+  assert.deepEqual(await photos.pushNext('all'), { caption: 'A · 2006' });
+  await assert.rejects(photos.pushNext('a000000000000'), /nicht gefunden/);
+});
+
+test('Zustand: Warnungen und keine Seriennummern', () => {
+  const r = summarize({ system: { model: 'DS', firmware_ver: 'x', sys_temp: 40, sys_tempwarn: false, up_time: '12:00:00', serial: 'GEHEIM' },
+    storage: { volumes: [{ id: 'v1', status: 'normal', size: { total: '100', used: '90' } }], storagePools: [{ id: 'p', status: 'normal' }], disks: [{ id: 'sda', status: 'normal', smart_status: 'failing', temp: 60, serial: 'GEHEIM' }] },
+    backups: { total: 0 }, upgrade: { available: true, version: 'DSM 9' } });
+  assert.equal(JSON.stringify(r).includes('GEHEIM'), false);
+  assert.equal(r.warnings.length, 4);
+  assert.deepEqual(r.update, { available: true, version: 'DSM 9' });
+  const fine = summarize({ system: { sys_temp: 40, up_time: '1:0:0' }, storage: { volumes: [], storagePools: [], disks: [{ id: 'a', status: 'normal', smart_status: 'normal', temp: 35 }] }, backups: { total: 1 }, upgrade: null });
+  assert.deepEqual(fine.warnings, []); assert.equal(fine.update, null);
+});
