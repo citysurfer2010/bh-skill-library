@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-workspace",
+  "name": "bh-workspace",
+  "version": "26.11.1",
+  "description": "Baut für jeden User Arbeitsumgebung, Web-Terminal und Subdomain",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}

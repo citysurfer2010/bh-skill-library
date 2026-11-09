@@ -24,7 +24,7 @@ def set_env(key, value):
 
 env = read_env()
 domain = env["EDGE_DOMAIN"]
-hosts = [f"auth.{domain}", f"apps.{domain}"]
+hosts = [f"auth.{domain}", f"apps.{domain}", f"*.{domain}"]
 
 
 def api(method, path, body=None):

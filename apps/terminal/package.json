@@ -1,0 +1,31 @@
+{
+  "name": "terminal",
+  "version": "26.11.1",
+  "private": true,
+  "description": "Web-Terminal in deine Arbeitsumgebung",
+  "main": "server.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server.js",
+    "test": "bash test/run-all.sh"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.0.2",
+    "ssh2": "^1.16.0",
+    "ws": "^8.18.0",
+    "@xterm/xterm": "^5.5.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/addon-webgl": "^0.18.0",
+    "@xterm/addon-search": "^0.15.0",
+    "@xterm/addon-web-links": "^0.11.0",
+    "@xterm/addon-image": "^0.8.0",
+    "@xterm/addon-unicode11": "^0.8.0",
+    "@xterm/addon-clipboard": "^0.1.0"
+  },
+  "devDependencies": {
+    "c8": "^10.1.3"
+  }
+}

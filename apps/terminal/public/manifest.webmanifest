@@ -1,0 +1,17 @@
+{
+  "name": "Terminal",
+  "short_name": "Terminal",
+  "description": "Web-Terminal in deine Arbeitsumgebung",
+  "lang": "de",
+  "start_url": "/terminal/",
+  "scope": "/terminal/",
+  "display": "standalone",
+  "background_color": "#1d4ed8",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    { "src": "/terminal/favicon.svg?v=1", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/terminal/branding/icon-192.png?v=1", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/terminal/branding/icon-512.png?v=1", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/terminal/branding/icon-maskable-512.png?v=1", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}

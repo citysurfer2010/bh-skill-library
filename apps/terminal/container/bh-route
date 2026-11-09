@@ -1,0 +1,17 @@
+#!/bin/bash
+# Legt fest, unter welchem Pfad eine App auf der eigenen Subdomain erreichbar ist.
+#   bh-route add /spiel 3001 | bh-route rm /spiel | bh-route list
+set -eu
+F=$HOME/.config/bh-apps/routes.json
+mkdir -p "$(dirname "$F")"; [ -s "$F" ] || echo '{"routes":[]}' >"$F"
+case "${1:-list}" in
+  add)
+    p=${2:-}; port=${3:-}
+    [[ $p =~ ^/([a-z0-9-]+(/[a-z0-9-]+)*)?$ ]] || { echo "Pfad wie /spiel angeben" >&2; exit 1; }
+    [[ $port =~ ^[0-9]+$ ]] && [ "$port" -ge 1024 ] && [ "$port" -le 65535 ] && [ "$port" != 2222 ] && [ "$port" != 8088 ] || { echo "Port von 1024 bis 65535, nicht 2222 oder 8088" >&2; exit 1; }
+    jq --arg p "$p" --argjson n "$port" '.routes |= (map(select(.path != $p)) + [{path: $p, port: $n}])' "$F" >"$F.new"; mv "$F.new" "$F"
+    echo "$p -> Port $port" ;;
+  rm) jq --arg p "${2:-}" '.routes |= map(select(.path != $p))' "$F" >"$F.new"; mv "$F.new" "$F" ;;
+  list) jq -r '.routes[] | "\(.path)\t\(.port)"' "$F" ;;
+  *) sed -n '3p' "$0" >&2; exit 1 ;;
+esac
