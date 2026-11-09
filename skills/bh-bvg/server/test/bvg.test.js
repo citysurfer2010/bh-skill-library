@@ -22,3 +22,9 @@ test('Abfahrten: Verspätung in Minuten, Ausfall, Kennung geprüft, Fehler gemel
   b.setFetch(async () => { throw new Error('x'); });
   await assert.rejects(b.departures('900024104'), /nicht erreichbar/);
 });
+
+test('Störungen: nur beobachtete Linien, Ausfälle und Warnungen, keine Hinweise', async () => {
+  b.setFetch(async () => res({ departures: [{ line: { name: 'S5' }, cancelled: true }, { line: { name: 'S7' }, remarks: [{ type: 'warning', summary: '<b>Bauarbeiten</b> am Zoo' }, { type: 'hint', text: 'Fahrrad' }] }, { line: { name: 'U2' }, cancelled: true }] }));
+  const a = await b.alerts([{ id: '1', label: 'Stadtbahn', lines: /^S(5|7)$/, products: 'suburban' }]);
+  assert.deepEqual(a, [{ label: 'Stadtbahn', text: 'S5 fällt aus' }, { label: 'Stadtbahn', text: 'Bauarbeiten am Zoo' }]);
+});

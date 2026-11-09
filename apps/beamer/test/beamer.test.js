@@ -177,3 +177,12 @@ test('Stundenplan: beim Öffnen frisch, aber höchstens alle 2 Minuten', async (
   assert.equal(r.status, 200); assert.equal((await r.json()).label, 'Heute');
   assert.equal((await t.call('/api/schedule')).status, 401);
 });
+
+test('Störungen: nur bei Änderung ans Menü', async () => {
+  const bridge = require('../lib/menu-bridge');
+  let pushes = 0; let list = [{ label: 'Stadtbahn', text: 'S5 fällt aus' }];
+  gateway.setCaller(async (name) => { if (name === 'bvg_alerts') return JSON.stringify(list); if (name === 'beamer_menu_set') pushes++; return 'ok'; });
+  await bridge.refreshAlerts(); await bridge.refreshAlerts();
+  assert.equal(pushes, 1);
+  list = []; await bridge.refreshAlerts(); assert.equal(pushes, 2);
+});

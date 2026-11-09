@@ -25,4 +25,29 @@ async function departures(stop, { minutes = 30, results = 8 } = {}) {
   return (data.departures || []).map((d) => ({ line: d.line?.name || '?', direction: d.direction || '', when: d.when || d.plannedWhen, delayMinutes: d.delay ? Math.round(d.delay / 60) : 0, cancelled: !!d.cancelled }));
 }
 
-module.exports = { stops, departures, setFetch };
+// Was die Familie betrifft: Schulweg, Ringbahn Messe Nord, Stadtbahn ab Charlottenburg.
+const WATCH = [
+  { id: '900024104', label: 'M49 Amtsgerichtsplatz', lines: /^M49$/, products: '' },
+  { id: '900024106', label: 'Ringbahn Messe Nord', lines: /^S4[12]$/, products: 'suburban' },
+  { id: '900024101', label: 'Stadtbahn Charlottenburg', lines: /^S(3|5|7|9)$/, products: 'suburban' },
+];
+const plain = (t) => String(t || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 130);
+
+async function alerts(watch = WATCH) {
+  const out = [];
+  for (const w of watch) {
+    const data = await get(`/stops/${w.id}/departures?${new URLSearchParams({ duration: '40', results: '30', remarks: 'true', ...(w.products ? { subway: 'false', bus: 'false', tram: 'false', regional: 'false', express: 'false', ferry: 'false' } : {}) })}`);
+    const list = (data.departures || []).filter((d) => w.lines.test(d.line?.name || ''));
+    const gone = [...new Set(list.filter((d) => d.cancelled).map((d) => d.line.name))];
+    if (gone.length) out.push({ label: w.label, text: `${gone.join(', ')} ${gone.length > 1 ? 'fallen' : 'fällt'} aus` });
+    const seen = new Set();
+    for (const d of list) for (const r of d.remarks || []) {
+      if (r.type !== 'warning') continue;
+      const text = plain(r.summary || r.text);
+      if (text && !seen.has(text)) { seen.add(text); out.push({ label: w.label, text }); }
+    }
+  }
+  return out;
+}
+
+module.exports = { stops, departures, alerts, setFetch };
