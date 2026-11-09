@@ -9,6 +9,7 @@ const { prepare, CONF, START_ROUTER } = require('./bootstrap');
 
 const TAB = /^[a-z0-9]{1,12}$/;
 const HIGH_WATER = 1 << 20;
+const MAX_EARLY = 256;
 const size = (v, fallback, max) => { const n = parseInt(v, 10); return n > 0 && n <= max ? n : fallback; };
 const readyDone = new Set();
 
@@ -36,7 +37,15 @@ async function stillLoggedIn(cookie, email) {
   } catch { return true; } // A login outage does not end running work.
 }
 
-async function bridge(ws, req, user, name, tab, cols, rows) {
+// Setting up the container connection and tmux takes seconds; input sent meanwhile would otherwise be lost.
+function holdEarly(ws) {
+  const early = [];
+  const hold = (m) => { if (early.length < MAX_EARLY) early.push(m); };
+  ws.on('message', hold);
+  return (handler) => { ws.off('message', hold); ws.on('message', handler); early.splice(0).forEach(handler); };
+}
+
+async function bridge(ws, req, user, name, tab, cols, rows, release) {
   const conn = await connect(name);
   if (!readyDone.has(name)) { await prepare(await sftpOf(conn)); readyDone.add(name); }
   conn.exec(START_ROUTER, (e, s) => { if (!e) s.on('data', () => {}).resume(); });
@@ -51,12 +60,13 @@ async function bridge(ws, req, user, name, tab, cols, rows) {
   stream.stderr.on('data', (d) => { if (ws.readyState === ws.OPEN) ws.send(d); });
   stream.on('close', close);
   ws.on('close', close);
-  ws.on('message', (raw) => {
+  const onMessage = (raw) => {
     let m; try { m = JSON.parse(raw); } catch { return; }
     if (m.t === 'i' && typeof m.d === 'string') stream.write(m.d);
     else if (m.t === 'r') stream.setWindow(size(m.r, rows, 500), size(m.c, cols, 1000), 0, 0);
     else if (m.t === 'k') conn.exec(`tmux kill-session -t web-${tab}`, () => close());
-  });
+  };
+  release(onMessage);
   let alive = true; ws.on('pong', () => { alive = true; });
   const ping = setInterval(() => { if (!alive) return ws.terminate(); alive = false; ws.ping(); return undefined; }, 30_000);
   // Whoever logs out also loses open terminals.
@@ -76,7 +86,7 @@ function attach(server) {
     if (!TAB.test(tab)) return refuse(socket, 400);
     if (state !== 'ready') return refuse(socket, 409);
     return wss.handleUpgrade(req, socket, head, (ws) => {
-      bridge(ws, req, user, name, tab, size(url.searchParams.get('c'), 100, 1000), size(url.searchParams.get('r'), 30, 500)).catch((e) => {
+      bridge(ws, req, user, name, tab, size(url.searchParams.get('c'), 100, 1000), size(url.searchParams.get('r'), 30, 500), holdEarly(ws)).catch((e) => {
         console.error(`[terminal] ${name}: ${e.message}`);
         try { ws.close(4500, 'Verbindung fehlgeschlagen'); } catch { /* already closed */ }
       });
@@ -84,4 +94,4 @@ function attach(server) {
   });
 }
 
-module.exports = { attach, sameOrigin, TAB };
+module.exports = { attach, sameOrigin, holdEarly, TAB };

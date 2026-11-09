@@ -30,7 +30,7 @@ window.TermSession = (() => {
       ws.onmessage = (e) => term.write(new Uint8Array(e.data));
       ws.onclose = (e) => {
         if (closed) return;
-        if (e.code === 4401) { location.href = `/login?next=${encodeURIComponent(location.pathname)}`; return; }
+        if (e.code === 4401) { location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`; return; }
         onState(id, 'wait'); tries += 1;
         setTimeout(connect, Math.min(500 * 2 ** tries, 5000));
       };
