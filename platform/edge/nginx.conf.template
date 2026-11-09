@@ -45,7 +45,22 @@ server {
     return 302 /login?next=$request_uri;
   }
 
-  location = /heute { return 302 /beamer/heute; }
+  # Reiner Anzeige-Screen; technisch liefert ihn die Beamer-App, weil er deren Daten zeigt.
+  location = /heute {
+    auth_request /_auth;
+    auth_request_set $u_email $upstream_http_x_auth_email;
+    auth_request_set $u_name $upstream_http_x_auth_name;
+    auth_request_set $u_role $upstream_http_x_auth_role;
+    error_page 401 = @login;
+    set $app http://bh-apps:3300;
+    rewrite ^ /heute break;
+    proxy_pass $app;
+    proxy_set_header Host $host;
+    proxy_set_header X-User-Email $u_email;
+    proxy_set_header X-User-Name $u_name;
+    proxy_set_header X-User-Role $u_role;
+    proxy_set_header X-Forwarded-Proto https;
+  }
 
   include /etc/nginx/conf.d/apps/*.inc;
 
