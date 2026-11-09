@@ -237,6 +237,8 @@ window.BHHome = (function () {
   tick(); setInterval(tick, 5000);
   weather(); setInterval(weather, 900000);
   setInterval(renderBoard, 20000);
+  // Kanal-Wippe: Bei laufendem Radio blaettern, sonst den ersten Sender starten.
+  api.channel = function (dir) { var st = step(dir); if (!st) return; if (api.isRadioOn()) tuneSoon(st); else api.onTune(st); };
   api.step = step; api.setState = function (s) { audio = s; paint(); };
   api.setMenu = setMenu; api.setPlaying = setPlaying;
   paint();
