@@ -12,6 +12,8 @@ const KEEP_LOCAL = 700; // the download skips files it still finds here
 const ALREADY_THERE = new Set([414, 1805]);
 
 const inbox = () => process.env.BH_ICLOUD_INBOX;
+// Touching this file stops all background work on the Synology, e.g. while it recovers from an update.
+const nasPaused = () => fs.existsSync(path.join(process.env.BH_FAMILY_DIR || '/nonexistent', 'nas-pause'));
 let db = null;
 function state() {
   if (db) return db;
@@ -46,6 +48,7 @@ function prune(files) {
 }
 
 async function step() {
+  if (nasPaused()) return { paused: true };
   const files = localFiles(); const seen = known();
   const next = files.find((f) => !seen.has(f.rel));
   if (!next) return { done: true, removedLocal: prune(files) };

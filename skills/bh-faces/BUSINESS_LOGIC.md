@@ -13,5 +13,6 @@
 - Kopien (gleiche Dateigröße) werden nur einmal analysiert.
 - Die Beamer-App treibt den Index von 23 bis 7 Uhr an, ein Schritt nach dem anderen. Läuft gerade die Slideshow, pausiert der Index, damit die kleine Synology nicht doppelt belastet wird.
 - Der Container ist auf 0,7 CPU-Kerne und 900 MB begrenzt.
+- Die DS215j hat nur 512 MB Arbeitsspeicher. Zwischen zwei Bildern liegen deshalb 5 Sekunden. Die Datei `nas-pause` im Familienordner stoppt alle Hintergrundarbeit auf der Synology, etwa während sie sich von einem Update erholt.
 - Bilder werden für die Analyse auf höchstens 1280 Pixel verkleinert, Gesichter unter 48 Pixel zählen nicht.
 - Ändert sich ein Album, wird es neu eingelesen; bereits analysierte Bilder bleiben.

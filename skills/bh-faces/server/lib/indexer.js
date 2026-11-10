@@ -4,6 +4,9 @@ const { call, download } = require('../../../bh-nas/server/lib/dsm.js');
 const { parseAlbum, isHidden, usable } = require('../../../bh-nas/server/lib/photo-pick.js');
 const store = require('./store.js');
 
+// Touching this file stops all background work on the Synology, e.g. while it recovers from an update.
+const nasPaused = () => require('fs').existsSync(require('path').join(process.env.BH_FAMILY_DIR || '/nonexistent', 'nas-pause'));
+
 const ALBUM_LIST_TTL_MS = 24 * 3600_000;
 const MAX_DEPTH = 2;
 const MAX_FILE_BYTES = 14 * 1024 * 1024;
@@ -57,6 +60,7 @@ async function analyzePhoto(photo) {
 
 /** One step: read a new album, or analyse the next picture. New albums come first, so the queue reflects everything known. */
 async function step() {
+  if (nasPaused()) return { paused: true };
   await refreshAlbums();
   const album = store.nextAlbum();
   if (album) return scan(album);
