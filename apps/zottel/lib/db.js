@@ -46,11 +46,23 @@ function migrate(conn) {
     CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT NOT NULL, text TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(user_email, id);
     CREATE TABLE IF NOT EXISTS trusted_tools (user_email TEXT NOT NULL, tool TEXT NOT NULL, PRIMARY KEY (user_email, tool));
+    CREATE TABLE IF NOT EXISTS routines (
+      id TEXT PRIMARY KEY, user_email TEXT NOT NULL, title TEXT NOT NULL, prompt TEXT NOT NULL, time TEXT NOT NULL, days TEXT NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1, next_run TEXT, last_run TEXT, chat_id TEXT, created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_routines_due ON routines(active, next_run);
+    CREATE INDEX IF NOT EXISTS idx_routines_user ON routines(user_email);
+    CREATE TABLE IF NOT EXISTS lessons (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT NOT NULL, area TEXT NOT NULL DEFAULT 'general', text TEXT NOT NULL,
+      status TEXT NOT NULL, signals INTEGER NOT NULL DEFAULT 1, contradictions INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_lessons_user_status ON lessons(user_email, status, signals DESC);
     CREATE TABLE IF NOT EXISTS profiles (user_email TEXT PRIMARY KEY, setup_chat_id TEXT, created_at TEXT NOT NULL);
   `);
   // Columns added after the first release; ALTER TABLE has no IF NOT EXISTS.
   const has = (table, column) => conn.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
   if (!has('chats', 'kind')) conn.exec("ALTER TABLE chats ADD COLUMN kind TEXT NOT NULL DEFAULT 'chat'");
+  if (!has('chats', 'unread')) conn.exec('ALTER TABLE chats ADD COLUMN unread INTEGER NOT NULL DEFAULT 0');
   if (!has('messages', 'hidden')) conn.exec('ALTER TABLE messages ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0');
 }
 

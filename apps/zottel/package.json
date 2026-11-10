@@ -1,6 +1,6 @@
 {
   "name": "zottel",
-  "version": "26.11.3",
+  "version": "26.11.4",
   "private": true,
   "description": "Zottel",
   "main": "server.js",

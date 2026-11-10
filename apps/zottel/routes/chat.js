@@ -3,6 +3,8 @@
 const express = require('express');
 const store = require('../lib/store');
 const agent = require('../lib/agent');
+const routines = require('../lib/routines');
+const lessons = require('../lib/lessons');
 const { subscribe } = require('../lib/events');
 
 const MAX_TEXT = 20_000;
@@ -27,9 +29,9 @@ function buildRouter() {
 
   r.get('/chats', (req, res) => res.json({ chats: store.listChats(req.user.email) }));
   r.post('/chats', (req, res) => res.status(201).json(store.createChat(req.user.email)));
-  r.get('/chats/:id', owned, (req, res) => res.json({
+  r.get('/chats/:id', owned, (req, res) => (store.setUnread(req.chat.id, false), res.json({
     chat: { id: req.chat.id, title: req.chat.title, mode: req.chat.mode }, messages: store.visibleMessages(req.chat.id), cards: store.cardsOf(req.chat.id), steps: store.stepsOf(req.chat.id), busy: agent.isRunning(req.chat.id),
-  }));
+  })));
   r.patch('/chats/:id', owned, (req, res) => {
     const { title, mode } = req.body || {};
     if (mode !== undefined) { if (!['do', 'look'].includes(mode)) return res.status(400).json({ error: 'Unbekannter Modus' }); store.setMode(req.chat.id, mode); }
@@ -74,6 +76,20 @@ function buildRouter() {
     if (p && !req.body?.restart && store.chatOf(req.user.email, p.setup_chat_id)) return res.json({ chatId: p.setup_chat_id });
     return res.status(201).json({ chatId: agent.startSetup(req.user.email).id });
   });
+
+  r.get('/routines', (req, res) => res.json({ routines: routines.list(req.user.email) }));
+  r.patch('/routines/:id', (req, res) => (routines.setActive(req.user.email, req.params.id, !!req.body?.active) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' })));
+  r.delete('/routines/:id', (req, res) => (routines.remove(req.user.email, req.params.id) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' })));
+  r.post('/routines/:id/run', (req, res) => {
+    const routine = routines.get(req.user.email, req.params.id);
+    if (!routine) return res.status(404).json({ error: 'Nicht gefunden' });
+    require('../lib/db').getDb().prepare('UPDATE routines SET next_run = ? WHERE id = ?').run(new Date(0).toISOString(), routine.id);
+    agent.runRoutines().catch((e) => console.error(`[zottel] ${e.message}`));
+    return res.status(202).end();
+  });
+  r.get('/lessons', (req, res) => res.json({ lessons: lessons.list(req.user.email) }));
+  r.patch('/lessons/:id', (req, res) => (lessons.setStatus(req.user.email, req.params.id, req.body?.status) ? res.status(204).end() : res.status(400).json({ error: 'Es wirken schon 5 Regeln. Pausiere zuerst eine.' })));
+  r.delete('/lessons/:id', (req, res) => (lessons.remove(req.user.email, req.params.id) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' })));
 
   r.get('/memories', (req, res) => res.json({ memories: store.memoriesOf(req.user.email) }));
   r.delete('/memories/:id', (req, res) => (store.forgetMemory(req.user.email, Number(req.params.id)) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' })));

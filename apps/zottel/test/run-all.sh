@@ -24,8 +24,8 @@ echo "Testinstanz auf Port $PORT"
 
 FAIL=0
 PASSED=0
-SUITES=("Validate" "Smoke" "RBAC" "Restart" "E2E" "Unit" "No-Native-Select" "No-Blocking-Resources" "Branding" "BH-Table" "Agent")
-FILES=("validate" "smoke" "rbac" "restart" "e2e" "unit-server" "no-native-select" "no-blocking-resources" "branding" "no-bare-table" "unit-agent")
+SUITES=("Validate" "Smoke" "RBAC" "Restart" "E2E" "Unit" "No-Native-Select" "No-Blocking-Resources" "Branding" "BH-Table" "Agent" "Learning")
+FILES=("validate" "smoke" "rbac" "restart" "e2e" "unit-server" "no-native-select" "no-blocking-resources" "branding" "no-bare-table" "unit-agent" "unit-learning")
 TOTAL_OK=0
 for i in "${!FILES[@]}"; do
   log="$TEST_TMP/${FILES[$i]}.log"

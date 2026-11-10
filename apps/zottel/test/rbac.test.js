@@ -15,6 +15,8 @@ const PROTECTED = [
   ['GET', '/api/chats', 'user'],
   ['GET', '/api/memories', 'user'],
   ['GET', '/api/setup', 'user'],
+  ['GET', '/api/routines', 'user'],
+  ['GET', '/api/lessons', 'user'],
   ['GET', '/api/me', 'user'],
   ['GET', '/api/me/api-keys', 'user'],
   ['GET', '/admin', 'admin'],

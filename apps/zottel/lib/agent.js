@@ -4,7 +4,8 @@ const store = require('./store');
 const gateway = require('./gateway');
 const llm = require('./chat-llm');
 const { isSafe } = require('./tool-policy');
-const { LOCAL_TOOLS, findTools } = require('./agent-tools');
+const { LOCAL_TOOLS } = require('./agent-tools');
+const { runLocal } = require('./local-tools');
 const { publish } = require('./events');
 const { systemPrompt } = require('./prompt');
 
@@ -41,13 +42,6 @@ async function compact(chat) {
   store.compactUpTo(chat.id, messages[end - 1].id);
 }
 
-async function runLocal(chat, email, name, args) {
-  if (name === 'find_tools') return findTools(email, args.query);
-  if (name === 'remember') return `Gemerkt (Nr. ${store.addMemory(email, args.text)}).`;
-  if (name === 'forget') return store.forgetMemory(email, Number(args.id)) ? 'Vergessen.' : 'Diesen Eintrag gibt es nicht.';
-  if (name === 'show_steps') { store.setSteps(chat.id, args.steps || []); publish(chat.id, { type: 'steps', steps: store.stepsOf(chat.id) }); return 'Angezeigt.'; }
-  return `Unbekanntes Werkzeug: ${name}`;
-}
 
 async function runPlatformTool(chat, email, call, name, args) {
   publish(chat.id, { type: 'tool', state: 'start', name });
@@ -141,4 +135,17 @@ async function decide(card, email, decision) {
   if (!store.pendingCount(card.chat_id)) await loop(card.chat_id, email);
 }
 
-module.exports = { sendMessage, decide, startSetup, isRunning, stop };
+/** Starts every routine that is due. Changes still wait for a card. */
+async function runRoutines(at = new Date()) {
+  const routines = require('./routines');
+  for (const r of routines.due(at)) {
+    if (r.chat_id && running.has(r.chat_id)) continue;
+    const chat = (r.chat_id && store.chatOf(r.user_email, r.chat_id)) || store.createRoutineChat(r.user_email, r.title);
+    routines.markRun(r.id, chat.id, at);
+    store.addMessage(chat.id, { role: 'user', content: `Routine „${r.title}“: ${r.prompt}` });
+    store.setUnread(chat.id, true);
+    loop(chat.id, r.user_email).catch((e) => console.error(`[zottel] ${e.message}`));
+  }
+}
+
+module.exports = { sendMessage, decide, startSetup, runRoutines, isRunning, stop };

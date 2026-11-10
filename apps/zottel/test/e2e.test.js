@@ -106,3 +106,11 @@ test('Einrichtung: einmal je User, Neustart auf Wunsch', async () => {
   assert.notEqual(again.chatId, first.chatId);
   assert.equal((await (await get('/api/setup', kid)).json()).chatId, again.chatId);
 });
+
+test('Routinen und Gelerntes gehören nur ihrem Besitzer', async () => {
+  const other = { 'x-user-email': 'ben@beispiel.de', 'x-user-role': 'user' };
+  assert.deepEqual((await (await get('/api/routines', user)).json()).routines.filter((r) => r.user_email !== user['x-user-email']), []);
+  assert.equal((await post('/api/routines/gibtsnicht/run', other)).status, 404);
+  assert.equal((await post('/api/lessons/999999', other, { status: 'active' }, 'PATCH')).status, 400);
+  assert.equal((await fetch(`${BASE}/api/lessons/999999`, { method: 'DELETE', headers: other })).status, 404);
+});
