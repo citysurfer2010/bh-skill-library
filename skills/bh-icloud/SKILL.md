@@ -52,7 +52,7 @@ Bilder kommen auf zwei Wegen nach `/photo/iCloud-Matti` auf der Synology.
 
 1. https://apps.familiebiskup.de/profile öffnen, unter „Verbundene Dienste“ bei **iCloud-Fotos** auf **Anmelden** gehen.
 2. Apple-Passwort und 2FA-Code dort eingeben. Nie im Chat danach fragen.
-3. Nötig nach einem Neustart des Containers und etwa alle zwei Monate.
+3. Nötig etwa alle zwei Monate, wenn Apple die Sitzung beendet. Ein Neustart des Containers allein braucht keine neue Anmeldung.
 
 Die Zeile sieht nur der Besitzer (`BH_WORK_CALENDAR_OWNER`).
 
