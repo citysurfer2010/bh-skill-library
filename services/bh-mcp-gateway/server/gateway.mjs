@@ -43,7 +43,15 @@ async function handleRpc(registry, user, msg) {
   }
 }
 
-export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLogin, connectSecret = "", fetchGoogle = fetch, loginIcloud = icloudLogin }) {
+// Platform apps with an assistant run tools as the signed-in person. Only the app account may ask, and only with the secret.
+function actingUser(req, caller, secret) {
+  const wanted = req.headers["x-act-as"];
+  if (wanted === undefined) return caller;
+  if (caller !== "bh-apps" || !secretOk(secret, req.headers["x-act-as-secret"])) return null;
+  return /^[a-z][a-z0-9-]{1,30}$/.test(wanted) && !wanted.startsWith("bh-") ? wanted : null;
+}
+
+export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLogin, connectSecret = "", actAsSecret = "", fetchGoogle = fetch, loginIcloud = icloudLogin }) {
   const pool = new BackendPool(usersDir);
   const registry = new Registry(servers, pool);
   const server = http.createServer(async (req, res) => {
@@ -67,7 +75,7 @@ export function createGateway({ servers, tokensFile, usersDir, loginNas = nasLog
         if (status === 200) pool.stopUser(body.user);
         return send(res, status, rest);
       }
-      const user = userFromRequest(req, tokensFile);
+      const user = actingUser(req, userFromRequest(req, tokensFile), actAsSecret);
       if (!user) return send(res, 401, { error: "unauthorized" });
       if (req.method === "POST" && req.url === "/connect/github") {
         const { status, ...rest } = await storeGithubToken(pool.homeOf(user), JSON.parse(await readBody(req)).token);
@@ -102,5 +110,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     tokensFile: process.env.MCP_TOKENS_FILE || "/etc/mcp-gateway/tokens/user-tokens.json",
     usersDir: process.env.MCP_USERS_DIR || "/var/lib/mcp-gateway/users",
     connectSecret: process.env.BH_CONNECT_SECRET || "",
+    actAsSecret: process.env.BH_ACT_AS_SECRET || "",
   }).listen(18800, "0.0.0.0", () => console.log("bh-mcp-gateway auf :18800"));
 }
