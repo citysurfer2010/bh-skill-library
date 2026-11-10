@@ -293,8 +293,8 @@ window.BHHome = (function () {
     if (chip) chipsEl.scrollLeft = Math.max(0, chip.offsetLeft - 400);
     chipsEl.className = (chipsEl.scrollLeft > 0 ? 'more-l ' : '') + (chipsEl.scrollLeft + chipsEl.clientWidth < chipsEl.scrollWidth - 1 ? 'more-r' : '');
   }
-  function closeSearch() { searchEl.className = ''; searchEl.blur(); paint(); }
-  function openSearch() { searchBefore = searchText; searchEl.value = searchText; searchEl.className = 'open'; searchEl.focus(); }
+  function closeSearch() { searchEl.className = ''; chipsEl.style.visibility = ''; searchEl.blur(); paint(); }
+  function openSearch() { searchBefore = searchText; searchEl.value = searchText; searchEl.className = 'open'; chipsEl.style.visibility = 'hidden'; searchEl.focus(); }
   searchEl.addEventListener('input', function () { searchText = searchEl.value.trim(); renderAlbums(); scrollAlbums(); });
   // The keyboard can also close without a key event.
   searchEl.addEventListener('blur', function () { if (searchEl.className) closeSearch(); });
