@@ -116,3 +116,22 @@ test('live events reach subscribers, a model failure gives a plain message', asy
   const err = got.find((e) => e.type === 'error');
   assert.ok(err); assert.doesNotMatch(err.message, /geheim/); assert.equal(agent.isRunning(chat.id), false);
 });
+
+test('first start: setup chat introduces Zottel, hides the trigger and knows the unlocked areas', async () => {
+  const email = 'kind@beispiel.de'; tools();
+  const seen = script({ content: 'Hallo, ich bin Zottel!' });
+  const chat = agent.startSetup(email);
+  await settled(chat.id); await new Promise((r) => setTimeout(r, 20)); await settled(chat.id);
+  const system = seen[0][0].content;
+  assert.match(system, /very first conversation/); assert.match(system, /iCloud \(Kalender/); assert.match(system, /never hand over finished solutions/);
+  assert.deepEqual(store.visibleMessages(chat.id).map((m) => m.content), ['Hallo, ich bin Zottel!']);
+  assert.equal(store.profileOf(email).setup_chat_id, chat.id);
+  assert.equal(store.chatOf(email, chat.id).kind, 'setup');
+});
+
+test('normal chats carry the coach mission but not the setup steps', async () => {
+  const chat = store.createChat(ME); tools();
+  const seen = script({ content: 'ok' });
+  await agent.sendMessage(chat, ME, 'Hilf mir bei Mathe');
+  assert.match(seen[0][0].content, /make your person better/); assert.doesNotMatch(seen[0][0].content, /very first conversation/);
+});

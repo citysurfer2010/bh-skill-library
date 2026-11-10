@@ -46,7 +46,12 @@ function migrate(conn) {
     CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT NOT NULL, text TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(user_email, id);
     CREATE TABLE IF NOT EXISTS trusted_tools (user_email TEXT NOT NULL, tool TEXT NOT NULL, PRIMARY KEY (user_email, tool));
+    CREATE TABLE IF NOT EXISTS profiles (user_email TEXT PRIMARY KEY, setup_chat_id TEXT, created_at TEXT NOT NULL);
   `);
+  // Columns added after the first release; ALTER TABLE has no IF NOT EXISTS.
+  const has = (table, column) => conn.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
+  if (!has('chats', 'kind')) conn.exec("ALTER TABLE chats ADD COLUMN kind TEXT NOT NULL DEFAULT 'chat'");
+  if (!has('messages', 'hidden')) conn.exec('ALTER TABLE messages ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0');
 }
 
 function getDb() {

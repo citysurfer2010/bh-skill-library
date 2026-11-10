@@ -89,7 +89,8 @@ async function loop(chatId, email) {
       if (!chat) return;
       await compact(chat);
       const fresh = store.chatOf(email, chatId);
-      const messages = [{ role: 'system', content: systemPrompt(email, fresh) }, ...store.activeMessages(chatId).map(toApi)];
+      const areas = fresh.kind === 'setup' ? [...new Set((await gateway.listTools(email).catch(() => [])).map((t) => t.name.split('_')[0]))] : [];
+      const messages = [{ role: 'system', content: systemPrompt(email, fresh, areas) }, ...store.activeMessages(chatId).map(toApi)];
       const { content, toolCalls } = await llm.complete({ model: MODEL, messages, tools: LOCAL_TOOLS, signal: controller.signal, onText: (text) => publish(chatId, { type: 'text', text }) });
       store.addMessage(chatId, { role: 'assistant', content, toolCalls: toolCalls.length ? toolCalls : null });
       publish(chatId, { type: 'message_end' });
@@ -113,6 +114,14 @@ function sendMessage(chat, email, text) {
   return loop(chat.id, email);
 }
 
+/** First start: Zottel introduces himself and sets himself up together with the person. */
+function startSetup(email) {
+  const chat = store.createSetupChat(email);
+  store.addMessage(chat.id, { role: 'user', content: 'Hallo! Das ist mein erster Start mit dir.', hidden: true });
+  loop(chat.id, email).catch((e) => console.error(`[zottel] ${e.message}`));
+  return chat;
+}
+
 /** The user's answer to a card. Continues the conversation once no card is open any more. */
 async function decide(card, email, decision) {
   if (decision === 'reject') {
@@ -132,4 +141,4 @@ async function decide(card, email, decision) {
   if (!store.pendingCount(card.chat_id)) await loop(card.chat_id, email);
 }
 
-module.exports = { sendMessage, decide, isRunning, stop };
+module.exports = { sendMessage, decide, startSetup, isRunning, stop };
