@@ -170,3 +170,12 @@ test('Zustand: Warnungen und keine Seriennummern', () => {
   const fine = summarize({ system: { sys_temp: 40, up_time: '1:0:0' }, storage: { volumes: [], storagePools: [], disks: [{ id: 'a', status: 'normal', smart_status: 'normal', temp: 35 }] }, backups: { total: 1 }, upgrade: null });
   assert.deepEqual(fine.warnings, []); assert.equal(fine.update, null);
 });
+
+test('Slideshow: Jahr spielt nur Alben dieses Jahres', async () => {
+  const photos = require('../lib/photos.js'); const got = [];
+  photos.reset(async (p) => { got.push(p); });
+  fakeNas({ '2006 A': [photo('a.jpg', 500 * KB)], '2007 B': [photo('b.jpg', 600 * KB)] });
+  assert.equal((await photos.albums()).find((a) => a.label === 'A').year, '2006');
+  assert.deepEqual(await photos.pushNext('y2007'), { caption: 'B · 2007' });
+  await assert.rejects(photos.pushNext('y1999'), /nicht gefunden/);
+});

@@ -6,7 +6,7 @@ window.BHHome = (function () {
   var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
   var homeEl = document.getElementById('home');
   var PAGES = ['start', 'radio', 'mood', 'photos', 'rooms'];
-  var ALBUM_ROW = 136; var ALL_ALBUMS = { id: 'all', label: 'Alle Alben', when: 'Zufällig gemischt' };
+  var ALBUM_ROW = 136; var ALL_ALBUMS = { id: 'all', label: 'Alle Alben', when: 'Zufällig gemischt', playAll: true };
   var page = 'start'; var zone = 'content'; var sideTimer = null; var grids = {}; var signature = ''; var playingId = null; var audio = 'load';
   var tuneTimer = null; var plan = null; var dayIndex = 0; var lastDay = ''; var party = null; var partyView = true; var tight = false;
   var edit = null; var pending = null; var heating = null; var events = []; var rooms = []; var roomsSig = ''; var room = 'Wohnzimmer';
@@ -193,8 +193,8 @@ window.BHHome = (function () {
   function scrollAlbums() {
     var g = grids.photos; if (!g) return;
     g.el.children[1].scrollTop = Math.max(0, Math.floor(g.at / COLS.photos) - 1) * ALBUM_ROW;
-    var it = g.items[g.at]; var total = g.items.length - 1;
-    g.el.querySelector('h2').innerHTML = 'Fotos' + (it ? '<span class="g-hint">' + (g.at ? 'Album ' + g.at + ' von ' + total + ' · ' + esc(it.label) : total + ' Alben') + '</span>' : '');
+    var it = g.items[g.at]; var hasAll = !!(g.items[0] && g.items[0].playAll); var total = g.items.length - (hasAll ? 1 : 0); var no = g.at + (hasAll ? 0 : 1);
+    g.el.querySelector('h2').innerHTML = 'Fotos' + (it ? '<span class="g-hint">' + (hasAll && !g.at ? total + ' Alben' : 'Album ' + no + ' von ' + total + ' · ' + esc(it.label)) + (yearFilter || searchText ? ' · Zurück: Filter löschen' : '') + '</span>' : '');
   }
 
   function paint() {
@@ -210,7 +210,7 @@ window.BHHome = (function () {
       var g = grids[name]; var tiles = g.el.querySelectorAll('.tile');
       for (var k = 0; k < tiles.length; k++) {
         tiles[k].className = tiles[k].className.replace(/ (focus|playing)/g, '');
-        if (zone === 'content' && page === name && k === g.at) tiles[k].className += ' focus';
+        if (zone === 'content' && page === name && k === g.at && !(name === 'photos' && photoZone === 'bar')) tiles[k].className += ' focus';
         if (name === 'rooms') paintRoom(tiles[k], g.items[k]);
         if (name === 'radio') {
           var on = g.items[k].id === playingId;
@@ -221,6 +221,7 @@ window.BHHome = (function () {
       }
     });
     scrollAlbums(); // last: a hidden list cannot scroll
+    if (grids.photos) paintPhotoBar();
   }
 
   var deg = function (v) { return v === null || v === undefined ? '–' : String(v).replace('.', ',') + '°'; };
@@ -251,9 +252,77 @@ window.BHHome = (function () {
     renderIndoor(); paint();
   }
 
+  // Fotos: year filter and search above the album list. The filter works locally, the Beamer already has all albums.
+  var allAlbums = []; var yearFilter = null; var searchText = ''; var photoZone = 'grid'; var barAt = 1; var barItems = [];
+  var barEl = document.createElement('div'); barEl.id = 'photo-bar';
+  var chipsEl = document.createElement('div'); chipsEl.id = 'photo-chips'; barEl.appendChild(chipsEl);
+  var searchBefore = '';
+  var searchEl = document.createElement('input'); searchEl.id = 'photo-search'; searchEl.type = 'text'; searchEl.placeholder = 'Album suchen …'; searchEl.setAttribute('autocomplete', 'off'); barEl.appendChild(searchEl);
+  var plain = function (s) { return String(s).toLowerCase().replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u'); };
+  var fold = function (s) { return String(s).toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss'); };
+  function buildPhotoBar() {
+    var years = []; allAlbums.forEach(function (a) { if (a.year && years.indexOf(a.year) < 0) years.push(a.year); });
+    years.sort().reverse();
+    barItems = [{ kind: 'search' }, { kind: 'all' }].concat(years.map(function (y) { return { kind: 'year', year: y }; }));
+  }
+  function filteredAlbums() {
+    var words = fold(searchText).split(/\s+/).filter(Boolean);
+    return allAlbums.filter(function (a) {
+      if (yearFilter && a.year !== yearFilter) return false;
+      var raw = a.label + ' ' + (a.when || ''); var text = fold(raw) + ' ' + plain(raw); // umlauts are awkward on a TV keyboard
+      return words.every(function (w) { return text.indexOf(w) >= 0; });
+    });
+  }
+  function renderAlbums() {
+    var list = filteredAlbums();
+    var first = yearFilter ? { id: 'y' + yearFilter, label: 'Alle aus ' + yearFilter, when: 'Zufällig gemischt', playAll: true } : ALL_ALBUMS;
+    var items = list.length && !searchText ? [first].concat(list) : list;
+    buildGrid('photos', 'Fotos', items, function (x) { return '<div class="tile album' + (x.playAll ? ' all' : '') + '"><b>' + esc(x.label) + '</b><small>' + esc(x.when || '') + '</small></div>'; });
+    if (!items.length) grids.photos.el.children[1].innerHTML = '<p class="g-empty">' + (allAlbums.length ? 'Keine Alben' + (searchText ? ' für „' + esc(searchText) + '“' : '') + '. Zurück löscht den Filter.' : 'Noch keine Alben verfügbar.') + '</p>';
+    if (barEl.parentNode !== grids.photos.el) grids.photos.el.appendChild(barEl); // moving it would close the keyboard
+    paintPhotoBar();
+  }
+  function paintPhotoBar() {
+    chipsEl.innerHTML = barItems.map(function (b, i) {
+      var active = b.kind === 'all' ? !yearFilter : b.kind === 'year' ? yearFilter === b.year : !!searchText;
+      var text = b.kind === 'search' ? (searchText ? 'Suche: ' + esc(searchText) : 'Suche') : b.kind === 'all' ? 'Alle Jahre' : b.year;
+      var focused = zone === 'content' && page === 'photos' && photoZone === 'bar' && i === barAt;
+      return '<span class="chip' + (active ? ' on' : '') + (focused ? ' focus' : '') + '">' + text + '</span>';
+    }).join('');
+    var chip = chipsEl.children[barAt];
+    if (chip) chipsEl.scrollLeft = Math.max(0, chip.offsetLeft - 400);
+    chipsEl.className = (chipsEl.scrollLeft > 0 ? 'more-l ' : '') + (chipsEl.scrollLeft + chipsEl.clientWidth < chipsEl.scrollWidth - 1 ? 'more-r' : '');
+  }
+  function closeSearch() { searchEl.className = ''; searchEl.blur(); paint(); }
+  function openSearch() { searchBefore = searchText; searchEl.value = searchText; searchEl.className = 'open'; searchEl.focus(); }
+  searchEl.addEventListener('input', function () { searchText = searchEl.value.trim(); renderAlbums(); scrollAlbums(); });
+  // The keyboard can also close without a key event.
+  searchEl.addEventListener('blur', function () { if (searchEl.className) closeSearch(); });
+  function cancelSearch() { searchText = searchBefore; renderAlbums(); closeSearch(); }
+  searchEl.addEventListener('keydown', function (e) {
+    e.stopPropagation();
+    if (e.keyCode === 13 || e.keyCode === 65376) { e.preventDefault(); photoZone = grids.photos.items.length ? 'grid' : 'bar'; closeSearch(); }
+    else if (e.keyCode === 10009 || e.keyCode === 8 && !searchEl.value || e.keyCode === 65385) { e.preventDefault(); cancelSearch(); }
+  });
+  function moveBar(k) {
+    if (k === 37) { if (barAt > 0) barAt--; else { setZone('side'); return; } }
+    else if (k === 39) { if (barAt < barItems.length - 1) barAt++; }
+    else if (k === 40 && grids.photos.items.length) photoZone = 'grid';
+    paint();
+  }
+  function applyBar() {
+    var b = barItems[barAt]; if (!b) return;
+    if (b.kind === 'search') { openSearch(); return; }
+    yearFilter = b.kind === 'year' ? b.year : null; // focus stays here, so years can be compared quickly
+    renderAlbums(); paint();
+  }
+
   function buildGrid(name, title, items, tile) {
     var el = document.getElementById('grid-' + name);
-    el.innerHTML = '<h2>' + title + '</h2><div>' + items.map(tile).join('') + '</div>';
+    var html = items.map(tile).join('');
+    // The album list keeps its elements: the search field lives next to them and must not lose focus.
+    if (name === 'photos' && el.children[1]) el.children[1].innerHTML = html;
+    else el.innerHTML = '<h2>' + title + '</h2><div>' + html + '</div>';
     grids[name] = { items: items, el: el, at: 0 };
   }
 
@@ -295,8 +364,7 @@ window.BHHome = (function () {
     if (next === signature) return;
     signature = next;
     buildGrid('radio', 'Radio', menu.radio || [], function (x) { return '<div class="tile station">' + esc(x.name) + '<small>' + esc(x.sub || '') + '</small></div>'; });
-    buildGrid('photos', 'Fotos', albums.length ? [ALL_ALBUMS].concat(albums) : [], function (x) { return '<div class="tile album' + (x.id === 'all' ? ' all' : '') + '"><b>' + esc(x.label) + '</b><small>' + esc(x.when || '') + '</small></div>'; });
-    if (!albums.length) grids.photos.el.children[1].innerHTML = '<p class="g-empty">Noch keine Alben verfügbar.</p>';
+    allAlbums = albums; buildPhotoBar(); renderAlbums();
     buildGrid('mood', 'Stimmung', menu.mood || [], function (x) { return '<div class="tile mood"><img src="' + esc(x.thumb) + '" alt=""><span>' + esc(x.label) + '</span></div>'; });
     paint();
   }
@@ -332,6 +400,7 @@ window.BHHome = (function () {
       paint(); return;
     }
     var g = grids[page]; if (!g) return;
+    if (page === 'photos' && dy < 0 && g.at < COLS.photos) { photoZone = 'bar'; paint(); return; }
     var cols = COLS[page]; var col = g.at % cols;
     if (dx < 0 && col === 0) { setZone('side'); return; }
     if (dx > 0 && col === cols - 1) return;
@@ -359,10 +428,11 @@ window.BHHome = (function () {
     setZone('side');
     if (key !== 38 && key !== 40) return;
     var i = PAGES.indexOf(page) + (key === 40 ? 1 : -1);
-    if (i >= 0 && i < PAGES.length) { page = PAGES[i]; if (page === 'rooms' && grids.rooms) grids.rooms.at = Math.max(rooms.indexOf(shownRoom()), 0); paint(); }
+    if (i >= 0 && i < PAGES.length) { page = PAGES[i]; photoZone = 'grid'; if (page === 'rooms' && grids.rooms) grids.rooms.at = Math.max(rooms.indexOf(shownRoom()), 0); paint(); }
   }
   function enter() {
     if (zone === 'side') { setZone('content'); return; }
+    if (page === 'photos' && photoZone === 'bar') { applyBar(); return; }
     if (page === 'start') { if (api.onPause) api.onPause(); return; }
     clearTimeout(tuneTimer); tuneTimer = null;
     var g = grids[page]; if (!g) return;
@@ -381,6 +451,7 @@ window.BHHome = (function () {
     if (k === 13) enter();
     else if (k < 37 || k > 40) return;
     else if (zone === 'side') moveSide(k);
+    else if (page === 'photos' && photoZone === 'bar') moveBar(k);
     else if (page === 'start') moveStart(k);
     else { var fast = page === 'photos' && e.repeat ? 3 : 1; moveGrid(k === 37 ? -1 : k === 39 ? 1 : 0, (k === 38 ? -1 : k === 40 ? 1 : 0) * fast); }
     e.preventDefault();
@@ -389,7 +460,10 @@ window.BHHome = (function () {
   // Back: first back to the start content, after that main.js decides.
   api.back = function () {
     clearTimeout(tuneTimer); tuneTimer = null;
+    if (searchEl.className) { cancelSearch(); return true; }
     if (edit) { edit = null; paint(); return true; }
+    if (page === 'photos' && zone === 'content' && (yearFilter || searchText)) { yearFilter = null; searchText = ''; barAt = 1; photoZone = 'grid'; renderAlbums(); paint(); return true; }
+    if (page === 'photos' && zone === 'content' && photoZone === 'bar') { photoZone = 'grid'; paint(); return true; }
     if (zone === 'side') { setZone('content'); return true; }
     if (page !== 'start') { page = 'start'; dayIndex = 0; renderDay(); paint(); return true; }
     if (dayIndex) { dayIndex = 0; renderDay(); return true; }

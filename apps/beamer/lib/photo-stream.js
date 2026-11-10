@@ -3,7 +3,7 @@
 const gateway = require('./gateway');
 
 const MIN_GAP_MS = 2000;
-const ID = /^(all|next|a[0-9a-f]{12})$/;
+const ID = /^(all|next|a[0-9a-f]{12}|y\d{4})$/;
 let busy = false; let last = 0;
 
 function handle(id) {

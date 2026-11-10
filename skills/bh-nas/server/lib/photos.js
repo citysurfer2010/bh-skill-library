@@ -45,9 +45,11 @@ async function fill(s, album, count) {
 
 async function open(start) {
   const all = await albums();
-  const album = start === 'all' ? null : all.find((a) => a.id === start);
-  if (start !== 'all' && !album) throw new Error('Album nicht gefunden');
-  const s = { album, queue: [], bag: album ? [] : shuffled(all), seen: new Set(), shown: 0 };
+  const year = /^y(\d{4})$/.exec(start)?.[1];
+  const pool = year ? all.filter((a) => a.year === year) : all;
+  const album = start === 'all' || year ? null : all.find((a) => a.id === start);
+  if ((start !== 'all' && !year && !album) || !pool.length) throw new Error('Album nicht gefunden');
+  const s = { album, pool, queue: [], bag: album ? [] : shuffled(pool), seen: new Set(), shown: 0 };
   if (album) await fill(s, album, ALBUM_MAX);
   return s;
 }
@@ -55,7 +57,7 @@ async function open(start) {
 /** Next queue entry; in "all albums" mode the bag refills so that the stream never ends. */
 async function nextEntry(s) {
   for (let i = 0; !s.queue.length && !s.album && i < MAX_TRIES; i++) {
-    if (!s.bag.length) { s.bag = shuffled(await albums()); s.seen = new Set(); }
+    if (!s.bag.length) { s.bag = shuffled(s.pool); s.seen = new Set(); }
     await fill(s, s.bag.pop(), PER_RANDOM_ALBUM);
   }
   return s.queue.shift() || null;

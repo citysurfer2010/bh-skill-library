@@ -160,6 +160,10 @@
   };
   function clearPause() { paused = null; audioState('idle'); stationEl.textContent = 'Radio'; stationEl.className = ''; noteEl.innerHTML = IDLE_NOTE; BHHome.setPlaying(null); }
   try { tizen.tvinputdevice.registerKey('MediaPlayPause'); } catch (e) { /* not every remote has them */ }
+  // Test: reports unknown keys in the access log, to find out whether the voice key reaches this app at all.
+  document.addEventListener('keydown', function (e) {
+    if ([13, 37, 38, 39, 40, 427, 428, 8, 10009, 10252].indexOf(e.keyCode) < 0) caps = 'key-' + e.keyCode;
+  }, true);
   document.addEventListener('keydown', function (e) {
     if (e.keyCode === 10252 && view.indexOf('home') === 0) { e.preventDefault(); BHHome.onPause(); }
   });
