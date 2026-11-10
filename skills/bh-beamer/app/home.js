@@ -253,7 +253,7 @@ window.BHHome = (function () {
   }
 
   // Fotos: year filter and search above the album list. The filter works locally, the Beamer already has all albums.
-  var allAlbums = []; var yearFilter = null; var searchText = ''; var photoZone = 'grid'; var barAt = 1; var barItems = [];
+  var allAlbums = []; var yearFilter = null; var searchText = ''; var photoZone = 'grid'; var barAt = 2; var barItems = [];
   var barEl = document.createElement('div'); barEl.id = 'photo-bar';
   var chipsEl = document.createElement('div'); chipsEl.id = 'photo-chips'; barEl.appendChild(chipsEl);
   var searchBefore = '';
@@ -263,7 +263,7 @@ window.BHHome = (function () {
   function buildPhotoBar() {
     var years = []; allAlbums.forEach(function (a) { if (a.year && years.indexOf(a.year) < 0) years.push(a.year); });
     years.sort().reverse();
-    barItems = [{ kind: 'search' }, { kind: 'all' }].concat(years.map(function (y) { return { kind: 'year', year: y }; }));
+    barItems = [{ kind: 'mic' }, { kind: 'search' }, { kind: 'all' }].concat(years.map(function (y) { return { kind: 'year', year: y }; }));
   }
   function filteredAlbums() {
     var words = fold(searchText).split(/\s+/).filter(Boolean);
@@ -284,8 +284,8 @@ window.BHHome = (function () {
   }
   function paintPhotoBar() {
     chipsEl.innerHTML = barItems.map(function (b, i) {
-      var active = b.kind === 'all' ? !yearFilter : b.kind === 'year' ? yearFilter === b.year : !!searchText;
-      var text = b.kind === 'search' ? (searchText ? 'Suche: ' + esc(searchText) : 'Suche') : b.kind === 'all' ? 'Alle Jahre' : b.year;
+      var active = b.kind === 'all' ? !yearFilter : b.kind === 'year' ? yearFilter === b.year : b.kind === 'mic' ? micState === 'rec' : !!searchText;
+      var text = b.kind === 'mic' ? (micState === 'rec' ? 'Hört zu …' : micState ? 'Test: ' + esc(micState) : 'Sprechen') : b.kind === 'search' ? (searchText ? 'Suche: ' + esc(searchText) : 'Suche') : b.kind === 'all' ? 'Alle Jahre' : b.year;
       var focused = zone === 'content' && page === 'photos' && photoZone === 'bar' && i === barAt;
       return '<span class="chip' + (active ? ' on' : '') + (focused ? ' focus' : '') + '">' + text + '</span>';
     }).join('');
@@ -324,8 +324,10 @@ window.BHHome = (function () {
     else if (k === 40 && grids.photos.items.length) photoZone = 'grid';
     paint();
   }
+  var micState = '';
   function applyBar() {
     var b = barItems[barAt]; if (!b) return;
+    if (b.kind === 'mic') { if (micState === 'rec' || !window.BHMicTest) return; micState = 'rec'; paint(); BHMicTest(function (r) { micState = r; paint(); }); return; }
     if (b.kind === 'search') { openSearch(); return; }
     yearFilter = b.kind === 'year' ? b.year : null; // focus stays here, so years can be compared quickly
     renderAlbums(); paint();
@@ -476,7 +478,7 @@ window.BHHome = (function () {
     clearTimeout(tuneTimer); tuneTimer = null;
     if (searchEl.className) { cancelSearch(); return true; }
     if (edit) { edit = null; paint(); return true; }
-    if (page === 'photos' && zone === 'content' && (yearFilter || searchText)) { yearFilter = null; searchText = ''; barAt = 1; photoZone = 'grid'; renderAlbums(); paint(); return true; }
+    if (page === 'photos' && zone === 'content' && (yearFilter || searchText)) { yearFilter = null; searchText = ''; barAt = 2; photoZone = 'grid'; renderAlbums(); paint(); return true; }
     if (page === 'photos' && zone === 'content' && photoZone === 'bar') { photoZone = 'grid'; paint(); return true; }
     if (zone === 'side') { setZone('content'); return true; }
     if (page !== 'start') { page = 'start'; dayIndex = 0; renderDay(); paint(); return true; }

@@ -318,7 +318,7 @@
   function poll() {
     var x = new XMLHttpRequest();
     var again = function (ms) { setTimeout(poll, ms); };
-    x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now() + '&since=' + encodeURIComponent(version) + '&caps=' + encodeURIComponent(caps + (window.BH_VOICE_STATE ? '_voice-' + window.BH_VOICE_STATE : '') + '_mics-' + (window.BH_MICS || '') + '_audioin-' + (window.BH_DEVS === undefined ? '' : window.BH_DEVS)));
+    x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now() + '&since=' + encodeURIComponent(version) + '&caps=' + encodeURIComponent(caps + (window.BH_VOICE_STATE ? '_voice-' + window.BH_VOICE_STATE : '') + '_mics-' + (window.BH_MICS || '') + '_audioin-' + (window.BH_DEVS === undefined ? '' : window.BH_DEVS) + (window.BH_MICTEST ? '_mictest-' + window.BH_MICTEST : '')));
     x.timeout = 35000;
     x.onload = function () {
       if (x.status !== 200) { again(3000); return; }
