@@ -64,11 +64,11 @@ function icloudRow(state, user, error, form = {}) {
   const { connected, appleId, rejected, mailRejected } = state;
   const addressOnly = connected && mailRejected && !rejected;
   const label = addressOnly ? "Adresse ergänzen" : connected ? "Neu verbinden" : "Verbinden";
-  const toggle = `<button type="button" class="p-btn${!connected || rejected || mailRejected ? " p-primary" : ""}" data-toggle="icloudForm" aria-expanded="${!!error}" aria-controls="icloudForm">${label}</button>`;
+  const toggle = `<button type="button" class="p-btn${!connected || rejected ? " p-primary" : ""}" data-toggle="icloudForm" aria-expanded="${!!error}" aria-controls="icloudForm">${label}</button>`;
   const action = connected ? `<button type="button" class="p-btn" data-toggle="icloudConfirm" aria-expanded="false" aria-controls="icloudConfirm">Trennen</button> ${toggle}` : toggle;
   const confirm = connected ? `<form id="icloudConfirm" class="p-panel p-confirm" method="post" action="/profile/icloud/disconnect" hidden><p>Deine Werkzeuge verlieren den Zugriff auf deine iCloud-Daten. Das Passwort wird hier gelöscht, bei Apple kannst du es zusätzlich widerrufen.</p><div class="p-buttons"><button type="submit" class="p-btn p-danger">Ja, trennen</button><button type="button" class="p-btn" data-cancel="icloudConfirm">Abbrechen</button></div></form>` : "";
-  const sub = rejected ? "Passwort abgelaufen oder bei Apple widerrufen." : addressOnly ? "Kalender und Kontakte sind verbunden. Für E-Mail fehlt deine @icloud.com-Adresse." : connected ? `Verbunden als ${esc(appleId)}` : "Kalender, Kontakte und E-Mail, nur lesend";
-  const status = rejected ? `<span class="p-tag warn">Anmeldung abgelehnt</span>` : addressOnly ? `<span class="p-tag warn">E-Mail unvollständig</span>` : tag(connected, "Verbunden", "Nicht verbunden");
+  const sub = rejected ? "Passwort abgelaufen oder bei Apple widerrufen." : addressOnly ? "Kalender und Kontakte sind verbunden. E-Mail ist nicht eingerichtet." : connected ? `Verbunden als ${esc(appleId)}` : "Kalender, Kontakte und E-Mail, nur lesend";
+  const status = rejected ? `<span class="p-tag warn">Anmeldung abgelehnt</span>` : addressOnly ? `<span class="p-tag on">Verbunden</span>` : tag(connected, "Verbunden", "Nicht verbunden");
   const formHtml = addressOnly ? icloudAddressForm(state, error, form) : icloudForm(user, state, error, form);
   return row({ icon: CLOUD, title: "iCloud", status, sub, action, panel: formHtml + confirm });
 }

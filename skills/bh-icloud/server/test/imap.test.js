@@ -111,7 +111,7 @@ test('rejected login mentions the mail address, password never appears', async (
   try {
     const out = text(await tools.TOOLS.mail_folders.handler({}));
     assert.match(out, /iCloud-Mail-Adresse/); assert.doesNotMatch(out, /abcd-efgh/);
-    assert.match(text(await tools.TOOLS.mail_folders.handler({})), /gesperrt/);
+    assert.match(text(await tools.TOOLS.mail_folders.handler({})), /nicht eingerichtet/);
   } finally { imap.closeShared(); await new Promise((r) => { server.close(r); }); }
 });
 
