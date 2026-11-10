@@ -294,7 +294,11 @@
     // Test: which voice interfaces this device offers (Samsung Voice Interaction from Tizen 6.0, Tizen Voice Control from 4.0).
     var vi = 0; var vc = 0; try { vi = window.webapis && webapis.voiceinteraction ? 1 : 0; } catch (e) { vi = 9; } try { vc = window.tizen && tizen.voicecontrol ? 1 : 0; } catch (e) { vc = 9; }
     var keys = ''; try { var all = tizen.tvinputdevice.getSupportedKeys(); keys = '_keys' + all.length + '-' + all.filter(function (k) { return /voice|mic|search|bixby|assist|speech|extra|ambient|info/i.test(k.name); }).map(function (k) { return k.name + k.code; }).join('.'); } catch (e) { keys = '_keyserr-' + e.name; }
-    var mic = ''; try { mic = '_mic' + (window.webapis && webapis.microphone ? (function () { try { var l = webapis.microphone.getMicrophones(); return l.length + '-' + l.map(function (m) { return String(m.name || m.id || '?').replace(/[^A-Za-z0-9]/g, ''); }).join('.'); } catch (e) { return 'err' + e.name; } })() : 0); } catch (e) { mic = '_micerr-' + e.name; }
+    var mic = '_mic' + (window.webapis && webapis.microphone ? 'api' : '0');
+    try {
+      webapis.microphone.getMicrophones(function (l) { window.BH_MICS = l.length + '-' + l.map(function (m) { return String(m.name || m.id || m.deviceId || JSON.stringify(m)).replace(/[^A-Za-z0-9]/g, '').slice(0, 30); }).join('.'); }, function (e) { window.BH_MICS = 'err-' + (e && e.name); });
+    } catch (e) { window.BH_MICS = 'ex-' + e.name; }
+    try { navigator.mediaDevices.enumerateDevices().then(function (d) { window.BH_DEVS = d.filter(function (x) { return x.kind === 'audioinput'; }).length; }); } catch (e) { window.BH_DEVS = 'ex'; }
     var gum = navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 1 : 0;
     var base = chrome + '_rtc' + (PC ? 1 : 0) + '_mse' + (window.MediaSource ? 1 : 0) + '_vi' + vi + '_vc' + vc + keys + mic + '_gum' + gum;
     caps = base;
@@ -314,7 +318,7 @@
   function poll() {
     var x = new XMLHttpRequest();
     var again = function (ms) { setTimeout(poll, ms); };
-    x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now() + '&since=' + encodeURIComponent(version) + '&caps=' + encodeURIComponent(caps + (window.BH_VOICE_STATE ? '_voice-' + window.BH_VOICE_STATE : '')));
+    x.open('GET', window.BH_SCREEN_URL + '/content?t=' + Date.now() + '&since=' + encodeURIComponent(version) + '&caps=' + encodeURIComponent(caps + (window.BH_VOICE_STATE ? '_voice-' + window.BH_VOICE_STATE : '') + '_mics-' + (window.BH_MICS || '') + '_audioin-' + (window.BH_DEVS === undefined ? '' : window.BH_DEVS)));
     x.timeout = 35000;
     x.onload = function () {
       if (x.status !== 200) { again(3000); return; }
