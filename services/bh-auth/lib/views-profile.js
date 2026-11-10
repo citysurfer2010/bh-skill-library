@@ -85,7 +85,7 @@ function googleServicesRow(state) {
 
 function icloudPhotosRow(show) {
   if (!show) return "";
-  return row({ icon: CLOUD, title: "iCloud-Fotos", sub: "Apple-Anmeldung für den Foto-Abgleich. Nötig nach einem Neustart und etwa alle zwei Monate.", action: `<a class="p-btn" href="/profile/icloud-photos/">Anmelden</a>` });
+  return row({ icon: CLOUD, title: "iCloud-Fotos", sub: "Apple-Anmeldung für den Foto-Abgleich. Nötig nach einem Neustart und etwa alle zwei Monate.", action: `<a class="p-btn" href="/profile/icloud-photos/">Öffnen</a>` });
 }
 
 function servicesCard(google, icloud, user, icloudError, icloudForm, icloudPhotos) {
