@@ -1,7 +1,7 @@
 {
   "skill_id": "bh-beamer",
   "name": "bh-beamer",
-  "version": "26.11.9",
+  "version": "26.11.10",
   "description": "Samsung-Beamer im Heimnetz bedienen",
   "author": "bh-platform",
   "schema_version": "2.0"

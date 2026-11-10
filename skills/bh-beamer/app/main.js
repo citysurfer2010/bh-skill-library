@@ -291,7 +291,9 @@
   function probe() {
     var PC = window.RTCPeerConnection || window.webkitRTCPeerConnection;
     var chrome = (navigator.userAgent.match(/Chrome\/[\d.]+/) || ['?'])[0];
-    var base = chrome + '_rtc' + (PC ? 1 : 0) + '_mse' + (window.MediaSource ? 1 : 0);
+    // Test: which voice interfaces this device offers (Samsung Voice Interaction from Tizen 6.0, Tizen Voice Control from 4.0).
+    var vi = 0; var vc = 0; try { vi = window.webapis && webapis.voiceinteraction ? 1 : 0; } catch (e) { vi = 9; } try { vc = window.tizen && tizen.voicecontrol ? 1 : 0; } catch (e) { vc = 9; }
+    var base = chrome + '_rtc' + (PC ? 1 : 0) + '_mse' + (window.MediaSource ? 1 : 0) + '_vi' + vi + '_vc' + vc;
     caps = base;
     if (!PC) return;
     try {

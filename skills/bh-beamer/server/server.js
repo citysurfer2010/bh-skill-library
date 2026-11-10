@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * bh-beamer MCP Server v26.11.9
+ * bh-beamer MCP Server v26.11.10
  *
  *
  * Architecture:
@@ -33,7 +33,7 @@ rl.on('line', async (line) => {
       result: {
         protocolVersion: params?.protocolVersion || '2024-11-05',
         capabilities:    { tools: {} },
-        serverInfo:      { name: 'bh-beamer', version: '26.11.9' },
+        serverInfo:      { name: 'bh-beamer', version: '26.11.10' },
       },
     });
     return;
@@ -69,4 +69,4 @@ rl.on('line', async (line) => {
 rl.on('close', () => process.exit(0));
 process.stdin.on('error', () => {});
 
-process.stderr.write(`[bh-beamer] v26.11.9 started — ${TOOL_NAMES.length} Tools registriert.\n`);
+process.stderr.write(`[bh-beamer] v26.11.10 started — ${TOOL_NAMES.length} Tools registriert.\n`);
