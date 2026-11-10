@@ -29,9 +29,11 @@ Für Fotos gelten eigene Regeln, weil Apple dafür keine offizielle Schnittstell
 - Neue iCloud-Fotos sollen über den VPS kommen, nicht über den Mac. Quelle: Matti, 09.11.2026. Den Altbestand holt das Mac-Skript.
 - Der Foto-Abgleich braucht anders als Kalender und Mail das echte Apple-Passwort. Es wird nur auf der Anmeldeseite im Profil eingegeben und liegt nur im Arbeitsspeicher des Containers. Die Sitzung liegt in `/srv/icloud-photos/cookies`.
 - Die Anmeldeseite öffnet nur der Besitzer.
-- Geholt werden täglich die neuesten 500 Fotos ohne Videos, damit die Platte des VPS nicht volläuft.
-- Der Mac sichert Fotos **und Videos**. Quelle: Matti, 10.11.2026. Der VPS lässt Videos wegen seines kleinen Zwischenspeichers aus.
+- Fotos **und Videos** werden gesichert, vom Mac wie vom VPS. Quelle: Matti, 10.11.2026.
+- Der VPS holt täglich die neuesten 300 Einträge. Sein Zwischenordner behält höchstens 700 Dateien und 12 GB, Älteres geht nach dem Hochladen weg.
+- Fällt der freie Platz auf dem VPS unter 6 GB, friert ein Wächter den Download ein (`docker pause`, kein Stopp, damit die Anmeldung erhalten bleibt) und lässt ihn ab 10 GB weiterlaufen.
+- Videos werden beim Hochladen von der Platte gestreamt, höchstens 4 GB je Datei.
 - In iCloud wird nie etwas gelöscht.
 - Der Container hat Internet, aber keinen Zugang zur Synology, zum Gateway oder zu anderen Diensten außer `bh-auth`, das seine Anmeldeseite durchreicht.
-- Hochgeladen wird nur nach `/photo/iCloud-Matti`, vorhandene Dateien werden nicht überschrieben. Eine Datei alle 8 Sekunden, damit die kleine Synology nicht überlastet. `nas-pause` im Familienordner stoppt das.
+- Hochgeladen wird nur nach `/photo/iCloud-Matti`, vorhandene Dateien werden nicht überschrieben. Eine Datei alle 8 Sekunden, große Videos dauern entsprechend länger, damit die kleine Synology nicht überlastet. `nas-pause` im Familienordner stoppt das.
 - Auf dem Server bleiben die neuesten 700 Dateien liegen, damit der tägliche Download sie wiedererkennt. Ältere gehen erst nach dem Hochladen weg.

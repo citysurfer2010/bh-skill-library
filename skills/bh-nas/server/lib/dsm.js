@@ -54,19 +54,27 @@ let transport = realPost;
 let sid = null;
 const setTransport = (t) => { transport = t; sid = null; };
 
+/** Sends one file. Large files are streamed from disk, so a video never has to fit into memory. */
 function realUpload(query, fields, file) {
   const url = new URL(`/webapi/entry.cgi?${new URLSearchParams(query)}`, process.env.BH_NAS_URL);
   const boundary = `----bh${crypto.randomBytes(12).toString('hex')}`;
-  const head = Object.entries(fields).map(([k, v]) => `--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`).join('');
+  const fieldsPart = Object.entries(fields).map(([k, v]) => `--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`).join('');
   const safeName = file.name.replace(/["\r\n]/g, '_');
-  const body = Buffer.concat([Buffer.from(`${head}--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${safeName}"\r\nContent-Type: application/octet-stream\r\n\r\n`), file.data, Buffer.from(`\r\n--${boundary}--\r\n`)]);
+  const head = Buffer.from(`${fieldsPart}--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${safeName}"\r\nContent-Type: application/octet-stream\r\n\r\n`);
+  const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
+  const size = file.data ? file.data.length : file.size;
   return new Promise((resolve, reject) => {
-    const req = https.request(url, { ...tlsOptions(), method: 'POST', timeout: 180_000, headers: { 'content-type': `multipart/form-data; boundary=${boundary}`, 'content-length': body.length } }, (res) => {
+    const req = https.request(url, { ...tlsOptions(), method: 'POST', timeout: 1_800_000, headers: { 'content-type': `multipart/form-data; boundary=${boundary}`, 'content-length': head.length + size + tail.length } }, (res) => {
       const parts = []; res.on('data', (c) => parts.push(c)); res.on('end', () => { try { resolve(JSON.parse(Buffer.concat(parts).toString('utf8'))); } catch (e) { reject(e); } }); res.on('error', reject);
     });
     req.on('timeout', () => req.destroy(new Error('Synology antwortet nicht')));
     req.on('error', reject);
-    req.end(body);
+    req.write(head);
+    if (file.data) { req.end(Buffer.concat([file.data, tail])); return; }
+    const stream = fs.createReadStream(file.path);
+    stream.on('error', (e) => req.destroy(e));
+    stream.on('end', () => req.end(tail));
+    stream.pipe(req, { end: false });
   });
 }
 let uploadTransport = realUpload;
@@ -107,9 +115,10 @@ async function download(file, maxBytes) {
 }
 
 /** Writes one file; the caller decides the folder. Existing files stay untouched. */
-async function upload(dir, name, data) {
+async function upload(dir, name, source) {
   if (!sid) await login();
-  const send = () => uploadTransport({ api: 'SYNO.FileStation.Upload', version: '2', method: 'upload', _sid: sid }, { path: dir, create_parents: 'true', overwrite: 'false' }, { name, data });
+  const file = Buffer.isBuffer(source) ? { name, data: source } : { name, path: source.path, size: source.size };
+  const send = () => uploadTransport({ api: 'SYNO.FileStation.Upload', version: '2', method: 'upload', _sid: sid }, { path: dir, create_parents: 'true', overwrite: 'false' }, file);
   let r = await send();
   if (!r.success && RELOGIN.has(r.error?.code)) { await login(); r = await send(); }
   return r;

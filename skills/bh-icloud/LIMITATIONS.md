@@ -24,6 +24,7 @@
 - Ob Apple Anmeldungen aus dem Rechenzentrum dauerhaft akzeptiert, ist noch nicht erprobt. Die erste Anmeldung am 09.11.2026 hat geklappt.
 - Etwa alle zwei Monate läuft die Apple-Sitzung ab, nach einem Neustart des Containers ist die Anmeldung nötig. Benachrichtigt wird darüber noch nicht.
 - Die Anmeldeseite stammt von icloudpd und folgt nicht dem Plattform-Design.
-- Mehr als 500 neue Fotos zwischen zwei Läufen würden nicht vollständig erfasst.
+- Mehr als 300 neue Einträge zwischen zwei Läufen erfasst der VPS nicht vollständig; der Mac holt sie nach.
+- Ältere Einträge im 300er-Fenster, die schon aus dem Zwischenordner geräumt sind, lädt der VPS erneut herunter. Hochgeladen werden sie nicht doppelt.
 - Das Hochladen würde mit Mattis Synology-Konto schreiben. Auf einen Ordner begrenzt ist es durch den Code, nicht durch die Rechte des Kontos.
 - `bh-faces` und die Slideshow nehmen die iCloud-Fotos noch nicht auf (HEIC).

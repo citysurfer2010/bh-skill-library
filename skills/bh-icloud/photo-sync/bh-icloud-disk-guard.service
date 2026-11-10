@@ -1,0 +1,6 @@
+[Unit]
+Description=Pause the iCloud photo download before the disk runs full
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/bh-icloud-disk-guard

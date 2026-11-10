@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * bh-nas MCP Server v26.11.6
+ * bh-nas MCP Server v26.11.7
  *
  *
  * Architecture:
@@ -33,7 +33,7 @@ rl.on('line', async (line) => {
       result: {
         protocolVersion: params?.protocolVersion || '2024-11-05',
         capabilities:    { tools: {} },
-        serverInfo:      { name: 'bh-nas', version: '26.11.6' },
+        serverInfo:      { name: 'bh-nas', version: '26.11.7' },
       },
     });
     return;
@@ -69,4 +69,4 @@ rl.on('line', async (line) => {
 rl.on('close', () => process.exit(0));
 process.stdin.on('error', () => {});
 
-process.stderr.write(`[bh-nas] v26.11.6 started — ${TOOL_NAMES.length} Tools registriert.\n`);
+process.stderr.write(`[bh-nas] v26.11.7 started — ${TOOL_NAMES.length} Tools registriert.\n`);
