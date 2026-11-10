@@ -17,6 +17,7 @@ Was wir über den Samsung-Beamer (The Premiere SP-LSP7TFAX, Tizen 5.5) gelernt h
 | Apps starten | Über die REST-Schnittstelle mit der App-Kennung. Kennungen vorher am Gerät prüfen: `3201907018807` war dort Netflix, nicht der Browser. |
 | Browser „Internet“ (`3201907018784`) | Startet, lädt aber keine übergebene Adresse (`metaTag`, `DEEP_LINK`, `NATIVE_LAUNCH`, REST-Parameter alle wirkungslos; Nachweis: kein Treffer im eigenen Server-Log). |
 | Bildschirminhalt | Kein Screenshot über das Netzwerk möglich. |
+| Mikro-Taste und Sprache | Nicht für BH Screen nutzbar, geprüft am 10.11.2026: Die Mikro-Taste fehlt in `tvinputdevice.getSupportedKeys()` und öffnet immer den Systemassistenten. `webapis.voiceinteraction` fehlt (erst ab Tizen 6.0). `tizen.voicecontrol` meldet angemeldete Begriffe, liefert aber nie ein Ergebnis. Das Fernbedienungsmikrofon erscheint als `BluetoothMicrophone`, `getUserMedia` endet mit `NotAllowedError`. YouTube darf das als Partner-App. Sprachsuche daher nur über eine Handy-Seite. |
 | Text anzeigen | Als Bild per DLNA (`/screen/<token>/image.jpg`), funktioniert ohne App. |
 | Webseiten | Nur über die eigene App „BH Screen“. |
 | YouTube-Videos | Über DIAL: `POST http://<ip>:8080/ws/apps/YouTube` mit `Origin: https://www.youtube.com` und Body `v=<id>` → 201, Video läuft. Ohne Origin 403; Port 8001 lehnt mit 401 ab. Firewall erlaubt 8080 nur vom Gateway-Netz. |
