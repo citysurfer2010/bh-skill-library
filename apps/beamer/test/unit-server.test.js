@@ -147,7 +147,7 @@ test('Gesichtsindex: nur nachts, pausiert waehrend der Slideshow', async () => {
   try {
     stream.reset();
     assert.equal(await indexer.round(day), 300000); assert.equal(calls, 0);
-    assert.equal(await indexer.round(night), 1500); assert.equal(calls, 1);
+    assert.equal(await indexer.round(night), 5000); assert.equal(calls, 1);
     stream.handle('all');
     await new Promise(setImmediate);
     calls = 0; assert.equal(await indexer.round(night), 300000); assert.equal(calls, 0);
@@ -163,7 +163,8 @@ test('iCloud-Upload: pausiert waehrend der Slideshow, wartet wenn nichts offen i
   const up = require('../lib/icloud-uploader');
   try {
     stream.reset();
-    gateway.setCaller(async () => '{"uploaded":true}'); assert.equal(await up.round(), 2000);
+    gateway.setCaller(async () => '{"uploaded":true}'); assert.equal(await up.round(), 8000);
+    gateway.setCaller(async () => '{"paused":true}'); assert.equal(await up.round(), 900000);
     gateway.setCaller(async () => '{"done":true,"removedLocal":0}'); assert.equal(await up.round(), 900000);
     gateway.setCaller(async () => { throw new Error('weg'); }); assert.equal(await up.round(), 120000);
     stream.handle('all'); await new Promise(setImmediate);

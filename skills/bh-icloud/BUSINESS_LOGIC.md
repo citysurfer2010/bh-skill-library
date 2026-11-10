@@ -32,5 +32,5 @@ Für Fotos gelten eigene Regeln, weil Apple dafür keine offizielle Schnittstell
 - Geholt werden täglich die neuesten 500 Fotos ohne Videos, damit die Platte des VPS nicht volläuft.
 - In iCloud wird nie etwas gelöscht.
 - Der Container hat Internet, aber keinen Zugang zur Synology, zum Gateway oder zu anderen Diensten außer `bh-auth`, das seine Anmeldeseite durchreicht.
-- Hochgeladen wird nur nach `/photo/iCloud-Matti`, vorhandene Dateien werden nicht überschrieben.
+- Hochgeladen wird nur nach `/photo/iCloud-Matti`, vorhandene Dateien werden nicht überschrieben. Eine Datei alle 8 Sekunden, damit die kleine Synology nicht überlastet. `nas-pause` im Familienordner stoppt das.
 - Auf dem Server bleiben die neuesten 700 Dateien liegen, damit der tägliche Download sie wiedererkennt. Ältere gehen erst nach dem Hochladen weg.
