@@ -304,6 +304,20 @@ window.BHHome = (function () {
     if (e.keyCode === 13 || e.keyCode === 65376) { e.preventDefault(); photoZone = grids.photos.items.length ? 'grid' : 'bar'; closeSearch(); }
     else if (e.keyCode === 10009 || e.keyCode === 8 && !searchEl.value || e.keyCode === 65385) { e.preventDefault(); cancelSearch(); }
   });
+  // Spoken album names, years or "Alle Alben" filter the list like the search does.
+  function registerVoice() {
+    if (!window.BHVoice) return;
+    var phrases = ['Alle Alben', 'Fotos'];
+    allAlbums.forEach(function (a) { if (phrases.indexOf(a.label) < 0) phrases.push(a.label); if (a.year && phrases.indexOf(a.year) < 0) phrases.push(a.year); });
+    BHVoice.setPhrases(phrases);
+  }
+  if (window.BHVoice) BHVoice.onHeard(function (text) {
+    page = 'photos'; zone = 'content'; photoZone = 'grid';
+    if (/^(19|20)\d{2}$/.test(text)) { yearFilter = text; searchText = ''; }
+    else if (/^(alle alben|fotos)$/i.test(text)) { yearFilter = null; searchText = ''; }
+    else { yearFilter = null; searchText = text; }
+    renderAlbums(); paint();
+  });
   function moveBar(k) {
     if (k === 37) { if (barAt > 0) barAt--; else { setZone('side'); return; } }
     else if (k === 39) { if (barAt < barItems.length - 1) barAt++; }
@@ -364,7 +378,7 @@ window.BHHome = (function () {
     if (next === signature) return;
     signature = next;
     buildGrid('radio', 'Radio', menu.radio || [], function (x) { return '<div class="tile station">' + esc(x.name) + '<small>' + esc(x.sub || '') + '</small></div>'; });
-    allAlbums = albums; buildPhotoBar(); renderAlbums();
+    allAlbums = albums; buildPhotoBar(); renderAlbums(); registerVoice();
     buildGrid('mood', 'Stimmung', menu.mood || [], function (x) { return '<div class="tile mood"><img src="' + esc(x.thumb) + '" alt=""><span>' + esc(x.label) + '</span></div>'; });
     paint();
   }
