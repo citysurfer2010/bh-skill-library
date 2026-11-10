@@ -56,7 +56,7 @@ export function createApp({ config = loadConfig(), db = openDb(config.dataDir), 
 
   const apps = appsStore(db);
   const avatars = avatarStore(config, users);
-  const deps = { config, users, apps, avatars, sessions, limiter, requireLogin, requireAdmin };
+  const deps = { config, db, users, apps, avatars, sessions, limiter, requireLogin, requireAdmin };
   app.use(screenRoutes(deps));
   app.use(verifyRoutes(deps));
   app.use(googleRoutes(deps));

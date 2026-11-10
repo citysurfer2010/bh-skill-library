@@ -199,3 +199,21 @@ test("iCloud-Fotos: Anmeldeseite nur fuer den Besitzer, Formular kommt an, Pfade
     assert.equal(rewriteHtml('<link href="https://cdn.jsdelivr.net/x.css">'), "");
   } finally { await g.stop(); upstream.close(); delete process.env.BH_ICLOUD_LOGIN_HOST; delete process.env.BH_ICLOUD_LOGIN_PORT; delete process.env.BH_ICLOUD_PHOTOS_OWNER; }
 });
+
+test("Alte screen.json und screen-menu.json werden einmalig übernommen", async () => {
+  const { mkdtempSync, writeFileSync, existsSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const path = await import("node:path");
+  const { openDb } = await import("../lib/db.js");
+  const { screenStore } = await import("../lib/screen-store.js");
+  const dir = mkdtempSync(path.join(tmpdir(), "screen-"));
+  writeFileSync(path.join(dir, "screen.json"), JSON.stringify({ mode: "audio", title: "Radio", text: "", url: "https://x.de/a", station: "Eins" }));
+  writeFileSync(path.join(dir, "screen-menu.json"), JSON.stringify({ radio: [{ id: "a" }], mood: [] }));
+  const db = openDb(":memory:");
+  const store = screenStore(db, dir);
+  assert.equal(store.load().mode, "audio"); assert.equal(store.load().station, "Eins"); assert.equal(store.load().id, undefined);
+  assert.deepEqual(store.loadMenu(), { radio: [{ id: "a" }], mood: [] });
+  assert.equal(existsSync(path.join(dir, "screen.json")), false); assert.equal(existsSync(path.join(dir, "screen.json.imported")), true);
+  store.saveContent({ mode: "text", title: "Neu" });
+  assert.equal(screenStore(db, dir).load().title, "Neu");
+});
