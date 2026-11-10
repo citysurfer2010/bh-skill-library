@@ -17,9 +17,11 @@
   function memory() {
     const draw = async () => {
       const { memories } = await ZottelChat.api('GET', '/memories');
-      host.innerHTML = `<div class="zt-memory"><div class="zt-big" data-big-figure>${ZottelFigure.html('look')}</div><h1>Was Zottel über dich weiß</h1><p class="zt-muted">Zottel merkt sich nur, was dir dauerhaft hilft. Du kannst jeden Eintrag löschen.</p>${memories.length ? `<ul class="zt-facts">${memories.map((m) => `<li><span>${esc(m.text)}</span><button type="button" class="bh-btn" data-forget="${m.id}">Vergessen</button></li>`).join('')}</ul>` : '<p class="zt-muted">Noch nichts. Sag einfach: „Merk dir, dass …“</p>'}</div>`;
+      host.innerHTML = `<div class="zt-memory"><div class="zt-big" data-big-figure>${ZottelFigure.html('look')}</div><h1>Was Zottel über dich weiß</h1><p class="zt-muted">Zottel merkt sich nur, was dir dauerhaft hilft. Du kannst jeden Eintrag löschen.</p><div><button type="button" class="bh-btn" data-setup>Einrichtung neu starten</button></div>${memories.length ? `<ul class="zt-facts">${memories.map((m) => `<li><span>${esc(m.text)}</span><button type="button" class="bh-btn" data-forget="${m.id}">Vergessen</button></li>`).join('')}</ul>` : '<p class="zt-muted">Noch nichts. Sag einfach: „Merk dir, dass …“</p>'}</div>`;
     };
-    host.addEventListener('click', async (e) => { const b = e.target.closest('[data-forget]'); if (!b) return; await ZottelChat.api('DELETE', `/memories/${b.dataset.forget}`); draw(); });
+    host.addEventListener('click', async (e) => {
+      if (e.target.closest('[data-setup]')) { const { chatId: id } = await ZottelChat.api('POST', '/setup', { restart: true }); location.href = `${BASE}/c/${id}`; return; }
+      const b = e.target.closest('[data-forget]'); if (!b) return; await ZottelChat.api('DELETE', `/memories/${b.dataset.forget}`); draw(); });
     return draw();
   }
 
@@ -28,6 +30,11 @@
     Navbar.render(onMemory ? 'memory' : 'home', me);
     document.body.classList.add('zt-body');
     sidebar(chatId).catch(() => {});
+    if (!onMemory && !chatId) {
+      // First visit: Zottel introduces himself and sets himself up.
+      const setup = await ZottelChat.api('GET', '/setup');
+      if (!setup.done) { const { chatId: id } = await ZottelChat.api('POST', '/setup', {}); location.replace(`${BASE}/c/${id}`); return; }
+    }
     if (onMemory) await memory();
     else ZottelChat.start(host, { chatId, me, onChange: (id) => sidebar(id).catch(() => {}) });
   } catch (e) {

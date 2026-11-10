@@ -22,15 +22,15 @@ const setMode = (id, mode) => getDb().prepare('UPDATE chats SET mode = ? WHERE i
 const setSummary = (id, summary) => getDb().prepare('UPDATE chats SET summary = ? WHERE id = ?').run(summary, id);
 const deleteChat = (id) => getDb().prepare('DELETE FROM chats WHERE id = ?').run(id);
 
-function addMessage(chatId, { role, content = '', toolCalls = null, toolCallId = null, toolName = null }) {
-  const r = getDb().prepare('INSERT INTO messages (chat_id, role, content, tool_calls, tool_call_id, tool_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .run(chatId, role, content, toolCalls ? JSON.stringify(toolCalls) : null, toolCallId, toolName, now());
+function addMessage(chatId, { role, content = '', toolCalls = null, toolCallId = null, toolName = null, hidden = false }) {
+  const r = getDb().prepare('INSERT INTO messages (chat_id, role, content, tool_calls, tool_call_id, tool_name, hidden, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(chatId, role, content, toolCalls ? JSON.stringify(toolCalls) : null, toolCallId, toolName, hidden ? 1 : 0, now());
   touchChat(chatId);
   return Number(r.lastInsertRowid);
 }
 const parseMessage = (m) => ({ ...m, tool_calls: m.tool_calls ? JSON.parse(m.tool_calls) : null });
 const activeMessages = (chatId) => all('SELECT * FROM messages WHERE chat_id = ? AND compacted = 0 ORDER BY id', chatId).map(parseMessage);
-const visibleMessages = (chatId) => all("SELECT id, role, content, tool_name, tool_calls, created_at FROM messages WHERE chat_id = ? AND role IN ('user', 'assistant', 'tool') ORDER BY id", chatId).map(parseMessage);
+const visibleMessages = (chatId) => all("SELECT id, role, content, tool_name, tool_calls, created_at FROM messages WHERE chat_id = ? AND hidden = 0 AND role IN ('user', 'assistant', 'tool') ORDER BY id", chatId).map(parseMessage);
 const compactUpTo = (chatId, id) => getDb().prepare('UPDATE messages SET compacted = 1 WHERE chat_id = ? AND id <= ?').run(chatId, id);
 
 function addCard(chatId, { tool, args, toolCallId }) {
@@ -60,7 +60,15 @@ const memoriesOf = (email) => all('SELECT id, text, created_at FROM memories WHE
 const addMemory = (email, text) => Number(getDb().prepare('INSERT INTO memories (user_email, text, created_at) VALUES (?, ?, ?)').run(email, String(text).slice(0, 500), now()).lastInsertRowid);
 const forgetMemory = (email, id) => getDb().prepare('DELETE FROM memories WHERE id = ? AND user_email = ?').run(id, email).changes > 0;
 
+function createSetupChat(email) {
+  const chat = createChat(email);
+  getDb().prepare("UPDATE chats SET kind = 'setup', title = 'Einrichtung' WHERE id = ?").run(chat.id);
+  getDb().prepare('INSERT INTO profiles (user_email, setup_chat_id, created_at) VALUES (?, ?, ?) ON CONFLICT (user_email) DO UPDATE SET setup_chat_id = excluded.setup_chat_id').run(email, chat.id, now());
+  return chatOf(email, chat.id);
+}
+const profileOf = (email) => plain(getDb().prepare('SELECT * FROM profiles WHERE user_email = ?').get(email));
+
 const isTrusted = (email, tool) => !!getDb().prepare('SELECT 1 FROM trusted_tools WHERE user_email = ? AND tool = ?').get(email, tool);
 const trust = (email, tool) => getDb().prepare('INSERT OR IGNORE INTO trusted_tools (user_email, tool) VALUES (?, ?)').run(email, tool);
 
-module.exports = { listChats, chatOf, createChat, setTitle, setMode, setSummary, deleteChat, addMessage, activeMessages, visibleMessages, compactUpTo, addCard, cardById, cardsOf, pendingCount, finishCard, setSteps, stepsOf, memoriesOf, addMemory, forgetMemory, isTrusted, trust };
+module.exports = { createSetupChat, profileOf, listChats, chatOf, createChat, setTitle, setMode, setSummary, deleteChat, addMessage, activeMessages, visibleMessages, compactUpTo, addCard, cardById, cardsOf, pendingCount, finishCard, setSteps, stepsOf, memoriesOf, addMemory, forgetMemory, isTrusted, trust };

@@ -68,6 +68,13 @@ function buildRouter() {
     return res.status(202).end();
   });
 
+  r.get('/setup', (req, res) => { const p = store.profileOf(req.user.email); res.json({ done: !!p, chatId: p?.setup_chat_id || null }); });
+  r.post('/setup', (req, res) => {
+    const p = store.profileOf(req.user.email);
+    if (p && !req.body?.restart && store.chatOf(req.user.email, p.setup_chat_id)) return res.json({ chatId: p.setup_chat_id });
+    return res.status(201).json({ chatId: agent.startSetup(req.user.email).id });
+  });
+
   r.get('/memories', (req, res) => res.json({ memories: store.memoriesOf(req.user.email) }));
   r.delete('/memories/:id', (req, res) => (store.forgetMemory(req.user.email, Number(req.params.id)) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' })));
   return r;

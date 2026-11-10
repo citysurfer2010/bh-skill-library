@@ -95,3 +95,14 @@ test('Schreiben von einer fremden Herkunft wird abgewiesen', async () => {
   assert.equal((await post('/api/chats', { ...user, origin: 'https://fremd.familiebiskup.de' })).status, 403);
   assert.equal((await post('/api/chats', { ...user, origin: BASE })).status, 201);
 });
+
+test('Einrichtung: einmal je User, Neustart auf Wunsch', async () => {
+  const kid = { 'x-user-email': `kind-${Date.now()}@beispiel.de`, 'x-user-role': 'user' };
+  assert.equal((await (await get('/api/setup', kid)).json()).done, false);
+  const first = await (await post('/api/setup', kid)).json();
+  assert.ok(first.chatId);
+  assert.equal((await (await post('/api/setup', kid)).json()).chatId, first.chatId);
+  const again = await (await post('/api/setup', kid, { restart: true })).json();
+  assert.notEqual(again.chatId, first.chatId);
+  assert.equal((await (await get('/api/setup', kid)).json()).chatId, again.chatId);
+});
