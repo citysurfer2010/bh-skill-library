@@ -38,12 +38,12 @@ cat >"$RUNNER" <<RUN
 #!/usr/bin/env bash
 # Started by launchd. A missing mount must never fill the local /Volumes folder.
 set -uo pipefail
-MOUNT="$MOUNT"; DONE="$HOME_DIR/first-run-done"
+MOUNT="$MOUNT"
 mounted() { mount | grep -q " on \$MOUNT ("; }
 mounted || { open "afp://$NAS/$SHARE"; sleep 30; }
 mounted || { echo "\$(date) Synology nicht erreichbar, nächster Versuch beim nächsten Lauf"; exit 0; }
-LIMIT=(); [ -f "\$DONE" ] && LIMIT=(--until-found 300)
-/usr/bin/caffeinate -i "$ICLOUDPD" --username "$APPLE_ID" --directory "\$MOUNT/$TARGET" --folder-structure "{:%Y/%Y-%m}" --size original --skip-videos --no-progress-bar "\${LIMIT[@]+"\${LIMIT[@]}"}" && touch "\$DONE"
+# Always the whole library: a shortcut after an interrupted first run would skip all older photos.
+/usr/bin/caffeinate -i "$ICLOUDPD" --username "$APPLE_ID" --directory "\$MOUNT/$TARGET" --folder-structure "{:%Y/%Y-%m}" --size original --skip-videos --no-progress-bar
 RUN
 chmod 700 "$RUNNER"
 cat >"$AGENT" <<PLIST
