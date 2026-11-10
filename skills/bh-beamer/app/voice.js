@@ -37,6 +37,6 @@ window.BHMicTest = function (done) {
       var an = ctx.createAnalyser(); an.fftSize = 1024; src.connect(an); var buf = new Float32Array(an.fftSize);
       var t = setInterval(function () { an.getFloatTimeDomainData(buf); frames++; for (var i = 0; i < buf.length; i++) { var v = Math.abs(buf[i]); if (v > peak) peak = v; } }, 100);
       setTimeout(function () { clearInterval(t); stream.getTracks().forEach(function (tr) { tr.stop(); }); try { ctx.close(); } catch (e) { /* old engine */ } finish('ok'); }, 5000);
-    }, function (e) { window.BH_MICTEST = 'denied-' + e.name; done(window.BH_MICTEST); });
+    }, function (e) { window.BH_MICTEST = 'denied-' + e.name + '-' + String(e.message || '').replace(/[^A-Za-z]/g, '').slice(0, 30); done(window.BH_MICTEST); });
   } catch (e) { window.BH_MICTEST = 'ex-' + e.name; done(window.BH_MICTEST); }
 };
