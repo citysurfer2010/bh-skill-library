@@ -9,7 +9,7 @@
 
 - Quelle ist `/Bilder`. Quelle: Matti, 09.11.2026.
 - Album heißt: Ordner, dessen Name mit einer Jahreszahl beginnt. Ungeordnete Sammlungen (`Finn_Unsortiert`, `Annefotos`, `entwickeln_…`) und Systemordner (`#recycle`, `#Backup_Handyupload`, `.TemporaryItems`) bleiben draußen.
-- Man wählt ein einzelnes Album oder „Alle Alben“. Quelle: Matti, 09.11.2026.
+- Man wählt ein einzelnes Album, ein Jahr oder „Alle Alben“. Quelle: Matti, 09.11.2026.
 - Keine doppelten Bilder: Dieselbe Dateigröße zählt innerhalb eines Laufs als dasselbe Bild, auch über Alben hinweg. Serienbilder (höchstens 5 Sekunden und 3 % Größe auseinander) werden auf eines reduziert. Quelle: Matti, 09.11.2026.
 - Passende Auswahl: Ein einzelnes Album zeigt höchstens 60 Bilder, gleichmäßig über das Album verteilt. „Alle Alben“ nimmt 12 Bilder je Album und geht alle Alben in zufälliger Folge durch, bevor eines wieder drankommt.
 - Dateien unter 150 KB sind meist Vorschauen und bleiben draußen.

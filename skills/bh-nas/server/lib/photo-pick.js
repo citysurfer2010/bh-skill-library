@@ -24,7 +24,7 @@ function parseAlbum(name) {
   }
   const title = rest.replace(/^[-_ ]+/, '').replace(/_/g, ' ').trim();
   const when = month ? `${MONTHS[month - 1]} ${years}` : years;
-  return { id: albumId(name), name, label: title || when, when: title ? when : '', sort: `${m[1]}${String(month || 0).padStart(2, '0')}` };
+  return { id: albumId(name), name, year: m[1], label: title || when, when: title ? when : '', sort: `${m[1]}${String(month || 0).padStart(2, '0')}` };
 }
 
 const usable = (f) => !f.isdir && !isHidden(f.name) && /\.jpe?g$/i.test(f.name) && f.additional?.size >= MIN_BYTES && f.additional.size <= MAX_BYTES;

@@ -73,5 +73,7 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 - Fernbedienung: OK pausiert, ▶ springt weiter, ▲ schneller und ▼ langsamer (4, 6, 8, 12 oder 20 Sekunden, bleibt gespeichert), CH wechselt das Radio, Zurück beendet. Radio läuft weiter.
 - Ein einzelnes Album endet mit „Album zu Ende“ und führt zurück zum Menü. „Alle Alben“ läuft endlos.
 - Bildschirm teilen unterbricht die Slideshow.
+- Über den Alben stehen Suche, „Alle Jahre“ und die Jahre, erreichbar mit ▲ aus der ersten Reihe. Quelle: Matti, 09.11.2026. Bei gewähltem Jahr spielt die erste Kachel alle Alben dieses Jahres. Die Suche filtert die Albumnamen ohne Serverabfrage.
+- Zurück hebt einen aktiven Filter auf.
 - Das letzte Bild eines Albums behält seine volle Standzeit. Die Bildunterschrift blendet nach 8 Sekunden aus, in der Pause bleibt sie stehen. Die Tasten erscheinen einmal zu Beginn und bei ◀.
 - Wird `platform/beamer-dev/bh-screen-deploy` geändert, muss die Kopie nach `/usr/local/sbin` neu installiert werden, sonst wirkt die Änderung nicht.
