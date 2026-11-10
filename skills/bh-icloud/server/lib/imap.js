@@ -2,7 +2,7 @@
 'use strict';
 
 const tls = require('tls');
-const { credentials, markRejected, RECONNECT } = require('./credentials.js');
+const { credentials, markRejected, MAIL_MISSING } = require('./credentials.js');
 
 const HOST = 'imap.mail.me.com';
 const TIMEOUT_MS = 90_000;
@@ -123,7 +123,7 @@ async function session() {
     fresh.close();
     if (!e.rejected) throw e;
     markRejected('mail');
-    throw new Error(`iCloud Mail lehnt die Anmeldung ab. Ist die Apple-ID keine iCloud-Adresse, muss die iCloud-Mail-Adresse angegeben sein: ${RECONNECT}`);
+    throw new Error(MAIL_MISSING);
   }
   shared = fresh;
   return fresh;

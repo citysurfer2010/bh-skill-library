@@ -1,1 +1,1 @@
-{ "name": "bh-icloud", "version": "26.11.5", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }
+{ "name": "bh-icloud", "version": "26.11.6", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }

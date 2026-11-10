@@ -46,10 +46,10 @@ test("profile: connected and rejected states", () => {
   assert.match(profileView({ ...base, icloud: { connected: true, appleId: "a@b.de", rejected: true } }), /Anmeldung abgelehnt/);
 });
 
-test("profile: a mail problem warns and asks only for the address", () => {
+test("profile: without iCloud mail the connection stays calm and only offers the address", () => {
   const html = profileView({ ...base, icloud: { connected: true, appleId: "a@b.de", mailRejected: true } });
-  assert.match(html, /@icloud\.com-Adresse/); assert.doesNotMatch(html, /Anmeldung abgelehnt/);
-  assert.match(html, /E-Mail unvollständig/); assert.match(html, /Adresse ergänzen/);
+  assert.match(html, /E-Mail ist nicht eingerichtet/); assert.doesNotMatch(html, /Anmeldung abgelehnt/);
+  assert.doesNotMatch(html, /p-tag warn/); assert.match(html, /Adresse ergänzen/);
   assert.match(html, /name="mailUser"[^>]* required data-autofocus/);
   assert.doesNotMatch(html, /id="icloudPassword"/); assert.match(html, /type="hidden" name="appleId" value="a@b.de"/);
 });

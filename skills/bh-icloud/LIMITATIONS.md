@@ -13,6 +13,7 @@
 
 ## Grenzen
 
+- iCloud-Mail braucht eine `@icloud.com`-Adresse. Ohne sie bleibt E-Mail ausgeschaltet, Kalender und Kontakte laufen weiter.
 - Mails werden bis 2 MB geladen, Text bis 64 KB ausgegeben (`truncated: true`). Anhänge erscheinen nur mit Name, Typ und Größe.
 - Ordnernamen mit Umlauten erscheinen in IMAP-Schreibweise (zum Beispiel `&APw-`). Sie funktionieren, wenn man sie genau so weitergibt.
 - Die Antwort von iCloud ist auf 24 MB begrenzt. Sehr große Kalender in langen Zeiträumen schlagen dann mit einer Meldung fehl.
