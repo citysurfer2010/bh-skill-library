@@ -1,0 +1,17 @@
+{
+  "name": "Zottel",
+  "short_name": "Zottel",
+  "description": "Dein persönlicher Assistent",
+  "lang": "de",
+  "start_url": "/zottel/",
+  "scope": "/zottel/",
+  "display": "standalone",
+  "background_color": "#1d4ed8",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    { "src": "/zottel/favicon.svg?v=3", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/zottel/branding/icon-192.png?v=3", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/zottel/branding/icon-512.png?v=3", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/zottel/branding/icon-maskable-512.png?v=3", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}

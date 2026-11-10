@@ -1,0 +1,99 @@
+/* Pages in the frame: full width, no max-width. Every page starts with the page header (title left, actions right).
+   Buttons belong there, not in navbar or breadcrumb. Lists borderless (.app-list), cards only for forms and dashboards. */
+
+#page-host { flex: 1; display: flex; flex-direction: column; }
+
+/* Page top bar: title (+ one-line subtitle) left, page actions right. */
+.app-topbar {
+  min-height: 68px; padding: 10px 24px; border-bottom: 1px solid var(--bh-border); box-sizing: border-box;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-shrink: 0; background: var(--bh-surface);
+}
+.app-topbar h1 { font-size: 24px; line-height: 1.2; font-weight: 700; color: var(--bh-text); letter-spacing: -.01em; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.app-topbar .sub { font-size: 13px; color: var(--bh-muted); margin-top: 2px; max-width: 60rem; }
+.app-topbar-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.app-topbar-actions .bh-btn, .app-topbar-actions .bh-input { height: var(--bh-control-h); margin: 0; }
+.app-content { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.app-content > * { margin-top: 0; margin-bottom: 0; }
+
+/* Lists borderless, no card around the table. */
+.app-content > .app-list { margin: 0 -24px; }
+.app-list table { width: 100%; border-collapse: collapse; }
+.app-list table th { text-align: left; }
+.app-list table th { position: sticky; top: 0; background: var(--bh-bg); border-bottom: 1px solid var(--bh-border); height: 39px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--bh-muted); }
+.app-list table th, .app-list table td { padding: 0 24px; }
+.app-list table td { padding: 16px 24px; font-size: 13px; }
+.app-list table td:first-child { font-weight: 600; }
+.app-list table td { border-bottom: 1px solid var(--bh-border-light); }
+.app-content > .app-list:first-child { margin-top: -24px; }
+.app-list tbody tr:not(.app-list-group):hover { background: var(--bh-primary-soft); }
+/* Grouped lists: ONE table with group rows (never one table per group — columns would differ). */
+.app-list table .app-list-group th { position: static; padding: 16px 24px 8px; text-align: left; font-size: 13px; font-weight: 700; color: var(--bh-text); background: var(--bh-surface); text-transform: none; letter-spacing: 0; border-bottom: 1px solid var(--bh-border); }
+.app-list-title { margin: 0; padding: 20px 24px 8px; font-size: 13px; font-weight: 700; color: var(--bh-text); }
+.app-list > .muted { padding: 16px 24px; margin: 0; }
+.app-list + .app-list { border-top: 1px solid var(--bh-border); }
+
+.card {
+  background: var(--bh-surface);
+  border: 1px solid var(--bh-border);
+  border-radius: var(--bh-radius-lg);
+  box-shadow: var(--bh-shadow-sm);
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .app-topbar { flex-wrap: wrap; padding: 10px 12px; }
+  .app-topbar-actions { width: 100%; justify-content: flex-start; }
+  .app-content { padding: 16px 12px; }
+  .app-content > .app-list { margin: 0 -12px; }
+}
+
+/* Loading standard: skeleton placeholders while content loads; shell stays visible. */
+.app-skel { display: block; border-radius: 6px; background: linear-gradient(90deg, var(--bh-border) 25%, var(--bh-surface) 50%, var(--bh-border) 75%); background-size: 400% 100%; animation: app-skel 1.4s ease infinite; }
+.app-skel-line { height: 12px; margin: 6px 0; }
+.app-skel-title { width: 220px; height: 22px; }
+.app-skel-num { width: 56px; height: 26px; margin-bottom: 8px; }
+.app-skel-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.app-skel-tile, .app-skel-card { padding: 16px; }
+.app-skel-list { padding: 8px 24px; } /* borderless like .app-list, never in a card */
+.app-skel-row { display: grid; grid-template-columns: 4fr 1fr 1fr 1fr; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--bh-border); }
+.app-skel-row:last-child { border-bottom: 0; }
+.app-skel-cards { display: grid; gap: 12px; }
+@keyframes app-skel { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .app-skel { animation: none; } }
+.app-skel-w10 { width: 10%; } .app-skel-w20 { width: 20%; } .app-skel-w30 { width: 30%; } .app-skel-w40 { width: 40%; } .app-skel-w50 { width: 50%; } .app-skel-w60 { width: 60%; } .app-skel-w70 { width: 70%; } .app-skel-w80 { width: 80%; } .app-skel-w90 { width: 90%; } .app-skel-w100 { width: 100%; }
+
+/* List page: search right in the page header, 48 px toolbar directly above the table (count + filters left, actions right). AppShell.listPage() builds it. */
+.app-search { position: relative; width: 256px; max-width: 100%; display: block; }
+.app-search input { width: 100%; height: var(--bh-control-h); padding: 0 12px 0 36px; box-sizing: border-box; border: 1px solid var(--bh-input-border);
+  border-radius: 6px; background: var(--bh-surface); color: var(--bh-text); font: inherit; font-size: 13px; transition: border-color .15s, box-shadow .15s; }
+.app-search input::placeholder { color: var(--bh-placeholder); }
+.app-search input:focus { outline: none; border-color: var(--bh-primary); box-shadow: 0 0 0 3px var(--bh-focus-ring); }
+.app-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--bh-placeholder); pointer-events: none; }
+.app-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 48px; padding: 0 24px; box-sizing: border-box;
+  border-bottom: 1px solid var(--bh-border); background: var(--bh-surface); }
+.app-content > .app-toolbar:first-child { margin: -24px -24px -16px; }   /* edge-to-edge, table header directly below */
+.app-toolbar-left, .app-toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.app-count { font-size: 13px; font-weight: 600; color: var(--bh-text); margin-right: 8px; white-space: nowrap; }
+.app-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.app-chip { display: inline-flex; align-items: center; gap: 6px; height: var(--bh-control-h-sm); padding: 0 12px; box-sizing: border-box;
+  border: 1px solid var(--bh-input-border); border-radius: 6px; background: var(--bh-surface); color: var(--bh-text);
+  font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background .15s; }
+.app-chip:hover { background: var(--bh-bg-subtle); text-decoration: none; }
+.app-chip.is-active { background: var(--bh-primary); border-color: var(--bh-primary); color: var(--bh-on-primary); }
+.app-chip-n { font-weight: 500; opacity: .75; }
+.app-chips + .app-chips { padding-left: 8px; border-left: 1px solid var(--bh-border); }
+@media (max-width: 768px) {
+  .app-content > .app-toolbar:first-child { margin: -16px -12px -16px; padding: 8px 12px; }
+  .app-topbar-actions .app-search { width: 100%; }
+}
+
+/* KPI tiles (AppShell.kpis); list pages use the KPI filter boxes of BHListPage. */
+.app-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.app-kpi { padding: 12px 16px; }
+.app-kpi-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--bh-muted); }
+.app-kpi-value { font-size: 20px; font-weight: 700; color: var(--bh-text); margin-top: 4px; }
+.app-kpi-sub { font-size: 12px; color: var(--bh-muted); margin-top: 2px; }
+/* Detail panel content (BHSideDrawer body): label / value pairs. */
+.app-dl { display: grid; grid-template-columns: minmax(110px, 35%) 1fr; gap: 10px 16px; margin: 0; font-size: 13px; }
+.app-dl dt { color: var(--bh-muted); }
+.app-dl dd { margin: 0; color: var(--bh-text); font-weight: 500; }

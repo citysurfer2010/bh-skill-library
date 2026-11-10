@@ -1,0 +1,42 @@
+'use strict';
+/**
+ * API keys for the Bearer API. Only the SHA-256 hash is stored; the plain text is returned exactly once on creation.
+ * The prefix bhzot_ makes a key of this app recognizable in logs.
+ */
+const crypto = require('crypto');
+const { getDb, nowIso } = require('./db');
+
+const PREFIX = 'bhzot_';
+const hashKey = (plain) => crypto.createHash('sha256').update(plain).digest('hex');
+const generate = () => PREFIX + crypto.randomBytes(32).toString('base64url');
+
+function create({ ownerId, label, scopes = 'submit,read' }) {
+  if (!ownerId) throw new Error('ownerId required');
+  if (!label) throw new Error('label required');
+  const plain = generate();
+  const prefix = plain.slice(0, 8);
+  const info = getDb().prepare(
+    'INSERT INTO api_keys (key_hash, key_prefix, owner_id, label, scopes, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  ).run(hashKey(plain), prefix, ownerId, label, scopes, nowIso());
+  return { id: Number(info.lastInsertRowid), key: plain, prefix, label, scopes, ownerId };
+}
+
+function verify(plain) {
+  if (!plain || !plain.startsWith(PREFIX)) return null;
+  const row = getDb().prepare('SELECT id, owner_id, scopes FROM api_keys WHERE key_hash = ? AND revoked_at IS NULL').get(hashKey(plain));
+  if (!row) return null;
+  getDb().prepare('UPDATE api_keys SET last_used_at = ? WHERE id = ?').run(nowIso(), row.id);
+  return row;
+}
+
+function list(ownerId) {
+  return getDb().prepare(
+    'SELECT id, key_prefix, label, scopes, created_at, last_used_at, revoked_at FROM api_keys WHERE owner_id = ? ORDER BY id DESC',
+  ).all(ownerId);
+}
+
+function revoke({ id, ownerId }) {
+  return getDb().prepare('UPDATE api_keys SET revoked_at = ? WHERE id = ? AND owner_id = ? AND revoked_at IS NULL').run(nowIso(), id, ownerId).changes > 0;
+}
+
+module.exports = { create, verify, list, revoke, PREFIX };

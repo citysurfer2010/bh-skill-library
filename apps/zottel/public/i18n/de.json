@@ -1,0 +1,10 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "error": "Fehler",
+    "saved": "Gespeichert",
+    "language": "Sprache"
+  }
+}
