@@ -17,7 +17,7 @@ function setup(reply) {
   sync.close(); fs.rmSync(process.env.BH_ICLOUD_SYNC_DB, { force: true }); fs.rmSync(process.env.BH_ICLOUD_INBOX, { recursive: true, force: true }); fs.mkdirSync(process.env.BH_ICLOUD_INBOX);
   const seen = [];
   dsm.setTransport(async () => json({ success: true, data: { sid: 'S' } }));
-  dsm.setUploadTransport(async (q, f, file) => { seen.push({ q, f, name: file.name }); return reply(seen); });
+  dsm.setUploadTransport(async (q, f, file) => { seen.push({ q, f, name: file.name, path: file.path, size: file.size }); return reply(seen); });
   return seen;
 }
 
@@ -49,4 +49,19 @@ test('Aufraeumen: nur Hochgeladenes jenseits der neuesten 700', async () => {
   assert.equal(end.removedLocal, 1); assert.equal(fs.existsSync(oldest), false);
   const keep = put('2019/2019-01/offen.jpg', 400);
   await assert.deepEqual(sync.counts().open, 1); assert.equal(fs.existsSync(keep), true);
+});
+
+test('Videos: Datei wird von der Platte gestreamt, Obergrenze in Bytes raeumt Hochgeladenes', async () => {
+  const seen = setup(() => ({ success: true }));
+  process.env.BH_ICLOUD_KEEP_BYTES = '3';
+  try {
+    const old = put('2025/2025-01/alt.MOV', 100); put('2026/2026-01/a.MOV', 300); put('2026/2026-02/b.MOV', 400);
+    for (let i = 0; i < 3; i++) await sync.step();
+    const b = seen.find((x) => x.name === 'b.MOV');
+    assert.equal(seen.length, 3); assert.equal(b.path.endsWith('b.MOV'), true); assert.equal(b.size, 1);
+    const end = await sync.step();
+    assert.equal(end.removedLocal, 0); assert.equal(fs.existsSync(old), true);
+    process.env.BH_ICLOUD_KEEP_BYTES = '2';
+    assert.equal((await sync.step()).removedLocal, 1); assert.equal(fs.existsSync(old), false);
+  } finally { delete process.env.BH_ICLOUD_KEEP_BYTES; }
 });
