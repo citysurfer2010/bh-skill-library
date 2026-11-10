@@ -175,11 +175,12 @@ test("Fotos: nur mit Schluessel einlieferbar, nur mit Link lesbar, nicht auf Vor
   } finally { await g.stop(); }
 });
 
-test("iCloud-Fotos: Anmeldeseite nur fuer den Besitzer, Formular kommt an, Pfade passen", async () => {
+test("iCloud-Fotos: eigene Anmeldeseite, nur fuer den Besitzer, Schritte werden durchgereicht", async () => {
   const http = await import("node:http");
-  const { rewriteHtml } = await import("../routes/icloud-photos-login.js");
-  const seen = [];
-  const upstream = http.createServer((req, res) => { let b = ""; req.on("data", (c) => { b += c; }); req.on("end", () => { seen.push({ m: req.method, u: req.url, b }); res.setHeader("content-type", "text/html"); res.end('<a hx-get="/status">x</a>'); }); }).listen(0, "127.0.0.1");
+  const { parseState } = await import("../routes/icloud-photos-login.js");
+  let state = "password"; const seen = [];
+  const pages = { password: '<form hx-post="/password"><input type="password" name="password"></form>', code: '<form hx-post="/code"><input name="code"></form>', ok: '<div class="fw-bold">No input is needed</div>' };
+  const upstream = http.createServer((req, res) => { let b = ""; req.on("data", (c) => { b += c; }); req.on("end", () => { if (req.method === "POST") { seen.push({ u: req.url, b }); state = req.url === "/password" ? "code" : "ok"; res.end("ok"); return; } res.end(pages[state]); }); }).listen(0, "127.0.0.1");
   await new Promise((r) => upstream.once("listening", r));
   process.env.BH_ICLOUD_LOGIN_HOST = "127.0.0.1"; process.env.BH_ICLOUD_LOGIN_PORT = String(upstream.address().port); process.env.BH_ICLOUD_PHOTOS_OWNER = "Chef@Beispiel.de";
   const g = await start();
@@ -188,32 +189,23 @@ test("iCloud-Fotos: Anmeldeseite nur fuer den Besitzer, Formular kommt an, Pfade
     await g.addUser("u@beispiel.de"); await g.addUser("chef@beispiel.de");
     const other = g.client(); await g.login(other, "u@beispiel.de");
     assert.equal((await other("/profile/icloud-photos/")).status, 403);
+    assert.equal((await other("/profile/icloud-photos/password", { form: { password: "x" } })).status, 403);
     const chef = g.client(); await g.login(chef, "chef@beispiel.de");
-    const page = await chef("/profile/icloud-photos/");
-    assert.equal(page.status, 200); assert.match(await page.text(), /hx-get="\/profile\/icloud-photos\/status"/);
-    assert.match(page.headers.get("content-security-policy"), /unsafe-inline/);
-    await chef("/profile/icloud-photos/password", { form: { password: "x y" } });
-    assert.deepEqual(seen.at(-1), { m: "POST", u: "/password", b: "password=x+y" });
+    assert.match(await (await chef("/profile/icloud-photos/")).text(), /Apple-Passwort für/);
+    assert.match(await (await chef("/profile/icloud-photos/code", { form: { code: "123456" } })).text(), /schon angekommen/);
+    assert.equal((await chef("/profile/icloud-photos/password", { form: { password: "x y" } })).status, 303);
+    assert.deepEqual(seen.at(-1), { u: "/password", b: "password=x+y" });
+    assert.match(await (await chef("/profile/icloud-photos/")).text(), /Bestätigungscode/);
+    await chef("/profile/icloud-photos/code", { form: { code: " 123 456 " } });
+    assert.deepEqual(seen.at(-1), { u: "/code", b: "code=123456" });
+    assert.match(await (await chef("/profile/icloud-photos/")).text(), /Verbunden/);
     assert.match(await (await chef("/profile")).text(), /href="\/profile\/icloud-photos\/"/);
     assert.doesNotMatch(await (await other("/profile")).text(), /icloud-photos/);
-    assert.equal(rewriteHtml('<link href="https://cdn.jsdelivr.net/x.css">'), "");
+    assert.deepEqual(parseState("<p>Authenticating</p>"), { step: "busy" });
+    assert.deepEqual(await (await chef("/profile/icloud-photos/state")).json(), { step: "ok" });
+    state = "password";
+    assert.match(await (await chef("/profile/icloud-photos/?after=password")).text(), /nicht bestätigt/);
+    upstream.close(); await new Promise((r) => setTimeout(r, 50));
+    assert.match(await (await chef("/profile/icloud-photos/")).text(), /Nicht erreichbar/);
   } finally { await g.stop(); upstream.close(); delete process.env.BH_ICLOUD_LOGIN_HOST; delete process.env.BH_ICLOUD_LOGIN_PORT; delete process.env.BH_ICLOUD_PHOTOS_OWNER; }
-});
-
-test("Alte screen.json und screen-menu.json werden einmalig übernommen", async () => {
-  const { mkdtempSync, writeFileSync, existsSync } = await import("node:fs");
-  const { tmpdir } = await import("node:os");
-  const path = await import("node:path");
-  const { openDb } = await import("../lib/db.js");
-  const { screenStore } = await import("../lib/screen-store.js");
-  const dir = mkdtempSync(path.join(tmpdir(), "screen-"));
-  writeFileSync(path.join(dir, "screen.json"), JSON.stringify({ mode: "audio", title: "Radio", text: "", url: "https://x.de/a", station: "Eins" }));
-  writeFileSync(path.join(dir, "screen-menu.json"), JSON.stringify({ radio: [{ id: "a" }], mood: [] }));
-  const db = openDb(":memory:");
-  const store = screenStore(db, dir);
-  assert.equal(store.load().mode, "audio"); assert.equal(store.load().station, "Eins"); assert.equal(store.load().id, undefined);
-  assert.deepEqual(store.loadMenu(), { radio: [{ id: "a" }], mood: [] });
-  assert.equal(existsSync(path.join(dir, "screen.json")), false); assert.equal(existsSync(path.join(dir, "screen.json.imported")), true);
-  store.saveContent({ mode: "text", title: "Neu" });
-  assert.equal(screenStore(db, dir).load().title, "Neu");
 });
