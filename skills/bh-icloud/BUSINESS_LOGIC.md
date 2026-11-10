@@ -30,6 +30,7 @@ Für Fotos gelten eigene Regeln, weil Apple dafür keine offizielle Schnittstell
 - Der Foto-Abgleich braucht anders als Kalender und Mail das echte Apple-Passwort. Es wird nur auf der Anmeldeseite im Profil eingegeben und liegt nur im Arbeitsspeicher des Containers. Die Sitzung liegt in `/srv/icloud-photos/cookies`.
 - Die Anmeldeseite öffnet nur der Besitzer.
 - Geholt werden täglich die neuesten 500 Fotos ohne Videos, damit die Platte des VPS nicht volläuft.
+- Der Mac sichert Fotos **und Videos**. Quelle: Matti, 10.11.2026. Der VPS lässt Videos wegen seines kleinen Zwischenspeichers aus.
 - In iCloud wird nie etwas gelöscht.
 - Der Container hat Internet, aber keinen Zugang zur Synology, zum Gateway oder zu anderen Diensten außer `bh-auth`, das seine Anmeldeseite durchreicht.
 - Hochgeladen wird nur nach `/photo/iCloud-Matti`, vorhandene Dateien werden nicht überschrieben. Eine Datei alle 8 Sekunden, damit die kleine Synology nicht überlastet. `nas-pause` im Familienordner stoppt das.

@@ -43,7 +43,7 @@ mounted() { mount | grep -q " on \$MOUNT ("; }
 mounted || { open "afp://$NAS/$SHARE"; sleep 30; }
 mounted || { echo "\$(date) Synology nicht erreichbar, nächster Versuch beim nächsten Lauf"; exit 0; }
 # Always the whole library: a shortcut after an interrupted first run would skip all older photos.
-/usr/bin/caffeinate -i "$ICLOUDPD" --username "$APPLE_ID" --directory "\$MOUNT/$TARGET" --folder-structure "{:%Y/%Y-%m}" --size original --skip-videos --no-progress-bar
+/usr/bin/caffeinate -i "$ICLOUDPD" --username "$APPLE_ID" --directory "\$MOUNT/$TARGET" --folder-structure "{:%Y/%Y-%m}" --size original --no-progress-bar
 RUN
 chmod 700 "$RUNNER"
 cat >"$AGENT" <<PLIST
