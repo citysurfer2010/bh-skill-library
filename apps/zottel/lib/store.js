@@ -8,7 +8,7 @@ const newId = () => crypto.randomBytes(9).toString('hex');
 const plain = (row) => (row ? { ...row } : null);
 const all = (sql, ...args) => getDb().prepare(sql).all(...args).map(plain);
 
-const listChats = (email) => all('SELECT id, title, mode, updated_at FROM chats WHERE user_email = ? ORDER BY updated_at DESC LIMIT 100', email);
+const listChats = (email) => all('SELECT id, title, mode, kind, unread, updated_at FROM chats WHERE user_email = ? ORDER BY updated_at DESC LIMIT 100', email);
 const chatOf = (email, id) => plain(getDb().prepare('SELECT * FROM chats WHERE id = ? AND user_email = ?').get(id, email));
 
 function createChat(email) {
@@ -68,7 +68,14 @@ function createSetupChat(email) {
 }
 const profileOf = (email) => plain(getDb().prepare('SELECT * FROM profiles WHERE user_email = ?').get(email));
 
+const setUnread = (id, on) => getDb().prepare('UPDATE chats SET unread = ? WHERE id = ?').run(on ? 1 : 0, id);
+function createRoutineChat(email, title) {
+  const chat = createChat(email);
+  getDb().prepare("UPDATE chats SET kind = 'routine', title = ? WHERE id = ?").run(title, chat.id);
+  return chatOf(email, chat.id);
+}
+
 const isTrusted = (email, tool) => !!getDb().prepare('SELECT 1 FROM trusted_tools WHERE user_email = ? AND tool = ?').get(email, tool);
 const trust = (email, tool) => getDb().prepare('INSERT OR IGNORE INTO trusted_tools (user_email, tool) VALUES (?, ?)').run(email, tool);
 
-module.exports = { createSetupChat, profileOf, listChats, chatOf, createChat, setTitle, setMode, setSummary, deleteChat, addMessage, activeMessages, visibleMessages, compactUpTo, addCard, cardById, cardsOf, pendingCount, finishCard, setSteps, stepsOf, memoriesOf, addMemory, forgetMemory, isTrusted, trust };
+module.exports = { setUnread, createRoutineChat, createSetupChat, profileOf, listChats, chatOf, createChat, setTitle, setMode, setSummary, deleteChat, addMessage, activeMessages, visibleMessages, compactUpTo, addCard, cardById, cardsOf, pendingCount, finishCard, setSteps, stepsOf, memoriesOf, addMemory, forgetMemory, isTrusted, trust };

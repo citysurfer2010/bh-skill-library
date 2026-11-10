@@ -15,7 +15,17 @@
 .zt-page:has(.zt-hello) .zt-mini { display: none; }
 .zt-head [hidden] { display: none; }
 .zt-big { width: 148px; height: 148px; }
-.zt-memory .zt-big { width: 96px; height: 96px; }
+.zt-memory .zt-big { width: 88px; height: 88px; flex: none; }
+.zt-mine-head { display: flex; align-items: center; gap: 16px; }
+.zt-mine { display: grid; gap: 8px; margin-top: 12px; }
+.zt-memory .zt-mine h2 { margin: 12px 0 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.zt-fact { display: grid; gap: 2px; min-width: 0; }
+.zt-fact-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: none; }
+.zt-pill { display: inline-block; margin-right: 4px; padding: 0 7px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.zt-pill--on { background: var(--bh-ok-bg); color: var(--bh-ok); }
+.zt-pill--idea { background: var(--bh-primary-soft); color: var(--bh-primary); }
+.zt-pill--off { background: var(--bh-bg-subtle); color: var(--bh-muted); }
+
 .zt-suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .zt-msg { display: flex; gap: 10px; }
 .zt-face { flex: none; width: 30px; height: 30px; margin-top: -2px; }
@@ -95,4 +105,24 @@
   .zt-arg { grid-template-columns: minmax(48px, 76px) minmax(0, 1fr); }
   .zt-card-actions .bh-btn { flex: 1 1 auto; }
   .zt-seg button { min-height: 40px; }
+}
+.zt-fact > :first-child { font-size: 15px; font-weight: 600; }
+.zt-fact > :not(:first-child) { font-size: 13px; line-height: 1.45; }
+.zt-fact--off .zt-fact > :first-child { color: var(--bh-muted); }
+.zt-fact-actions .zt-del { padding: 0 10px; border-color: transparent; background: none; color: var(--bh-danger); }
+.zt-fact-actions .zt-del:focus-visible { outline: 2px solid var(--bh-danger); outline-offset: 1px; }
+.zt-fact-actions .zt-del:hover { background: var(--bh-danger-bg); }
+.zt-memory .zt-note { padding: 8px 12px; border-radius: var(--bh-radius-sm); }
+.zt-memory .zt-status { min-height: 0; padding: 0; }
+.zt-memory .zt-status:empty { display: none; }
+.zt-page-memory, .zt-memory { padding-top: 24px; }
+.zt-restart { margin-top: 20px; }
+/* Last, so it wins over the desktop rules above. */
+@media (max-width: 760px) {
+  .zt-facts li { flex-direction: column; align-items: stretch; }
+  .zt-fact { width: 100%; }
+  .zt-fact-actions { justify-content: flex-start; }
+  .zt-fact-actions { gap: 6px; }
+  .zt-fact-actions .bh-btn { min-height: 44px; padding: 0 12px; }
+  .zt-memory { padding-top: 16px; }
 }

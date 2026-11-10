@@ -89,6 +89,8 @@ app.use(errorPage.errorHandler);
 
 if (require.main === module) {
   getDb();
+  // Routines: one look per minute is precise enough and costs nothing when none is due.
+  setInterval(() => require('./lib/agent').runRoutines().catch((e) => console.error(`[zottel] ${e.message}`)), 60_000).unref();
   const server = app.listen(PORT, HOST, () => console.log(`[${APP_ID}] läuft auf http://${HOST}:${PORT} (Pfad: "${APP_BASE}")`));
   const stop = () => server.close(() => { closeDb(); process.exit(0); });
   process.on('SIGTERM', stop);
