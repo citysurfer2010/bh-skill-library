@@ -293,7 +293,10 @@
     var chrome = (navigator.userAgent.match(/Chrome\/[\d.]+/) || ['?'])[0];
     // Test: which voice interfaces this device offers (Samsung Voice Interaction from Tizen 6.0, Tizen Voice Control from 4.0).
     var vi = 0; var vc = 0; try { vi = window.webapis && webapis.voiceinteraction ? 1 : 0; } catch (e) { vi = 9; } try { vc = window.tizen && tizen.voicecontrol ? 1 : 0; } catch (e) { vc = 9; }
-    var base = chrome + '_rtc' + (PC ? 1 : 0) + '_mse' + (window.MediaSource ? 1 : 0) + '_vi' + vi + '_vc' + vc;
+    var keys = ''; try { var all = tizen.tvinputdevice.getSupportedKeys(); keys = '_keys' + all.length + '-' + all.filter(function (k) { return /voice|mic|search|bixby|assist|speech|extra|ambient|info/i.test(k.name); }).map(function (k) { return k.name + k.code; }).join('.'); } catch (e) { keys = '_keyserr-' + e.name; }
+    var mic = ''; try { mic = '_mic' + (window.webapis && webapis.microphone ? (function () { try { var l = webapis.microphone.getMicrophones(); return l.length + '-' + l.map(function (m) { return String(m.name || m.id || '?').replace(/[^A-Za-z0-9]/g, ''); }).join('.'); } catch (e) { return 'err' + e.name; } })() : 0); } catch (e) { mic = '_micerr-' + e.name; }
+    var gum = navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 1 : 0;
+    var base = chrome + '_rtc' + (PC ? 1 : 0) + '_mse' + (window.MediaSource ? 1 : 0) + '_vi' + vi + '_vc' + vc + keys + mic + '_gum' + gum;
     caps = base;
     if (!PC) return;
     try {

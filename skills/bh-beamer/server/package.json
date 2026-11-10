@@ -1,1 +1,1 @@
-{ "name": "bh-beamer", "version": "26.11.11", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }
+{ "name": "bh-beamer", "version": "26.11.12", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }
