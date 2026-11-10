@@ -1,1 +1,1 @@
-{ "name": "bh-birthdays", "version": "26.11.3", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }
+{ "name": "bh-birthdays", "version": "26.11.4", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }

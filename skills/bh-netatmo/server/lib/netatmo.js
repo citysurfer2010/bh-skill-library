@@ -1,7 +1,6 @@
 'use strict';
 /** Reads the Netatmo heating via the web login of the family account, read-only. Rare logins, failed attempts locked out. */
-const fs = require('fs');
-const path = require('path');
+const { read, write } = require('./store.js');
 
 let doFetch = (...a) => fetch(...a);
 const setFetch = (f) => { doFetch = f; };
@@ -11,9 +10,6 @@ const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130 Safari
 const ACCESS = 'netatmocomaccess_token';
 const TOKEN_MS = 150 * 60_000; const LOCK_MS = 30 * 60_000; const ROOMS_MS = 5 * 60_000;
 
-const file = () => path.join(process.env.BH_FAMILY_DIR || '/tmp/bh-family', 'netatmo.json');
-function read() { try { return JSON.parse(fs.readFileSync(file(), 'utf8')); } catch { return {}; } }
-function write(patch) { fs.mkdirSync(path.dirname(file()), { recursive: true }); fs.writeFileSync(file(), JSON.stringify({ ...read(), ...patch }), { mode: 0o600 }); }
 
 function jar(initial = {}) {
   const c = { ...initial };

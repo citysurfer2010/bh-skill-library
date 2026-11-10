@@ -9,7 +9,7 @@ const d = require('../lib/on-this-day.js');
 test('Geburtstage: Eingabe wird geprüft, Datei nur für den Dienst lesbar', () => {
   assert.equal(b.add('A', 'kaputt'), null);
   assert.deepEqual(b.add('Anna Muster', '2015-11-14'), { name: 'Anna Muster', date: '2015-11-14' });
-  assert.equal(fs.statSync(path.join(process.env.BH_FAMILY_DIR, 'birthdays.json')).mode & 0o777, 0o600);
+  assert.equal(fs.statSync(path.join(process.env.BH_FAMILY_DIR, 'birthdays.db')).mode & 0o777, 0o600);
   b.remove('Anna Muster'); assert.deepEqual(b.load(), []);
 });
 
@@ -44,4 +44,16 @@ test('An diesem Tag: höchstens ein Abruf pro Tag, nur Monat und Tag in der Adre
   assert.equal(calls, 1); assert.match(seen, /\/all\/11\/22$/);
   assert.equal(d.forToday(now).facts.length, 1);
   assert.equal(d.forToday(new Date('2026-11-23T09:00:00+01:00')), null);
+});
+
+test('Alte birthdays.json wird einmalig übernommen, vorhandene Einträge bleiben', () => {
+  const { reset } = require('../lib/db.js');
+  const dir = process.env.BH_FAMILY_DIR; const legacy = path.join(dir, 'birthdays.json');
+  reset(); for (const s of ['', '-wal', '-shm']) fs.rmSync(path.join(dir, `birthdays.db${s}`), { force: true });
+  fs.writeFileSync(legacy, JSON.stringify([{ name: 'Alt', date: '2000-01-02' }]));
+  assert.deepEqual(b.load(), [{ name: 'Alt', date: '2000-01-02' }]);
+  assert.equal(fs.existsSync(legacy), false); assert.equal(fs.existsSync(`${legacy}.imported`), true);
+  fs.writeFileSync(legacy, JSON.stringify([{ name: 'Neu', date: '2001-01-02' }]));
+  reset(); assert.deepEqual(b.load(), [{ name: 'Alt', date: '2000-01-02' }]);
+  fs.rmSync(legacy, { force: true }); b.remove('Alt');
 });

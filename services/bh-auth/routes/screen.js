@@ -1,20 +1,18 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
-import path from "node:path";
 import express, { Router } from "express";
 import { esc } from "../lib/views.js";
 import { screenJpeg } from "../lib/screen-image.js";
 import { photoRoutes } from "./screen-photos.js";
+import { screenStore } from "../lib/screen-store.js";
 
 const same = (a, b) => { const x = Buffer.from(String(a)); const y = Buffer.from(String(b)); return b !== "" && x.length === y.length && timingSafeEqual(x, y); };
 
 // Display for the Beamer: it cannot log in, the link itself is the secret.
-export function screenRoutes({ config }) {
+export function screenRoutes({ config, db }) {
   const r = Router();
-  const file = path.join(config.dataDir, "screen.json");
-  const load = () => { try { return { mode: "text", url: null, ...JSON.parse(readFileSync(file, "utf8")) }; } catch { return { mode: "text", title: "", text: "", url: null }; } };
-  const menuFile = path.join(config.dataDir, "screen-menu.json");
-  const loadMenu = () => { try { return JSON.parse(readFileSync(menuFile, "utf8")); } catch { return null; } };
+  const store = screenStore(db, config.dataDir);
+  const load = store.load;
+  const loadMenu = store.loadMenu;
   const requests = [];
   const requestWaiters = new Set();
   const waiters = new Set();
@@ -52,7 +50,7 @@ export function screenRoutes({ config }) {
     let body; try { body = JSON.parse(req.body); } catch { return res.status(400).json({ error: "unlesbar" }); }
     const answer = sdp(body?.sdp); const c = load();
     if (!answer || c.mode !== "share" || body?.session !== c.session) return res.status(409).json({ error: "Sitzung passt nicht" });
-    writeFileSync(file, JSON.stringify({ ...c, answer }), { mode: 0o600 });
+    store.setAnswer(answer);
     res.status(204).end();
   });
   // Separate page for the YouTube player: inside the app it has no origin and refuses to play.
@@ -92,7 +90,7 @@ export function screenRoutes({ config }) {
   r.post("/screen-menu", express.json({ limit: "128kb" }), (req, res) => {
     if (!writer(req)) return res.status(401).json({ error: "unauthorized" });
     if (!Array.isArray(req.body?.radio) || !Array.isArray(req.body?.mood)) return res.status(400).json({ error: "ungueltig" });
-    writeFileSync(menuFile, JSON.stringify({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null, board: req.body.board || null, alerts: req.body.alerts || [], birthdays: req.body.birthdays || [], rooms: req.body.rooms || [], events: req.body.events || [], heating: req.body.heating || null, onThisDay: req.body.onThisDay || null, photoAlbums: req.body.photoAlbums || [] }), { mode: 0o600 });
+    store.saveMenu({ radio: req.body.radio, mood: req.body.mood, schedule: req.body.schedule || null, board: req.body.board || null, alerts: req.body.alerts || [], birthdays: req.body.birthdays || [], rooms: req.body.rooms || [], events: req.body.events || [], heating: req.body.heating || null, onThisDay: req.body.onThisDay || null, photoAlbums: req.body.photoAlbums || [] });
     changed();
     res.status(204).end();
   });
@@ -117,7 +115,7 @@ export function screenRoutes({ config }) {
     if (mode === "share" && !offer) return res.status(400).json({ error: "Angebot ungueltig" });
     const previous = load().mode;
     const session = mode === "share" ? randomBytes(9).toString("hex") : null;
-    writeFileSync(file, JSON.stringify({ mode, title: clip(req.body?.title, 200), text: clip(req.body?.text, 1000), url, offer, session, answer: null, video, station: clip(req.body?.station, 100) }), { mode: 0o600 });
+    store.saveContent({ mode, title: clip(req.body?.title, 200), text: clip(req.body?.text, 1000), url, offer, session, answer: null, video, station: clip(req.body?.station, 100) });
     changed();
     res.json({ ok: true, previous, session });
   });

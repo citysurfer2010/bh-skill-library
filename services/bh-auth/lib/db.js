@@ -28,6 +28,12 @@ const MIGRATIONS = [
   "ALTER TABLE users ADD COLUMN googleEmail TEXT",
   "ALTER TABLE users ADD COLUMN avatarType TEXT",
   "ALTER TABLE users ADD COLUMN avatarAt INTEGER",
+  `CREATE TABLE screen_content (
+     id INTEGER PRIMARY KEY CHECK (id = 1),
+     mode TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', text TEXT NOT NULL DEFAULT '',
+     url TEXT, offer TEXT, session TEXT, answer TEXT, video TEXT, station TEXT
+   )`,
+  "CREATE TABLE screen_menu (id INTEGER PRIMARY KEY CHECK (id = 1), data TEXT NOT NULL)",
 ];
 
 export function openDb(fileOrDir) {
