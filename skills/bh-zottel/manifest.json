@@ -1,0 +1,8 @@
+{
+  "skill_id": "bh-zottel",
+  "name": "bh-zottel",
+  "version": "26.11.1",
+  "description": "Zottel, der persoenliche Assistent je User auf der BH Platform",
+  "author": "bh-platform",
+  "schema_version": "2.0"
+}

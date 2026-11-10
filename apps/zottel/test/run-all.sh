@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Test run for Zottel: mandatory suites plus coverage threshold.
+# Runs against a throwaway instance (port + 36000, own DATA_DIR), never against the running app.
+set -u
+cd "$(dirname "$0")/.."
+
+mkdir -p .test-tmp
+TEST_TMP=$(mktemp -d "$PWD/.test-tmp/run-XXXXXX")
+export TEST_TMP TMPDIR="$TEST_TMP"
+export PORT="${TEST_PORT:-$((3060 + 36000))}"
+export DATA_DIR="$TEST_TMP/data"
+export HOST=127.0.0.1 TRUST_PROXY_AUTH=1 NODE_NO_WARNINGS=1
+unset DEV_USER_EMAIL DEV_USER_ROLE
+
+node server.js > "$TEST_TMP/server.log" 2>&1 &
+APP_PID=$!
+cleanup() { kill "$APP_PID" 2>/dev/null; wait "$APP_PID" 2>/dev/null; rm -rf "$TEST_TMP"; }
+trap cleanup EXIT INT TERM
+
+is_up() { node -e "fetch('http://127.0.0.1:$PORT/health',{signal:AbortSignal.timeout(2000)}).then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"; }
+for _ in $(seq 1 30); do is_up && break; sleep 0.5; done
+if ! is_up; then echo "FEHLER: Testinstanz nicht erreichbar. Log:"; tail -20 "$TEST_TMP/server.log"; exit 1; fi
+echo "Testinstanz auf Port $PORT"
+
+FAIL=0
+PASSED=0
+SUITES=("Validate" "Smoke" "RBAC" "Restart" "E2E" "Unit" "No-Native-Select" "No-Blocking-Resources" "Branding" "BH-Table" "Agent")
+FILES=("validate" "smoke" "rbac" "restart" "e2e" "unit-server" "no-native-select" "no-blocking-resources" "branding" "no-bare-table" "unit-agent")
+TOTAL_OK=0
+for i in "${!FILES[@]}"; do
+  log="$TEST_TMP/${FILES[$i]}.log"
+  if node --test --test-reporter=tap "test/${FILES[$i]}.test.js" > "$log" 2>&1; then
+    ok=$(sed -n 's/^# pass //p' "$log")
+    echo "ok   ${SUITES[$i]}: $ok Tests"
+    PASSED=$((PASSED + 1)); TOTAL_OK=$((TOTAL_OK + ok))
+  else
+    echo "ROT  ${SUITES[$i]}"
+    grep -v '^\s*at ' "$log" | grep -A12 '^\s*not ok' | head -40 | sed 's/^/     /'
+    FAIL=1
+  fi
+done
+
+echo
+echo "Coverage (c8)"
+if node_modules/.bin/c8 --reporter=text-summary --check-coverage node --test --test-reporter=tap --test-concurrency=1 test/*.test.js > "$TEST_TMP/cov.log" 2>&1; then
+  grep -E '(Lines|Functions|Branches|Statements)' "$TEST_TMP/cov.log" | sed 's/^/  /'
+  echo "  Schwelle erreicht"
+else
+  grep -E '(Lines|Functions|Branches|Statements)|^# fail|^not ok|ERROR' "$TEST_TMP/cov.log" | sed 's/^/  /'
+  echo "  Coverage-Lauf rot (Tests oder Schwelle)"
+  FAIL=1
+fi
+
+echo
+echo "Ergebnis: $PASSED von ${#SUITES[@]} Suiten grün, $TOTAL_OK Tests bestanden"
+if [ "$FAIL" -eq 0 ]; then echo "Alle Tests bestanden."; else echo "Tests ROT: nicht committen."; exit 1; fi
