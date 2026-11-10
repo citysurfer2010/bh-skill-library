@@ -239,7 +239,7 @@ body:not(.audio) #playing:not([data-s="paused"]) { opacity: .72; }
 #photo-chips.more-l, #photo-chips.more-l.more-r { --fl: transparent; }
 #photo-chips.more-r, #photo-chips.more-l.more-r { --fr: transparent; }
 .chip { display: inline-block; margin-right: 12px; padding: 8px 22px; border-radius: 10px; background: var(--card); color: var(--ink); font-size: 32px; font-weight: 700; line-height: 40px; }
-.chip:nth-child(2) { margin-right: 32px; }
+.chip:first-child { margin-right: 32px; }
 .chip.on { background: var(--accent); color: var(--plate); }
 .chip.on + .chip.on { background: var(--chip); color: var(--accent); }
 .chip.focus { box-shadow: 0 0 0 5px #1d4ed8; }
