@@ -10,6 +10,8 @@ install -d -m 755 "$D"; install -d -m 711 "$L"; install -d -m 700 -o "$U" -g "$U
 jq --arg t "$(val BH_APPS_LLM_TOKEN)" 'with_entries(select(.value != "app/bh-apps")) + {($t): "app/bh-apps"}' "$TOKENS" >"$TOKENS.new"
 chown "$U:$U" "$TOKENS.new"; chmod 400 "$TOKENS.new"; mv "$TOKENS.new" "$TOKENS"
 printf '%s' "$(val BH_APPS_LLM_TOKEN)" >"$L/llm/token.new"; chown "$U:$U" "$L/llm/token.new"; chmod 400 "$L/llm/token.new"; mv "$L/llm/token.new" "$L/llm/token"
+[ -n "$(val BH_ACT_AS_SECRET)" ] || (umask 077; echo "BH_ACT_AS_SECRET=$(openssl rand -hex 32)" >>"$ENV")
+printf '%s' "$(val BH_ACT_AS_SECRET)" >"$L/llm/act-as-secret.new"; chown "$U:$U" "$L/llm/act-as-secret.new"; chmod 400 "$L/llm/act-as-secret.new"; mv "$L/llm/act-as-secret.new" "$L/llm/act-as-secret"
 install -m 755 bhapp /usr/local/sbin/bhapp
 docker build -q -t bh-apps:current . >/dev/null
 docker network inspect bh-apps-net >/dev/null 2>&1 || docker network create bh-apps-net >/dev/null
