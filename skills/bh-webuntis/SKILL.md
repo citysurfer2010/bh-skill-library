@@ -24,6 +24,6 @@ Holt über das zentrale MCP-Gateway den Tagesplan aller Kinder des Eltern-Kontos
 
 - Nur lesen, nie etwas in WebUntis ändern.
 - `webuntis_day` holt bei jedem Aufruf frische Werte, es gibt keinen Zwischenspeicher im Skill.
-- Maßvoll abrufen: Die App Beamer fragt um 6:30, 6:45, 7:00 (bis dahin steht der Vertretungsplan), 10:00, 13:00 und 16:05 Uhr, dazu beim Öffnen der Seite und beim Start von BH Screen, höchstens alle 2 Minuten.
+- Maßvoll abrufen: Die App Beamer fragt um 6:30, 6:45, 7:00 (bis dahin steht der Vertretungsplan), 10:00, 13:00 und 16:05 Uhr, dazu beim Öffnen der Seite und beim Start von BH Home, höchstens alle 2 Minuten.
 - Die Programm-Schnittstelle `jsonrpc.svc` ist gesperrt (403). Der Skill nutzt die Anmeldung der Webseite auf ausdrücklichen Wunsch des Kontoinhabers. Sperrt WebUntis das, wird nicht drumherum gearbeitet.
 - Lehrkräfte werden nicht ausgegeben: Für die Anzeige im Wohnzimmer reichen Fach und Änderung.

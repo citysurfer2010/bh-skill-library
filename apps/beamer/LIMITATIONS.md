@@ -23,7 +23,7 @@ Details zu einem Modul: `docs/limitations/<modul>.md`.
 
 - Bildschirm und Kamera teilen geht nur im selben Heimnetz (WebRTC ohne STUN/TURN). Am Handy gibt es nur die Kamera, Browser dort können keinen Bildschirm teilen.
 
-- Die Radio-Pause merkt sich der Beamer nur, solange BH Screen läuft.
+- Die Radio-Pause merkt sich der Beamer nur, solange BH Home läuft.
 - Am Geburtstag startet der Screen auf dem Reiter „Geburtstag“; Klausuren und Änderungen zeigt dort nur ein Punkt am Reiter „Heute“.
 
 ## Backlog
@@ -31,5 +31,5 @@ Details zu einem Modul: `docs/limitations/<modul>.md`.
 - Einmalige Termine aus dem Family-Kalender auf dem Startbild (Matti, 09.11.2026). Wartet auf den Google-Login; die App braucht dazu Lesezugriff auf den Kalender.
 
 - Ruhebild mit Uhr und Wetter, wenn nichts läuft.
-- BH Screen mit der echten Fernbedienung bedienen (Senderwahl per Pfeiltasten).
+- BH Home mit der echten Fernbedienung bedienen (Senderwahl per Pfeiltasten).
 - Szenen und Zeitpläne, z. B. „Abend“ = Kamin + Radio leise.

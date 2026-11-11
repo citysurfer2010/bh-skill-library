@@ -102,7 +102,7 @@ async function press(key) {
 }
 
 // Confirmed by query on this Beamer. Before every start the real name is checked again.
-const APPS = { 'BH Screen': 'bhscreen01.BHScreen', YouTube: '111299001912', 'Prime Video': '3201910019365', Netflix: '3201907018807', 'Disney+': '3201901017640', 'Apple TV': '3201807016597', Spotify: '3201606009684', WOW: '3201411000562', Internet: '3201907018784' };
+const APPS = { 'BH Home': 'bhscreen01.BHScreen', YouTube: '111299001912', 'Prime Video': '3201910019365', Netflix: '3201907018807', 'Disney+': '3201901017640', 'Apple TV': '3201807016597', Spotify: '3201606009684', WOW: '3201411000562', Internet: '3201907018784' };
 
 function realRest(method, id, timeout = 6000) {
   return new Promise((resolve, reject) => {
@@ -141,7 +141,7 @@ async function isInstalled(app) {
   try { await appInfo(app); installedUntil.set(app, Date.now() + 600_000); return true; } catch { return false; }
 }
 
-// Developer apps installed via sdb (BH Screen) never report `running`/`visible` to the REST endpoint.
+// Developer apps installed via sdb (BH Home) never report `running`/`visible` to the REST endpoint.
 // There the answer `true` to the start counts as success; if the app is already in the foreground, the
 // Beamer does not answer the start at all (timeout) - that is no error either, it was reachable just now.
 async function openApp(app, { tries = 8, delayMs = 750, restart = false } = {}) {

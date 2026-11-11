@@ -105,7 +105,7 @@ function buildRouter() {
     return { session };
   }));
 
-  // Stop depending on content: end radio in BH Screen, everything else ends by jumping to the home page.
+  // Stop depending on content: end radio in BH Home, everything else ends by jumping to the home page.
   async function stopAll() {
     if (now?.kind === 'share') { await endShare(); return; }
     await gateway.call('beamer_home');

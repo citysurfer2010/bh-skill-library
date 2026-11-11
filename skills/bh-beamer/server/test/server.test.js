@@ -67,18 +67,18 @@ test('App starten: echter Name wird vorher geprueft, fremde App wird nie gestart
 });
 
 test('Entwickler-App: Start gilt mit Antwort true oder Timeout als Erfolg, Ausfall bleibt Fehler', async () => {
-  const dev = (postResult) => { const calls = []; r.setRest(async (m, id) => { calls.push([m, id]); if (m === 'POST') return postResult(); return { status: 200, json: { name: 'BH Screen', running: false, visible: false } }; }); return calls; };
+  const dev = (postResult) => { const calls = []; r.setRest(async (m, id) => { calls.push([m, id]); if (m === 'POST') return postResult(); return { status: 200, json: { name: 'BH Home', running: false, visible: false } }; }); return calls; };
   let calls = dev(() => ({ status: 200, json: true }));
-  assert.equal(await r.openApp('BH Screen', { tries: 1, delayMs: 1 }), 'started');
+  assert.equal(await r.openApp('BH Home', { tries: 1, delayMs: 1 }), 'started');
   assert.ok(calls.filter((c) => c[0] === 'GET').length <= 3);
   dev(() => { throw new Error('timeout'); });
-  assert.equal(await r.openApp('BH Screen', { tries: 1, delayMs: 1 }), 'running');
+  assert.equal(await r.openApp('BH Home', { tries: 1, delayMs: 1 }), 'running');
   dev(() => { throw new Error('Beamer ist aus oder nicht erreichbar'); });
-  await assert.rejects(r.openApp('BH Screen', { tries: 1, delayMs: 1 }), /nicht erreichbar/);
+  await assert.rejects(r.openApp('BH Home', { tries: 1, delayMs: 1 }), /nicht erreichbar/);
   dev(() => ({ status: 200, json: {} }));
-  await assert.rejects(r.openApp('BH Screen', { tries: 1, delayMs: 1 }), /liess sich nicht starten/);
+  await assert.rejects(r.openApp('BH Home', { tries: 1, delayMs: 1 }), /liess sich nicht starten/);
   calls = dev(() => ({ status: 200, json: true }));
-  await r.openApp('BH Screen', { tries: 1, delayMs: 1, restart: true });
+  await r.openApp('BH Home', { tries: 1, delayMs: 1, restart: true });
   assert.deepEqual(calls.slice(1, 3).map((c) => c[0]), ['DELETE', 'POST']);
 });
 
@@ -112,7 +112,7 @@ test('Browser: Start ueber die App, Adresse wird nachgereicht, fremde App nie', 
   assert.equal(sent.length, 0);
 });
 
-test('Text: mit App BH Screen direkt, sonst als Bild (erst https, dann http)', async () => {
+test('Text: mit App BH Home direkt, sonst als Bild (erst https, dann http)', async () => {
   process.env.BH_SCREEN_URL = 'https://x/screen/t'; process.env.BH_AUTH_INTERNAL = 'http://x'; process.env.BH_SCREEN_WRITE = 'W';
   const realFetch = global.fetch; const sent = []; global.fetch = async (_u, o) => { sent.push(JSON.parse(o.body)); return { ok: true }; };
   const { showText, showUrl } = require('../lib/screen.js');
@@ -120,9 +120,9 @@ test('Text: mit App BH Screen direkt, sonst als Bild (erst https, dann http)', a
     const opened = [];
     const withApp = { isInstalled: async () => true, openApp: async (a, o) => opened.push([a, o]), launchBrowser: async () => assert.fail('kein Browser') };
     assert.equal(await showText('Hallo', '', { remote: withApp, waitMs: 1 }), 'app');
-    assert.deepEqual(sent.at(-1), { mode: 'text', title: 'Hallo', text: '' }); assert.deepEqual(opened.at(-1), ['BH Screen', undefined]);
+    assert.deepEqual(sent.at(-1), { mode: 'text', title: 'Hallo', text: '' }); assert.deepEqual(opened.at(-1), ['BH Home', undefined]);
     assert.equal(await showUrl('https://a.de/x', { remote: withApp }), 'app');
-    assert.deepEqual(sent.at(-1), { mode: 'url', url: 'https://a.de/x' }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
+    assert.deepEqual(sent.at(-1), { mode: 'url', url: 'https://a.de/x' }); assert.deepEqual(opened.at(-1), ['BH Home', { restart: true }]);
     await assert.rejects(showUrl('http://a.de', { remote: withApp }), /https/);
     const urls = []; let states = ['STOPPED', 'PLAYING'];
     const noApp = { isInstalled: async () => false, launchBrowser: async (u) => urls.push('browser:' + u) };
@@ -143,12 +143,12 @@ test('Radio: nur https, App wird gestartet, nach Webseite neu gestartet', async 
   try {
     const opened = []; const remote = { isInstalled: async () => true, openApp: async (a, o) => opened.push([a, o]) };
     await playRadio('https://r.de/s.mp3', 'NDR 2', { remote });
-    assert.deepEqual(sent.at(-1), { mode: 'audio', url: 'https://r.de/s.mp3', title: 'NDR 2' }); assert.deepEqual(opened.at(-1), ['BH Screen', undefined]);
+    assert.deepEqual(sent.at(-1), { mode: 'audio', url: 'https://r.de/s.mp3', title: 'NDR 2' }); assert.deepEqual(opened.at(-1), ['BH Home', undefined]);
     previous = 'url';
-    await playRadio('https://r.de/s.mp3', 'NDR 2', { remote }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
-    await showText('Hallo', '', { remote }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
+    await playRadio('https://r.de/s.mp3', 'NDR 2', { remote }); assert.deepEqual(opened.at(-1), ['BH Home', { restart: true }]);
+    await showText('Hallo', '', { remote }); assert.deepEqual(opened.at(-1), ['BH Home', { restart: true }]);
     await assert.rejects(playRadio('http://r.de/s.mp3', 'x', { remote }), /https/);
-    await assert.rejects(playRadio('https://r.de/s.mp3', 'x', { remote: { isInstalled: async () => false } }), /BH Screen/);
+    await assert.rejects(playRadio('https://r.de/s.mp3', 'x', { remote: { isInstalled: async () => false } }), /BH Home/);
   } finally { global.fetch = realFetch; }
 });
 
@@ -160,7 +160,7 @@ test('Freigabe: Angebot geht an den Dienst, App kommt nach vorn, Antwort wird ab
   try {
     const opened = []; const remote = { isInstalled: async () => true, openApp: async (a, o) => opened.push([a, o]) };
     assert.equal(await shareStart('v=0', { remote }), 'abc');
-    assert.deepEqual(sent.at(-1), { mode: 'share', offer: 'v=0' }); assert.deepEqual(opened.at(-1), ['BH Screen', { restart: true }]);
+    assert.deepEqual(sent.at(-1), { mode: 'share', offer: 'v=0' }); assert.deepEqual(opened.at(-1), ['BH Home', { restart: true }]);
   } finally { global.fetch = realFetch; }
   let seen;
   assert.equal(await shareAnswer('a b', async (u, o) => { seen = [u, o]; return { ok: true, json: async () => ({ answer: 'v=0 x' }) }; }), 'v=0 x');
@@ -226,7 +226,7 @@ test('Stream: Steueradresse wird gefunden, Adresse maskiert, Fehler gemeldet', a
 });
 
 
-test('BH Screen: Menü kennt den Radio-Zustand und alle Rückrufe', () => {
+test('BH Home: Menü kennt den Radio-Zustand und alle Rückrufe', () => {
   const main = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'main.js'), 'utf8');
   for (const hook of ['BHHome.onTune =', 'BHHome.onMood =', 'BHHome.isRadioOn =', 'BHHome.onPreview =']) assert.ok(main.includes(hook), hook);
 });

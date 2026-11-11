@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Registers the profile BH for the command line (plain-text passwords, the CLI does not know the GUI encryption),
-# packages BH Screen, grants the Beamer the install permission and installs the app.
+# packages BH Home, grants the Beamer the install permission and installs the app.
 set -uo pipefail
 H=/home/tizen; TS=$H/tizen-studio; T=$TS/tools/ide/bin/tizen; S=$TS/tools/sdb; C=$H/SamsungCertificate/BH; ENV=/srv/bh-platform/.env
 P=$H/tizen-studio-data/profile/profiles.xml; B=$(sed -n 's/^BH_BEAMER_IP=//p' $ENV | tail -1); PW=$(sed -n 's/^BH_TIZEN_AUTHOR_PW=//p' $ENV | tail -1)

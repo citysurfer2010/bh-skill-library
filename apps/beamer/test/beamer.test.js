@@ -105,7 +105,7 @@ test('Nach der Freigabe läuft wieder der vorherige Inhalt', async () => {
   assert.deepEqual(calls.map((c) => c[0]), ['beamer_stop_radio']);
 });
 
-test('Stoppen: Radio endet in BH Screen, Video über die Startseite', async () => {
+test('Stoppen: Radio endet in BH Home, Video über die Startseite', async () => {
   await post('/radio', { id: 'ndr2' }); calls.length = 0;
   assert.equal((await (await post('/stop')).json()).now, null);
   assert.deepEqual(calls, [['beamer_home', {}]]);

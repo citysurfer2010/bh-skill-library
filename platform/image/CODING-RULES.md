@@ -29,6 +29,6 @@ Die Version steht an diesen Stellen und muss überall gleich sein:
 | App | `apps/<app>/package.json` |
 | Dienst | `skills/<dienst>/manifest.json`, Feld `version`, und `services/<dienst>/package.json` |
 | Dienst | `skills/<dienst>/manifest.json`, Feld `version`, und `services/<dienst>/package.json` |
-| BH Screen | `skills/bh-beamer/app/config.xml`, Attribut `version` |
+| BH Home | `skills/bh-beamer/app/config.xml`, Attribut `version` |
 
 Das Jahr ist zweistellig und der Monat ohne Null, weil Tizen-Apps in den ersten beiden Stellen höchstens 255 erlauben und npm keine führenden Nullen zulässt. `scripts/validate.sh` prüft Format und Gleichheit.

@@ -473,7 +473,7 @@ window.BHHome = (function () {
   // Shows the installed version: from the system, otherwise from the package itself.
   (function showVersion() {
     var el = document.getElementById('side-ver');
-    var put = function (v) { if (v) el.textContent = 'BH Screen ' + v; };
+    var put = function (v) { if (v) el.textContent = 'BH Home ' + v; };
     try { put(tizen.application.getAppInfo().version); return; } catch (e) { /* continue with config.xml */ }
     try {
       var x = new XMLHttpRequest(); x.open('GET', 'config.xml');
