@@ -21,15 +21,15 @@ async function setContent(payload, http = fetch) {
 const afterPrevious = (c) => (c.previous === 'url' ? { restart: true } : undefined);
 
 // Do not wait: the app shows the new content at once; if it is already running, the Beamer answers the start only after the time limit.
-function bringToFront(remote, current) { Promise.resolve(remote.openApp('BH Screen', afterPrevious(current))).catch(() => {}); }
+function bringToFront(remote, current) { Promise.resolve(remote.openApp('BH Home', afterPrevious(current))).catch(() => {}); }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ACTIVE = ['PLAYING', 'TRANSITIONING', 'PAUSED_PLAYBACK'];
 
-// With the BH Screen app installed the Beamer shows the text itself; otherwise as an image via stream.
+// With the BH Home app installed the Beamer shows the text itself; otherwise as an image via stream.
 async function showText(title, text, { remote = require('./remote.js'), dlna = require('./dlna.js'), waitMs = 2500 } = {}) {
   const current = await setContent({ mode: 'text', title, text });
-  if (await remote.isInstalled('BH Screen')) { bringToFront(remote, current); return 'app'; }
+  if (await remote.isInstalled('BH Home')) { bringToFront(remote, current); return 'app'; }
   const image = `${process.env.BH_SCREEN_URL}/image.jpg?v=${Date.now()}`;
   for (const url of [image, image.replace(/^https:/, 'http:')]) {
     await dlna.play(url, title, 'image');
@@ -39,12 +39,12 @@ async function showText(title, text, { remote = require('./remote.js'), dlna = r
   throw new Error('Der Beamer hat das Bild nicht angenommen');
 }
 
-// The BH Screen app opens web pages full screen; without it only the Samsung browser remains, without passing the address.
+// The BH Home app opens web pages full screen; without it only the Samsung browser remains, without passing the address.
 async function showUrl(url, { remote = require('./remote.js') } = {}) {
   const href = httpsUrl(url);
-  if (await remote.isInstalled('BH Screen')) {
+  if (await remote.isInstalled('BH Home')) {
     await setContent({ mode: 'url', url: href });
-    remote.openApp('BH Screen', { restart: true }).catch(() => {});
+    remote.openApp('BH Home', { restart: true }).catch(() => {});
     return 'app';
   }
   await remote.launchBrowser(href);
@@ -55,7 +55,7 @@ async function showHome({ remote = require('./remote.js') } = {}) {
   bringToFront(remote, await setContent({ mode: 'text', title: '', text: '' }));
 }
 
-// Ambience in BH Screen, optionally with radio: this way the app keeps the remote control.
+// Ambience in BH Home, optionally with radio: this way the app keeps the remote control.
 async function playAmbient({ video, title, radioUrl, station }, { remote = require('./remote.js') } = {}) {
   if (radioUrl) httpsUrl(radioUrl);
   bringToFront(remote, await setContent({ mode: 'video', video, title, ...(radioUrl ? { url: radioUrl, station } : {}) }));
@@ -74,7 +74,7 @@ async function menuRequests(wait = 0, http = fetch) {
 
 async function playRadio(url, title, { remote = require('./remote.js') } = {}) {
   const href = httpsUrl(url);
-  if (!(await remote.isInstalled('BH Screen'))) throw new Error('Radio braucht die App BH Screen');
+  if (!(await remote.isInstalled('BH Home'))) throw new Error('Radio braucht die App BH Home');
   bringToFront(remote, await setContent({ mode: 'audio', url: href, title }));
 }
 

@@ -16,16 +16,16 @@ Bedient den Samsung The Premiere über das zentrale MCP-Gateway und den WireGuar
 | `beamer_status` | Erreichbarkeit, Name, Modell, Zustand |
 | `beamer_press` | Taste drücken: `KEY_POWER`, `KEY_VOLUP`, `KEY_VOLDOWN`, `KEY_MUTE`, `KEY_HOME`, `KEY_RETURN`, Pfeile, `KEY_ENTER`, `KEY_PLAY`, `KEY_PAUSE`, `KEY_SOURCE` |
 | `beamer_open_app` | App starten: YouTube, Prime Video, Netflix, Disney+, Apple TV, Spotify, WOW, Internet |
-| `beamer_show_text` | Text groß anzeigen: in der App BH Screen, sonst als Bild per Stream |
-| `beamer_show_url` | Webseite im Vollbild öffnen (braucht die App BH Screen) |
+| `beamer_show_text` | Text groß anzeigen: in der App BH Home, sonst als Bild per Stream |
+| `beamer_show_url` | Webseite im Vollbild öffnen (braucht die App BH Home) |
 | `beamer_play_media` | Video, Radio/Musik (`kind: audio`) oder Bild per DLNA abspielen, Adresse muss eine direkte Medienadresse sein |
 | `beamer_play_youtube` | YouTube-Video abspielen (Link oder Video-Kennung), startet die YouTube-App mit dem Video |
-| `beamer_play_radio` | Radiosender/Musik-Stream (https, mp3/aac) in der App BH Screen abspielen |
+| `beamer_play_radio` | Radiosender/Musik-Stream (https, mp3/aac) in der App BH Home abspielen |
 | `beamer_stop_radio` | Radio beenden |
 | `beamer_share_start` / `beamer_share_answer` | Bildschirmfreigabe vermitteln (WebRTC-Angebot abgeben, Antwort des Beamers holen); Oberfläche in der App Beamer |
-| `beamer_play_ambient` | Stimmungsvideo in BH Screen, auf Wunsch mit Radio dazu; die Zurück-Taste führt zum Startbild |
+| `beamer_play_ambient` | Stimmungsvideo in BH Home, auf Wunsch mit Radio dazu; die Zurück-Taste führt zum Startbild |
 | `beamer_home` | Startbild mit Uhr, Wetter und Menü zeigen |
-| `beamer_menu_set` / `beamer_menu_requests` | Menü der App BH Screen setzen, Auswahl der Fernbedienung abholen (nutzt die App Beamer) |
+| `beamer_menu_set` / `beamer_menu_requests` | Menü der App BH Home setzen, Auswahl der Fernbedienung abholen (nutzt die App Beamer) |
 | `beamer_power` | Ein-/Ausschalten (`state: on\|off`), meldet Erfolg nur bei bestätigtem Zustand |
 | `beamer_stop_media` | Wiedergabe beenden |
 | `beamer_media_state` | Zustand der Wiedergabe |
@@ -41,7 +41,7 @@ Beim ersten Tastendruck erscheint am Beamer eine Abfrage. Der User erlaubt sie m
 - Der Link der Anzeigeseite ist geheim und bleibt in der `.env`, er wird nie ausgegeben.
 - `KEY_POWER` schaltet aus. Einschalten aus dem Standby klappt darüber meist nicht.
 
-## App „BH Screen“ (einmalig vom Mac installieren)
+## App „BH Home“ (einmalig vom Mac installieren)
 
 Quellcode in `app/`. Die App fragt alle 3 Sekunden den Server, was sie zeigen soll: Text oder eine Webseite im Vollbild.
 Samsung stellt Zertifikate nur über Tizen Studio aus, deshalb läuft das Paketieren auf dem Mac:

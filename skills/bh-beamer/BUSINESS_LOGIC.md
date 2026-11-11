@@ -17,16 +17,16 @@ Was wir über den Samsung-Beamer (The Premiere SP-LSP7TFAX, Tizen 5.5) gelernt h
 | Apps starten | Über die REST-Schnittstelle mit der App-Kennung. Kennungen vorher am Gerät prüfen: `3201907018807` war dort Netflix, nicht der Browser. |
 | Browser „Internet“ (`3201907018784`) | Startet, lädt aber keine übergebene Adresse (`metaTag`, `DEEP_LINK`, `NATIVE_LAUNCH`, REST-Parameter alle wirkungslos; Nachweis: kein Treffer im eigenen Server-Log). |
 | Bildschirminhalt | Kein Screenshot über das Netzwerk möglich. |
-| Mikro-Taste und Sprache | Nicht für BH Screen nutzbar, geprüft am 10.11.2026: Die Mikro-Taste fehlt in `tvinputdevice.getSupportedKeys()` und öffnet immer den Systemassistenten. `webapis.voiceinteraction` fehlt (erst ab Tizen 6.0). `tizen.voicecontrol` meldet angemeldete Begriffe, liefert aber nie ein Ergebnis. Das Fernbedienungsmikrofon erscheint als `BluetoothMicrophone`, `getUserMedia` endet mit `NotAllowedError`. YouTube darf das als Partner-App. Sprachsuche daher nur über eine Handy-Seite. |
+| Mikro-Taste und Sprache | Nicht für BH Home nutzbar, geprüft am 10.11.2026: Die Mikro-Taste fehlt in `tvinputdevice.getSupportedKeys()` und öffnet immer den Systemassistenten. `webapis.voiceinteraction` fehlt (erst ab Tizen 6.0). `tizen.voicecontrol` meldet angemeldete Begriffe, liefert aber nie ein Ergebnis. Das Fernbedienungsmikrofon erscheint als `BluetoothMicrophone`, `getUserMedia` endet mit `NotAllowedError`. YouTube darf das als Partner-App. Sprachsuche daher nur über eine Handy-Seite. |
 | Text anzeigen | Als Bild per DLNA (`/screen/<token>/image.jpg`), funktioniert ohne App. |
-| Webseiten | Nur über die eigene App „BH Screen“. |
+| Webseiten | Nur über die eigene App „BH Home“. |
 | YouTube-Videos | Über DIAL: `POST http://<ip>:8080/ws/apps/YouTube` mit `Origin: https://www.youtube.com` und Body `v=<id>` → 201, Video läuft. Ohne Origin 403; Port 8001 lehnt mit 401 ab. Firewall erlaubt 8080 nur vom Gateway-Netz. |
-| Radio / Musik | **Nicht per DLNA:** der Beamer lehnt Live-Streams mit Fehler 716 ab (DLF und NDR 2 getestet, auch als Video). Weg: App BH Screen spielt den Stream selbst (`beamer_play_radio`, Modus `audio`). |
+| Radio / Musik | **Nicht per DLNA:** der Beamer lehnt Live-Streams mit Fehler 716 ab (DLF und NDR 2 getestet, auch als Video). Weg: App BH Home spielt den Stream selbst (`beamer_play_radio`, Modus `audio`). |
 | Entwickler-App im REST-Status | Eine per `sdb` installierte App meldet immer `running:false, visible:false`, auch wenn sie läuft; ein Start der bereits laufenden App bekommt keine Antwort (Timeout). `openApp` wertet darum `true` oder Timeout nach erfolgreicher Abfrage als Erfolg. |
 | Ausschalten | Kurzer Klick auf `KEY_POWER` wirkt nicht; die Taste 3 s halten (Press/Release). Bestätigt 08.11. |
 | Einschalten | Wake-on-LAN (UDP 9 durch den Tunnel, `BH_BEAMER_MAC`) weckt ihn, wenn am Beamer unter Allgemein → Netzwerk → Experteneinstellungen das Einschalten über Mobilgerät und der IP-Fernzugriff an sind. Im Standby antwortet er auf nichts, auch nicht auf Ping; trotzdem kommt das Weckpaket an. Getestet 08.11.: nach 30 s Standby in 9 s wieder an. Ohne diese Einstellungen: keine Reaktion. |
 
-## App „BH Screen“
+## App „BH Home“
 
 Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden `BH_SCREEN_URL/content` ab und zeigt Text oder lädt eine https-Adresse im Vollbild. Nach einer Webseite steuert der Skill die App nur noch über Beenden und Neustart (`openApp(..., { restart: true })`).
 
@@ -65,7 +65,7 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 
 ## Versionsanzeige
 
-- Unten in der Seitenleiste steht die installierte Version von BH Screen, damit man sieht, was ausgerollt ist. Quelle: Matti, 09.11.2026.
+- Unten in der Seitenleiste steht die installierte Version von BH Home, damit man sieht, was ausgerollt ist. Quelle: Matti, 09.11.2026.
 
 ## Fotos
 
@@ -78,3 +78,7 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 - Zurück hebt einen aktiven Filter auf.
 - Das letzte Bild eines Albums behält seine volle Standzeit. Die Bildunterschrift blendet nach 8 Sekunden aus, in der Pause bleibt sie stehen. Die Tasten erscheinen einmal zu Beginn und bei ◀.
 - Wird `platform/beamer-dev/bh-screen-deploy` geändert, muss die Kopie nach `/usr/local/sbin` neu installiert werden, sonst wirkt die Änderung nicht.
+
+## Name
+
+- Die App auf dem Beamer heißt „BH Home“. Quelle: Matti, 11.11.2026. Die interne Kennung `bhscreen01.BHScreen`, das Paket `BHScreen.wgt` und `BH_SCREEN_*` bleiben, damit der Beamer die bestehende App aktualisiert statt eine zweite zu installieren.
