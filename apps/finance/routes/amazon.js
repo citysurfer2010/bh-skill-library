@@ -11,13 +11,14 @@ function buildRouter({ sameOrigin, requireFinance }) {
   r.use(sameOrigin, requireFinance);
   r.get('/status', async (_req, res) => {
     const s = amazon.status();
-    if (s.configured) s.connected = await api.status().then((x) => x.connected).catch(() => null);
+    if (s.configured) Object.assign(s, await api.status().then((x) => ({ connected: x.connected, stored: !!x.stored })).catch(() => ({ connected: null, stored: false })));
     res.json(s);
   });
   r.post('/login', async (req, res) => {
     const email = String(req.body?.email || '').trim(); const password = String(req.body?.password || '');
-    if (!email || !password) return res.status(400).json({ error: 'E-Mail und Passwort angeben' });
-    try { return res.json(await api.login(email, password)); } catch (e) { return fail(res, e); }
+    // Empty: the worker uses the access stored in the .env (BH_AMAZON_EMAIL / BH_AMAZON_PASSWORD).
+    if (Boolean(email) !== Boolean(password)) return res.status(400).json({ error: 'E-Mail und Passwort angeben' });
+    try { return res.json(await api.login(email || undefined, password || undefined)); } catch (e) { return fail(res, e); }
   });
   r.post('/login/answer', async (req, res) => {
     try { return res.json(await api.answer({ code: req.body?.code ? String(req.body.code).trim() : undefined, captcha: req.body?.captcha ? String(req.body.captcha).trim() : undefined })); } catch (e) { return fail(res, e); }

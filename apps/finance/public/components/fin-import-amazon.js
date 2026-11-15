@@ -6,7 +6,8 @@ window.FinAmazon = (() => {
   let wasRunning = false;
   const cancel = '<button type="button" class="bh-btn" data-amz-cancel>Abbrechen</button>';
 
-  function form() {
+  function form(s) {
+    if (!step && s?.stored) return '<form class="fin-amz-form" data-amz-login><p class="fin-hint">Der Amazon-Zugang ist auf dem Server hinterlegt. Läuft die Sitzung ab, meldet sich der Abruf selbst neu an; nur bei einem Code oder Captcha fragt Amazon dich.</p><div><button type="submit" class="bh-btn bh-btn-primary">Mit hinterlegtem Zugang anmelden</button></div></form>';
     if (step?.state === 'code') return `<form class="fin-amz-form" data-amz-answer="code"><label class="bh-label" for="fin-amz-code">${Fin.esc(step.prompt || 'Code von Amazon')}</label><div class="fin-inline"><input id="fin-amz-code" class="bh-input" inputmode="numeric" autocomplete="one-time-code" required><button type="submit" class="bh-btn bh-btn-primary">Bestätigen</button>${cancel}</div></form>`;
     if (step?.state === 'captcha') return `<form class="fin-amz-form" data-amz-answer="captcha"><img class="fin-amz-captcha" src="${Fin.esc(step.image)}" alt="Zeichen zum Abtippen"><label class="bh-label" for="fin-amz-cap">Zeichen aus dem Bild</label><div class="fin-inline"><input id="fin-amz-cap" class="bh-input" autocomplete="off" required><button type="submit" class="bh-btn bh-btn-primary">Weiter</button>${cancel}</div></form>`;
     if (step?.state === 'approve') return `<form class="fin-amz-form" data-amz-answer="approve"><p class="fin-hint">${Fin.esc(step.prompt || 'Bitte die Anmeldung in der Amazon-App oder per E-Mail freigeben und dann hier weitermachen.')}</p><div class="fin-inline"><button type="submit" class="bh-btn bh-btn-primary">Freigegeben, weiter</button>${cancel}</div></form>`;
@@ -21,7 +22,7 @@ window.FinAmazon = (() => {
     const head = '<h2>Amazon</h2><p class="fin-hint">Liest deine Amazon-Zahlungen und die Artikel je Bestellung, nur lesend, einmal am Tag. Jede Amazon-Abbuchung zeigt dann, was gekauft wurde.</p>';
     if (s.connected === null && !step) return `<section class="card fin-upload fin-amz">${head}<p class="fin-bank-error" role="status">Der Amazon-Dienst ist gerade nicht erreichbar. Bitte später noch einmal versuchen.</p></section>`;
     const relogin = s.lastError === 'login';
-    if (!s.connected || relogin || step) return `<section class="card fin-upload fin-amz">${head}${relogin && !step ? '<p class="fin-bank-error" role="status">Die Amazon-Anmeldung ist abgelaufen. Bitte neu verbinden.</p>' : ''}${form()}</section>`;
+    if (!s.connected || relogin || step) return `<section class="card fin-upload fin-amz">${head}${relogin && !step ? '<p class="fin-bank-error" role="status">Die Amazon-Anmeldung ist abgelaufen. Bitte neu verbinden.</p>' : ''}${form(s)}</section>`;
     const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
     const facts = s.payments ? `${n(s.payments, 'Zahlung', 'Zahlungen')} seit ${Fin.esc(Fin.date(s.first))} · ${n(s.withItems, 'Bestellung', 'Bestellungen')} mit Artikeln · ${n(s.linked, 'Buchung', 'Buchungen')} zugeordnet` : 'Noch nichts abgerufen.';
     return `<section class="card fin-upload fin-amz">${head}<p class="fin-hint">${facts}${s.lastSync ? ` · zuletzt ${Fin.esc(when(s.lastSync))}` : ''}</p>
@@ -46,7 +47,7 @@ window.FinAmazon = (() => {
     wasRunning = !!s.running;
     box.querySelector('[data-amz-login]')?.addEventListener('submit', async (e) => {
       e.preventDefault(); busy(e.target);
-      try { await handle(await Fin.api('POST', '/amazon/login', { email: box.querySelector('#fin-amz-mail').value, password: box.querySelector('#fin-amz-pw').value }), rerender); } catch (x) { Toast.error(x.message); rerender(); }
+      try { const mail = box.querySelector('#fin-amz-mail'); await handle(await Fin.api('POST', '/amazon/login', mail ? { email: mail.value, password: box.querySelector('#fin-amz-pw').value } : {}), rerender); } catch (x) { Toast.error(x.message); rerender(); }
     });
     box.querySelector('[data-amz-answer]')?.addEventListener('submit', async (e) => {
       e.preventDefault(); const kind = e.target.dataset.amzAnswer; busy(e.target);

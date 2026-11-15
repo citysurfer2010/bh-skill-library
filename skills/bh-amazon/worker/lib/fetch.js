@@ -1,6 +1,7 @@
 'use strict';
 /** Reads "Ihre Zahlungen → Transaktionen" back to a date, and the items of single orders. Slow on purpose: one page at a time. */
-const { context, save, hasSession, forget, LoginNeeded } = require('./session');
+const { context, save, hasSession, forget, LoginNeeded, credentials } = require('./session');
+const login = require('./login');
 const { parsePayments, parseItems } = require('./parse');
 
 const PAYMENTS = 'https://www.amazon.de/cpe/yourpayments/transactions';
@@ -25,9 +26,24 @@ function extractRows() {
   return rows;
 }
 
-async function guard(page) { if (/\/ap\/signin|\/ap\/mfa/.test(page.url())) { forget(); throw new LoginNeeded(); } }
+/** Amazon redirects to the sign-in after the page has loaded, so wait for it to settle before deciding. */
+async function guard(page) {
+  await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
+  if (/\/ap\/(signin|mfa)|\/ax\/claim/.test(page.url())) { forget(); throw new LoginNeeded(); }
+}
 
-async function payments({ since = '2021-01-01' } = {}) {
+/** With the access from the .env the worker signs in again by itself; a code or captcha still needs the person. */
+async function withLogin(fn) {
+  try { return await fn(); } catch (e) {
+    if (e.code !== 'login' || !credentials()) throw e;
+    const r = await login.start();
+    if (r.state !== 'ok') { const x = new LoginNeeded(); x.message = r.state === 'error' ? r.message : 'Amazon fragt nach einer Bestätigung. Bitte in der App anmelden.'; throw x; }
+    return fn();
+  }
+}
+
+async function payments(opts = {}) { return withLogin(() => readPayments(opts)); }
+async function readPayments({ since = '2021-01-01' } = {}) {
   if (!hasSession()) throw new LoginNeeded();
   const ctx = await context(); const page = await ctx.newPage(); const all = []; let pages = 0;
   try {
@@ -47,7 +63,8 @@ async function payments({ since = '2021-01-01' } = {}) {
   return { pages: pages + 1, payments: all.filter((p) => p.date >= since).filter((p) => { const k = [p.orderId, p.date, p.cents, p.method].join('|'); return !seen.has(k) && seen.add(k); }) };
 }
 
-async function items(orderIds) {
+async function items(orderIds) { return withLogin(() => readItems(orderIds)); }
+async function readItems(orderIds) {
   if (!hasSession()) throw new LoginNeeded();
   const ctx = await context(); const page = await ctx.newPage(); const out = {};
   try {

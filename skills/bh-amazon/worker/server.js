@@ -8,7 +8,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const login = require('./lib/login');
 const fetcher = require('./lib/fetch');
-const { hasSession, forget } = require('./lib/session');
+const { hasSession, forget, credentials } = require('./lib/session');
 
 const PORT = Number(process.env.PORT || 3800);
 const TOKEN = (() => { try { return fs.readFileSync(process.env.TOKEN_FILE || '/run/bh-amazon/token', 'utf8').trim(); } catch { return ''; } })();
@@ -21,8 +21,8 @@ async function body(req) { let s = ''; for await (const c of req) { s += c; if (
 
 const routes = {
   'GET /health': async () => ({ ok: true }),
-  'GET /status': async () => ({ connected: hasSession() }),
-  'POST /login': async (b) => serial(() => login.start({ email: String(b.email || ''), password: String(b.password || '') })),
+  'GET /status': async () => ({ connected: hasSession(), stored: !!credentials() }),
+  'POST /login': async (b) => serial(() => login.start(b.email && b.password ? { email: String(b.email), password: String(b.password) } : {})),
   'POST /login/answer': async (b) => serial(() => login.answer({ code: b.code, captcha: b.captcha })),
   'POST /logout': async () => { forget(); return { connected: false }; },
   'POST /payments': async (b) => serial(() => fetcher.payments({ since: /^\d{4}-\d{2}-\d{2}$/.test(b.since || '') ? b.since : undefined })),

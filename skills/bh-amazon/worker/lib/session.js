@@ -33,6 +33,14 @@ async function save(ctx) {
   const tmp = `${SESSION}.tmp`; await ctx.storageState({ path: tmp }); fs.chmodSync(tmp, 0o600); fs.renameSync(tmp, SESSION);
 }
 
+/** Stored Amazon access (Matti 15.11.2026: login in the .env), handed to this container only: {"email","password"}. */
+function credentials() {
+  try { const c = JSON.parse(fs.readFileSync(process.env.CREDENTIALS_FILE || '/run/bh-amazon/credentials', 'utf8')); return c.email && c.password ? c : null; } catch { return null; }
+}
+
+/** Amazon only hands out these cookies after a real login; without them the session is empty, whatever the page shows. */
+async function signedIn(ctx) { return (await ctx.cookies('https://www.amazon.de')).some((c) => /^(at|sess-at|x)-acbde$/.test(c.name)); }
+
 class LoginNeeded extends Error { constructor() { super('Die Amazon-Anmeldung ist abgelaufen. Bitte in der App neu verbinden.'); this.code = 'login'; } }
 
-module.exports = { context, save, hasSession, forget, closeBrowser, LoginNeeded, SESSION };
+module.exports = { context, save, hasSession, forget, closeBrowser, LoginNeeded, SESSION, credentials, signedIn };

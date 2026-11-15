@@ -11,6 +11,11 @@ OFFSET=$(awk -F: '$1=="dockremap"{print $2; exit}' /etc/subuid 2>/dev/null); OFF
 PW=$(( OFFSET + $(docker run --rm --entrypoint id bh-amazon:current -u) ))
 install -d -m 711 "$S"; install -d -m 700 -o "$PW" -g "$PW" "$S/state" "$S/run"
 printf '%s' "$(val BH_AMAZON_TOKEN)" >"$S/run/token.new"; chown "$PW:$PW" "$S/run/token.new"; chmod 400 "$S/run/token.new"; mv "$S/run/token.new" "$S/run/token"
+# Amazon access (BH_AMAZON_EMAIL / BH_AMAZON_PASSWORD) only for this container, so it can sign in again by itself.
+if [ -n "$(val BH_AMAZON_EMAIL)" ] && [ -n "$(val BH_AMAZON_PASSWORD)" ]; then
+  (umask 077; jq -n --arg e "$(val BH_AMAZON_EMAIL)" --arg p "$(val BH_AMAZON_PASSWORD)" '{email:$e,password:$p}' >"$S/run/credentials.new")
+  chown "$PW:$PW" "$S/run/credentials.new"; chmod 400 "$S/run/credentials.new"; mv "$S/run/credentials.new" "$S/run/credentials"
+else rm -f "$S/run/credentials"; fi
 printf '%s' "$(val BH_AMAZON_TOKEN)" >"$L/amazon-token.new"; chown 101000:101000 "$L/amazon-token.new"; chmod 400 "$L/amazon-token.new"; mv "$L/amazon-token.new" "$L/amazon-token"
 docker network inspect bh-apps-net >/dev/null 2>&1 || docker network create bh-apps-net >/dev/null
 docker rm -f bh-amazon >/dev/null 2>&1 || true
