@@ -45,7 +45,10 @@ function labelFor(aspsp, account) {
   const giro = /giro|current|privatkonto/i.test(product) || (!product && (!type || type === 'CACC'));
   const wanted = card && b.card ? b.card : !savings && !card && (giro || aspsp === 'PayPal') ? b.label : null;
   if (wanted && !taken(wanted)) return wanted;
-  const alt = `${b.label} ${iban ? iban.slice(-4) : crypto.randomBytes(2).toString('hex')}`;
+  // Savings show what they are (Matti 15.11.2026: "Tagesgeld sollte als Tagesgeldkonto ausgewiesen sein").
+  const kind = !savings ? null : /tagesgeld/i.test(product) ? 'Tagesgeldkonto' : /festgeld/i.test(product) ? 'Festgeldkonto' : 'Sparkonto';
+  if (kind && !taken(`${b.label} ${kind}`)) return `${b.label} ${kind}`;
+  const alt = `${b.label} ${kind ? `${kind} ` : ''}${iban ? iban.slice(-4) : crypto.randomBytes(2).toString('hex')}`;
   return taken(alt) ? `${alt}-${crypto.randomBytes(2).toString('hex')}` : alt;
 }
 

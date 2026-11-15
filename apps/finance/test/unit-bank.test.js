@@ -65,7 +65,7 @@ test('connect: only known banks, state bound to the person, names by account typ
     { uid: 'u-tg', account_id: { iban: 'DE009999' }, cash_account_type: 'SVGS', name: 'Tagesgeld' }]);
   assert.equal(accounts.length, 3);
   const labels = Object.fromEntries(sync.status().accounts.map((a) => [a.uid, a.label]));
-  assert.deepEqual([labels['u-giro'], labels['u-card'], labels['u-tg']], ['comdirect', 'CD-CCM', 'comdirect 9999']);
+  assert.deepEqual([labels['u-giro'], labels['u-card'], labels['u-tg']], ['comdirect', 'CD-CCM', 'comdirect Sparkonto']);
   assert.equal(sync.status().accounts.find((a) => a.uid === 'u-giro').iban, 'DE00 … 1111');
   assert.deepEqual(sync.status().banks, ['Comdirect', 'BBBank', 'DKB', 'PayPal']);
 });
@@ -77,7 +77,7 @@ test('names: the current account gets the usual name even when the bank lists sa
   assert.equal(accounts.length, 2);
   const byUid = Object.fromEntries(sync.status().accounts.map((a) => [a.uid, a]));
   // 'comdirect' already belongs to u-giro above, so the new current account falls back; savings never take a base name.
-  assert.equal(byUid['x-tg'].label, 'comdirect 1405'); assert.equal(byUid['x-tg'].name, 'Tagesgeld PLUS-Konto');
+  assert.equal(byUid['x-tg'].label, 'comdirect Tagesgeldkonto'); assert.equal(byUid['x-tg'].name, 'Tagesgeld PLUS-Konto');
   assert.equal(byUid['x-giro'].label, 'comdirect 1400');
   for (const uid of ['x-tg', 'x-giro']) await sync.disconnect(uid);
 });
