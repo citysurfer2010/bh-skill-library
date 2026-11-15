@@ -15,7 +15,7 @@ window.Fin = (() => {
     const isForm = body instanceof FormData;
     const r = await fetch(`${BASE}/api${url}`, { method, headers: body && !isForm ? { 'content-type': 'application/json' } : {}, body: isForm ? body : body ? JSON.stringify(body) : undefined });
     const data = await r.json().catch(() => null);
-    if (!r.ok) throw new Error(data?.error || 'Das hat nicht geklappt');
+    if (!r.ok) throw Object.assign(new Error(data?.error || 'Das hat nicht geklappt'), { status: r.status, code: data?.code });
     return data;
   }
 

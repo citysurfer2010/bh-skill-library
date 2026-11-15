@@ -22,8 +22,9 @@ const ledger = require('../lib/ledger');
 
 const calls = [];
 let reply = () => ({});
+const details = {}; // per account uid, what the bank says about it
 bank._setFetch(async (url, init) => {
-  calls.push({ url, init }); const out = await reply(url, init);
+  calls.push({ url, init }); const out = url.endsWith('/details') ? (details[url.split('/').at(-2)] || {}) : await reply(url, init);
   return { ok: !out.status, status: out.status || 200, json: async () => out.body || out };
 });
 const tx = (ref, date, amount, ind, extra = {}) => ({ entry_reference: ref, booking_date: date, transaction_amount: { amount: String(amount), currency: 'EUR' }, credit_debit_indicator: ind, remittance_information: [`Zweck ${ref}`], ...extra });
@@ -77,9 +78,23 @@ test('names: the current account gets the usual name even when the bank lists sa
   assert.equal(accounts.length, 2);
   const byUid = Object.fromEntries(sync.status().accounts.map((a) => [a.uid, a]));
   // 'comdirect' already belongs to u-giro above, so the new current account falls back; savings never take a base name.
-  assert.equal(byUid['x-tg'].label, 'comdirect Tagesgeldkonto'); assert.equal(byUid['x-tg'].name, 'Tagesgeld PLUS-Konto');
+  assert.equal(byUid['x-tg'].label, 'comdirect Tagesgeldkonto'); assert.equal(byUid['x-tg'].name, 'Tagesgeld PLUS-Konto'); assert.equal(byUid['x-tg'].details, 'Tagesgeld PLUS-Konto');
   assert.equal(byUid['x-giro'].label, 'comdirect 1400');
   for (const uid of ['x-tg', 'x-giro']) await sync.disconnect(uid);
+});
+
+test('names from the bank description: rent and deposit accounts by flat, business account by its word; scopes guessed', async () => {
+  reply = (url) => (url.endsWith('/auth') ? { url: 'u' } : { session_id: 'dkb-1', access: { valid_until: '2099-01-01T00:00:00Z' }, accounts: [
+    { uid: 'd-miete', account_id: { iban: 'DE118687' }, cash_account_type: 'CACC', product: 'Mietenkonto - privat', details: 'XYZ - BLN, Musterwegstraße 20 - WE01', usage: 'PRIV' },
+    { uid: 'd-kaution', account_id: { iban: 'DE110594' }, cash_account_type: 'CACC', product: 'Treuhandkonto Einzelmietkaution', details: 'XYZ - BLN, Musterwegstraße 20 - WE01.02 - Kaution', usage: 'ORGA' },
+    { uid: 'd-gk', account_id: { iban: 'DE111406' }, cash_account_type: 'CACC', product: 'Girokonto', details: 'Geschäftskonto', usage: 'PRIV' }] });
+  await sync.connect({ aspsp: 'DKB', user: 'm@b.de', redirectUrl: 'x' });
+  await sync.finish({ code: 'c', state: JSON.parse(calls.at(-1).init.body).state, user: 'm@b.de' });
+  const byUid = Object.fromEntries(sync.status().accounts.map((a) => [a.uid, a.label]));
+  assert.deepEqual([byUid['d-miete'], byUid['d-kaution'], byUid['d-gk']], ['BLN, Musterwegstraße 20 - WE01', 'BLN, Musterwegstraße 20 - WE01.02 - Kaution', 'DKB Geschäftskonto']);
+  const scope = (n) => getDb().prepare('SELECT scope FROM accounts WHERE name = ?').get(n).scope;
+  assert.deepEqual([scope(byUid['d-miete']), scope(byUid['d-kaution']), scope(byUid['d-gk'])], ['immobilien', 'treuhand', 'immobilien']);
+  for (const uid of ['d-miete', 'd-kaution', 'd-gk']) await sync.disconnect(uid);
 });
 
 test('fetch: pages, links CSV lines, adds new ones, second run with overlap adds nothing', async () => {
@@ -89,12 +104,12 @@ test('fetch: pages, links CSV lines, adds new ones, second run with overlap adds
   const res = await sync.syncAll({ force: true });
   const giro = res.find((r) => r.uid === 'u-giro');
   assert.deepEqual([giro.added, giro.linked], [1, 1]);
-  assert.match(calls.find((c) => c.url.includes('u-giro')).url, /date_from=2025-01-01/);
+  assert.match(calls.find((c) => c.url.includes('u-giro/transactions')).url, /date_from=2025-01-01/);
   const rows = rowsOf('comdirect');
   assert.equal(rows.length, 2); assert.equal(rows[0].text, 'Strom alt'); assert.equal(rows[0].bank_ref, 'b1');
   const again = (await sync.syncAll({ force: true })).find((r) => r.uid === 'u-giro');
   assert.deepEqual([again.added, again.known], [0, 2]);
-  assert.match(calls.filter((c) => c.url.includes('u-giro')).at(-2).url, /date_from=2025-01-05/);
+  assert.match(calls.filter((c) => c.url.includes('u-giro/transactions')).at(-2).url, /date_from=2025-01-05/);
 });
 
 test('fetch: at most every 20 hours unless asked; CSV after bank fetch counts as duplicate', async () => {

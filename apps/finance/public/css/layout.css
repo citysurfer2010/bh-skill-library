@@ -28,6 +28,7 @@
 .app-list tbody tr:not(.app-list-group):hover { background: var(--bh-primary-soft); }
 /* Grouped lists: ONE table with group rows (never one table per group — columns would differ). */
 .app-list table .app-list-group th { position: static; padding: 16px 24px 8px; text-align: left; font-size: 13px; font-weight: 700; color: var(--bh-text); background: var(--bh-surface); text-transform: none; letter-spacing: 0; border-bottom: 1px solid var(--bh-border); }
+.app-list table .is-right { text-align: right; }
 .app-list-title { margin: 0; padding: 20px 24px 8px; font-size: 13px; font-weight: 700; color: var(--bh-text); }
 .app-list > .muted { padding: 16px 24px; margin: 0; }
 .app-list + .app-list { border-top: 1px solid var(--bh-border); }

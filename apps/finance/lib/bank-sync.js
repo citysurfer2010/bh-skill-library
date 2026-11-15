@@ -9,9 +9,9 @@ const { getDb } = require('./db');
 const bank = require('./bank-api');
 const { toRows } = require('./bank-convert');
 const { classify, hashOf } = require('./ledger');
+const ledgerAccounts = require('./accounts');
+const { BANKS, rank, labelFor } = require('./bank-names');
 
-// Ledger names as in the old spreadsheet: the current account gets the bank's usual name, a card its card name.
-const BANKS = [{ name: 'Comdirect', label: 'comdirect', card: 'CD-CCM' }, { name: 'BBBank', label: 'BBB' }, { name: 'DKB', label: 'DKB' }, { name: 'PayPal', label: 'PayPal' }];
 const MIN_GAP_MS = 20 * 3600_000;
 const OVERLAP_DAYS = 7;
 const FIRST_FROM = '2025-01-01'; // The spreadsheet ends with 2024; the first fetch closes the gap as far as the bank allows.
@@ -29,29 +29,6 @@ async function connect({ aspsp, user, redirectUrl }) {
   return url;
 }
 
-const productOf = (a) => [a.product, a.details].filter(Boolean).join(' ');
-/** Current accounts first, so they get the usual ledger name before any other account of the same bank. */
-const rank = (a) => (/giro|current|privatkonto/i.test(productOf(a)) ? 0 : /tagesgeld|spar|festgeld/i.test(productOf(a)) ? 2 : 1);
-
-/** A free ledger name for a new bank account: the usual name by account type first, then bank plus IBAN end. */
-function labelFor(aspsp, account) {
-  const db = getDb(); const b = BANKS.find((x) => x.name === aspsp) || { label: aspsp };
-  const iban = account.account_id?.iban || ''; const type = account.cash_account_type || '';
-  const taken = (l) => !!db.prepare('SELECT 1 FROM bank_accounts WHERE label = ?').get(l);
-  // comdirect reports its Tagesgeld as CACC too; only the product name tells a current account from savings.
-  const product = productOf(account);
-  const savings = /tagesgeld|spar|festgeld|savings/i.test(product) || type === 'SVGS';
-  const card = type === 'CARD' || /kredit|visa|card/i.test(product);
-  const giro = /giro|current|privatkonto/i.test(product) || (!product && (!type || type === 'CACC'));
-  const wanted = card && b.card ? b.card : !savings && !card && (giro || aspsp === 'PayPal') ? b.label : null;
-  if (wanted && !taken(wanted)) return wanted;
-  // Savings show what they are (Matti 15.11.2026: "Tagesgeld sollte als Tagesgeldkonto ausgewiesen sein").
-  const kind = !savings ? null : /tagesgeld/i.test(product) ? 'Tagesgeldkonto' : /festgeld/i.test(product) ? 'Festgeldkonto' : 'Sparkonto';
-  if (kind && !taken(`${b.label} ${kind}`)) return `${b.label} ${kind}`;
-  const alt = `${b.label} ${kind ? `${kind} ` : ''}${iban ? iban.slice(-4) : crypto.randomBytes(2).toString('hex')}`;
-  return taken(alt) ? `${alt}-${crypto.randomBytes(2).toString('hex')}` : alt;
-}
-
 async function finish({ code, state, user }) {
   const db = getDb();
   const st = db.prepare('SELECT * FROM bank_states WHERE state = ?').get(String(state || ''));
@@ -66,7 +43,9 @@ async function finish({ code, state, user }) {
     // Renewing the consent gives new account uids; the ledger name stays with the IBAN.
     if (old) db.prepare('DELETE FROM bank_accounts WHERE aspsp = ? AND iban = ?').run(st.aspsp, iban);
     const label = old?.label || labelFor(st.aspsp, a);
-    db.prepare('INSERT OR REPLACE INTO bank_accounts (uid, session_id, aspsp, iban, name, label, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(a.uid, s.session_id, st.aspsp, iban, String(a.details || a.product || a.name || '').slice(0, 80), label, now());
+    db.prepare('INSERT OR REPLACE INTO bank_accounts (uid, session_id, aspsp, iban, name, label, product, details, usage, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(a.uid, s.session_id, st.aspsp, iban, String(a.name || '').slice(0, 80), label, a.product || null, a.details || null, a.usage || null, now());
+    ledgerAccounts.ensure(label, ledgerAccounts.defaultScope(a));
     accounts.push(a.uid);
   }
   db.prepare("DELETE FROM bank_sessions WHERE session_id NOT IN (SELECT session_id FROM bank_accounts) AND session_id != ?").run(s.session_id);
@@ -106,6 +85,12 @@ async function syncAccount(acc, { force = false, psuIp } = {}) {
   const db = getDb();
   if (!force && acc.last_sync_at && Date.now() - Date.parse(acc.last_sync_at) < MIN_GAP_MS) return { uid: acc.uid, skipped: true };
   try {
+    // Keeps product and description current; a scope is only guessed for an account that has none yet.
+    const d = await bank.details(acc.uid).catch(() => null);
+    if (d) {
+      db.prepare('UPDATE bank_accounts SET product = ?, details = ?, usage = ? WHERE uid = ?').run(d.product || null, d.details || null, d.usage || null, acc.uid);
+      ledgerAccounts.ensure(acc.label, ledgerAccounts.defaultScope(d));
+    }
     const list = []; let continuation; let pages = 0;
     do {
       const page = await bank.transactions(acc.uid, { dateFrom: dateFrom(acc), continuation, psuIp });
@@ -138,7 +123,7 @@ function syncAll(opts = {}) {
 
 function status() {
   const db = getDb();
-  const accounts = db.prepare('SELECT a.uid, a.aspsp, a.iban, a.name, a.label, a.first_booked_on, a.last_sync_at, a.last_error, s.valid_until, s.status FROM bank_accounts a JOIN bank_sessions s ON s.session_id = a.session_id ORDER BY a.aspsp, a.label').all()
+  const accounts = db.prepare('SELECT a.uid, a.aspsp, a.iban, COALESCE(a.details, a.product, a.name) AS name, a.product, a.details, a.label, a.first_booked_on, a.last_sync_at, a.last_error, s.valid_until, s.status FROM bank_accounts a JOIN bank_sessions s ON s.session_id = a.session_id ORDER BY a.aspsp, a.label').all()
     .map(({ iban, ...a }) => ({ ...a, iban: mask(iban), status: a.status === 'active' && a.valid_until && a.valid_until < now() ? 'expired' : a.status }));
   return { configured: bank.configured(), banks: BANKS.map((b) => b.name), accounts, running: isRunning() };
 }
@@ -149,7 +134,7 @@ function status() {
  */
 function rename(uid, label) {
   const l = String(label || '').trim();
-  if (!l || l.length > 40) throw new bank.BankError(400, 'Name 1 bis 40 Zeichen');
+  if (!l || l.length > 60) throw new bank.BankError(400, 'Name 1 bis 60 Zeichen');
   const db = getDb(); const acc = db.prepare('SELECT * FROM bank_accounts WHERE uid = ?').get(uid);
   if (!acc) return false;
   if (l === acc.label) return true;
@@ -168,6 +153,8 @@ function rename(uid, label) {
       } else db.prepare('UPDATE transactions SET account = ? WHERE id = ?').run(l, m.id);
     }
     db.prepare('UPDATE bank_accounts SET label = ? WHERE uid = ?').run(l, uid);
+    const scope = db.prepare('SELECT scope FROM accounts WHERE name = ?').get(acc.label)?.scope;
+    if (scope) db.prepare('INSERT OR IGNORE INTO accounts (name, scope, updated_at) VALUES (?, ?, ?)').run(l, scope, now());
     db.exec('COMMIT');
   } catch (e) { db.exec('ROLLBACK'); throw e; }
   return true;

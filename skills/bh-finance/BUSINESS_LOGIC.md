@@ -35,3 +35,12 @@ Eine Buchung ist doppelt, wenn Konto, Tag, Betrag und Text gleich sind. Gleiche 
 - PayPal-Aufladungen und -Abbuchungen („Bankgutschrift auf PayPal-Konto“, „Von Nutzer eingeleitete Abbuchung“, ACH-Rückbuchungen) werden beim PayPal-Import übersprungen: Sie stehen schon auf dem Bankkonto (dort Kategorie TRANS). Gezählt wird nur der echte Kauf auf dem PayPal-Konto.
 - Es gelten nur die neuesten Kategorien (Tabelle 2025, Matti 15.11.2026). Vergangene Buchungen behalten ihre Kategorie, wenn es sie noch gibt; die alte Kategorie IMMO ist aufgeteilt: Darlehen/Kredit/Rate/BauGeld → IMMORATE, Gutschriften → IMMOEIN, Rest → IMMOAUS, jeweils mit Bemerkung „früher IMMO“.
 - Alte Kontonamen der Tabellen: Comdirect → comdirect, BBBank/BBBank-Bezügekonto → BBB, KK Matti/Visa-Matti/comdirect CC Matti → CD-CCM, DKB Hauptkonto → DKB.
+
+## Konten und Bereiche (15.11.2026)
+
+- Jedes Konto hat einen Bereich: **Haushalt**, **Immobilien** oder **Treuhand**. Nur Haushalt zählt in Übersicht, Investments, Sparquote und „Zu prüfen“; die Buchungsliste zeigt standardmäßig nur Haushaltskonten, ein einzelnes Konto über `?account=`.
+- Grund: Matti verknüpfte 21 DKB-Konten, darunter Mietenkonten je Wohnung und Kautions-Treuhandkonten. Mieten kämen sonst doppelt (im Haushalt zählt nur „Überschuss aus Immobilien“), Kautionen sind Geld der Mieter.
+- Erste Einordnung aus der Bank: Verwendung ORGA oder „Treuhand/Kaution“ → Treuhand; „Mietenkonto“ oder „Geschäftskonto“ → Immobilien; sonst Haushalt. Eine Wahl der Person wird nie überschrieben.
+- Neue Bankkonten mit eigener Beschreibung heißen danach („BLN, Musterwegstraße 20 - WE01“, Kürzel wie „XYZ - “ vorne entfernt; ein einzelnes Wort bekommt die Bank davor: „DKB Geschäftskonto“).
+- Umbenennen nimmt alle Buchungen, die Bankverbindung und den Bereich mit. Ein vergebener Name wird abgelehnt; nur ein Bankkonto darf sich einem reinen CSV-Konto anschließen, und erst nach Rückfrage (Server antwortet 409 `code: merge`, die Seite fragt „zusammenführen?“ und schickt `merge: true`), weil sich das Zusammenführen nicht rückgängig machen lässt.
+- Offene Buchungen von Immobilien- und Treuhandkonten erscheinen nur grau: sie sind keine Aufgabe für „Zu prüfen“.

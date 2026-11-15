@@ -6,6 +6,7 @@ const { getDb } = require('../lib/db');
 const report = require('../lib/report');
 const ledger = require('../lib/ledger');
 const { parseBankFile } = require('../lib/importers');
+const accounts = require('../lib/accounts');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 const yearOf = (v) => { const y = Number(v); return Number.isInteger(y) && y > 1990 && y < 2100 ? y : new Date().getFullYear(); };
@@ -26,7 +27,7 @@ function sameOrigin(req, res, next) {
 
 function buildRouter() {
   const r = express.Router();
-  r.use(['/overview', '/investments', '/categories', '/transactions', '/imports', '/access'], sameOrigin, requireFinance);
+  r.use(['/overview', '/investments', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
   r.get('/overview', (req, res) => res.json(report.overview(yearOf(req.query.year))));
   r.get('/investments', (req, res) => res.json(report.investments(yearOf(req.query.year))));
   r.get('/categories', (_req, res) => res.json({ categories: getDb().prepare('SELECT * FROM categories ORDER BY art, name').all() }));
@@ -37,7 +38,11 @@ function buildRouter() {
   });
 
   r.get('/transactions', (req, res) => {
-    const y = yearOf(req.query.year); const where = ['booked_on >= ? AND booked_on < ?']; const args = [`${y}-01-01`, `${y + 1}-01-01`];
+    // year=all: every year at once (e.g. all open lines of one account).
+    const y = yearOf(req.query.year); const all = req.query.year === 'all';
+    const where = all ? ['1 = 1'] : ['booked_on >= ? AND booked_on < ?']; const args = all ? [] : [`${y}-01-01`, `${y + 1}-01-01`];
+    // One account on request; otherwise household accounts only, unless scope=all.
+    if (req.query.account) { where.push('account = ?'); args.push(String(req.query.account)); } else if (req.query.scope !== 'all') where.push(accounts.HOUSEHOLD);
     if (req.query.open === '1') where.push('category IS NULL');
     if (req.query.category) { where.push(req.query.category === 'OFFEN' ? 'category IS NULL' : 'category = ?'); if (req.query.category !== 'OFFEN') args.push(String(req.query.category)); }
     if (/^\d{1,2}$/.test(String(req.query.month || ''))) { where.push("CAST(substr(booked_on, 6, 2) AS INTEGER) = ?"); args.push(Number(req.query.month)); }
@@ -62,11 +67,20 @@ function buildRouter() {
     try {
       const parsed = parseBankFile(req.file.buffer, req.body?.account || null);
       const result = ledger.importRows({ filename: req.file.originalname.slice(0, 120), ...parsed, user: req.user.email });
-      const open = getDb().prepare('SELECT count(*) AS n FROM transactions WHERE category IS NULL').get().n;
+      const open = getDb().prepare(`SELECT count(*) AS n FROM transactions WHERE category IS NULL AND ${accounts.HOUSEHOLD}`).get().n;
       return res.status(201).json({ ...result, format: parsed.format, account: parsed.account, rows: parsed.rows.length, open });
     } catch (e) { return res.status(400).json({ error: e.message }); }
   });
 
+  r.get('/accounts', (_req, res) => res.json({ accounts: accounts.list(), scopes: accounts.SCOPES }));
+  r.patch('/accounts/:name', (req, res) => {
+    const name = String(req.params.name);
+    try {
+      if (req.body?.scope !== undefined) accounts.setScope(name, String(req.body.scope));
+      if (req.body?.name !== undefined && !accounts.rename(name, req.body.name, { mergeBank: require('../lib/bank-sync').rename, merge: req.body.merge === true })) return res.status(404).json({ error: 'Konto nicht gefunden' });
+      return res.status(204).end();
+    } catch (e) { return res.status(e.status || 400).json({ error: e.message, code: e.code }); }
+  });
   r.get('/access', (req, res) => res.json({ users: getDb().prepare('SELECT email, added_at FROM access ORDER BY email').all(), admin: req.user.role === 'admin' }));
   r.post('/access', (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Nur für Admins' });

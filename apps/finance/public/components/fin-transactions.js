@@ -2,7 +2,7 @@
 /** Transactions: list with work lists, detail panel to assign a category. Every assignment teaches the rules. */
 window.FinTransactions = (() => {
   const { esc, euro, date, BASE } = Fin;
-  let page = null; let rows = []; let cats = []; let year = null; let filter = 'all'; let category = null;
+  let page = null; let rows = []; let cats = []; let year = null; let filter = 'all'; let category = null; let account = null; let allYears = false;
 
   const kpis = () => [
     { key: 'all', label: 'Alle', value: rows.length },
@@ -50,7 +50,7 @@ window.FinTransactions = (() => {
 
   async function load() {
     page.table.setLoading(true);
-    const q = new URLSearchParams({ year: year || '' }); if (category) q.set('category', category);
+    const q = new URLSearchParams({ year: allYears ? 'all' : year || '' }); if (category) q.set('category', category); if (account) q.set('account', account);
     const data = await Fin.api('GET', `/transactions?${q}`);
     rows = data.transactions.map((r) => ({ ...r })); page.setKpis(kpis(), filter); page.table.setRows(visible());
     return data;
@@ -64,14 +64,14 @@ window.FinTransactions = (() => {
   const isOpen = (host) => !!page && host.contains(page.root);
 
   async function render(host, y, id) {
-    year = y; category = new URLSearchParams(location.search).get('category');
+    year = y; category = new URLSearchParams(location.search).get('category'); account = new URLSearchParams(location.search).get('account'); allYears = new URLSearchParams(location.search).get('year') === 'all';
     if (category === 'OFFEN') { filter = 'open'; category = null; }
     cats = (await Fin.api('GET', '/categories')).categories;
     const catName = category ? cats.find((c) => c.code === category)?.name || category : null;
     page = BHListPage.render(host, {
-      title: catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `Jahr ${year || 'aktuell'} · alle Konten`, search: { placeholder: 'Gegenpartei, Text, Betrag …' },
+      title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || 'aktuell'}`} · ${account ? 'ein Konto' : 'Haushaltskonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …' },
       kpis: kpis(), kpiActive: filter, onKpi: (k) => { filter = k; page.setKpis(kpis(), k); page.table.setRows(visible()); },
-      topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }].concat(category ? [{ label: 'Alle Kategorien', href: `${BASE}/transactions?year=${year || ''}` }] : []),
+      topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }].concat(category ? [{ label: 'Alle Kategorien', href: `${BASE}/transactions?year=${year || ''}` }] : []).concat(account ? [{ label: 'Alle Konten', href: `${BASE}/accounts` }] : []),
       countLabel: ['Buchung', 'Buchungen'],
       table: { storageKey: 'finance-transactions', rowHref: (r) => `${BASE}/transactions/${r.id}${location.search}`, itemLabel: ['Buchung', 'Buchungen'], emptyMessage: 'Keine Buchungen in dieser Auswahl.',
         columns: [
@@ -80,12 +80,12 @@ window.FinTransactions = (() => {
           { key: 'amount_cents', label: 'Betrag', width: 130, align: 'right', render: (r) => Fin.amount(r.amount_cents), sortValue: (r) => r.amount_cents },
           { key: 'category', label: 'Kategorie', width: 200, render: catCell, sortValue: (r) => r.category || '' },
           { key: 'account', label: 'Konto', width: 110 }, { key: 'text', label: 'Text', width: 320 },
-        ] },
+        ].filter((c) => !(account && c.key === 'account')) },
     });
     const data = await load();
     if (!year && data.years.length) year = data.years[0];
     // A link to a transaction of another year opens that year, so every transaction address works on its own.
-    if (id && !rows.some((x) => String(x.id) === String(id))) {
+    if (id && !allYears && !rows.some((x) => String(x.id) === String(id))) {
       try {
         const { transaction } = await Fin.api('GET', `/transactions/${encodeURIComponent(id)}`);
         const y2 = Number(transaction.booked_on.slice(0, 4));

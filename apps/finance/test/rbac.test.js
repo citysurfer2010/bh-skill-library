@@ -14,6 +14,8 @@ const PROTECTED = [
   ['GET', '/api/overview', 'admin'],
   ['GET', '/api/transactions', 'admin'],
   ['GET', '/api/bank/status', 'admin'],
+  ['GET', '/api/accounts', 'admin'],
+  ['GET', '/accounts', 'user'],
   ['GET', '/transactions/1', 'user'],
   ['GET', '/api/me', 'user'],
   ['GET', '/api/me/api-keys', 'user'],
@@ -101,4 +103,13 @@ test('GET /api/transactions/:id: eigene Adresse je Buchung, 404 für unbekannte,
   assert.equal(ok.status, 200); assert.equal((await ok.json()).transaction.booked_on, '2023-05-04');
   assert.equal((await t.call('/api/transactions/999999', { as: 'a@beispiel.de', role: 'admin' })).status, 404);
   assert.equal((await t.call(`/api/transactions/${id}`, { as: 'u@beispiel.de', role: 'user' })).status, 403);
+});
+
+test('GET /api/transactions?year=all&account=…: alle Jahre eines Kontos', async () => {
+  const { getDb } = require('../lib/db');
+  const ins = getDb().prepare('INSERT INTO transactions (account, booked_on, amount_cents, hash, created_at) VALUES (?, ?, ?, ?, ?)');
+  const tag = `${process.pid}-${Date.now()}`;
+  ins.run(`alle-jahre-${tag}`, '2021-02-03', -1, `aj1-${tag}`, '2026-11-15'); ins.run(`alle-jahre-${tag}`, '2025-02-03', -2, `aj2-${tag}`, '2026-11-15');
+  const r = await t.call(`/api/transactions?year=all&account=${encodeURIComponent(`alle-jahre-${tag}`)}`, { as: 'a@beispiel.de', role: 'admin' });
+  assert.equal(r.status, 200); assert.equal((await r.json()).transactions.length, 2);
 });

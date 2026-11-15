@@ -50,6 +50,8 @@ function startAuth({ aspsp, state, redirectUrl }) {
   return call('POST', '/auth', { access: { valid_until: validUntil }, aspsp: { name: aspsp, country: 'DE' }, state, redirect_url: redirectUrl, psu_type: 'personal' });
 }
 const createSession = (code) => call('POST', '/sessions', { code });
+/** Product, description and usage (PRIV/ORGA) of one account, e.g. "Mietenkonto - privat" with the flat it belongs to. */
+const details = (uid) => call('GET', `/accounts/${encodeURIComponent(uid)}/details`);
 const deleteSession = (id) => call('DELETE', `/sessions/${encodeURIComponent(id)}`);
 
 /** One page of booked transactions; psuIp marks a request the person started themselves. */
@@ -60,4 +62,4 @@ function transactions(uid, { dateFrom, continuation, psuIp } = {}) {
   return call('GET', `/accounts/${encodeURIComponent(uid)}/transactions?${q}`, null, psuIp ? { 'psu-ip-address': psuIp } : {});
 }
 
-module.exports = { configured, startAuth, createSession, deleteSession, transactions, token, BankError, _setFetch: (f) => { fetchImpl = f; } };
+module.exports = { configured, startAuth, createSession, deleteSession, details, transactions, token, BankError, _setFetch: (f) => { fetchImpl = f; } };

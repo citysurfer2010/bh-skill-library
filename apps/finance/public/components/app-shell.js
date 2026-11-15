@@ -6,7 +6,7 @@
  * Loading standard: draw the frame at once from what is known, content shows placeholders until data arrives; never a white page.
  *   AppShell.loading(host, title, kind)  'table' | 'cards' | 'form'     AppShell.links(prefix, go)  in-module links without reload
  * Lists are borderless, never in a .card. Small static lists (up to 10 rows):
- *   AppShell.list({ columns: [{ key, label, html? }], rows, title?, empty?, rowHref? })
+ *   AppShell.list({ columns: [{ key, label, html?, align? }], rows | groups: [{ label, rows }], title?, empty?, rowHref?, className? })
  *   AppShell.kpis([{ label, value, sub? }])   AppShell.listPage(host, { title, sub?, search?, count, countLabel?, toolbarLeft?, toolbarRight?, list })
  *   AppShell.chips(items: [[key, label, n?]], active, href(key))
  */
@@ -69,17 +69,22 @@ window.AppShell = (() => {
    * columns: [{ key, label, html? }] — html(row) returns trusted HTML for that cell, otherwise row[key] is escaped.
    * rowHref(row) makes the first cell a link (same-module links navigate without reload via AppShell.links).
    */
-  function list({ columns = [], rows = [], title = '', empty = 'Keine Einträge.', rowHref = null } = {}) {
-    const head = `<thead><tr>${columns.map((c) => `<th scope="col">${esc(c.label)}</th>`).join('')}</tr></thead>`;
+  function list({ columns = [], rows = [], title = '', empty = 'Keine Einträge.', rowHref = null, groups = null, className = '' } = {}) {
+    const al = (c) => (c.align ? ` class="is-${c.align}"` : '');
+    const head = `<thead><tr>${columns.map((c) => `<th scope="col"${al(c)}>${esc(c.label)}</th>`).join('')}</tr></thead>`;
     const cell = (c, r, i) => {
       const v = c.html ? c.html(r) : esc(r[c.key]);
-      return i === 0 && rowHref ? `<td><a href="${esc(rowHref(r))}">${v}</a></td>` : `<td>${v}</td>`;
+      return i === 0 && rowHref ? `<td${al(c)}><a href="${esc(rowHref(r))}">${v}</a></td>` : `<td${al(c)}>${v}</td>`;
     };
-    const body = rows.length
-      ? `<tbody>${rows.map((r) => `<tr>${columns.map((c, i) => cell(c, r, i)).join('')}</tr>`).join('')}</tbody>`
-      : '';
-    return `<section class="app-list">${title ? `<h2 class="app-list-title">${esc(title)}</h2>` : ''}`
-      + (rows.length ? `<table>${head}${body}</table>` : `<p class="muted">${esc(empty)}</p>`) + '</section>';
+    const tr = (r) => `<tr>${columns.map((c, i) => cell(c, r, i)).join('')}</tr>`;
+    // groups: [{ label (trusted HTML), rows }] → ONE table with a group row per group, so the columns stay aligned.
+    const shown = groups ? groups.filter((g) => g.rows.length) : null;
+    const any = shown ? shown.length > 0 : rows.length > 0;
+    const body = shown
+      ? shown.map((g) => `<tr class="app-list-group"><th colspan="${columns.length}" scope="colgroup">${g.label}</th></tr>${g.rows.map(tr).join('')}`).join('')
+      : rows.map(tr).join('');
+    return `<section class="app-list${className ? ` ${esc(className)}` : ''}">${title ? `<h2 class="app-list-title">${esc(title)}</h2>` : ''}`
+      + (any ? `<table>${head}<tbody>${body}</tbody></table>` : `<p class="muted">${esc(empty)}</p>`) + '</section>';
   }
 
   /** KPI tiles: label in capitals, big value, optional small line. */

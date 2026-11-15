@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Finance pages: / overview · /transactions(/id) · /investments · /import · /categories.
+ * Finance pages: / overview · /transactions(/id) · /investments · /accounts · /import · /categories.
  * Loading standard: frame at once, placeholders until the data arrives, in-module links without reload.
  */
 (async () => {
@@ -10,6 +10,7 @@
     { id: 'overview', label: 'Übersicht', href: `${BASE}/`, icon: 'chart', match: /^\/$/ },
     { id: 'transactions', label: 'Buchungen', href: `${BASE}/transactions`, icon: 'list', match: /^\/transactions(?:\/(\d+))?\/?$/ },
     { id: 'investments', label: 'Investments und Rücklagen', href: `${BASE}/investments`, icon: 'euro', match: /^\/investments\/?$/ },
+    { id: 'accounts', label: 'Konten', href: `${BASE}/accounts`, icon: 'building', match: /^\/accounts\/?$/ },
     { id: 'import', label: 'Importieren', href: `${BASE}/import`, icon: 'upload', match: /^\/import\/?$/ },
     { id: 'categories', label: 'Kategorien', href: `${BASE}/categories`, icon: 'settings', match: /^\/categories\/?$/ },
   ];
@@ -29,6 +30,7 @@
     if (p.id === 'overview') return FinOverview.render(host, year);
     if (p.id === 'transactions') return FinTransactions.render(host, year, id);
     if (p.id === 'investments') return FinInvestments.render(host, year);
+    if (p.id === 'accounts') return FinAccounts.render(host);
     if (p.id === 'import') return FinImport.render(host);
     return FinCategories.render(host);
   }

@@ -1,6 +1,7 @@
 'use strict';
 /** Evaluations: month by month per kind and category, investments, years on file. */
 const { getDb } = require('./db');
+const { HOUSEHOLD } = require('./accounts');
 
 const MONTHS = 12;
 const years = () => getDb().prepare("SELECT DISTINCT substr(booked_on, 1, 4) AS y FROM transactions ORDER BY y DESC").all().map((r) => Number(r.y));
@@ -9,9 +10,9 @@ const years = () => getDb().prepare("SELECT DISTINCT substr(booked_on, 1, 4) AS 
 function overview(year) {
   const db = getDb();
   const cats = db.prepare('SELECT code, art, name, budget_cents FROM categories').all().map((c) => ({ ...c }));
-  const rows = db.prepare("SELECT COALESCE(category, 'OFFEN') AS code, CAST(substr(booked_on, 6, 2) AS INTEGER) AS m, SUM(amount_cents) AS cents, COUNT(*) AS n FROM transactions WHERE booked_on >= ? AND booked_on < ? GROUP BY code, m")
+  const rows = db.prepare(`SELECT COALESCE(category, 'OFFEN') AS code, CAST(substr(booked_on, 6, 2) AS INTEGER) AS m, SUM(amount_cents) AS cents, COUNT(*) AS n FROM transactions WHERE ${HOUSEHOLD} AND booked_on >= ? AND booked_on < ? GROUP BY code, m`)
     .all(`${year}-01-01`, `${year + 1}-01-01`);
-  const prev = Object.fromEntries(db.prepare("SELECT COALESCE(category, 'OFFEN') AS code, SUM(amount_cents) AS cents FROM transactions WHERE booked_on >= ? AND booked_on < ? GROUP BY code")
+  const prev = Object.fromEntries(db.prepare(`SELECT COALESCE(category, 'OFFEN') AS code, SUM(amount_cents) AS cents FROM transactions WHERE ${HOUSEHOLD} AND booked_on >= ? AND booked_on < ? GROUP BY code`)
     .all(`${year - 1}-01-01`, `${year}-01-01`).map((r) => [r.code, r.cents]));
   const byCode = new Map(cats.map((c) => [c.code, { ...c, months: Array(MONTHS).fill(0), total: 0, count: 0, previous: prev[c.code] ?? null }]));
   for (const r of rows) {
@@ -36,7 +37,7 @@ function overview(year) {
 /** Wealth building: money put into investments and reserves, per month and per target, plus the running total over all years. */
 function investments(year) {
   const db = getDb();
-  const filter = "category IN (SELECT code FROM categories WHERE art IN ('Investment', 'Rücklagen'))";
+  const filter = `${HOUSEHOLD} AND category IN (SELECT code FROM categories WHERE art IN ('Investment', 'Rücklagen'))`;
   const months = Array(MONTHS).fill(0);
   for (const r of db.prepare(`SELECT CAST(substr(booked_on, 6, 2) AS INTEGER) AS m, SUM(-amount_cents) AS cents FROM transactions WHERE ${filter} AND booked_on >= ? AND booked_on < ? GROUP BY m`).all(`${year}-01-01`, `${year + 1}-01-01`)) months[r.m - 1] = r.cents;
   const targets = db.prepare(`SELECT counterparty, category, (SELECT name FROM categories WHERE code = category) AS category_name, (SELECT art FROM categories WHERE code = category) AS art, SUM(-amount_cents) AS cents, COUNT(*) AS n, MIN(booked_on) AS first, MAX(booked_on) AS last FROM transactions WHERE ${filter} AND booked_on >= ? AND booked_on < ? GROUP BY counterparty, category ORDER BY cents DESC`).all(`${year}-01-01`, `${year + 1}-01-01`).map((r) => ({ ...r }));

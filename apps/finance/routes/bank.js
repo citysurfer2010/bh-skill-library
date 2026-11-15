@@ -2,12 +2,14 @@
 /** Bank connection (Enable Banking): connect, consent callback, fetch now, rename and remove accounts. Same access as the finances. */
 const express = require('express');
 const sync = require('../lib/bank-sync');
+const accounts = require('../lib/accounts');
+const { getDb } = require('../lib/db');
 
 const APP_BASE = '/finance';
 // Must equal the redirect URL registered at Enable Banking.
 const REDIRECT = process.env.BANK_REDIRECT_URL || 'https://apps.familiebiskup.de/finance/api/bank/callback';
 const psuIp = (req) => String(req.get('x-forwarded-for') || req.get('x-real-ip') || req.ip || '').split(',')[0].trim() || undefined;
-const fail = (res, e) => res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message });
+const fail = (res, e) => res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message, code: e.code });
 
 function buildRouter({ sameOrigin, requireFinance }) {
   const r = express.Router();
@@ -30,7 +32,9 @@ function buildRouter({ sameOrigin, requireFinance }) {
     try { return res.json({ results: await sync.syncAll({ force: true, psuIp: psuIp(req) }) }); } catch (e) { return fail(res, e); }
   });
   r.patch('/accounts/:uid', (req, res) => {
-    try { return sync.rename(req.params.uid, req.body?.label) ? res.status(204).end() : res.status(404).json({ error: 'Konto nicht gefunden' }); } catch (e) { return fail(res, e); }
+    const acc = getDb().prepare('SELECT label FROM bank_accounts WHERE uid = ?').get(req.params.uid);
+    if (!acc) return res.status(404).json({ error: 'Konto nicht gefunden' });
+    try { accounts.rename(acc.label, req.body?.label, { mergeBank: sync.rename, merge: req.body?.merge === true }); return res.status(204).end(); } catch (e) { return fail(res, e); }
   });
   r.delete('/accounts/:uid', async (req, res) => (await sync.disconnect(req.params.uid) ? res.status(204).end() : res.status(404).json({ error: 'Konto nicht gefunden' })));
   return r;

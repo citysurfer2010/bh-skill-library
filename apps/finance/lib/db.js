@@ -56,7 +56,15 @@ function migrate(conn) {
       last_sync_at TEXT, last_error TEXT, created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_bank_accounts_session ON bank_accounts(session_id);
+    -- Bereich je Konto: nur "haushalt" zählt in Übersicht, Investments und „Zu prüfen“. Fehlt eine Zeile, gilt haushalt.
+    CREATE TABLE IF NOT EXISTS accounts (
+      name TEXT PRIMARY KEY, scope TEXT NOT NULL DEFAULT 'haushalt' CHECK (scope IN ('haushalt', 'immobilien', 'treuhand')), updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_accounts_scope ON accounts(scope);
+    CREATE INDEX IF NOT EXISTS idx_tx_account_date ON transactions(account, booked_on);
   `);
+  const bankCols = conn.prepare('PRAGMA table_info(bank_accounts)').all().map((c) => c.name);
+  for (const col of ['product', 'details', 'usage']) if (!bankCols.includes(col)) conn.exec(`ALTER TABLE bank_accounts ADD COLUMN ${col} TEXT`);
   // Link to the bank's own booking id, so the daily overlap never books anything twice.
   if (!conn.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 'bank_ref')) conn.exec('ALTER TABLE transactions ADD COLUMN bank_ref TEXT');
   conn.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_bank_ref ON transactions(account, bank_ref) WHERE bank_ref IS NOT NULL; CREATE INDEX IF NOT EXISTS idx_tx_account_amount ON transactions(account, amount_cents, booked_on);');

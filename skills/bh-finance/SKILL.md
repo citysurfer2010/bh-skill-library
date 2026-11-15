@@ -16,6 +16,7 @@ Die App `apps/finance` ersetzt die alte Tabelle „Finanzreport“: Kontoauszüg
 | `lib/bank-api.js` | Enable Banking (PSD2): signierte Aufrufe, Zustimmung, Sitzung, Umsätze |
 | `lib/bank-convert.js` | Bank-Umsatz → Buchung (Vorzeichen, Gegenpartei, Bank-ID) |
 | `lib/bank-sync.js` | Verbinden, Kontonamen, täglicher Abruf, Abgleich mit CSV-Buchungen |
+| `lib/accounts.js` | Alle Konten mit Bereich (Haushalt, Immobilien, Treuhand), Umbenennen, Filter „nur Haushalt“ |
 | `lib/importers.js` | Erkennt CSV-Exporte von comdirect (auch Kreditkarte), BBBank und PayPal am Inhalt |
 | `lib/ledger.js` | Import mit Dublettenprüfung, Korrekturen |
 | `lib/categorize.js` | Lernt Gegenpartei → Kategorie aus Entscheidungen |
@@ -25,6 +26,10 @@ Die App `apps/finance` ersetzt die alte Tabelle „Finanzreport“: Kontoauszüg
 ## Zugang
 
 Die Daten sind privat. Admins sehen sie immer, alle anderen erst nach Freigabe unter „Importieren“.
+
+## Konten
+
+Seite „Konten“ (`/finance/accounts`): alle Konten in Abschnitten je Bereich (Haushalt, Immobilien, Treuhand) mit Bank, Produkt, letztem Abruf, Buchungen, Zeitraum und offenen Buchungen; umbenennen (Stift) und Bereich wählen direkt in der Liste, auf dem Handy als Karten. „Offen“ führt zu allen offenen Buchungen des Kontos über alle Jahre (`?account=…&category=OFFEN&year=all`). Jede Buchung hat ihre eigene Adresse `/finance/transactions/<id>`.
 
 ## Bankabruf
 

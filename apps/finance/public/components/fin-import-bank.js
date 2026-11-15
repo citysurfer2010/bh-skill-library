@@ -64,10 +64,19 @@ window.FinBank = (() => {
     const close = () => { main.innerHTML = keep; li.classList.remove('is-editing'); li.querySelector('[data-rename]').focus(); };
     form.querySelector('[data-cancel]').addEventListener('click', close);
     form.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } });
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try { await Fin.api('PATCH', `/bank/accounts/${uid}`, { label: input.value }); Toast.success('Umbenannt'); focusHead = true; rerender(); } catch (x) { Toast.error(x.message); }
-    });
+    const save = async (merge) => {
+      const label = input.value.trim();
+      try { await Fin.api('PATCH', `/bank/accounts/${uid}`, merge ? { label, merge: true } : { label }); Toast.success(merge ? 'Zusammengeführt' : 'Umbenannt'); focusHead = true; rerender(); } catch (x) {
+        if (x.code !== 'merge') { Toast.error(x.message); return; }
+        // Joining an existing account cannot be undone: ask in place, the safe choice has the focus.
+        main.innerHTML = `<div class="fin-acc-ask" role="status">Mit bestehendem Konto „${esc(label)}“ zusammenführen? Die Bank-Buchungen werden mit den vorhandenen verbunden, das lässt sich nicht rückgängig machen.</div>
+          <div class="fin-inline"><button type="button" class="bh-btn bh-btn-sm bh-btn-primary" data-merge-yes>Zusammenführen</button><button type="button" class="bh-btn bh-btn-sm" data-merge-no>Abbrechen</button></div>`;
+        main.querySelector('[data-merge-no]').focus();
+        main.querySelector('[data-merge-no]').addEventListener('click', close);
+        main.querySelector('[data-merge-yes]').addEventListener('click', () => { input.value = label; save(true); });
+      }
+    };
+    form.addEventListener('submit', (e) => { e.preventDefault(); save(false); });
   }
 
   /** Confirmation in place (no window.confirm, skeleton rule 7): the account row asks, the safe choice gets the focus. */
