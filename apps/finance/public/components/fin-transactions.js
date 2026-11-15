@@ -27,7 +27,7 @@ window.FinTransactions = (() => {
       <p class="fin-hint">Was du zuordnest, merkt sich die App für diese Gegenpartei. Ab dem zweiten gleichen Mal ordnet sie neue Buchungen selbst zu.</p>
       <div class="fin-next"><span class="fin-hint" role="status" data-left>${leftText()}</span>${rows.some((x) => !x.category && x !== r) ? '<button type="button" class="bh-btn bh-btn-sm" data-next-open>Nächste offene</button>' : ''}</div></div>`;
     const o = { title: `${esc(r.counterparty || 'Buchung')} · ${esc(euro(r.amount_cents))}`, body, storageKey: 'finance-detail', position: `${i + 1} von ${list.length}`,
-      prev: i > 0 ? () => open(list[i - 1]) : null, next: i < list.length - 1 ? () => open(list[i + 1]) : null, onClose: () => history.replaceState(null, '', `${BASE}/transactions${location.search}`) };
+      prev: i > 0 ? () => open(list[i - 1]) : null, next: i < list.length - 1 ? () => open(list[i + 1]) : null, onClose: () => history.replaceState(null, '', `${listHref()}${location.search}`) };
     if (BHSideDrawer.isOpen()) BHSideDrawer.update(o); else BHSideDrawer.open(o);
     const panel = document.querySelector('.bh-sd-panel');
     const save = async (patch) => {
@@ -63,15 +63,18 @@ window.FinTransactions = (() => {
   }
   const isOpen = (host) => !!page && host.contains(page.root);
 
-  async function render(host, y, id) {
-    year = y; category = new URLSearchParams(location.search).get('category'); account = new URLSearchParams(location.search).get('account'); allYears = new URLSearchParams(location.search).get('year') === 'all';
+  /** The list this transaction belongs to; the detail itself has a year-free address (/finance/transactions/<id>). */
+  const listHref = () => Fin.yearHref(allYears ? 'all' : year || new Date().getFullYear(), 'transactions');
+
+  async function render(host, y, id, jumped = false) {
+    year = y; category = new URLSearchParams(location.search).get('category'); account = new URLSearchParams(location.search).get('account'); allYears = !jumped && Fin.allYears();
     if (category === 'OFFEN') { filter = 'open'; category = null; }
     cats = (await Fin.api('GET', '/categories')).categories;
     const catName = category ? cats.find((c) => c.code === category)?.name || category : null;
     page = BHListPage.render(host, {
       title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || 'aktuell'}`} · ${account ? 'ein Konto' : 'Haushaltskonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …' },
       kpis: kpis(), kpiActive: filter, onKpi: (k) => { filter = k; page.setKpis(kpis(), k); page.table.setRows(visible()); },
-      topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }].concat(category ? [{ label: 'Alle Kategorien', href: `${BASE}/transactions?year=${year || ''}` }] : []).concat(account ? [{ label: 'Alle Konten', href: `${BASE}/accounts` }] : []),
+      topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }].concat(category ? [{ label: 'Alle Kategorien', href: listHref() }] : []).concat(account ? [{ label: 'Alle Konten', href: `${BASE}/accounts` }] : []),
       countLabel: ['Buchung', 'Buchungen'],
       table: { storageKey: 'finance-transactions', rowHref: (r) => `${BASE}/transactions/${r.id}${location.search}`, itemLabel: ['Buchung', 'Buchungen'], emptyMessage: 'Keine Buchungen in dieser Auswahl.',
         columns: [
@@ -89,8 +92,8 @@ window.FinTransactions = (() => {
       try {
         const { transaction } = await Fin.api('GET', `/transactions/${encodeURIComponent(id)}`);
         const y2 = Number(transaction.booked_on.slice(0, 4));
-        if (Fin.yearOf() !== y2) { history.replaceState(null, '', `${BASE}/transactions/${transaction.id}?year=${y2}`); return render(host, y2, id); }
-      } catch (x) { Toast.error(x.message); history.replaceState(null, '', `${BASE}/transactions${location.search}`); }
+        if (!jumped && y2 !== year) return render(host, y2, id, true);
+      } catch (x) { Toast.error(x.message); history.replaceState(null, '', `${listHref()}${location.search}`); }
     }
     show(id);
   }

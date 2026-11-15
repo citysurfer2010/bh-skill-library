@@ -7,16 +7,27 @@
   const BASE = '/finance'; const host = document.getElementById('page-host');
   const path = () => location.pathname.slice(BASE.length) || '/';
   const PAGES = [
-    { id: 'overview', label: 'Übersicht', href: `${BASE}/`, icon: 'chart', match: /^\/$/ },
-    { id: 'transactions', label: 'Buchungen', href: `${BASE}/transactions`, icon: 'list', match: /^\/transactions(?:\/(\d+))?\/?$/ },
-    { id: 'investments', label: 'Investments und Rücklagen', href: `${BASE}/investments`, icon: 'euro', match: /^\/investments\/?$/ },
+    { id: 'overview', label: 'Übersicht', href: `${BASE}/`, icon: 'chart', match: /^\/(?:\d{4}\/?)?$/ },
+    { id: 'transactions', label: 'Buchungen', href: `${BASE}/transactions`, icon: 'list', match: /^\/(?:(?:\d{4}|all)\/)?transactions(?:\/(\d+))?\/?$/ },
+    { id: 'investments', label: 'Investments und Rücklagen', href: `${BASE}/investments`, icon: 'euro', match: /^\/(?:\d{4}\/)?investments\/?$/ },
     { id: 'accounts', label: 'Konten', href: `${BASE}/accounts`, icon: 'building', match: /^\/accounts\/?$/ },
     { id: 'import', label: 'Importieren', href: `${BASE}/import`, icon: 'upload', match: /^\/import\/?$/ },
     { id: 'categories', label: 'Kategorien', href: `${BASE}/categories`, icon: 'settings', match: /^\/categories\/?$/ },
   ];
   let me = null;
 
+  /** Old links with ?year=2026 become /finance/2026/… (other query parameters stay). */
+  function yearQueryToPath() {
+    const q = new URLSearchParams(location.search); const y = q.get('year');
+    if (!y || !/^(\d{4}|all)$/.test(y)) return;
+    const rest = location.pathname.slice(BASE.length).replace(/^\/(?:\d{4}|all)(?=\/|$)/, '');
+    if (!/^\/?(transactions|investments)?\/?$/.test(rest)) return;
+    q.delete('year'); const page = rest.replace(/\//g, '');
+    history.replaceState(null, '', `${Fin.yearHref(y, page)}${q.toString() ? `?${q}` : ''}`);
+  }
+
   async function route() {
+    yearQueryToPath();
     const p = PAGES.find((x) => x.match.test(path())) || PAGES[0];
     const id = p.match.exec(path())?.[1];
     ModuleSidebar.show({ title: 'Finanzen', active: p.id, storageKey: 'finance-sidebar-collapsed', items: PAGES.map(({ id: i, label, href, icon }) => ({ id: i, label, href, icon })) });

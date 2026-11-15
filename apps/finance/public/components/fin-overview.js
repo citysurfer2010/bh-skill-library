@@ -16,7 +16,7 @@ window.FinOverview = (() => {
   }
 
   function table(data) {
-    const link = (r) => (r.head ? `<strong class="fin-group">${esc(r.name)}</strong>` : `<a href="${BASE}/transactions?year=${data.year}&category=${encodeURIComponent(r.code)}">${esc(r.name)}</a>`);
+    const link = (r) => (r.head ? `<strong class="fin-group">${esc(r.name)}</strong>` : `<a href="${Fin.yearHref(data.year, 'transactions')}?category=${encodeURIComponent(r.code)}">${esc(r.name)}</a>`);
     const cell = (v) => `<span class="fin-num ${Fin.tone(v)}">${esc(short(v))}</span>`;
     // Average spending above the budget is marked; budgets are positive, spending negative.
     const avg = (r) => { const a = Math.round(r.total / 12); const over = r.budget != null && -a > r.budget; return `<span class="fin-num ${over ? 'fin-over' : Fin.tone(a)}"${over ? ' title="Über dem Budget"' : ''}>${esc(short(a))}${over ? ' ▲' : ''}</span>`; };
@@ -43,9 +43,9 @@ window.FinOverview = (() => {
       { label: 'Überschuss', value: euro(t.result), sub: t.result < 0 ? 'Mehr ausgegeben als eingenommen' : 'Einnahmen minus Ausgaben' },
       { label: 'Investiert und zurückgelegt', value: euro(t.invested + t.reserved), sub: t.savingsRate == null ? '' : `Sparquote ${t.savingsRate.toLocaleString('de-DE')} %` },
     ]);
-    const open = t.open ? `<div class="fin-callout"><span>${t.open} Buchungen sind noch nicht zugeordnet und fehlen in den Summen ihrer Kategorie.</span><a class="bh-btn bh-btn-primary bh-btn-sm" href="${BASE}/transactions?year=${data.year}&category=OFFEN">Jetzt zuordnen</a></div>` : '';
+    const open = t.open ? `<div class="fin-callout"><span>${t.open} Buchungen sind noch nicht zugeordnet und fehlen in den Summen ihrer Kategorie.</span><a class="bh-btn bh-btn-primary bh-btn-sm" href="${Fin.yearHref(data.year, 'transactions')}?category=OFFEN">Jetzt zuordnen</a></div>` : '';
     AppShell.render(host, `<header class="app-topbar"><div><h1>Übersicht ${data.year}</h1><div class="sub">Haushaltskonten, Beträge in Euro. Geldtransfers zwischen eigenen Konten zählen nicht. Klick auf eine Kategorie zeigt ihre Buchungen.</div></div></header>
-      ${Fin.yearChips(data.years, data.year, '/')}${kpis}${open}${table(data)}`);
+      ${Fin.yearChips(data.years, data.year)}${kpis}${open}${table(data)}`);
   }
 
   return { render };

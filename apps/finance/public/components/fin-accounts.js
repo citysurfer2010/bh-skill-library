@@ -11,7 +11,7 @@ window.FinAccounts = (() => {
     const { BASE } = Fin;
     if (!a.open) return '<span class="fin-num fin-muted">0</span>';
     if (a.scope !== 'haushalt') return `<span class="fin-num fin-muted" title="zählt nicht in „Zu prüfen“">${a.open}</span>`;
-    return `<a class="fin-num" href="${BASE}/transactions?account=${encodeURIComponent(a.name)}&category=OFFEN&year=all">${a.open}</a>`;
+    return `<a class="fin-num" href="${BASE}/all/transactions?account=${encodeURIComponent(a.name)}&category=OFFEN">${a.open}</a>`;
   }
 
   function origin(a) {

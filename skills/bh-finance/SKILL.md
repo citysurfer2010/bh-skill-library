@@ -31,7 +31,7 @@ Die Daten sind privat. Admins sehen sie immer, alle anderen erst nach Freigabe u
 
 ## Konten
 
-Seite „Konten“ (`/finance/accounts`): alle Konten in Abschnitten je Bereich (Haushalt, Immobilien, Treuhand) mit Bank, Produkt, letztem Abruf, Buchungen, Zeitraum und offenen Buchungen; umbenennen (Stift) und Bereich wählen direkt in der Liste, auf dem Handy als Karten. „Offen“ führt zu allen offenen Buchungen des Kontos über alle Jahre (`?account=…&category=OFFEN&year=all`). Jede Buchung hat ihre eigene Adresse `/finance/transactions/<id>`. Steht eine Amazon-Bestellnummer im Verwendungszweck, verlinkt das Detail direkt auf die Bestellung bei amazon.de.
+Seite „Konten“ (`/finance/accounts`): alle Konten in Abschnitten je Bereich (Haushalt, Immobilien, Treuhand) mit Bank, Produkt, letztem Abruf, Buchungen, Zeitraum und offenen Buchungen; umbenennen (Stift) und Bereich wählen direkt in der Liste, auf dem Handy als Karten. „Offen“ führt zu allen offenen Buchungen des Kontos über alle Jahre (`?account=…&category=OFFEN&year=all`). Das Jahr steht im Pfad: `/finance/2026`, `/finance/2026/transactions`, `/finance/2026/investments`, alle Jahre `/finance/all/transactions`; alte Links mit `?year=` werden umgeschrieben. Jede Buchung hat ihre eigene Adresse `/finance/transactions/<id>`. Steht eine Amazon-Bestellnummer im Verwendungszweck, verlinkt das Detail direkt auf die Bestellung bei amazon.de.
 
 ## Bankabruf
 

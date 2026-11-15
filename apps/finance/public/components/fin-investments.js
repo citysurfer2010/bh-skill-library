@@ -10,7 +10,7 @@ window.FinInvestments = (() => {
     const max = Math.max(...d.months, 1);
     const bars = `<section class="fin-bars" aria-label="Investiert je Monat ${d.year}">${d.months.map((v, i) => `<div class="fin-bar" tabindex="0" title="${MONTHS[i]}: ${esc(euro(v))}" aria-label="${MONTHS[i]}: ${esc(euro(v))}"><span class="fin-bar-fill" data-h="${Math.round((v / max) * 100)}"></span><span class="fin-bar-label">${MONTHS[i]}</span><span class="fin-bar-value">${v ? esc(Fin.short(v)) : ''}</span></div>`).join('')}</section>`;
     AppShell.render(host, `<header class="app-topbar"><div><h1>Investments und Rücklagen ${d.year}</h1><div class="sub">Geld, das in Anlagen und Rücklagen geflossen ist, etwa Aktien, Beteiligungen und die Rücklagen der Kinder. Rückflüsse zählen negativ.</div></div></header>
-      ${Fin.yearChips(d.years, d.year, '/investments')}
+      ${Fin.yearChips(d.years, d.year, 'investments')}
       ${AppShell.kpis([{ label: `Angelegt ${d.year}`, value: euro(d.total), sub: `Ø ${euro(Math.round(d.total / 12))} je Monat` }, { label: 'Stärkster Monat', value: d.total ? MONTHS[best] : '–', sub: d.total ? euro(d.months[best]) : '' }, { label: 'Seit Beginn der Daten', value: euro(all) }])}
       ${bars}
       ${AppShell.list({ title: 'Wohin das Geld ging', columns: [{ key: 'counterparty', label: 'Ziel' }, { key: 'cents', label: 'Summe', html: (r) => Fin.amount(r.cents) }, { key: 'category_name', label: 'Kategorie', html: (r) => `${esc(r.category_name || r.category)} <span class="fin-tag">${esc(r.art || '')}</span>` }, { key: 'n', label: 'Buchungen' }, { key: 'last', label: 'Zuletzt', html: (r) => esc(date(r.last)) }], rows: d.targets, empty: 'In diesem Jahr ist nichts investiert worden.' })}

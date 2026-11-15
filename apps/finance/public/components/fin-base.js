@@ -19,8 +19,13 @@ window.Fin = (() => {
     return data;
   }
 
-  const yearChips = (years, year, path) => AppShell.chips((years.length ? years : [year]).map((y) => [y, String(y)]), year, (y) => `${BASE}${path}?year=${y}`);
-  const yearOf = () => Number(new URLSearchParams(location.search).get('year')) || null;
+  // The year is part of the address: /finance/2026, /finance/2026/transactions, /finance/all/transactions (Matti 15.11.2026).
+  const YEAR_PATH = /^\/finance\/(\d{4}|all)(?=\/|$)/;
+  const yearParam = () => YEAR_PATH.exec(location.pathname)?.[1] || new URLSearchParams(location.search).get('year') || null;
+  const yearOf = () => { const v = yearParam(); return v && v !== 'all' ? Number(v) : null; };
+  const allYears = () => yearParam() === 'all';
+  const yearHref = (y, page = '') => `${BASE}/${y}${page ? `/${page}` : ''}`;
+  const yearChips = (years, year, page = '') => AppShell.chips((years.length ? years : [year]).map((y) => [y, String(y)]), year, (y) => yearHref(y, page));
 
   function categoryOptions(categories) {
     return [{ value: '', label: 'Noch nicht zugeordnet' }].concat(categories.map((c) => ({ value: c.code, label: `${c.name} (${c.code})`, hint: c.art })));
@@ -33,5 +38,5 @@ window.Fin = (() => {
     return id ? `<a class="bh-btn bh-btn-sm fin-amazon" href="https://www.amazon.de/gp/your-account/order-details?orderID=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">Bestellung ${esc(id)} bei Amazon ansehen</a>` : '';
   };
 
-  return { amazonOrder, amazonLink, BASE, esc, euro, short, amount, date, MONTHS, api, yearChips, yearOf, categoryOptions, tone };
+  return { amazonOrder, amazonLink, BASE, esc, euro, short, amount, date, MONTHS, api, yearChips, yearOf, allYears, yearHref, categoryOptions, tone };
 })();
