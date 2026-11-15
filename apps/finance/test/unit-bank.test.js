@@ -110,7 +110,8 @@ test('fetch: pages, links CSV lines, adds new ones, second run with overlap adds
   assert.equal(rows.length, 2); assert.equal(rows[0].text, 'Strom alt'); assert.equal(rows[0].bank_ref, 'b1');
   const again = (await sync.syncAll({ force: true })).find((r) => r.uid === 'u-giro');
   assert.deepEqual([again.added, again.known], [0, 2]);
-  assert.match(calls.filter((c) => c.url.includes('u-giro/transactions')).at(-2).url, /date_from=2025-01-05/);
+  // A known account is fetched in the background: at most 89 days back, even though the overlap would reach further.
+  assert.match(calls.filter((c) => c.url.includes('u-giro/transactions')).at(-2).url, new RegExp(`date_from=${new Date(Date.now() - 89 * 86_400_000).toISOString().slice(0, 10)}`));
 });
 
 test('fetch: at most every 20 hours unless asked; CSV after bank fetch counts as duplicate', async () => {
@@ -119,6 +120,17 @@ test('fetch: at most every 20 hours unless asked; CSV after bank fetch counts as
   assert.equal(calls.length, n);
   const r = ledger.importRows({ filename: 'b.csv', format: 'comdirect', account: 'comdirect', rows: [{ date: '2025-01-12', cents: -999, text: 'Netflix CSV', counterparty: 'Netflix' }], user: 't' });
   assert.deepEqual([r.added, r.duplicates], [0, 1]);
+});
+
+test('later fetches reach back at most 89 days; a "wrong period" answer is retried within them', async () => {
+  const floor = new Date(Date.now() - 89 * 86_400_000).toISOString().slice(0, 10);
+  getDb().prepare("UPDATE bank_accounts SET last_sync_at = '2020-01-01T00:00:00Z' WHERE uid = 'u-card'").run();
+  reply = (url) => (url.includes('u-card/transactions') && url.includes('date_from=2025-01-01') ? { status: 400, body: { message: 'Wrong transactions period requested' } } : url.endsWith('/balances') ? { balances: [] } : { transactions: [] });
+  const start = calls.length;
+  const out = await sync.syncAll({ force: true });
+  assert.equal(out.find((o) => o.uid === 'u-card').error, undefined);
+  assert.ok(calls.slice(start).filter((c) => c.url.includes('u-card/transactions')).every((c) => !c.url.includes('date_from=2025-01-01')), 'never asks further back than 89 days for a known account');
+  assert.ok(calls.slice(start).some((c) => c.url.includes('u-card/transactions') && c.url.includes(`date_from=${floor}`)));
 });
 
 test('expired consent: error kept on the account, session marked, no more automatic fetches', async () => {

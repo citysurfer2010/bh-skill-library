@@ -87,10 +87,17 @@ async function storeBalance(uid) {
   getDb().prepare('UPDATE bank_accounts SET balance_cents = ?, balance_type = ?, balance_on = ? WHERE uid = ?').run(cents, pick.balance_type || '', pick.reference_date || new Date().toISOString().slice(0, 10), uid);
 }
 
+/**
+ * Without a fresh consent banks give at most 90 days (DKB answers "Wrong transactions period requested").
+ * Only the very first fetch of an account, right after connecting, may reach further back.
+ */
+const BACKGROUND_DAYS = 89;
+const backgroundFloor = () => shiftDay(new Date().toISOString().slice(0, 10), -BACKGROUND_DAYS);
 function dateFrom(acc) {
   const db = getDb();
   const lastBank = db.prepare('SELECT max(booked_on) AS d FROM transactions WHERE account = ? AND bank_ref IS NOT NULL').get(acc.label).d;
-  return lastBank ? shiftDay(lastBank, -OVERLAP_DAYS) : FIRST_FROM;
+  const from = lastBank ? shiftDay(lastBank, -OVERLAP_DAYS) : FIRST_FROM;
+  return acc.last_sync_at && from < backgroundFloor() ? backgroundFloor() : from;
 }
 
 async function syncAccount(acc, { force = false, psuIp } = {}) {
@@ -104,9 +111,13 @@ async function syncAccount(acc, { force = false, psuIp } = {}) {
       ledgerAccounts.ensure(acc.label, ledgerAccounts.defaultScope(d));
     }
     await storeBalance(acc.uid);
-    const list = []; let continuation; let pages = 0;
+    const list = []; let continuation; let pages = 0; let from = dateFrom(acc);
     do {
-      const page = await bank.transactions(acc.uid, { dateFrom: dateFrom(acc), continuation, psuIp });
+      let page;
+      try { page = await bank.transactions(acc.uid, { dateFrom: from, continuation, psuIp }); } catch (e) {
+        if (pages || !/period/i.test(e.message) || from >= backgroundFloor()) throw e;
+        from = backgroundFloor(); page = await bank.transactions(acc.uid, { dateFrom: from, continuation, psuIp }); // the bank allows only 90 days here
+      }
       list.push(...(page.transactions || [])); continuation = page.continuation_key; pages += 1;
     } while (continuation && pages < 100);
     const rows = toRows(list); const result = store(acc, rows);
