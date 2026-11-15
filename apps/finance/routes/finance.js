@@ -77,4 +77,4 @@ function buildRouter() {
   return r;
 }
 
-module.exports = { buildRouter, mayUse };
+module.exports = { buildRouter, mayUse, sameOrigin, requireFinance };

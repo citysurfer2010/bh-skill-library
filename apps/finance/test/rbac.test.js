@@ -13,6 +13,7 @@ const PROTECTED = [
   ['GET', '/transactions', 'user'],
   ['GET', '/api/overview', 'admin'],
   ['GET', '/api/transactions', 'admin'],
+  ['GET', '/api/bank/status', 'admin'],
   ['GET', '/api/me', 'user'],
   ['GET', '/api/me/api-keys', 'user'],
   ['GET', '/admin', 'admin'],

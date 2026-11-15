@@ -15,6 +15,7 @@ const errorPage = require('./lib/error-page');
 const externalRoutes = require('./routes/external');
 const apiKeyRoutes = require('./routes/api-keys');
 const financeRoutes = require('./routes/finance');
+const bankRoutes = require('./routes/bank');
 
 const APP_BASE = '/finance';
 const APP_ID = 'finance';
@@ -82,6 +83,7 @@ app.get('/api/me', (req, res) => {
   res.json({ id: email, email, name, role, finance: financeRoutes.mayUse(req.user) });
 });
 app.use('/api/me/api-keys', apiKeyRoutes.buildRouter());
+app.use('/api/bank', bankRoutes.buildRouter(financeRoutes));
 app.use('/api', financeRoutes.buildRouter());
 
 app.use(errorPage.notFound);
@@ -90,6 +92,7 @@ app.use(errorPage.errorHandler);
 if (require.main === module) {
   getDb();
   const server = app.listen(PORT, HOST, () => console.log(`[${APP_ID}] läuft auf http://${HOST}:${PORT} (Pfad: "${APP_BASE}")`));
+  bankRoutes.startSchedule();
   const stop = () => server.close(() => { closeDb(); process.exit(0); });
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);

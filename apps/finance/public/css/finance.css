@@ -29,7 +29,7 @@
 .fin-bar-fill { align-self: end; height: var(--fin-bar-h); min-height: 2px; border-radius: 4px 4px 0 0; background: var(--bh-primary); }
 .fin-bar-label { margin-top: 4px; color: var(--bh-muted); font-size: 12px; }
 .fin-bar-value { color: var(--bh-text); font-size: 11px; font-variant-numeric: tabular-nums; }
-.fin-upload { display: grid; gap: 8px; max-width: 560px; margin: 0 0 16px; }
+.fin-upload { display: grid; gap: 8px; max-width: 720px; margin: 0 0 16px; }
 .fin-upload h2 { margin: 0; font-size: 16px; }
 .fin-form { display: grid; gap: 8px; margin-top: 16px; }
 .fin-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -41,4 +41,21 @@
 @media (max-width: 560px) {
   .fin-matrix table td:first-child, .fin-matrix table th:first-child { min-width: 104px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .fin-bar-value { font-size: 11px; color: var(--bh-text); margin-top: 4px; }
+}
+.fin-bank-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fin-bank-item { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding: 12px; border: 1px solid var(--bh-border); border-radius: var(--bh-radius); }
+.fin-bank-item.is-editing .fin-bank-actions { display: none; }
+.fin-bank-main { min-width: 0; flex: 1 1 260px; }
+.fin-bank-main .fin-hint { margin: 2px 0 0; overflow-wrap: anywhere; }
+.fin-bank-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.fin-bank-rename .fin-bank-name { flex: 1 1 200px; }
+.fin-bank-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+.fin-bank-error { margin-top: 6px; padding: 6px 10px; border-radius: var(--bh-radius-sm); background: var(--bh-danger-bg); color: var(--bh-danger); font-size: 13px; }
+.fin-bank-footer { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--bh-border); }
+.fin-bank-footer .fin-hint { margin-bottom: 0; }
+.fin-badge { display: inline-block; padding: 2px 8px; line-height: 16px; border-radius: var(--bh-radius-sm); background: var(--bh-bg-subtle); color: var(--bh-muted); font-size: 12px; font-weight: 500; }
+.fin-badge-warn { background: var(--bh-warn-bg); color: var(--bh-warn); }
+@media (max-width: 560px) {
+  .fin-bank-actions { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+  .fin-bank-actions .bh-btn, .fin-bank-rename .bh-btn { min-height: 40px; }
 }

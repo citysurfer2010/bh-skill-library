@@ -8,6 +8,13 @@ const { normalize } = require('./counterparty');
 const now = () => new Date().toISOString();
 const hashOf = (account, r, n) => crypto.createHash('sha256').update([account, r.date, r.cents, r.text.replace(/\s+/g, ' ').trim(), n].join('|')).digest('hex');
 
+/** Rule lookup for a new line: sure rules book it, otherwise the suggestion waits for the person. */
+function classify(counterparty) {
+  const s = categorize.suggest(counterparty);
+  if (s?.sure) return { category: s.category, source: 'rule', suggestion: null };
+  return { category: null, source: null, suggestion: s ? s.category : null };
+}
+
 function knownCategory(code) { return !!(code && getDb().prepare('SELECT 1 FROM categories WHERE code = ?').get(code)); }
 
 /** Identical lines in one file are real (two equal purchases); they are told apart by their position among equals. */
@@ -16,14 +23,19 @@ function importRows({ filename, format, account, rows, user, keepCategories = fa
   db.exec('BEGIN IMMEDIATE');
   try {
     const imp = db.prepare('INSERT INTO imports (filename, format, account, rows, added, duplicates, created_by, created_at) VALUES (?, ?, ?, ?, 0, 0, ?, ?)').run(filename, format, account, rows.length, user, now());
+    // A CSV line that the bank fetch already brought (same account, day and amount) is a duplicate.
+    const bankCount = db.prepare('SELECT count(*) AS n FROM transactions WHERE account = ? AND booked_on = ? AND amount_cents = ? AND bank_ref IS NOT NULL');
+    const used = new Map();
+    const fromBank = (acc, date, cents) => {
+      const k = [acc, date, cents].join('|'); const n = used.get(k) || 0;
+      if (bankCount.get(acc, date, cents).n <= n) return false;
+      used.set(k, n + 1); return true;
+    };
     const insert = db.prepare('INSERT OR IGNORE INTO transactions (account, booked_on, amount_cents, kind, text, counterparty, category, category_source, suggestion, note, hash, import_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     for (const r of rows) {
       const key = [r.date, r.cents, r.text].join('|'); const n = (seen.get(key) || 0) + 1; seen.set(key, n);
-      let category = null; let source = null; let suggestion = null;
-      if (keepCategories && knownCategory(r.category)) { category = r.category; source = 'import'; } else {
-        const s = categorize.suggest(r.counterparty);
-        if (s?.sure) { category = s.category; source = 'rule'; } else if (s) suggestion = s.category;
-      }
+      if (fromBank(r.account || account, r.date, r.cents)) continue;
+      const { category, source, suggestion } = keepCategories && knownCategory(r.category) ? { category: r.category, source: 'import', suggestion: null } : classify(r.counterparty);
       added += insert.run(r.account || account, r.date, r.cents, r.kind || '', r.text || '', r.counterparty || '', category, source, suggestion, r.note || '', hashOf(r.account || account, r, n), imp.lastInsertRowid, now()).changes;
     }
     db.prepare('UPDATE imports SET added = ?, duplicates = ? WHERE id = ?').run(added, rows.length - added, imp.lastInsertRowid);
@@ -56,4 +68,4 @@ function setCategory(id, category, note) {
   return { transaction: db.prepare('SELECT * FROM transactions WHERE id = ?').get(id), applied };
 }
 
-module.exports = { importRows, setCategory };
+module.exports = { importRows, setCategory, classify, hashOf };

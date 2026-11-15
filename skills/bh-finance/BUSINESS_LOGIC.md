@@ -20,3 +20,12 @@
 ## Dubletten
 
 Eine Buchung ist doppelt, wenn Konto, Tag, Betrag und Text gleich sind. Gleiche Zeilen in einer Datei sind echte Buchungen und werden über ihre Reihenfolge unterschieden.
+
+## Bankabruf (Enable Banking, 15.11.2026)
+
+- Nur lesend, nur gebuchte Umsätze. Automatisch höchstens alle 20 Stunden je Konto, „Jetzt abrufen“ jederzeit.
+- Abruf ab dem letzten Bank-Umsatz minus 7 Tage Überlappung; der erste Abruf direkt nach dem Verbinden ab 01.01.2025 (die Tabelle endet 2024). Wie weit eine Bank zurück liefert, entscheidet sie; „Buchungen ab“ zeigt es je Konto.
+- Jede Bank-Buchung trägt die Bank-ID (`bank_ref`); sie wird nie zweimal gebucht.
+- Steht dieselbe Buchung schon aus einem CSV im Konto (gleicher Betrag, ±3 Tage), wird sie verknüpft statt neu angelegt. Ein CSV nach dem Bankabruf überspringt Zeilen mit gleichem Konto, Tag und Betrag.
+- Kontoname: Girokonto bekommt den bisherigen Namen (`comdirect`, `BBB`, `PayPal`), die comdirect-Karte `CD-CCM`, alles andere Bank plus IBAN-Ende. Umbenennen zieht die Bank-Buchungen mit und führt sie mit CSV-Buchungen unter dem neuen Namen zusammen (das CSV behält seine Kategorie).
+- Läuft die Zustimmung ab oder widerruft die Bank, bleibt der Fehler am Konto stehen und es wird nicht mehr automatisch abgerufen, bis neu verbunden ist.

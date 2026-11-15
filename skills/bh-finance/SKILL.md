@@ -1,6 +1,6 @@
 ---
 name: bh-finance
-description: Private Haushaltsfinanzen der Familie auf der BH Platform, App apps/finance mit Kontoauszug-Import, gelernten Kategorien, Monatsauswertung und Investments. Nutzen, wenn es um Ausgaben, Einnahmen, Budgets, Sparquote, Investments oder Kontoauszüge geht.
+description: Private Haushaltsfinanzen der Familie auf der BH Platform, App apps/finance mit täglichem Bankabruf (Enable Banking), Kontoauszug-Import, gelernten Kategorien, Monatsauswertung und Investments. Nutzen, wenn es um Ausgaben, Einnahmen, Budgets, Sparquote, Investments oder Kontoauszüge geht.
 ---
 
 # Skill: BH Finanzen
@@ -13,6 +13,9 @@ Die App `apps/finance` ersetzt die alte Tabelle „Finanzreport“: Kontoauszüg
 
 | Baustein | Aufgabe |
 |---|---|
+| `lib/bank-api.js` | Enable Banking (PSD2): signierte Aufrufe, Zustimmung, Sitzung, Umsätze |
+| `lib/bank-convert.js` | Bank-Umsatz → Buchung (Vorzeichen, Gegenpartei, Bank-ID) |
+| `lib/bank-sync.js` | Verbinden, Kontonamen, täglicher Abruf, Abgleich mit CSV-Buchungen |
 | `lib/importers.js` | Erkennt CSV-Exporte von comdirect (auch Kreditkarte), BBBank und PayPal am Inhalt |
 | `lib/ledger.js` | Import mit Dublettenprüfung, Korrekturen |
 | `lib/categorize.js` | Lernt Gegenpartei → Kategorie aus Entscheidungen |
@@ -23,9 +26,12 @@ Die App `apps/finance` ersetzt die alte Tabelle „Finanzreport“: Kontoauszüg
 
 Die Daten sind privat. Admins sehen sie immer, alle anderen erst nach Freigabe unter „Importieren“.
 
+## Bankabruf
+
+Unter „Importieren“ → „Bankkonten“ eine Bank verbinden (comdirect, BBBank, PayPal). Die App ruft danach einmal am Tag ab. Die Zustimmung gilt 180 Tage, dann „Neu verbinden“. Zugang bei Enable Banking: App-ID und privater Schlüssel liegen nur auf dem Server (`ENABLE_BANKING_APP_ID`, `ENABLE_BANKING_KEY_FILE` in `/srv/bh-platform/.env`); `platform/apps/setup-apps.sh` legt sie für die Apps ab. Registrierte Rückleitung: `https://apps.familiebiskup.de/finance/api/bank/callback`.
+
 ## Monatsroutine
 
-1. Bei der Bank die Umsätze als CSV exportieren.
-2. Unter „Importieren“ hochladen, bei der Kreditkarte das Konto wählen.
-3. Unter „Buchungen“ die Arbeitsliste „Zu prüfen“ abarbeiten.
-4. „Übersicht“ und „Investments und Rücklagen“ ansehen.
+1. Für nicht verbundene Konten die Umsätze als CSV exportieren und unter „Importieren“ hochladen.
+2. Unter „Buchungen“ die Arbeitsliste „Zu prüfen“ abarbeiten.
+3. „Übersicht“ und „Investments und Rücklagen“ ansehen.

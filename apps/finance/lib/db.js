@@ -45,7 +45,21 @@ function migrate(conn) {
       counterparty TEXT NOT NULL, category TEXT NOT NULL REFERENCES categories(code) ON UPDATE CASCADE,
       hits INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL, PRIMARY KEY (counterparty, category)
     );
+    -- Bankabruf (Enable Banking): offene Anmeldungen, Zustimmungen der Bank und die Konten darin.
+    CREATE TABLE IF NOT EXISTS bank_states (state TEXT PRIMARY KEY, aspsp TEXT NOT NULL, created_by TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS bank_sessions (
+      session_id TEXT PRIMARY KEY, aspsp TEXT NOT NULL, valid_until TEXT, status TEXT NOT NULL DEFAULT 'active', created_by TEXT NOT NULL, created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS bank_accounts (
+      uid TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES bank_sessions(session_id) ON DELETE CASCADE, aspsp TEXT NOT NULL,
+      iban TEXT NOT NULL DEFAULT '', name TEXT NOT NULL DEFAULT '', label TEXT NOT NULL, first_booked_on TEXT,
+      last_sync_at TEXT, last_error TEXT, created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_bank_accounts_session ON bank_accounts(session_id);
   `);
+  // Link to the bank's own booking id, so the daily overlap never books anything twice.
+  if (!conn.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 'bank_ref')) conn.exec('ALTER TABLE transactions ADD COLUMN bank_ref TEXT');
+  conn.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_bank_ref ON transactions(account, bank_ref) WHERE bank_ref IS NOT NULL; CREATE INDEX IF NOT EXISTS idx_tx_account_amount ON transactions(account, amount_cents, booked_on);');
 }
 
 function getDb() {

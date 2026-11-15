@@ -12,6 +12,12 @@ chown "$U:$U" "$TOKENS.new"; chmod 400 "$TOKENS.new"; mv "$TOKENS.new" "$TOKENS"
 printf '%s' "$(val BH_APPS_LLM_TOKEN)" >"$L/llm/token.new"; chown "$U:$U" "$L/llm/token.new"; chmod 400 "$L/llm/token.new"; mv "$L/llm/token.new" "$L/llm/token"
 [ -n "$(val BH_ACT_AS_SECRET)" ] || (umask 077; echo "BH_ACT_AS_SECRET=$(openssl rand -hex 32)" >>"$ENV")
 printf '%s' "$(val BH_ACT_AS_SECRET)" >"$L/llm/act-as-secret.new"; chown "$U:$U" "$L/llm/act-as-secret.new"; chmod 400 "$L/llm/act-as-secret.new"; mv "$L/llm/act-as-secret.new" "$L/llm/act-as-secret"
+# Bank fetch of the finance app (Enable Banking): app id and private key, read-only inside the app container.
+EB_ID=$(val ENABLE_BANKING_APP_ID); EB_KEY=$(val ENABLE_BANKING_KEY_FILE)
+if [ -n "$EB_ID" ] && [ -r "$EB_KEY" ]; then
+  printf '%s' "$EB_ID" >"$L/llm/enablebanking-app-id.new"; cp "$EB_KEY" "$L/llm/enablebanking.key.new"
+  for f in enablebanking-app-id enablebanking.key; do chown "$U:$U" "$L/llm/$f.new"; chmod 400 "$L/llm/$f.new"; mv "$L/llm/$f.new" "$L/llm/$f"; done
+fi
 install -m 755 bhapp /usr/local/sbin/bhapp
 docker build -q -t bh-apps:current . >/dev/null
 docker network inspect bh-apps-net >/dev/null 2>&1 || docker network create bh-apps-net >/dev/null
