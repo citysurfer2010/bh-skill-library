@@ -7,6 +7,7 @@
  *   other   "Darlehensrate 123456789012" (no split: counted as rate)
  */
 const { getDb } = require('./db');
+const statements = require('./loan-statements');
 
 const num = (s) => (s == null ? 0 : Math.round(Number(String(s).replace(/\./g, '').replace(',', '.')) * 100));
 const digits = (s) => String(s || '').replace(/\D/g, '');
@@ -52,7 +53,7 @@ function importSheet({ asOf, units = [] }) {
 /** Loans with their bank payments per year, totals and the payments no loan could be found for. */
 function overview() {
   const db = getDb();
-  const loans = db.prepare('SELECT l.*, u.address, u.unit, u.floor, u.owner, u.market_value_cents FROM loans l JOIN estate_units u USING (unit_key) ORDER BY u.address, u.unit, l.position').all().map((l) => ({ ...l, years: {}, last_paid: null, ref: accountNo(l.account_iban) }));
+  const loans = db.prepare('SELECT l.*, u.address, u.unit, u.floor, u.owner, u.market_value_cents FROM loans l JOIN estate_units u USING (unit_key) ORDER BY u.address, u.unit, l.position').all().map((l) => ({ ...l, years: {}, last_paid: null, ref: accountNo(l.account_iban), paid: [] }));
   const byRef = new Map(); for (const l of loans) for (const r of [l.account_iban, l.ref]) if (r) byRef.set(r, l);
   let unmatched = 0;
   const lines = db.prepare("SELECT booked_on, amount_cents, text FROM transactions WHERE amount_cents < 0 AND (text LIKE '%TILG%' OR text LIKE '%Darl.-Leistung%' OR text LIKE '%Darlehensrate%')").all();
@@ -62,6 +63,15 @@ function overview() {
     const y = (l.years[t.booked_on.slice(0, 4)] ||= { interest: 0, principal: 0, paid: 0, n: 0 });
     y.interest += p.interest; y.principal += p.principal; y.paid += -t.amount_cents; y.n += 1;
     if (!l.last_paid || t.booked_on > l.last_paid) l.last_paid = t.booked_on;
+    l.paid.push({ on: t.booked_on, principal: p.principal });
+  }
+  // Bank statements: the last balance minus the repayment of the rates since then is today's balance (sheet as fallback).
+  for (const l of loans) {
+    const s = l.ref ? statements.of(l.ref) : { history: [], rate: null, docs: null };
+    const last = s.history.at(-1);
+    Object.assign(l, { rate_pct: s.rate, docs_url: s.docs, history: s.history, bank_balance: last || null,
+      balance_now_cents: last ? last.cents - l.paid.filter((x) => x.on > last.on).reduce((a, x) => a + x.principal, 0) : l.balance_cents });
+    delete l.paid;
   }
   const sum = (k) => loans.reduce((s, l) => s + (l[k] || 0), 0);
   const value = db.prepare('SELECT sum(market_value_cents) AS v FROM estate_units WHERE unit_key IN (SELECT unit_key FROM loans)').get().v || 0;
@@ -69,7 +79,7 @@ function overview() {
   return {
     asOf: db.prepare("SELECT value FROM app_state WHERE key = 'loans_as_of'").get()?.value || null,
     loans: loans.map(({ account_iban, ...l }) => ({ ...l, iban: account_iban ? `…${account_iban.slice(-4)}` : '' })),
-    totals: { amount: sum('amount_cents'), balance: sum('balance_cents'), annuity: sum('annuity_cents'), marketValue: value },
+    totals: { amount: sum('amount_cents'), balance: sum('balance_now_cents'), annuity: sum('annuity_cents'), marketValue: value },
     years: Object.entries(years).map(([year, v]) => ({ year: Number(year), ...v })).sort((a, b) => b.year - a.year), unmatched,
   };
 }
@@ -77,8 +87,9 @@ function overview() {
 /** Flats with value, rent and the balance of their loans (module Immobilien). */
 function estate() {
   const db = getDb();
-  const units = db.prepare(`SELECT u.*, (SELECT sum(balance_cents) FROM loans l WHERE l.unit_key = u.unit_key) AS balance_cents,
-    (SELECT count(*) FROM loans l WHERE l.unit_key = u.unit_key) AS loans FROM estate_units u ORDER BY u.address, u.unit`).all().map((u) => ({ ...u }));
+  const now = new Map(); for (const l of overview().loans) now.set(l.unit_key, (now.get(l.unit_key) || 0) + (l.balance_now_cents || 0));
+  const units = db.prepare(`SELECT u.*, (SELECT count(*) FROM loans l WHERE l.unit_key = u.unit_key) AS loans FROM estate_units u ORDER BY u.address, u.unit`).all()
+    .map((u) => ({ ...u, balance_cents: u.loans ? now.get(u.unit_key) ?? null : null }));
   const sum = (k) => units.reduce((s, u) => s + (u[k] || 0), 0);
   return { asOf: db.prepare("SELECT value FROM app_state WHERE key = 'loans_as_of'").get()?.value || null, units,
     totals: { units: units.length, sqm: sum('sqm'), marketValue: sum('market_value_cents'), rentYear: sum('rent_year_cents'), balance: sum('balance_cents') } };

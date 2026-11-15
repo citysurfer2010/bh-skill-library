@@ -87,6 +87,9 @@ function migrate(conn) {
       UNIQUE (unit_key, position)
     );
     CREATE INDEX IF NOT EXISTS idx_loans_unit ON loans(unit_key);
+    -- Balances from the bank's loan statements (scripts/import-loan-statements.js) and the folder with a loan's papers; keyed by account number, so they survive a new sheet import.
+    CREATE TABLE IF NOT EXISTS loan_balances (ref TEXT NOT NULL, balance_on TEXT NOT NULL, balance_cents INTEGER NOT NULL, rate_pct REAL, PRIMARY KEY (ref, balance_on));
+    CREATE TABLE IF NOT EXISTS loan_docs (ref TEXT PRIMARY KEY, url TEXT NOT NULL);
   `);
   const txCols = conn.prepare('PRAGMA table_info(transactions)').all().map((c) => c.name);
   if (!txCols.includes('amazon_order')) conn.exec('ALTER TABLE transactions ADD COLUMN amazon_order TEXT');

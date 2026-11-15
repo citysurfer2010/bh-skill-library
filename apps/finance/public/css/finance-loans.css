@@ -1,7 +1,7 @@
 /* Loans page (Matti 15.11.2026): amounts never wrap; on the phone each loan is a card. */
 .fin-loan-list .fin-num, .fin-loan-list td:nth-child(5) { white-space: nowrap; }
 .fin-loan-list .fin-hint { margin: 2px 0 0; font-size: 12px; font-weight: 400; }
-.fin-loan-list td:nth-child(3) .fin-hint, .fin-loan-list td:nth-child(6) .fin-hint { white-space: nowrap; }
+.fin-loan-list td:nth-child(3) .fin-hint, .fin-loan-list td:nth-child(4) .fin-hint, .fin-loan-list td:nth-child(6) .fin-hint { white-space: nowrap; }
 .fin-loan-list .fin-nowrap { white-space: nowrap; }
 .fin-mob-label { display: none; }
 .fin-loans-soon { margin: 0 0 12px; padding: 8px 12px; border-radius: var(--bh-radius-sm); background: var(--bh-warn-bg); color: var(--bh-warn); }
@@ -47,5 +47,8 @@
   .fin-loan-list td:last-child:empty { display: none; }
   .fin-years-list table { table-layout: auto; width: 100%; }
   .fin-years-list th, .fin-years-list td { padding-left: 8px !important; padding-right: 8px !important; width: auto !important; min-width: 0 !important; }
+  .fin-years-list th:first-child, .fin-years-list td:first-child { padding-left: 16px !important; }
+  .fin-years-list th:last-child, .fin-years-list td:last-child { padding-right: 16px !important; }
+  .fin-years-list .app-list-title { padding-left: 16px; padding-right: 16px; }
   .fin-years-list .app-list-resize { display: none; }
 }
