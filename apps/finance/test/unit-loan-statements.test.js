@@ -27,7 +27,7 @@ test('parse: PSD statement (Sollzinsen, Festzinssatz) and NordLB year statement 
   const psd = `EUR-Konto Kontonummer 7000000001\nHerrn und Frau Ursprungsdarlehen 50.000,00\nnomin.Festzinssatz bis 30.04.2035 p.a. 2,75 %\nalter Kontostand vom 30.12.2022 40.000,00 S\n31.01. 31.01. Darlehenstilgung 150,00 H\nneuer Kontostand vom 30.12.2023 38.200,00 S`;
   assert.deepEqual(st.parse(psd), { ref: '7000000001', balances: [{ on: '2022-12-30', cents: 4000000 }, { on: '2023-12-30', cents: 3820000 }], rate: 2.75 });
   const nord = `Jahreskontoauszug für den Zeitraum 01.01.2025 - 31.12.2025 Seite 1 von 2\nDarlehen 0800000002, DE00 1234 5678 0800 0000 02, Musterstadt\nKontostand am 01.01.2025 -300.000,00\n31.01.2025 Darlehenszins / Wert: 31.01.2025 -700,00\nKontostand am 31.12.2025 -295.500,00`;
-  assert.deepEqual(st.parse(nord), { ref: '800000002', balances: [{ on: '2025-01-01', cents: 30000000 }, { on: '2025-12-31', cents: 29550000 }], rate: null });
+  assert.deepEqual(st.parse(nord), { ref: '800000002', balances: [{ on: '2025-01-01', cents: 30000000 }, { on: '2025-12-31', cents: 29550000 }], rate: null, place: 'Musterstadt' });
 });
 
 test('import keeps only known loans; overview: balance today from the last statement minus repayment since', () => {
@@ -72,5 +72,26 @@ test('a statement of an account the sheet lacks goes to the only loan of the sam
   assert.equal(second.ref, '800000009'); assert.equal(second.balance_now_cents, 4800000);
   loans.importSheet({ units: [{ address: '2, Beispielort, Am Park 8', unit: 'WE 10', market_value: 1, loans: [{ position: 1, amount: 1, balance: 1, lender: 'NordLB', account: 'DE00250500000800000002' }, { position: 2, amount: 1, balance: 1, lender: 'NordLB' }] }] });
   assert.equal(loans.overview().loans.find((l) => l.position === 2).ref, '800000009', 'the found account survives a new sheet import');
+});
+
+test('without a flat folder the place decides: a tax folder path, else the address in the statement header', () => {
+  const links = require('../lib/estate-links');
+  loans.importSheet({ units: [
+    { address: '4, Beispielort, Birkenweg 7', unit: 'WE 05', market_value: 1, loans: [{ position: 1, amount: 1, balance: 1, lender: 'NordLB', account: 'DE00250500000900000001' }, { position: 2, amount: 1, balance: 1, lender: 'NordLB' }] },
+    { address: '5, Beispielort, Eichenweg 3', unit: 'WE 01', market_value: 1, loans: [{ position: 1, amount: 1, balance: 1, lender: 'PSD', account: 'DE00100900007000000021' }, { position: 2, amount: 1, balance: 1, lender: 'PSD' }] },
+  ] });
+  assert.deepEqual(links.unitsFor('#_Leads / 14055, Berlin, Andere Allee 4, WE 02'), []);
+  assert.deepEqual(links.unitsFor('Beispielort, Birkenweg 7,1'), ['4, Beispielort, Birkenweg 7 – WE 05']);
+  assert.deepEqual(links.unitsFor('Birkenweg 70'), [], 'number 7 is not 70');
+  const nord = (no) => `Darlehen ${no}, DE00 2505 0000 ${no.slice(0, 4)} 0000 01, Beispielort, Birkenweg 7,1\nKontostand am 01.01.2025 -10.000,00\nKontostand am 31.12.2025 -9.000,00`;
+  const psd = (no) => `EUR-Konto Kontonummer ${no}\nalter Kontostand vom 30.12.2022 5.000,00 S\nneuer Kontostand vom 30.12.2023 4.000,00 S`;
+  const refs = new Set(['900000001', '7000000021']);
+  st.importStatements({ statements: [
+    { text: nord('0900000001'), folderId: 'leadFolder000001' }, { text: nord('0900000002'), folderId: 'leadFolder000001' },
+    { text: psd('7000000021'), place: '2024 / 02_AnlageV / 03_BESTAND_5, Beispielort, Eichenweg 3, EG' }, { text: psd('7000000022'), place: '2024 / 02_AnlageV / 03_BESTAND_5, Beispielort, Eichenweg 3, EG' },
+  ] }, refs);
+  const o = loans.overview().loans;
+  assert.equal(o.find((l) => l.lender === 'NordLB' && l.position === 2).ref, '900000002', 'header address, though the file lies in a lead folder');
+  assert.equal(o.find((l) => l.lender === 'PSD' && l.position === 2).ref, '7000000022', 'tax folder path');
 });
 

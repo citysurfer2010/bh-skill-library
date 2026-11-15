@@ -31,6 +31,20 @@ function importLinks({ folders = [] }) {
   return { linked: links.length, units: units.length, missing: units.filter((u) => !links.some((l) => l.unit_key === u.unit_key)).map((u) => u.unit_key) };
 }
 
+/**
+ * Flats named by a free place text (a tax folder "01_BESTAND_10779, Berlin, Musterweg 1, EG" or a statement header
+ * "Darlehen 123, DE…, Berlin, Musterweg 1,1"): the flat's street and number must appear in it; flat numbers in the text narrow it down.
+ */
+function unitsFor(place) {
+  const p = norm(place).replace(/[,_/]+/g, ' ').replace(/\s+/g, ' ');
+  if (!p) return [];
+  const nums = flats(place);
+  return getDb().prepare('SELECT unit_key, address, unit FROM estate_units').all().filter((u) => {
+    const s = norm(String(u.address).split(',')[2] || '').replace(/[,_/]+/g, ' ');
+    return s && new RegExp(`(^| )${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![0-9a-z])`).test(p) && (!nums.size || [...flats(u.unit)].some((n) => nums.has(n)));
+  }).map((u) => u.unit_key);
+}
+
 const of = (unitKey) => getDb().prepare('SELECT folder_url, finance_url FROM estate_links WHERE unit_key = ?').get(unitKey) || {};
 
-module.exports = { match, importLinks, of };
+module.exports = { match, importLinks, of, unitsFor };

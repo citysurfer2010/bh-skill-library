@@ -6,6 +6,7 @@
  * Only accounts of a known loan are kept; the papers' folder of a loan is stored as a link.
  */
 const { getDb } = require('./db');
+const { unitsFor } = require('./estate-links');
 
 const cents = (s) => Math.round(Number(String(s).replace(/\./g, '').replace(',', '.')) * 100);
 /** Account number inside a German IBAN (same rule as loans.js, kept here to avoid a require cycle). */
@@ -17,9 +18,10 @@ function parse(text) {
   const t = String(text || '').replace(/[ \t]+/g, ' ');
   const nord = /Darlehen (\d{8,12}),/.exec(t)?.[1];
   if (nord && /Kontostand am/.test(t)) {
+    const place = (/Darlehen \d{8,12}, (?:DE[\d ]{20,30},)?([^\n]*)/.exec(t)?.[1] || '').trim();
     const balances = [...t.matchAll(/Kontostand am (\d{2}\.\d{2}\.\d{4}) (-?[\d.]+,\d{2})/g)].map((m) => ({ on: iso(m[1]), cents: -Math.round(Number(m[2].replace(/\./g, '').replace(',', '.')) * 100) }));
     const rate = /Sollzins(?:satz)?(?: p\.a\.)?:? ([\d]+,\d+) ?%/.exec(t)?.[1];
-    return balances.length ? { ref: nord.replace(/^0+/, ''), balances, rate: rate ? Number(rate.replace(',', '.')) : null } : null;
+    return balances.length ? { ref: nord.replace(/^0+/, ''), balances, rate: rate ? Number(rate.replace(',', '.')) : null, place } : null;
   }
   const ref = /Kontonummer (\d{6,12})/.exec(t)?.[1];
   if (!ref || !/Kontostand/.test(t)) return null;
@@ -34,22 +36,24 @@ function parse(text) {
  * account, its bank is the bank of a known loan in the same folder, and it is the only such loan; otherwise it is skipped.
  */
 function assign(db, parsed, knownRefs) {
-  const units = (folderId) => db.prepare("SELECT unit_key FROM estate_links WHERE folder_url LIKE ?").all(`%/${folderId}`).map((r) => r.unit_key);
+  const byFolder = (folderId) => (folderId ? db.prepare("SELECT unit_key FROM estate_links WHERE folder_url LIKE ?").all(`%/${folderId}`).map((r) => r.unit_key) : []);
+  // Folder of the flat first, then the place the statement came from (tax folder), then the address in the statement's header.
+  const units = (p) => [byFolder(p.folderId), unitsFor(p.from), unitsFor(p.place)].find((k) => k.length) || [];
   const add = db.prepare('INSERT OR IGNORE INTO loan_refs (unit_key, position, ref) VALUES (?, ?, ?)');
-  for (const p of parsed.filter((x) => !knownRefs.has(x.ref) && x.folderId)) {
-    const keys = units(p.folderId); if (!keys.length) continue;
+  for (const p of parsed.filter((x) => !knownRefs.has(x.ref))) {
+    const keys = units(p); if (!keys.length) continue;
     const inFolder = db.prepare(`SELECT l.*, r.ref AS known_ref FROM loans l LEFT JOIN loan_refs r USING (unit_key, position) WHERE l.unit_key IN (${keys.map(() => '?').join(',')})`).all(...keys);
-    const known = new Set(parsed.filter((x) => x.folderId === p.folderId && knownRefs.has(x.ref)).map((x) => x.ref));
+    const known = new Set(parsed.filter((x) => knownRefs.has(x.ref) && units(x).some((k) => keys.includes(k))).map((x) => x.ref));
     const banks = new Set(inFolder.filter((l) => known.has(accountNo(l.account_iban)) || known.has(l.known_ref)).map((l) => l.lender));
     const free = inFolder.filter((l) => !l.account_iban && !l.known_ref && banks.has(l.lender));
     if (free.length === 1) { add.run(free[0].unit_key, free[0].position, p.ref); knownRefs.add(p.ref); }
   }
 }
 
-/** Statements in ({ name, text, folderId? }), docs ({ ref, url }) too; returns how many balances were stored. */
+/** Statements in ({ name, text, folderId?, place? }), docs ({ ref, url }) too; returns how many balances were stored. */
 function importStatements({ statements = [], docs = [] }, knownRefs) {
   const db = getDb(); let balances = 0; let skipped = 0;
-  const parsed = statements.map((s) => { const p = parse(s.text); return p && { ...p, folderId: s.folderId || null }; });
+  const parsed = statements.map((s) => { const p = parse(s.text); return p && { ...p, folderId: s.folderId || null, from: s.place || '' }; });
   const ins = db.prepare('INSERT INTO loan_balances (ref, balance_on, balance_cents, rate_pct) VALUES (?, ?, ?, ?) ON CONFLICT (ref, balance_on) DO UPDATE SET balance_cents = excluded.balance_cents, rate_pct = COALESCE(excluded.rate_pct, rate_pct)');
   const doc = db.prepare('INSERT INTO loan_docs (ref, url) VALUES (?, ?) ON CONFLICT (ref) DO UPDATE SET url = excluded.url');
   db.exec('BEGIN IMMEDIATE');
