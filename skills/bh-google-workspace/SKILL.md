@@ -85,7 +85,7 @@ Bei `Access token expired or revoked` zuerst `auth.refreshToken()` aufrufen.
 | `drive.findFolder` | Sucht einen Ordner in Google Drive nach Name. |
 | `drive.fullTextSearch` | Volltextsuche in Google Drive (fullText contains). |
 | `drive.getFileContent` | Ruft den Text-Inhalt einer Datei aus Google Drive ab. |
-| `drive.getPdfText` | Extrahiert Text aus einer PDF-Datei in Google Drive. |
+| `drive.getPdfText` | Extrahiert Text aus einer PDF-Datei in Google Drive; gescannte PDFs (fast kein Text) liest Tesseract (deu+eng) seitenweise, `ocr: true` erzwingt das, höchstens 20 Seiten je Aufruf. |
 | `drive.search` | Durchsucht Google Drive nach Dateien. |
 
 ### Google Docs
