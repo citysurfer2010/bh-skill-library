@@ -43,6 +43,7 @@ function buildRouter() {
     // One account on request; otherwise household accounts only, unless scope=all.
     if (req.query.account) { where.push('account = ?'); args.push(String(req.query.account)); } else if (req.query.scope !== 'all') where.push(accounts.HOUSEHOLD);
     if (req.query.open === '1') where.push('category IS NULL');
+    if (req.query.amazon === '1') where.push('amazon_order IS NOT NULL');
     if (req.query.category) { where.push(req.query.category === 'OFFEN' ? 'category IS NULL' : 'category = ?'); if (req.query.category !== 'OFFEN') args.push(String(req.query.category)); }
     if (/^\d{1,2}$/.test(String(req.query.month || ''))) { where.push("CAST(substr(booked_on, 6, 2) AS INTEGER) = ?"); args.push(Number(req.query.month)); }
     const rows = getDb().prepare(`SELECT t.*, c.name AS category_name, c.art, (SELECT group_concat(title, ' · ') FROM (SELECT title FROM amazon_items i WHERE i.order_id = t.amazon_order ORDER BY title)) AS amazon_titles FROM transactions t LEFT JOIN categories c ON c.code = t.category WHERE ${where.join(' AND ')} ORDER BY booked_on DESC, id DESC`).all(...args);

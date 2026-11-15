@@ -61,4 +61,14 @@
 /* Fixed column widths, so filtering does not move the columns. */
 @media (min-width: 721px) { .fin-estate-list table { table-layout: fixed; width: 100%; } .fin-estate-list th:nth-child(1) { width: 26%; } .fin-estate-list th:nth-child(2) { width: 14%; } .fin-estate-list th:nth-child(3) { width: 10%; } .fin-estate-list th:nth-child(4) { width: 13%; } .fin-estate-list th:nth-child(5) { width: 14%; } .fin-estate-list th:nth-child(6) { width: 15%; } .fin-estate-list th:nth-child(7) { width: 8%; } }
 @media (min-width: 721px) { .fin-estate-bar [data-filter] { width: 200px; } .fin-estate-bar [data-filter="debt"] { width: 220px; } }
-@media (max-width: 720px) { .fin-estate-bar { padding: 8px 0; } .fin-estate-bar [data-filter="debt"] { grid-column: 1 / -1; } .fin-estate-search { width: 100%; } .fin-estate-list .fin-mob-label { display: inline; color: var(--bh-muted); font-size: 12px; } }
+@media (max-width: 720px) { .fin-estate-bar { padding: 8px 0; } .fin-estate-bar [data-filter="debt"], .fin-estate-bar [data-filter="link"] { grid-column: 1 / -1; } .fin-estate-search { width: 100%; } .fin-estate-list .fin-mob-label { display: inline; color: var(--bh-muted); font-size: 12px; } }
+/* Amazon: items as a short list, dates and amounts never wrap; on the phone each order is a card. */
+.fin-amazon-list .fin-amazon-items { margin: 0; padding-left: 16px; display: grid; gap: 2px; }
+.fin-amazon-list .fin-num { white-space: nowrap; }
+@media (max-width: 720px) {
+  .fin-amazon-list table, .fin-amazon-list tbody { display: block; } .fin-amazon-list colgroup, .fin-amazon-list thead { display: none; }
+  .fin-amazon-list tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 16px; border-bottom: 1px solid var(--bh-border-light); }
+  .fin-amazon-list td { padding: 0 !important; border: 0 !important; min-width: 0 !important; width: auto !important; text-align: left !important; }
+  .fin-amazon-list td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; } .fin-amazon-list td:nth-child(3) { text-align: right !important; }
+  .fin-amazon-list td:nth-child(4), .fin-amazon-list td:nth-child(5), .fin-amazon-list td:nth-child(6) { font-size: 13px; color: var(--bh-muted); }
+}

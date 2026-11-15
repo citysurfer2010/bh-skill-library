@@ -60,7 +60,7 @@ window.FinTransactions = (() => {
 
   async function load() {
     page.table.setLoading(true);
-    const q = new URLSearchParams({ year: allYears ? 'all' : year || '' }); if (category) q.set('category', category); if (account) q.set('account', account); else if (everyAccount) q.set('scope', 'all');
+    const q = new URLSearchParams({ year: allYears ? 'all' : year || '' }); if (category) q.set('category', category); if (account) q.set('account', account); else if (everyAccount) q.set('scope', 'all'); if (new URLSearchParams(location.search).get('amazon') === '1') q.set('amazon', '1');
     const data = await Fin.api('GET', `/transactions?${q}`);
     rows = data.transactions.map((r) => ({ ...r })); page.setKpis(kpis(), filter); page.table.setRows(visible());
     return data;
@@ -93,7 +93,7 @@ window.FinTransactions = (() => {
   }
   const THIS_YEAR = String(new Date().getFullYear());
   /** Anything that differs from the plain list of this year's private accounts. */
-  const anyActive = () => { const q = new URLSearchParams(location.search); return (allYears || String(year || THIS_YEAR) !== THIS_YEAR) || ['category', 'account', 'scope', 'show', 'q'].some((k) => q.get(k)); };
+  const anyActive = () => { const q = new URLSearchParams(location.search); return (allYears || String(year || THIS_YEAR) !== THIS_YEAR) || ['category', 'account', 'scope', 'show', 'q', 'amazon'].some((k) => q.get(k)); };
   function resetButton() {
     const b = pageHost && pageHost.querySelector('[data-reset-filters]'); if (b) b.hidden = !anyActive();
   }
@@ -113,6 +113,8 @@ window.FinTransactions = (() => {
       (v) => go(cur, (q) => { q.delete('category'); if (v) q.set('category', v); }), '');
     mount('#fin-acc-filter', [{ value: '', label: 'Alle Privatkonten' }, { value: '*all', label: 'Alle Konten' }].concat(accts.map((x) => ({ value: x.name, label: x.name, hint: scopes[x.scope] || '' }))),
       account || (everyAccount ? '*all' : ''), 'Konto', (v) => go(cur, (q) => { q.delete('account'); q.delete('scope'); if (v === '*all') q.set('scope', 'all'); else if (v) q.set('account', v); }), '');
+    mount('#fin-amz-filter', [{ value: '', label: 'Alle Buchungen' }, { value: '1', label: 'Nur Amazon' }], new URLSearchParams(location.search).get('amazon') || '', 'Herkunft',
+      (v) => go(cur, (q) => { q.delete('amazon'); if (v) q.set('amazon', v); }), '');
     pageHost.querySelector('[data-reset-filters]').addEventListener('click', () => { history.pushState(null, '', Fin.yearHref(THIS_YEAR, 'transactions')); render(pageHost, Number(THIS_YEAR)); });
     resetButton();
   }
@@ -125,7 +127,7 @@ window.FinTransactions = (() => {
     cats = c.categories; accts = a.accounts; scopes = a.scopes;
     const catName = category ? cats.find((c) => c.code === category)?.name || category : null;
     page = BHListPage.render(host, {
-      toolbarRight: '<div class="fin-filters" role="group" aria-label="Filter"><div class="fin-acc-filter" id="fin-year-filter"></div><div class="fin-acc-filter" id="fin-acc-filter"></div><div class="fin-acc-filter" id="fin-cat-filter"></div><button type="button" class="bh-btn bh-btn-sm fin-reset" data-reset-filters hidden>Filter zurücksetzen</button></div>',
+      toolbarRight: '<div class="fin-filters" role="group" aria-label="Filter"><div class="fin-acc-filter" id="fin-year-filter"></div><div class="fin-acc-filter" id="fin-acc-filter"></div><div class="fin-acc-filter" id="fin-cat-filter"></div><div class="fin-acc-filter" id="fin-amz-filter"></div><button type="button" class="bh-btn bh-btn-sm fin-reset" data-reset-filters hidden>Filter zurücksetzen</button></div>',
       title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || new Date().getFullYear()}`} · ${account ? 'ein Konto' : everyAccount ? 'alle Konten' : 'Privatkonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …', value: search, onInput: (v) => { page.table.setFilter(v); setParam('q', v); } },
       kpis: kpis(), kpiActive: filter, onKpi: (k) => { filter = k; page.setKpis(kpis(), k); page.table.setRows(visible()); setParam('show', k === 'all' ? '' : k); },
       topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }],

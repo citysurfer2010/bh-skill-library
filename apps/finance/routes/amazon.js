@@ -9,6 +9,7 @@ const fail = (res, e) => res.status(e.status && e.status < 500 ? e.status : 502)
 function buildRouter({ sameOrigin, requireFinance }) {
   const r = express.Router();
   r.use(sameOrigin, requireFinance);
+  r.get('/orders', (req, res) => res.json(require('../lib/amazon-orders').list({ year: /^\d{4}$/.test(req.query.year || '') ? req.query.year : 'all', q: String(req.query.q || '').slice(0, 80), category: String(req.query.category || ''), link: ['mit', 'ohne'].includes(req.query.link) ? req.query.link : '' })));
   r.get('/status', async (_req, res) => {
     const s = amazon.status();
     if (s.configured) Object.assign(s, await api.status().then((x) => ({ connected: x.connected, stored: !!x.stored })).catch(() => ({ connected: null, stored: false })));

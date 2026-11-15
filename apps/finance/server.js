@@ -78,7 +78,7 @@ app.get(['/admin', '/admin/', '/admin.html'], requireRole('admin'), (_req, res) 
 app.use(express.static(PUBLIC_DIR, { index: false, setHeaders: (res) => res.set('Cache-Control', 'no-cache') }));
 
 // Every view is a real path.
-app.get(['/', '/transactions', '/transactions/:id', '/investments', '/accounts', '/import', '/categories', '/loans', '/estate', /^\/(\d{4}|all)\/?$/, /^\/(\d{4}|all)\/(transactions|investments)\/?$/], (_req, res) => sendPage(res, INDEX_HTML));
+app.get(['/', '/transactions', '/transactions/:id', '/investments', '/accounts', '/import', '/categories', '/loans', '/estate', '/amazon', /^\/(\d{4}|all)\/?$/, /^\/(\d{4}|all)\/(transactions|investments)\/?$/], (_req, res) => sendPage(res, INDEX_HTML));
 
 app.get('/api/me', (req, res) => {
   const { email, name, role } = req.user;

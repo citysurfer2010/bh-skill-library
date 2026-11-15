@@ -125,7 +125,7 @@
 .bhlp-toolbar-right:has(.fin-filters) { flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
 .fin-filters { flex: 1 1 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; padding-block: 6px; }
 .fin-filters .fin-acc-filter { min-width: 120px; }
-@media (min-width: 721px) { #fin-year-filter { width: 120px; } #fin-acc-filter, #fin-cat-filter { width: 200px; } }
+@media (min-width: 721px) { #fin-year-filter { width: 120px; } #fin-acc-filter, #fin-cat-filter { width: 200px; } #fin-amz-filter { width: 160px; } }
 .fin-filters .fin-reset[hidden] { display: none; }
 .bhlp-search input:not(:placeholder-shown) { border-color: var(--bh-primary); box-shadow: 0 0 0 1px var(--bh-primary); background: var(--bh-primary-soft); }
 .fin-filters .fin-acc-filter.is-on .bhs__btn { border-color: var(--bh-primary); box-shadow: 0 0 0 1px var(--bh-primary); background: var(--bh-primary-soft); color: var(--bh-primary); font-weight: 600; }
