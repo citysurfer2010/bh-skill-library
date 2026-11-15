@@ -44,6 +44,11 @@ function buildRouter() {
     const rows = getDb().prepare(`SELECT t.*, c.name AS category_name, c.art FROM transactions t LEFT JOIN categories c ON c.code = t.category WHERE ${where.join(' AND ')} ORDER BY booked_on DESC, id DESC`).all(...args);
     res.json({ transactions: rows, years: report.years() });
   });
+  // Every transaction has its own address (/finance/transactions/<id>); the page asks here when the id is not in the year shown.
+  r.get('/transactions/:id', (req, res) => {
+    const t = getDb().prepare('SELECT t.*, c.name AS category_name, c.art FROM transactions t LEFT JOIN categories c ON c.code = t.category WHERE t.id = ?').get(Number(req.params.id));
+    return t ? res.json({ transaction: t }) : res.status(404).json({ error: 'Buchung nicht gefunden' });
+  });
   r.patch('/transactions/:id', (req, res) => {
     try {
       const out = ledger.setCategory(Number(req.params.id), req.body?.category, req.body?.note);

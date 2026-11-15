@@ -14,6 +14,7 @@ const PROTECTED = [
   ['GET', '/api/overview', 'admin'],
   ['GET', '/api/transactions', 'admin'],
   ['GET', '/api/bank/status', 'admin'],
+  ['GET', '/transactions/1', 'user'],
   ['GET', '/api/me', 'user'],
   ['GET', '/api/me/api-keys', 'user'],
   ['GET', '/admin', 'admin'],
@@ -91,4 +92,13 @@ test('Marken-Dateien laden ohne Anmeldung, die Oberfläche nicht', async () => {
   assert.equal((await t.call('/manifest.webmanifest')).status, 200);
   assert.equal((await t.call('/branding/nav-icon.svg')).status, 200);
   assert.equal((await t.call('/components/pages/home-page.js')).status, 401);
+});
+
+test('GET /api/transactions/:id: eigene Adresse je Buchung, 404 für unbekannte, 403 ohne Finanzzugang', async () => {
+  const { getDb } = require('../lib/db');
+  const id = getDb().prepare("INSERT INTO transactions (account, booked_on, amount_cents, hash, created_at) VALUES ('t', '2023-05-04', -100, 'rbac-deeplink', '2026-11-15')").run().lastInsertRowid;
+  const ok = await t.call(`/api/transactions/${id}`, { as: 'a@beispiel.de', role: 'admin' });
+  assert.equal(ok.status, 200); assert.equal((await ok.json()).transaction.booked_on, '2023-05-04');
+  assert.equal((await t.call('/api/transactions/999999', { as: 'a@beispiel.de', role: 'admin' })).status, 404);
+  assert.equal((await t.call(`/api/transactions/${id}`, { as: 'u@beispiel.de', role: 'user' })).status, 403);
 });

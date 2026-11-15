@@ -84,6 +84,14 @@ window.FinTransactions = (() => {
     });
     const data = await load();
     if (!year && data.years.length) year = data.years[0];
+    // A link to a transaction of another year opens that year, so every transaction address works on its own.
+    if (id && !rows.some((x) => String(x.id) === String(id))) {
+      try {
+        const { transaction } = await Fin.api('GET', `/transactions/${encodeURIComponent(id)}`);
+        const y2 = Number(transaction.booked_on.slice(0, 4));
+        if (Fin.yearOf() !== y2) { history.replaceState(null, '', `${BASE}/transactions/${transaction.id}?year=${y2}`); return render(host, y2, id); }
+      } catch (x) { Toast.error(x.message); history.replaceState(null, '', `${BASE}/transactions${location.search}`); }
+    }
     show(id);
   }
 
