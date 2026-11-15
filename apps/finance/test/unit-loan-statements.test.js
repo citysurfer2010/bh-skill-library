@@ -23,6 +23,13 @@ test('parse: account, both balances as debt, rate; other papers give null', () =
   assert.equal(st.parse('Zinsbescheinigung für 2024'), null);
 });
 
+test('parse: PSD statement (Sollzinsen, Festzinssatz) and NordLB year statement (negative balance means debt)', () => {
+  const psd = `EUR-Konto Kontonummer 7000000001\nHerrn und Frau Ursprungsdarlehen 50.000,00\nnomin.Festzinssatz bis 30.04.2035 p.a. 2,75 %\nalter Kontostand vom 30.12.2022 40.000,00 S\n31.01. 31.01. Darlehenstilgung 150,00 H\nneuer Kontostand vom 30.12.2023 38.200,00 S`;
+  assert.deepEqual(st.parse(psd), { ref: '7000000001', balances: [{ on: '2022-12-30', cents: 4000000 }, { on: '2023-12-30', cents: 3820000 }], rate: 2.75 });
+  const nord = `Jahreskontoauszug für den Zeitraum 01.01.2025 - 31.12.2025 Seite 1 von 2\nDarlehen 0800000002, DE00 1234 5678 0800 0000 02, Musterstadt\nKontostand am 01.01.2025 -300.000,00\n31.01.2025 Darlehenszins / Wert: 31.01.2025 -700,00\nKontostand am 31.12.2025 -295.500,00`;
+  assert.deepEqual(st.parse(nord), { ref: '800000002', balances: [{ on: '2025-01-01', cents: 30000000 }, { on: '2025-12-31', cents: 29550000 }], rate: null });
+});
+
 test('import keeps only known loans; overview: balance today from the last statement minus repayment since', () => {
   loans.importSheet({ asOf: '2026-11-15', units: [{ address: '1, Musterstadt, Musterweg 1', unit: 'WE 01', market_value: 200000, loans: [{ position: 1, amount: 120000, balance: 99999, annuity: 310, lender: 'Bank', account: IBAN }] }] });
   const refs = new Set(['1234567']);
@@ -45,3 +52,25 @@ test('import keeps only known loans; overview: balance today from the last state
   assert.equal(loans.overview().totals.balance, l.balance_now_cents, 'totals use today\'s balance');
   assert.equal(loans.estate().units[0].balance_cents, l.balance_now_cents, 'the Immobilien module shows the same balance');
 });
+
+test('a statement of an account the sheet lacks goes to the only loan of the same bank without account in that flat folder', () => {
+  const links = require('../lib/estate-links');
+  loans.importSheet({ units: [
+    { address: '2, Beispielort, Am Park 8', unit: 'WE 10', market_value: 1, loans: [{ position: 1, amount: 300000, balance: 1, lender: 'NordLB', account: 'DE00250500000800000002' }, { position: 2, amount: 50000, balance: 1, lender: 'NordLB' }, { position: 3, amount: 10000, balance: 1, lender: 'Andere Bank' }] },
+    { address: '3, Beispielort, Lindenweg 2', unit: 'WE 30', market_value: 1, loans: [{ position: 1, amount: 1, balance: 1, lender: 'NordLB' }, { position: 2, amount: 1, balance: 1, lender: 'NordLB' }] },
+  ] });
+  links.importLinks({ folders: [{ name: '2, Beispielort, Am Park 8, WE 10', id: 'folderAmPark0010' }, { name: '3, Beispielort, Lindenweg 2, WE 30', id: 'folderLinden0030' }] });
+  const nord = (no, from, to) => `Darlehen ${no}, DE00\nKontostand am 01.01.2025 -${from}\nKontostand am 31.12.2025 -${to}`;
+  const refs = new Set(['800000002']);
+  const r = st.importStatements({ statements: [
+    { text: nord('0800000002', '300.000,00', '295.000,00'), folderId: 'folderAmPark0010' },
+    { text: nord('0800000009', '50.000,00', '48.000,00'), folderId: 'folderAmPark0010' },
+    { text: nord('0800000007', '1,00', '1,00'), folderId: 'folderLinden0030' },
+  ] }, refs);
+  assert.deepEqual(r, { balances: 4, skipped: 1 }, 'the second NordLB loan gets its account; in a folder without a known loan nothing is guessed');
+  const second = loans.overview().loans.find((l) => l.unit === 'WE 10' && l.position === 2);
+  assert.equal(second.ref, '800000009'); assert.equal(second.balance_now_cents, 4800000);
+  loans.importSheet({ units: [{ address: '2, Beispielort, Am Park 8', unit: 'WE 10', market_value: 1, loans: [{ position: 1, amount: 1, balance: 1, lender: 'NordLB', account: 'DE00250500000800000002' }, { position: 2, amount: 1, balance: 1, lender: 'NordLB' }] }] });
+  assert.equal(loans.overview().loans.find((l) => l.position === 2).ref, '800000009', 'the found account survives a new sheet import');
+});
+

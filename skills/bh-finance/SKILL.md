@@ -22,7 +22,7 @@ Die App `apps/finance` ersetzt die alte Tabelle „Finanzreport“: Kontoauszüg
 | `lib/categorize.js` | Lernt Gegenpartei → Kategorie aus Entscheidungen |
 | `lib/report.js` | Übersicht je Art und Kategorie, Investments und Rücklagen |
 | `lib/amazon.js`, `lib/amazon-api.js` | Amazon-Zahlungen und Artikel vom Dienst `bh-amazon` holen, Abbuchungen zuordnen (Bestellnummer im Text, sonst eindeutiger Betrag ±4 Tage) |
-| `lib/loan-statements.js` | Darlehensauszüge der Bank: Kontostände und Sollzins; Restschuld heute = letzter Auszug minus Tilgung seitdem |
+| `lib/loan-statements.js` | Darlehensauszüge (BBBank, PSD, NordLB): Kontostände und Zinssatz; Restschuld heute = letzter Auszug minus Tilgung seitdem; ein Auszug zu einem Konto, das im Sheet fehlt, geht an das einzige Darlehen derselben Bank ohne Konto im selben Wohnungsordner |
 | `lib/estate-links.js` | Drive-Ordner je Wohnung (Straße + WE-Nummer) und deren `02_Finanzierung`-Ordner |
 | `lib/loans.js` | Wohnungen und Darlehen aus der Portfolioübersicht; Zins und Tilgung aus Bankbuchungen (IBAN oder Darlehensnummer im Text) |
 | `lib/categories.js` | Kategorien anlegen und ändern (Prüfung, Kürzel, Dubletten) |

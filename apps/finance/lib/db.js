@@ -90,6 +90,8 @@ function migrate(conn) {
     -- Balances from the bank's loan statements (scripts/import-loan-statements.js) and the folder with a loan's papers; keyed by account number, so they survive a new sheet import.
     CREATE TABLE IF NOT EXISTS loan_balances (ref TEXT NOT NULL, balance_on TEXT NOT NULL, balance_cents INTEGER NOT NULL, rate_pct REAL, PRIMARY KEY (ref, balance_on));
     CREATE TABLE IF NOT EXISTS loan_docs (ref TEXT PRIMARY KEY, url TEXT NOT NULL);
+    -- Account of a loan the sheet lists without one, found from its statement (same flat folder, same bank as a known loan).
+    CREATE TABLE IF NOT EXISTS loan_refs (unit_key TEXT NOT NULL, position INTEGER NOT NULL, ref TEXT NOT NULL, PRIMARY KEY (unit_key, position));
     -- Drive folder of each flat and its financing papers (scripts/import-estate-links.js); kept across sheet imports.
     CREATE TABLE IF NOT EXISTS estate_links (unit_key TEXT PRIMARY KEY, folder_url TEXT, finance_url TEXT);
   `);

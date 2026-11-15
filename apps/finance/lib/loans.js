@@ -54,7 +54,8 @@ function importSheet({ asOf, units = [] }) {
 /** Loans with their bank payments per year, totals and the payments no loan could be found for. */
 function overview() {
   const db = getDb();
-  const loans = db.prepare('SELECT l.*, u.address, u.unit, u.floor, u.owner, u.market_value_cents FROM loans l JOIN estate_units u USING (unit_key) ORDER BY u.address, u.unit, l.position').all().map((l) => ({ ...l, years: {}, last_paid: null, ref: accountNo(l.account_iban), paid: [] }));
+  const loans = db.prepare('SELECT l.*, u.address, u.unit, u.floor, u.owner, u.market_value_cents, r.ref AS found_ref FROM loans l JOIN estate_units u USING (unit_key) LEFT JOIN loan_refs r USING (unit_key, position) ORDER BY u.address, u.unit, l.position').all()
+    .map(({ found_ref: found, ...l }) => ({ ...l, years: {}, last_paid: null, ref: accountNo(l.account_iban) || found || '', paid: [] }));
   const byRef = new Map(); for (const l of loans) for (const r of [l.account_iban, l.ref]) if (r) byRef.set(r, l);
   let unmatched = 0;
   const lines = db.prepare("SELECT booked_on, amount_cents, text FROM transactions WHERE amount_cents < 0 AND (text LIKE '%TILG%' OR text LIKE '%Darl.-Leistung%' OR text LIKE '%Darlehensrate%')").all();
