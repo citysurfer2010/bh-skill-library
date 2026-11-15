@@ -42,7 +42,7 @@ Eine Buchung ist doppelt, wenn Konto, Tag, Betrag und Text gleich sind. Gleiche 
 - Jedes Konto hat einen Bereich: **Haushalt**, **Immobilien** oder **Treuhand**. Nur Haushalt zählt in Übersicht, Investments, Sparquote und „Zu prüfen“; die Buchungsliste zeigt standardmäßig nur Haushaltskonten, ein einzelnes Konto über `?account=`.
 - Grund: Matti verknüpfte 21 DKB-Konten, darunter Mietenkonten je Wohnung und Kautions-Treuhandkonten. Mieten kämen sonst doppelt (im Haushalt zählt nur „Überschuss aus Immobilien“), Kautionen sind Geld der Mieter.
 - Erste Einordnung aus der Bank: Verwendung ORGA oder „Treuhand/Kaution“ → Treuhand; „Mietenkonto“ oder „Geschäftskonto“ → Immobilien; sonst Haushalt. Eine Wahl der Person wird nie überschrieben.
-- Neue Bankkonten mit eigener Beschreibung heißen danach („BLN, Musterwegstraße 20 - WE01“, Kürzel wie „XYZ - “ vorne entfernt; ein einzelnes Wort bekommt die Bank davor: „DKB Geschäftskonto“).
+- Neue Bankkonten mit eigener Beschreibung heißen danach („BLN, Musterweg 1 - WE01“, Kürzel wie „XYZ - “ vorne entfernt; ein einzelnes Wort bekommt die Bank davor: „DKB Geschäftskonto“).
 - Umbenennen nimmt alle Buchungen, die Bankverbindung und den Bereich mit. Ein vergebener Name wird abgelehnt; nur ein Bankkonto darf sich einem reinen CSV-Konto anschließen, und erst nach Rückfrage (Server antwortet 409 `code: merge`, die Seite fragt „zusammenführen?“ und schickt `merge: true`), weil sich das Zusammenführen nicht rückgängig machen lässt.
 - Offene Buchungen von Immobilien- und Treuhandkonten erscheinen nur grau: sie sind keine Aufgabe für „Zu prüfen“.
 

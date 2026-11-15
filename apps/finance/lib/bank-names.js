@@ -9,7 +9,7 @@ const productOf = (a) => [a.product, a.details].filter(Boolean).join(' ');
 /** Current accounts first, so they get the usual ledger name before any other account of the same bank. */
 const rank = (a) => (/giro|current|privatkonto/i.test(productOf(a)) ? 0 : /tagesgeld|spar|festgeld/i.test(productOf(a)) ? 2 : 1);
 
-/** "XYZ - BLN, Musterwegstraße 20 - WE01" → "BLN, Musterwegstraße 20 - WE01"; a bare word gets the bank in front. */
+/** "XYZ - BLN, Musterweg 1 - WE01" → "BLN, Musterweg 1 - WE01"; a bare word gets the bank in front. */
 function describe(bankLabel, a) {
   let d = String(a.details || '').replace(/\s+/g, ' ').trim();
   if (!d || d === a.product || /^giro/i.test(d)) return '';

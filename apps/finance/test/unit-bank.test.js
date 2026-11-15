@@ -85,13 +85,13 @@ test('names: the current account gets the usual name even when the bank lists sa
 
 test('names from the bank description: rent and deposit accounts by flat, business account by its word; scopes guessed', async () => {
   reply = (url) => (url.endsWith('/auth') ? { url: 'u' } : { session_id: 'dkb-1', access: { valid_until: '2099-01-01T00:00:00Z' }, accounts: [
-    { uid: 'd-miete', account_id: { iban: 'DE118687' }, cash_account_type: 'CACC', product: 'Mietenkonto - privat', details: 'XYZ - BLN, Musterwegstraße 20 - WE01', usage: 'PRIV' },
-    { uid: 'd-kaution', account_id: { iban: 'DE110594' }, cash_account_type: 'CACC', product: 'Treuhandkonto Einzelmietkaution', details: 'XYZ - BLN, Musterwegstraße 20 - WE01.02 - Kaution', usage: 'ORGA' },
+    { uid: 'd-miete', account_id: { iban: 'DE118687' }, cash_account_type: 'CACC', product: 'Mietenkonto - privat', details: 'XYZ - BLN, Musterweg 1 - WE01', usage: 'PRIV' },
+    { uid: 'd-kaution', account_id: { iban: 'DE110594' }, cash_account_type: 'CACC', product: 'Treuhandkonto Einzelmietkaution', details: 'XYZ - BLN, Musterweg 1 - WE01.02 - Kaution', usage: 'ORGA' },
     { uid: 'd-gk', account_id: { iban: 'DE111406' }, cash_account_type: 'CACC', product: 'Girokonto', details: 'Geschäftskonto', usage: 'PRIV' }] });
   await sync.connect({ aspsp: 'DKB', user: 'm@b.de', redirectUrl: 'x' });
   await sync.finish({ code: 'c', state: JSON.parse(calls.at(-1).init.body).state, user: 'm@b.de' });
   const byUid = Object.fromEntries(sync.status().accounts.map((a) => [a.uid, a.label]));
-  assert.deepEqual([byUid['d-miete'], byUid['d-kaution'], byUid['d-gk']], ['BLN, Musterwegstraße 20 - WE01', 'BLN, Musterwegstraße 20 - WE01.02 - Kaution', 'DKB Geschäftskonto']);
+  assert.deepEqual([byUid['d-miete'], byUid['d-kaution'], byUid['d-gk']], ['BLN, Musterweg 1 - WE01', 'BLN, Musterweg 1 - WE01.02 - Kaution', 'DKB Geschäftskonto']);
   const scope = (n) => getDb().prepare('SELECT scope FROM accounts WHERE name = ?').get(n).scope;
   assert.deepEqual([scope(byUid['d-miete']), scope(byUid['d-kaution']), scope(byUid['d-gk'])], ['immobilien', 'treuhand', 'immobilien']);
   for (const uid of ['d-miete', 'd-kaution', 'd-gk']) await sync.disconnect(uid);
