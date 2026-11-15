@@ -7,7 +7,7 @@ const { parsePayments, parseItems, parseCards } = require('./parse');
 const PAYMENTS = 'https://www.amazon.de/cpe/yourpayments/transactions';
 const HISTORY = (year, start) => `https://www.amazon.de/your-orders/orders?timeFilter=year-${year}&startIndex=${start}`;
 const ORDER = (id) => `https://www.amazon.de/gp/your-account/order-details?orderID=${encodeURIComponent(id)}`;
-const MAX_PAGES = 300;
+const MAX_ROUNDS = 150;
 const pause = (page) => page.waitForTimeout(1200 + Math.floor(Math.random() * 800));
 
 /** Runs in the page: each element holding an order number, widened to the row that also shows an amount, plus the date heading above it. */
@@ -44,24 +44,31 @@ async function withLogin(fn) {
 }
 
 async function payments(opts = {}) { return withLogin(() => readPayments(opts)); }
+/**
+ * The payments page loads more rows while scrolling (POST …/get-transactions) and drops rows far above, so every
+ * round collects what is visible. A round scrolls up a little and down again: the loader reacts only when it comes
+ * into view anew. Stops when the rows reach `since` or nothing new came for four rounds (checked 15.11.2026: back to 12/2021).
+ */
 async function readPayments({ since = '2021-01-01' } = {}) {
   if (!hasSession()) throw new LoginNeeded();
-  const ctx = await context(); const page = await ctx.newPage(); const all = []; let pages = 0;
+  const ctx = await context(); const page = await ctx.newPage(); const all = new Map(); let rounds = 0;
+  const key = (p) => [p.orderId, p.date, p.cents, p.method].join('|');
+  const collect = async () => { let fresh = 0; for (const r of parsePayments(await page.evaluate(extractRows))) if (!all.has(key(r))) { all.set(key(r), r); fresh += 1; } return fresh; };
   try {
-    await page.goto(PAYMENTS, { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page);
-    for (; pages < MAX_PAGES; pages += 1) {
-      await pause(page);
-      const rows = parsePayments(await page.evaluate(extractRows)); all.push(...rows);
-      const oldest = rows.map((r) => r.date).sort()[0];
-      if (!rows.length || (oldest && oldest < since)) break;
-      const next = page.getByRole('button', { name: /^(weiter|nächste)/i }).or(page.getByRole('link', { name: /^(weiter|nächste)/i })).first();
-      if (!(await next.count()) || await next.isDisabled().catch(() => false)) break;
-      await next.click(); await page.waitForLoadState('domcontentloaded'); await guard(page);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(PAYMENTS, { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page); await pause(page);
+    await collect();
+    for (let still = 0; rounds < MAX_ROUNDS && still < 4; rounds += 1) {
+      if ([...all.values()].some((p) => p.date < since)) break;
+      const loaded = page.waitForResponse((r) => /get-transactions/.test(r.url()), { timeout: 6000 }).catch(() => null);
+      await page.mouse.move(640, 500); await page.mouse.wheel(0, -2500); await page.waitForTimeout(400);
+      for (let k = 0; k < 8; k += 1) { await page.mouse.wheel(0, 700); await page.waitForTimeout(250); }
+      await loaded; await page.waitForTimeout(1200);
+      still = (await collect()) ? 0 : still + 1;
     }
     await save(ctx);
   } finally { await ctx.close().catch(() => {}); }
-  const seen = new Set();
-  return { pages: pages + 1, payments: all.filter((p) => p.date >= since).filter((p) => { const k = [p.orderId, p.date, p.cents, p.method].join('|'); return !seen.has(k) && seen.add(k); }) };
+  return { rounds, payments: [...all.values()].filter((p) => p.date >= since) };
 }
 
 /**
