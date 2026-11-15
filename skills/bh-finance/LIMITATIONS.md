@@ -10,7 +10,7 @@
 - Amazon: Bei Abbuchungen ohne Bestellnummer im Text und bei Bestellungen ohne Datum fehlt manchmal die Zuordnung zu den Artikeln.
 - Depotwerte (Kursstand) fehlen; ausgewertet werden nur Einzahlungen in Investments und Rücklagen.
 - Liefert eine Bank denselben Umsatz mit anderem Text, erkennt die Dublettenprüfung ihn nicht.
-- MCP-Werkzeuge für Zottel fehlen noch.
+- Die MCP-Werkzeuge lesen nur. Wer sie bekommt, steht doppelt: in `servers.json` (`users`) und in der Liste „Wer die Finanzen sieht“; neue Personen in beiden eintragen.
 - Sicherungen der Datenbank laufen nicht automatisch.
 - Darlehenskonten kommen nicht über die Banking-API: Enable Banking beruht auf PSD2, und das umfasst nur Zahlungskonten. Bei der BBBank liefert die Verbindung nur das Girokonto (geprüft 15.11.2026). Restschuld und Zinssatz kommen deshalb aus den Darlehensauszügen in Drive (`scripts/import-loan-statements.js`) und werden mit den Raten fortgeschrieben.
 - FinTS/HBCI für Darlehen und Depots braucht eine Produktregistrierung bei der Deutschen Kreditwirtschaft (hbci-zka.de). Das Formular muss per E-Mail geschickt werden, die Anmeldung dauert etwa 14 Tage. Ohne registrierte Produkt-ID lehnen die Banken den Zugriff ab; fremde IDs sind nicht zulässig. Bis dahin gibt es keinen FinTS-Abruf. Danach: `BH_FINTS_PRODUCT_ID` sowie Kennung und PIN je Bank in die `.env`.

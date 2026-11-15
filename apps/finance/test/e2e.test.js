@@ -97,6 +97,26 @@ test('Kategorien: hinzufügen und bearbeiten nur mit Finanz-Zugriff', async () =
   assert.equal(list.categories.find((c) => c.code === category.code).art, 'Einnahmen');
 });
 
+test('MCP-Schlüssel (Scope finance): nur mit Finanz-Zugriff, nur lesend, beim Entzug gesperrt', async () => {
+  const key = async (h, scopes) => fetch(`${BASE}/api/me/api-keys`, { method: 'POST', headers: h, body: JSON.stringify({ label: 'zottel', scopes }) });
+  const helfer = { ...guest, 'x-user-email': `helfer-${Date.now().toString(36)}@beispiel.de` };
+  assert.equal((await key(helfer, 'finance')).status, 403, 'ohne Zugang kein Finanz-Schlüssel');
+  const adminKey = (await (await key(admin2, 'finance')).json()).key;
+  const ext = (k, url) => fetch(`${BASE}/api/external/finance${url}`, { headers: { authorization: `Bearer ${k}` } });
+  for (const url of ['/overview?year=2026', '/transactions?year=all&q=e&limit=5', '/investments', '/loans', '/estate']) assert.equal((await ext(adminKey, url)).status, 200, url);
+  const tx = await (await ext(adminKey, '/transactions?year=all&limit=3')).json();
+  assert.ok(tx.shown <= 3 && typeof tx.count === 'number');
+  const readKey = (await (await key(admin2, 'read')).json()).key;
+  assert.equal((await ext(readKey, '/overview')).status, 403, 'read allein reicht nicht');
+  assert.equal((await fetch(`${BASE}/api/external/finance/overview`)).status, 401);
+  // Zugang geben, Schlüssel anlegen, Zugang entziehen: der Schlüssel ist sofort gesperrt.
+  assert.equal((await fetch(`${BASE}/api/access`, { method: 'POST', headers: admin2, body: JSON.stringify({ email: helfer['x-user-email'] }) })).status, 201);
+  const helferKey = (await (await key(helfer, 'finance')).json()).key;
+  assert.equal((await ext(helferKey, '/loans')).status, 200);
+  assert.equal((await fetch(`${BASE}/api/access/${encodeURIComponent(helfer['x-user-email'])}`, { method: 'DELETE', headers: admin2 })).status, 204);
+  assert.equal((await ext(helferKey, '/loans')).status, 401, 'nach dem Entzug gesperrt');
+});
+
 test('Finanzen: privat, Admin immer, andere erst nach Freigabe', async () => {
   assert.equal((await get('/api/overview', guest)).status, 403);
   assert.equal((await get('/api/overview', admin2)).status, 200);

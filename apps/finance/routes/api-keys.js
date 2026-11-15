@@ -6,7 +6,10 @@
 const express = require('express');
 const apiKeys = require('../lib/api-keys');
 
-const ALLOWED_SCOPES = new Set(['submit', 'read']);
+const { mayUse } = require('../lib/access');
+
+// "finance": read-only finance data for the MCP tools, only for people who may see the finances.
+const ALLOWED_SCOPES = new Set(['submit', 'read', 'finance']);
 
 function buildRouter() {
   const router = express.Router();
@@ -16,7 +19,8 @@ function buildRouter() {
     if (!label || !String(label).trim()) return res.status(400).json({ error: 'label required' });
     const wanted = (scopes ? String(scopes).split(',') : ['submit', 'read'])
       .map((s) => s.trim()).filter((s) => ALLOWED_SCOPES.has(s));
-    if (!wanted.length) return res.status(400).json({ error: 'at least one valid scope (submit|read)' });
+    if (!wanted.length) return res.status(400).json({ error: 'at least one valid scope (submit|read|finance)' });
+    if (wanted.includes('finance') && !mayUse(req.user)) return res.status(403).json({ error: 'Kein Zugang zu den Finanzen' });
     return res.status(201).json(apiKeys.create({
       ownerId: req.user.email,
       label: String(label).trim().slice(0, 100),

@@ -12,9 +12,7 @@ const categories = require('../lib/categories');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 const yearOf = (v) => { const y = Number(v); return Number.isInteger(y) && y > 1990 && y < 2100 ? y : new Date().getFullYear(); };
 
-function mayUse(user) {
-  return !!user && (user.role === 'admin' || !!getDb().prepare('SELECT 1 FROM access WHERE email = ?').get(user.email));
-}
+const { mayUse, revokeFinanceKeys } = require('../lib/access');
 function requireFinance(req, res, next) { return mayUse(req.user) ? next() : res.status(403).json({ error: 'Kein Zugang zu den Finanzen' }); }
 
 // User apps share the site; writes must come from this page.
@@ -93,7 +91,10 @@ function buildRouter() {
   });
   r.delete('/access/:email', (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Nur für Admins' });
-    return getDb().prepare('DELETE FROM access WHERE email = ?').run(String(req.params.email).toLowerCase()).changes ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' });
+    const email = String(req.params.email).toLowerCase();
+    if (!getDb().prepare('DELETE FROM access WHERE email = ?').run(email).changes) return res.status(404).json({ error: 'Nicht gefunden' });
+    revokeFinanceKeys(email); // the person's tools for Zottel lose access with them
+    return res.status(204).end();
   });
   return r;
 }

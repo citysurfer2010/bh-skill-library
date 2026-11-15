@@ -18,7 +18,9 @@ ENV=/srv/bh-platform/.env; val() { sed -n "s/^$1=//p" "$ENV" | tail -1; }
   printf 'BH_CONNECT_SECRET=%s\n' "$(val BH_CONNECT_SECRET)" >>"$D/nas.env"
   printf 'BH_ACT_AS_SECRET=%s\n' "$(val BH_ACT_AS_SECRET)" >>"$D/nas.env"
   printf 'BH_NETATMO_USER=%s\nBH_NETATMO_PASSWORD=%s\nBH_FAMILY_DIR=/var/lib/mcp-gateway/family\n' "$(val BH_NETATMO_USER)" "$(val BH_NETATMO_PASSWORD)" >>"$D/nas.env"
-  printf 'BH_SCREEN_URL=%s/screen/%s\nBH_SCREEN_WRITE=%s\nBH_AUTH_INTERNAL=http://bh-auth:3337\n' "$(val BH_PUBLIC_URL)" "$(val BH_SCREEN_READ)" "$(val BH_SCREEN_WRITE)" >>"$D/nas.env")
+  printf 'BH_SCREEN_URL=%s/screen/%s\nBH_SCREEN_WRITE=%s\nBH_AUTH_INTERNAL=http://bh-auth:3337\n' "$(val BH_PUBLIC_URL)" "$(val BH_SCREEN_READ)" "$(val BH_SCREEN_WRITE)" >>"$D/nas.env"
+  # Finance tools for Zottel: read-only key with scope "finance" (apps/finance, created once by the admin), app reached inside bh-apps-net.
+  printf 'BH_FINANCE_URL=http://bh-apps:3302/finance\nBH_FINANCE_KEY=%s\n' "$(val BH_FINANCE_KEY)" >>"$D/nas.env")
 docker build -q -t mcp-gateway:current /opt/bh-skill-library/services/bh-mcp-gateway
 docker network inspect mcp-gateway-net >/dev/null 2>&1 || docker network create mcp-gateway-net >/dev/null
 docker rm -f mcp-gateway >/dev/null 2>&1 || true
@@ -44,7 +46,7 @@ docker run -d --name mcp-gateway --network name=mcp-gateway-net,gw-priority=100 
 for net in $(docker network ls --format '{{.Name}}' | grep '^devbox-net-' || true); do
   docker network connect "$net" mcp-gateway
 done
-# Only for the Beamer's display page in the login service.
+# For the Beamer's display page in the login service and the finance tools (read-only API of apps/finance).
 docker network connect bh-apps-net mcp-gateway 2>/dev/null || true
 # Only for the local face analysis, which has no route to the outside.
 docker network connect bh-faces-net mcp-gateway 2>/dev/null || true

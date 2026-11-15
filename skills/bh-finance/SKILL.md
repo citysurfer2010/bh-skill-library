@@ -48,3 +48,18 @@ Unter „Importieren“ → „Bankkonten“ eine Bank verbinden (comdirect, BBB
 1. Für nicht verbundene Konten die Umsätze als CSV exportieren und unter „Importieren“ hochladen.
 2. Unter „Buchungen“ die Arbeitsliste „Zu prüfen“ abarbeiten.
 3. „Übersicht“ und „Investments und Rücklagen“ ansehen.
+
+## MCP-Werkzeuge (für Zottel)
+
+Server `skills/bh-finance/server` im MCP-Gateway (`servers.json`, Eintrag `finance`), nur lesend und nur für die dort genannten Personen (derzeit `matti`). Handelt Zottel für jemand anderen, z. B. ein Kind, sieht er die Werkzeuge nicht.
+
+| Werkzeug | Zweck |
+|---|---|
+| `finance_get_overview` | Jahr: Einnahmen, Ausgaben, Ergebnis, Sparquote, offene Buchungen, Summen je Art und Kategorie mit Vorjahr und Budget |
+| `finance_search_transactions` | Buchungen suchen (Text, Gegenpartei, Amazon-Artikel, Kategorie, Konto, Jahr); Anzahl und Summe aller Treffer |
+| `finance_get_investments` | Investments und Rücklagen eines Jahres und über die Jahre |
+| `finance_get_loans` | Kredite mit Restschuld laut Bank, Rate, Zins, Tilgung, Jahresendständen |
+| `finance_get_estate` | Wohnungen mit Fläche, Marktwert, Miete, Restschuld, Drive-Ordner |
+
+Beträge kommen in Euro. Dahinter liegt `/api/external/finance/*` der App mit einem API-Schlüssel im Scope `finance`: Nur wer die Finanzen sehen darf, kann ihn anlegen, und wer von der Liste „Wer die Finanzen sieht“ entfernt wird, verliert seine Finanz-Schlüssel sofort. Der Schlüssel steht als `BH_FINANCE_KEY` in `/srv/bh-platform/.env`, `platform/gateway/setup-mcp-gateway.sh` reicht ihn an das Gateway weiter.
+

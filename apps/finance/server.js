@@ -65,6 +65,7 @@ app.get('/build-version-check.js', (_req, res) => {
 });
 
 // Bearer API for external clients, own check via API key, hence before the user check.
+app.use('/api/external/finance', require('./routes/external-finance').buildRouter());
 app.use('/api/external', externalRoutes.buildRouter());
 
 app.use(currentUser);
