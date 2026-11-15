@@ -36,7 +36,7 @@ window.FinAccounts = (() => {
       return { label: `${esc(label)} · ${rows.length} ${rows.length === 1 ? 'Konto' : 'Konten'} <span class="fin-hint">${esc(GROUP_HINT[key] || '')}</span>`, rows };
     });
     AppShell.render(host, `<header class="app-topbar"><div><h1>Konten</h1><div class="sub">${accounts.length} Konten, davon ${household} im Haushalt</div></div></header>
-      ${AppShell.list({ className: 'fin-acc-list', groups, empty: 'Noch keine Konten. Sie entstehen mit dem ersten Import oder Bankabruf.', columns: [
+      ${AppShell.list({ className: 'fin-acc-list', storageKey: 'finance-accounts', groups, empty: 'Noch keine Konten. Sie entstehen mit dem ersten Import oder Bankabruf.', columns: [
     { key: 'name', label: 'Konto', html: nameCell },
     { key: 'bank', label: 'Bank und Produkt', html: origin },
     { key: 'scope', label: 'Bereich', html: (a) => `<div class="fin-acc-scope" data-scope-for="${esc(a.name)}" data-value="${esc(a.scope)}"></div>` },
@@ -66,28 +66,12 @@ window.FinAccounts = (() => {
     host.querySelectorAll('[data-rename]').forEach((btn) => btn.addEventListener('click', () => renameForm(host, btn.closest('.fin-acc-name'))));
   }
 
-  /** One line: field, save, cancel. Joining an existing account asks first, in place. */
+  /** Rename in a dialog; focus comes back to the row's pencil. */
   function renameForm(host, box) {
-    const { esc } = Fin; const old = box.dataset.name; const id = `fin-acc-${Math.random().toString(36).slice(2, 8)}`;
-    const back = (name) => render(host, { sel: '[data-rename]', key: 'name', name });
-    box.innerHTML = `<form class="fin-acc-form"><label class="sr-only" for="${id}">Kontoname</label><input id="${id}" class="bh-input" maxlength="60" value="${esc(old)}" required>
-      <button type="submit" class="bh-btn bh-btn-sm bh-btn-primary">Speichern</button><button type="button" class="bh-btn bh-btn-sm" data-cancel>Abbrechen</button></form>`;
-    const form = box.querySelector('form'); const input = form.querySelector('input'); input.focus(); input.select();
-    form.querySelector('[data-cancel]').addEventListener('click', () => back(old));
-    form.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); back(old); } });
-    const save = async (merge) => {
-      const name = input.value.trim();
-      try { await Fin.api('PATCH', `/accounts/${encodeURIComponent(old)}`, merge ? { name, merge: true } : { name }); Toast.success(merge ? 'Zusammengeführt' : 'Umbenannt'); back(name); } catch (x) {
-        if (x.code !== 'merge') { Toast.error(x.message); return; }
-        box.classList.add('is-asking');
-        box.innerHTML = `<div class="fin-acc-ask" role="status">Mit bestehendem Konto „${esc(name)}“ zusammenführen? Die Bank-Buchungen werden mit den vorhandenen verbunden, das lässt sich nicht rückgängig machen.</div>
-          <div class="fin-inline"><button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-merge-yes>Zusammenführen</button><button type="button" class="bh-btn bh-btn-sm" data-merge-no>Abbrechen</button></div>`;
-        box.querySelector('[data-merge-no]').focus();
-        box.querySelector('[data-merge-no]').addEventListener('click', () => back(old));
-        box.querySelector('[data-merge-yes]').addEventListener('click', () => { input.value = name; save(true); });
-      }
-    };
-    form.addEventListener('submit', (e) => { e.preventDefault(); save(false); });
+    const old = box.dataset.name;
+    FinRename.open({ current: old,
+      save: (name, merge) => Fin.api('PATCH', `/accounts/${encodeURIComponent(old)}`, merge ? { name, merge: true } : { name }),
+      done: (name) => render(host, { sel: '[data-rename]', key: 'name', name }) });
   }
 
   return { render };

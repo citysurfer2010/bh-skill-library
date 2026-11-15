@@ -54,32 +54,11 @@ window.FinBank = (() => {
   }
 
   function renameForm(li, rerender) {
-    const { esc } = Fin; const uid = encodeURIComponent(li.dataset.uid); const main = li.querySelector('.fin-bank-main');
-    const keep = main.innerHTML; li.classList.add('is-editing');
-    main.innerHTML = `<form class="fin-bank-rename" data-rename-form><label class="bh-label" for="fin-rn-${uid}">Kontoname</label>
-      <div class="fin-inline"><input id="fin-rn-${uid}" class="bh-input fin-bank-name" maxlength="40" value="${esc(li.dataset.name)}" required>
-      <button type="submit" class="bh-btn bh-btn-sm bh-btn-primary">Speichern</button><button type="button" class="bh-btn bh-btn-sm" data-cancel>Abbrechen</button></div>
-      <p class="fin-hint">Die Buchungen aus dem Bankabruf wandern unter den neuen Namen mit.</p></form>`;
-    const form = main.querySelector('form'); const input = form.querySelector('input'); input.focus(); input.select();
-    const close = () => { main.innerHTML = keep; li.classList.remove('is-editing'); li.querySelector('[data-rename]').focus(); };
-    form.querySelector('[data-cancel]').addEventListener('click', close);
-    form.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } });
-    const save = async (merge) => {
-      const label = input.value.trim();
-      try { await Fin.api('PATCH', `/bank/accounts/${uid}`, merge ? { label, merge: true } : { label }); Toast.success(merge ? 'Zusammengeführt' : 'Umbenannt'); focusHead = true; rerender(); } catch (x) {
-        if (x.code !== 'merge') { Toast.error(x.message); return; }
-        // Joining an existing account cannot be undone: ask in place, the safe choice has the focus.
-        main.innerHTML = `<div class="fin-acc-ask" role="status">Mit bestehendem Konto „${esc(label)}“ zusammenführen? Die Bank-Buchungen werden mit den vorhandenen verbunden, das lässt sich nicht rückgängig machen.</div>
-          <div class="fin-inline"><button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-merge-yes>Zusammenführen</button><button type="button" class="bh-btn bh-btn-sm" data-merge-no>Abbrechen</button></div>`;
-        main.querySelector('[data-merge-no]').focus();
-        main.querySelector('[data-merge-no]').addEventListener('click', close);
-        main.querySelector('[data-merge-yes]').addEventListener('click', () => { input.value = label; save(true); });
-      }
-    };
-    form.addEventListener('submit', (e) => { e.preventDefault(); save(false); });
+    FinRename.open({ current: li.dataset.name,
+      save: (label, merge) => Fin.api('PATCH', `/bank/accounts/${encodeURIComponent(li.dataset.uid)}`, merge ? { label, merge: true } : { label }),
+      done: () => { focusHead = true; rerender(); } });
   }
 
-  /** Confirmation in place (no window.confirm, skeleton rule 7): the account row asks, the safe choice gets the focus. */
   function askDrop(li, rerender) {
     const actions = li.querySelector('.fin-bank-actions'); const keep = actions.innerHTML;
     actions.innerHTML = `<p class="fin-hint fin-bank-ask" role="status">„${Fin.esc(li.dataset.name)}“ trennen? Neue Umsätze kommen dann nicht mehr, die bisherigen Buchungen bleiben.</p>
@@ -105,7 +84,7 @@ window.FinBank = (() => {
     });
     host.querySelectorAll('.fin-bank-item').forEach((li) => {
       li.querySelector('[data-renew]')?.addEventListener('click', (e) => connect(e.currentTarget.dataset.renew, e.currentTarget));
-      li.querySelector('[data-rename]').addEventListener('click', () => { if (!li.classList.contains('is-editing')) renameForm(li, rerender); });
+      li.querySelector('[data-rename]').addEventListener('click', () => renameForm(li, rerender));
       li.querySelector('[data-drop]').addEventListener('click', () => askDrop(li, rerender));
     });
   }
@@ -121,7 +100,7 @@ window.FinBank = (() => {
       (bad ? Toast.error : Toast.success)(bad ? `Abruf fertig, ${bad === 1 ? '1 Konto' : `${bad} Konten`} mit Fehler (siehe unten)` : 'Abruf fertig.');
     }
     wasRunning = s.running;
-    if (s.running) setTimeout(function again() { if (host.querySelector('[data-rename-form]')) setTimeout(again, 4000); else rerender(); }, 4000);
+    if (s.running) setTimeout(function again() { if (document.querySelector('dialog.bh-modal[open]')) setTimeout(again, 4000); else rerender(); }, 4000);
   }
 
   return { html, bind, afterReturn, summary };

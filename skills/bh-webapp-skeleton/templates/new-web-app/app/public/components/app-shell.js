@@ -22,6 +22,7 @@ window.AppShell = (() => {
 
   function render(host, html) {
     host.innerHTML = html;
+    host.querySelectorAll('col[data-w]').forEach((c) => { c.style.width = `${c.dataset.w}px`; }); // remembered list column widths
     const top = host.querySelector(':scope > .app-topbar');
     const content = document.createElement('div');
     content.className = 'app-content';
@@ -69,9 +70,34 @@ window.AppShell = (() => {
    * columns: [{ key, label, html? }] — html(row) returns trusted HTML for that cell, otherwise row[key] is escaped.
    * rowHref(row) makes the first cell a link (same-module links navigate without reload via AppShell.links).
    */
-  function list({ columns = [], rows = [], title = '', empty = 'Keine Einträge.', rowHref = null, groups = null, className = '' } = {}) {
+  /** Column widths of a list, dragged at the header's right edge and remembered per storageKey in this browser. */
+  const listWidths = (key) => { try { return JSON.parse(localStorage.getItem(`bh-list:${key}:widths`) || '{}'); } catch (_) { return {}; } };
+  if (typeof document !== 'undefined' && !window.__bhListResize) {
+    window.__bhListResize = true;
+    document.addEventListener('pointerdown', (e) => {
+      const h = e.target.closest && e.target.closest('.app-list-resize'); if (!h) return;
+      e.preventDefault();
+      const table = h.closest('table'); const key = table.dataset.listKey; const i = Number(h.dataset.col);
+      const col = table.querySelectorAll('col')[i]; const th = h.closest('th'); const startX = e.clientX; const startW = th.getBoundingClientRect().width;
+      table.querySelectorAll('col').forEach((c, j) => { if (!c.style.width) c.style.width = `${Math.round(table.querySelectorAll('thead th')[j].getBoundingClientRect().width)}px`; });
+      table.classList.add('is-sized');
+      const move = (ev) => { col.style.width = `${Math.max(64, Math.round(startW + ev.clientX - startX))}px`; };
+      const up = () => {
+        document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up);
+        const w = {}; table.querySelectorAll('col').forEach((c, j) => { w[j] = parseInt(c.style.width, 10); });
+        try { localStorage.setItem(`bh-list:${key}:widths`, JSON.stringify(w)); } catch (_) { /* widths stay for this view only */ }
+      };
+      document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+    });
+  }
+
+  function list({ columns = [], rows = [], title = '', empty = 'Keine Einträge.', rowHref = null, groups = null, className = '', storageKey = '' } = {}) {
     const al = (c) => (c.align ? ` class="is-${c.align}"` : '');
-    const head = `<thead><tr>${columns.map((c) => `<th scope="col"${al(c)}>${esc(c.label)}</th>`).join('')}</tr></thead>`;
+    const widths = storageKey ? listWidths(storageKey) : {};
+    const handle = (i) => (storageKey && i < columns.length - 1 ? `<span class="app-list-resize" data-col="${i}" aria-hidden="true"></span>` : '');
+    const head = `<thead><tr>${columns.map((c, i) => `<th scope="col"${al(c)}>${esc(c.label)}${handle(i)}</th>`).join('')}</tr></thead>`;
+    const sized = storageKey && Object.keys(widths).length;
+    const cols = storageKey ? `<colgroup>${columns.map((_, i) => `<col${widths[i] ? ` data-w="${Number(widths[i])}"` : ''}>`).join('')}</colgroup>` : '';
     const cell = (c, r, i) => {
       const v = c.html ? c.html(r) : esc(r[c.key]);
       return i === 0 && rowHref ? `<td${al(c)}><a href="${esc(rowHref(r))}">${v}</a></td>` : `<td${al(c)}>${v}</td>`;
@@ -84,7 +110,7 @@ window.AppShell = (() => {
       ? shown.map((g) => `<tr class="app-list-group"><th colspan="${columns.length}" scope="colgroup">${g.label}</th></tr>${g.rows.map(tr).join('')}`).join('')
       : rows.map(tr).join('');
     return `<section class="app-list${className ? ` ${esc(className)}` : ''}">${title ? `<h2 class="app-list-title">${esc(title)}</h2>` : ''}`
-      + (any ? `<table>${head}<tbody>${body}</tbody></table>` : `<p class="muted">${esc(empty)}</p>`) + '</section>';
+      + (any ? `<table${storageKey ? ` data-list-key="${esc(storageKey)}"${sized ? ' class="is-sized"' : ''}` : ''}>${cols}${head}<tbody>${body}</tbody></table>` : `<p class="muted">${esc(empty)}</p>`) + '</section>';
   }
 
   /** KPI tiles: label in capitals, big value, optional small line. */
