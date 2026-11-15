@@ -1,6 +1,6 @@
 {
   "name": "finance",
-  "version": "26.11.35",
+  "version": "26.11.36",
   "private": true,
   "description": "Einnahmen, Ausgaben und Investments",
   "main": "server.js",

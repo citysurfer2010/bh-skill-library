@@ -43,7 +43,6 @@
   .fin-estate-list td:nth-child(7):empty { display: none; }
   .fin-estate-list td:nth-child(5)::before { content: 'Kaltmiete '; color: var(--bh-muted); font-size: 12px; }
   .fin-estate-list td:nth-child(6):has(a)::before { content: 'Restschuld '; color: var(--bh-muted); font-size: 12px; }
-  .fin-estate-list .fin-nowrap { white-space: normal; }
 }
 @media (max-width: 720px) {
   .fin-loan-list td:last-child:empty { display: none; }
@@ -54,3 +53,12 @@
   .fin-years-list .app-list-title { padding-left: 16px; padding-right: 16px; }
   .fin-years-list .app-list-resize { display: none; }
 }
+
+/* Wohnungen: filter bar below the KPIs, count left, filters right; on the phone the owner is labelled in the card. */
+.fin-estate-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 4px 0; border-bottom: 1px solid var(--bh-border); }
+.fin-estate-bar [data-count] { font-size: 13px; white-space: nowrap; }
+.fin-estate-search { width: 300px; max-width: 100%; }
+/* Fixed column widths, so filtering does not move the columns. */
+@media (min-width: 721px) { .fin-estate-list table { table-layout: fixed; width: 100%; } .fin-estate-list th:nth-child(1) { width: 26%; } .fin-estate-list th:nth-child(2) { width: 14%; } .fin-estate-list th:nth-child(3) { width: 10%; } .fin-estate-list th:nth-child(4) { width: 13%; } .fin-estate-list th:nth-child(5) { width: 14%; } .fin-estate-list th:nth-child(6) { width: 15%; } .fin-estate-list th:nth-child(7) { width: 8%; } }
+@media (min-width: 721px) { .fin-estate-bar [data-filter] { width: 200px; } .fin-estate-bar [data-filter="debt"] { width: 220px; } }
+@media (max-width: 720px) { .fin-estate-bar { padding: 8px 0; } .fin-estate-bar [data-filter="debt"] { grid-column: 1 / -1; } .fin-estate-search { width: 100%; } .fin-estate-list .fin-mob-label { display: inline; color: var(--bh-muted); font-size: 12px; } }
