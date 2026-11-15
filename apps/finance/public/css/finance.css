@@ -61,20 +61,22 @@
 .app-list .fin-hint { margin: 2px 0 0; }
 .fin-muted { color: var(--bh-muted); }
 .fin-acc-list { overflow-x: auto; }
-.fin-acc-list th, .fin-acc-list td { padding-left: 14px; padding-right: 14px; }
+.fin-acc-list th, .fin-acc-list td { padding-left: 10px; padding-right: 10px; }
 .fin-acc-list td { padding-top: 10px; padding-bottom: 10px; vertical-align: top; }
-.fin-acc-list td:first-child { width: 300px; min-width: 300px; max-width: 300px; }
-.fin-acc-list td:nth-child(5) .fin-hint { font-size: 12px; }
+.fin-acc-list td:first-child { width: 210px; min-width: 210px; max-width: 210px; }
+.fin-acc-list td:nth-child(6) .fin-hint { font-size: 12px; }
 .fin-acc-name .fin-acc-rename { align-self: flex-start; }
-.fin-acc-list td:nth-child(3) { min-width: 0; max-width: 220px; }
+.fin-acc-list td:nth-child(3) { min-width: 0; max-width: 170px; }
 .fin-acc-synced { white-space: nowrap; }
 .fin-acc-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .fin-acc-name strong { min-width: 0; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-.fin-acc-rename { flex: none; width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; opacity: .55; transition: opacity .12s; }
-.fin-acc-rename:hover, .fin-acc-rename:focus-visible { opacity: 1; }
+.fin-acc-rename { flex: none; width: 24px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; color: var(--bh-muted); opacity: .35; transition: opacity .12s, color .12s; cursor: pointer; border-radius: var(--bh-radius-sm); }
+.fin-acc-list tr:hover .fin-acc-rename, .fin-bank-item:hover .fin-acc-rename { opacity: .7; }
+.fin-acc-rename:hover, .fin-acc-rename:focus-visible { opacity: 1; color: var(--bh-primary); }
+.fin-acc-rename:focus-visible { outline: 2px solid var(--bh-focus-ring); outline-offset: 1px; }
+@media (hover: none) { .fin-acc-rename { opacity: .6; } }
 .fin-acc-bank { font-weight: 500; color: var(--bh-text); }
 .fin-acc-iban { font-size: 12px; }
-.fin-acc-scope { min-width: 128px; }
 .fin-acc-meta { display: none; }
 .fin-acc-list .app-list-group th { height: auto; }
 .fin-acc-list .app-list-group .fin-hint { margin-left: 8px; font-weight: 400; }
@@ -92,8 +94,7 @@
   .fin-acc-list td:nth-child(3) { grid-column: 1 / -1; grid-row: 2; }
   .fin-acc-list td:nth-child(n+4) { display: none; }
   .fin-acc-meta { display: block; margin-top: 2px; color: var(--bh-muted); font-size: 12px; }
-  .fin-acc-scope { min-width: 128px; }
-  .fin-acc-rename { width: 40px; height: 40px; }
+  .fin-acc-rename { width: 36px; height: 36px; }
 }
 .fin-amazon-row { margin: 0; }
 .fin-amazon::after, .fin-amazon-items a::after { content: "\00a0↗"; }
@@ -115,3 +116,7 @@
   .fin-amz-form .fin-inline > .bh-btn { flex: 1 1 0; }
 }
 .fin-acc-list table.is-sized td, .fin-acc-list table.is-sized td:first-child, .fin-acc-list table.is-sized td:nth-child(3) { width: auto; min-width: 0; max-width: none; }
+.fin-kind { display: inline-block; padding: 2px 8px; line-height: 16px; border-radius: var(--bh-radius-sm); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.fin-kind-haushalt { background: var(--bh-ok-bg); color: var(--bh-ok); }
+.fin-kind-immobilien { background: var(--bh-info-bg); color: var(--bh-info); }
+.fin-kind-treuhand { background: var(--bh-warn-bg); color: var(--bh-warn); }

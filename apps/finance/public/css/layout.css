@@ -99,9 +99,9 @@
 .app-dl dt { color: var(--bh-muted); }
 .app-dl dd { margin: 0; color: var(--bh-text); font-weight: 500; }
 /* Draggable column widths of AppShell.list({ storageKey }) */
-.app-list table th:has(.app-list-resize) { padding-right: 28px; }
-.app-list-resize { position: absolute; top: 0; right: 0; width: 20px; height: 100%; cursor: col-resize; touch-action: none; }
-.app-list-resize::after { content: ""; position: absolute; top: 25%; right: 9px; height: 50%; border-right: 2px solid var(--bh-border); }
+.app-list table th:has(.app-list-resize) { padding-right: 16px; }
+.app-list-resize { position: absolute; top: 0; right: 0; width: 16px; height: 100%; cursor: col-resize; touch-action: none; }
+.app-list-resize::after { content: ""; position: absolute; top: 25%; right: 7px; height: 50%; border-right: 2px solid var(--bh-border); }
 .app-list thead:hover .app-list-resize::after { border-right-color: var(--bh-muted); }
 .app-list-resize:hover::after, .app-list-resize:focus-visible::after { border-right-color: var(--bh-primary); }
 .app-list-resize:focus-visible { outline: 2px solid var(--bh-focus-ring); outline-offset: -2px; }

@@ -4,6 +4,7 @@ window.FinBank = (() => {
   const when = (iso) => new Date(iso).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const BANK_NAMES = { Comdirect: 'comdirect', BBBank: 'BBBank', DKB: 'DKB', PayPal: 'PayPal' };
   const WARN_DAYS = 14;
+  const PEN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   const REASONS = { access_denied: 'Du hast die Freigabe bei der Bank abgebrochen. Es wurde nichts geändert.' };
   let wasRunning = false; let focusHead = false;
 
@@ -23,10 +24,10 @@ window.FinBank = (() => {
     const fetched = a.last_sync_at ? `Zuletzt abgerufen ${esc(when(a.last_sync_at))}${a.first_booked_on ? ` · Buchungen ab ${esc(date(a.first_booked_on))}` : ''}` : 'Noch nicht abgerufen';
     const l = esc(a.label);
     return `<li class="fin-bank-item" data-uid="${esc(a.uid)}" data-name="${l}">
-      <div class="fin-bank-main"><div class="fin-bank-head"><strong>${l}</strong>${badge(a)}</div><div class="fin-hint">${facts}</div><div class="fin-hint">${fetched}</div>
+      <div class="fin-bank-main"><div class="fin-bank-head"><strong>${l}</strong><button type="button" class="fin-acc-rename" data-rename aria-label="${l} umbenennen">${PEN}</button>${badge(a)}</div><div class="fin-hint">${facts}</div><div class="fin-hint">${fetched}</div>
         ${a.last_error && a.status === 'active' ? `<div class="fin-bank-error" role="status">Letzter Abruf fehlgeschlagen: ${esc(a.last_error)}</div>` : ''}</div>
       <div class="fin-bank-actions">${renew ? `<button type="button" class="bh-btn bh-btn-sm bh-btn-primary" data-renew="${esc(a.aspsp)}" aria-label="${l} neu verbinden">Neu verbinden</button>` : ''}
-        <button type="button" class="bh-btn bh-btn-sm" data-rename aria-label="${l} umbenennen">Umbenennen</button><button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-drop aria-label="${l} trennen">Trennen</button></div></li>`;
+        <button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-drop aria-label="${l} trennen">Trennen</button></div></li>`;
   }
 
   function html(s) {
@@ -55,7 +56,7 @@ window.FinBank = (() => {
 
   function renameForm(li, rerender) {
     FinRename.open({ current: li.dataset.name,
-      save: (label, merge) => Fin.api('PATCH', `/bank/accounts/${encodeURIComponent(li.dataset.uid)}`, merge ? { label, merge: true } : { label }),
+      save: ({ name: label }, merge) => Fin.api('PATCH', `/bank/accounts/${encodeURIComponent(li.dataset.uid)}`, merge ? { label, merge: true } : { label }),
       done: () => { focusHead = true; rerender(); } });
   }
 

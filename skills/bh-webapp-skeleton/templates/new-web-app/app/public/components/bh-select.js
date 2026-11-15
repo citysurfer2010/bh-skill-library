@@ -84,7 +84,9 @@
         if (typed) { input.value = typed; q = typed; act = 0; }
       }
       list = h('div', 'bhs__list'); list.id = id + '-l'; list.setAttribute('role', 'listbox'); if (o.label) list.setAttribute('aria-label', o.label); pop.appendChild(list);
-      pop.addEventListener('keydown', onKey); document.body.appendChild(scrim); document.body.appendChild(pop);
+      pop.addEventListener('keydown', onKey);
+      // Inside a modal <dialog> the list must live in the dialog: the dialog sits in the top layer above the page.
+      const layer = host.closest('dialog[open]') || document.body; layer.appendChild(scrim); layer.appendChild(pop);
       document.addEventListener('mousedown', onDoc); window.addEventListener('resize', onMove); window.addEventListener('scroll', onMove, true);
       drawList(); place(); drawBtn(); (input || pop).focus();
     }

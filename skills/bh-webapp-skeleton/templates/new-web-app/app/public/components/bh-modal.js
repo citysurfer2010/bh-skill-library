@@ -1,7 +1,7 @@
 'use strict';
 /**
  * BHModal — a small dialog on the native <dialog>: the browser traps the focus and closes on Esc; focus returns to the opener.
- *   BHModal.open({ title, body, submitLabel, danger, onSubmit(form) })
+ *   BHModal.open({ title, body, submitLabel, danger, onSubmit(form), onOpen?(dialog) })  onOpen e.g. mounts BHSelect fields
  * onSubmit may throw (the message shows in the dialog) or return { next: { title, body, submitLabel, danger, onSubmit } }
  * to ask a follow-up question in the same dialog (e.g. "merge with the existing account?"). title and body are HTML, escaped by the caller.
  */
@@ -47,6 +47,7 @@ window.BHModal = (() => {
           if (field) { field.setAttribute('aria-invalid', 'true'); field.setAttribute('aria-describedby', 'bh-modal-error'); field.focus(); } else submit.focus();
         }
       });
+      if (o.onOpen) o.onOpen(d);
       (d.querySelector('[autofocus]') || (o.danger ? d.querySelector('[data-cancel]') : d.querySelector('input, select, textarea')) || submit).focus();
     }
 
