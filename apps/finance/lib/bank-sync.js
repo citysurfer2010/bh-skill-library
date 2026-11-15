@@ -61,13 +61,13 @@ function store(acc, rows) {
     const byRef = db.prepare('SELECT 1 FROM transactions WHERE account = ? AND bank_ref = ?');
     const csv = db.prepare('SELECT id FROM transactions WHERE account = ? AND bank_ref IS NULL AND amount_cents = ? AND booked_on BETWEEN ? AND ? ORDER BY abs(julianday(booked_on) - julianday(?)), id LIMIT 1');
     const link = db.prepare('UPDATE transactions SET bank_ref = ? WHERE id = ?');
-    const insert = db.prepare('INSERT OR IGNORE INTO transactions (account, booked_on, amount_cents, kind, text, counterparty, category, category_source, suggestion, note, hash, import_id, created_at, bank_ref) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const insert = db.prepare('INSERT OR IGNORE INTO transactions (account, booked_on, amount_cents, kind, text, counterparty, category, category_source, suggestion, note, hash, import_id, created_at, bank_ref, counterparty_iban) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     for (const r of rows) {
       if (byRef.get(acc.label, r.ref)) { known += 1; continue; }
       const match = csv.get(acc.label, r.cents, shiftDay(r.date, -3), shiftDay(r.date, 3), r.date);
       if (match) { link.run(r.ref, match.id); linked += 1; continue; }
       const c = classify(r.counterparty);
-      added += insert.run(acc.label, r.date, r.cents, r.kind, r.text, r.counterparty, c.category, c.source, c.suggestion, '', hashOf(acc.label, { ...r, text: `bank:${r.ref}` }, 1), imp.lastInsertRowid, now(), r.ref).changes;
+      added += insert.run(acc.label, r.date, r.cents, r.kind, r.text, r.counterparty, c.category, c.source, c.suggestion, '', hashOf(acc.label, { ...r, text: `bank:${r.ref}` }, 1), imp.lastInsertRowid, now(), r.ref, r.counterpartyIban || null).changes;
     }
     db.prepare('UPDATE imports SET added = ?, duplicates = ? WHERE id = ?').run(added, rows.length - added, imp.lastInsertRowid);
     db.exec('COMMIT');
@@ -116,6 +116,7 @@ function syncAll(opts = {}) {
     const accs = getDb().prepare("SELECT a.* FROM bank_accounts a JOIN bank_sessions s ON s.session_id = a.session_id WHERE s.status = 'active' AND (s.valid_until IS NULL OR s.valid_until > ?) ORDER BY a.created_at").all(now());
     const out = [];
     for (const a of accs) out.push(await syncAccount(a, opts));
+    if (out.some((o) => o.added)) require('./transfers').detect();
     return out;
   })().finally(() => { running = null; });
   return running;

@@ -36,13 +36,15 @@ window.FinOverview = (() => {
     const t = data.totals;
     const prev = (art) => { const a = data.arts.find((x) => x.art === art); return a?.previous ? `${data.year - 1}: ${euro(a.previous)}` : 'Summe des Jahres'; };
     const kpis = AppShell.kpis([
+      { label: 'Extern rein', value: euro(t.externIn), sub: 'Geld von außen, ohne Transfers' },
+      { label: 'Extern raus', value: euro(t.externOut), sub: 'Geld nach außen, ohne Transfers' },
       { label: 'Einnahmen', value: euro(t.income), sub: prev('Einnahmen') },
       { label: 'Ausgaben', value: euro(t.spending), sub: prev('Ausgaben') },
       { label: 'Überschuss', value: euro(t.result), sub: t.result < 0 ? 'Mehr ausgegeben als eingenommen' : 'Einnahmen minus Ausgaben' },
       { label: 'Investiert und zurückgelegt', value: euro(t.invested + t.reserved), sub: t.savingsRate == null ? '' : `Sparquote ${t.savingsRate.toLocaleString('de-DE')} %` },
     ]);
     const open = t.open ? `<div class="fin-callout"><span>${t.open} Buchungen sind noch nicht zugeordnet und fehlen in den Summen ihrer Kategorie.</span><a class="bh-btn bh-btn-primary bh-btn-sm" href="${BASE}/transactions?year=${data.year}&category=OFFEN">Jetzt zuordnen</a></div>` : '';
-    AppShell.render(host, `<header class="app-topbar"><div><h1>Übersicht ${data.year}</h1><div class="sub">Alle Konten, Beträge in Euro. Klick auf eine Kategorie zeigt ihre Buchungen.</div></div></header>
+    AppShell.render(host, `<header class="app-topbar"><div><h1>Übersicht ${data.year}</h1><div class="sub">Haushaltskonten, Beträge in Euro. Geldtransfers zwischen eigenen Konten zählen nicht. Klick auf eine Kategorie zeigt ihre Buchungen.</div></div></header>
       ${Fin.yearChips(data.years, data.year, '/')}${kpis}${open}${table(data)}`);
   }
 

@@ -93,6 +93,7 @@ if (require.main === module) {
   getDb();
   const server = app.listen(PORT, HOST, () => console.log(`[${APP_ID}] läuft auf http://${HOST}:${PORT} (Pfad: "${APP_BASE}")`));
   bankRoutes.startSchedule();
+  try { const t = require('./lib/transfers').detect(); if (t.byIban + t.byPair) console.log(`[${APP_ID}] Geldtransfers erkannt: ${t.byIban} über IBAN, ${t.byPair} als Paar`); } catch (e) { console.error(`[${APP_ID}] Transfer-Erkennung:`, e.message); }
   const stop = () => server.close(() => { closeDb(); process.exit(0); });
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);

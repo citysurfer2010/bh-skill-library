@@ -25,12 +25,15 @@ function overview(year) {
     const a = (arts[c.art] ||= { art: c.art, months: Array(MONTHS).fill(0), total: 0, previous: 0 });
     c.months.forEach((v, i) => { a.months[i] += v; }); a.total += c.total; a.previous += c.previous || 0;
   }
+  // Money that really came in from outside or went out: household accounts, transfers between own accounts left out.
+  const ext = db.prepare(`SELECT COALESCE(SUM(CASE WHEN amount_cents > 0 THEN amount_cents END), 0) AS rein, COALESCE(SUM(CASE WHEN amount_cents < 0 THEN amount_cents END), 0) AS raus FROM transactions
+    WHERE ${HOUSEHOLD} AND booked_on >= ? AND booked_on < ? AND (category IS NULL OR category NOT IN (SELECT code FROM categories WHERE art = 'Übertrag'))`).get(`${year}-01-01`, `${year + 1}-01-01`);
   const sum = (art) => arts[art]?.total || 0;
   const income = sum('Einnahmen'); const spending = sum('Ausgaben');
   const invested = -sum('Investment'); const reserved = -sum('Rücklagen');
   return {
     year, years: years(), categories, arts: Object.values(arts),
-    totals: { income, spending, result: income + spending, invested, reserved, savingsRate: income > 0 ? Math.round(((invested + reserved) / income) * 1000) / 10 : null, open: categories.find((c) => c.code === 'OFFEN')?.count || 0 },
+    totals: { externIn: ext.rein, externOut: ext.raus, income, spending, result: income + spending, invested, reserved, savingsRate: income > 0 ? Math.round(((invested + reserved) / income) * 1000) / 10 : null, open: categories.find((c) => c.code === 'OFFEN')?.count || 0 },
   };
 }
 

@@ -14,10 +14,11 @@ function toRow(t) {
   const signed = t.credit_debit_indicator === 'DBIT' ? -Math.abs(cents) : Math.abs(cents);
   const text = clean([].concat(t.remittance_information || []).join(' '));
   const party = clean(signed < 0 ? t.creditor?.name : t.debtor?.name);
+  const iban = clean(signed < 0 ? t.creditor_account?.iban : t.debtor_account?.iban).replace(/\s/g, '').toUpperCase() || null;
   const kind = clean(t.bank_transaction_code?.description || t.bank_transaction_code?.code || '');
   // Banks give a stable id; without one, the content stands in (equal lines get their position among equals later).
   const ref = clean(t.entry_reference || t.transaction_id) || `c:${crypto.createHash('sha256').update([date, signed, text, party].join('|')).digest('hex').slice(0, 24)}`;
-  return { date, cents: signed, kind, text: text || party, counterparty: party || extract(text), ref };
+  return { date, cents: signed, kind, text: text || party, counterparty: party || extract(text), counterpartyIban: iban, ref };
 }
 
 /** Rows with the same content-derived ref are real repeats; they are numbered so none is lost. */

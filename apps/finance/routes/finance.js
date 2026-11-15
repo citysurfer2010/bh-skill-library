@@ -67,6 +67,7 @@ function buildRouter() {
     try {
       const parsed = parseBankFile(req.file.buffer, req.body?.account || null);
       const result = ledger.importRows({ filename: req.file.originalname.slice(0, 120), ...parsed, user: req.user.email });
+      require('../lib/transfers').detect();
       const open = getDb().prepare(`SELECT count(*) AS n FROM transactions WHERE category IS NULL AND ${accounts.HOUSEHOLD}`).get().n;
       return res.status(201).json({ ...result, format: parsed.format, account: parsed.account, rows: parsed.rows.length, open });
     } catch (e) { return res.status(400).json({ error: e.message }); }

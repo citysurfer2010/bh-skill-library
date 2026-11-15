@@ -32,6 +32,7 @@ process.stdin.on('end', () => {
     added += r.added; duplicates += r.duplicates;
   }
   categorize.rebuild();
+  require('../lib/transfers').detect();
   console.log(JSON.stringify({ categories: (data.categories || []).length, added, duplicates, rules: db.prepare('SELECT count(*) AS n FROM rules').get().n }));
   closeDb();
 });

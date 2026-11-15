@@ -44,3 +44,10 @@ Eine Buchung ist doppelt, wenn Konto, Tag, Betrag und Text gleich sind. Gleiche 
 - Neue Bankkonten mit eigener Beschreibung heißen danach („BLN, Musterwegstraße 20 - WE01“, Kürzel wie „XYZ - “ vorne entfernt; ein einzelnes Wort bekommt die Bank davor: „DKB Geschäftskonto“).
 - Umbenennen nimmt alle Buchungen, die Bankverbindung und den Bereich mit. Ein vergebener Name wird abgelehnt; nur ein Bankkonto darf sich einem reinen CSV-Konto anschließen, und erst nach Rückfrage (Server antwortet 409 `code: merge`, die Seite fragt „zusammenführen?“ und schickt `merge: true`), weil sich das Zusammenführen nicht rückgängig machen lässt.
 - Offene Buchungen von Immobilien- und Treuhandkonten erscheinen nur grau: sie sind keine Aufgabe für „Zu prüfen“.
+
+## Geldtransfers und „extern rein/raus“ (Matti 15.11.2026)
+
+- Zahlungen zwischen eigenen Konten sind Geldtransfer (TRANS), nie Einnahme oder Ausgabe. Wichtig ist, was extern rein- und rausgeht.
+- Erkennung (`lib/transfers.js`), nach jedem CSV-Import, Bankabruf und beim Start: (1) Gegen-IBAN oder eine IBAN im Text gehört zu einem eigenen Konto (nicht dem eigenen); (2) ohne IBAN: gleicher Betrag mit umgekehrtem Vorzeichen auf zwei eigenen Konten innerhalb von 3 Tagen, nur wenn das Paar eindeutig ist und eine Seite einen Kontoinhaber nennt.
+- Gesetzt wird nur bei offenen oder per Regel gebuchten Zeilen (`category_source` = transfer); manuelle und aus der Tabelle übernommene Kategorien bleiben.
+- Übersicht: „Extern rein“ und „Extern raus“ = alle Haushaltsbuchungen des Jahres ohne Übertrag, auch noch nicht zugeordnete.
