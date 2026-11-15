@@ -32,10 +32,10 @@ test('lists five read-only tools and answers in euros with the key', async () =>
   const env = { BH_FINANCE_URL: `http://127.0.0.1:${stub.address().port}/finance`, BH_FINANCE_KEY: 'bhfin_test' };
   const [list, loans, tx] = await rpc(env, [
     { jsonrpc: '2.0', id: 1, method: 'tools/list' },
-    { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'finance_get_loans', arguments: {} } },
-    { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'finance_search_transactions', arguments: { q: 'Kabel', year: 'all', limit: 5 } } },
+    { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'get_loans', arguments: {} } },
+    { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'search_transactions', arguments: { q: 'Kabel', year: 'all', limit: 5 } } },
   ].map((m) => m));
-  assert.deepEqual(list.result.tools.map((t) => t.name).sort(), ['finance_get_estate', 'finance_get_investments', 'finance_get_loans', 'finance_get_overview', 'finance_search_transactions']);
+  assert.deepEqual(list.result.tools.map((t) => t.name).sort(), ['get_estate', 'get_investments', 'get_loans', 'get_overview', 'search_transactions']);
   const l = JSON.parse(loans.result.content[0].text);
   assert.equal(l.totals.balance, 123456.78); assert.equal(l.loans[0].balance_now_eur, 90000);
   assert.equal(JSON.parse(tx.result.content[0].text).sum_eur, -23.98);
@@ -43,13 +43,13 @@ test('lists five read-only tools and answers in euros with the key', async () =>
 });
 
 test('without setup or with a revoked key the tool says so plainly', async () => {
-  const [none] = await rpc({ BH_FINANCE_URL: '', BH_FINANCE_KEY: '' }, [{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'finance_get_estate', arguments: {} } }]);
+  const [none] = await rpc({ BH_FINANCE_URL: '', BH_FINANCE_KEY: '' }, [{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_estate', arguments: {} } }]);
   assert.match(none.result.content[0].text, /nicht eingerichtet/); assert.equal(none.result.isError, true);
-  const [bad] = await rpc({ BH_FINANCE_URL: `http://127.0.0.1:${stub.address().port}/finance`, BH_FINANCE_KEY: 'bhfin_alt' }, [{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'finance_get_estate', arguments: {} } }]);
+  const [bad] = await rpc({ BH_FINANCE_URL: `http://127.0.0.1:${stub.address().port}/finance`, BH_FINANCE_KEY: 'bhfin_alt' }, [{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_estate', arguments: {} } }]);
   assert.match(bad.result.content[0].text, /Kein Zugang/);
 });
 
 test('every tool counts as read-only for Zottel (a read verb in its name)', () => {
   const READ = /(^|_)(list|get|search|read|find)(_|$)/; // subset of apps/zottel/lib/tool-policy.js
-  for (const t of require('../tools/index.js').TOOL_NAMES) assert.match(t, READ, t);
+  for (const t of require('../tools/index.js').TOOL_NAMES) assert.match(`finance_${t}`, READ, t); // the gateway prefixes the server id
 });

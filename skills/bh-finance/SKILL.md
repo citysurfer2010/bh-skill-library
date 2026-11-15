@@ -51,7 +51,7 @@ Unter „Importieren“ → „Bankkonten“ eine Bank verbinden (comdirect, BBB
 
 ## MCP-Werkzeuge (für Zottel)
 
-Server `skills/bh-finance/server` im MCP-Gateway (`servers.json`, Eintrag `finance`), nur lesend und nur für die dort genannten Personen (derzeit `matti`). Handelt Zottel für jemand anderen, z. B. ein Kind, sieht er die Werkzeuge nicht.
+Server `skills/bh-finance/server` im MCP-Gateway (`servers.json`, Eintrag `finance`; das Gateway stellt `finance_` vor die Werkzeugnamen), nur lesend und nur für die dort genannten Personen (derzeit `matti`). Handelt Zottel für jemand anderen, z. B. ein Kind, sieht er die Werkzeuge nicht.
 
 | Werkzeug | Zweck |
 |---|---|
