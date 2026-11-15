@@ -86,44 +86,61 @@ window.FinTransactions = (() => {
     render(pageHost, yearPart === 'all' ? null : Number(yearPart));
   }
 
-  /** Filters for year, category and account (Matti 15.11.2026); all of them typing dropdowns, kept in the address. */
+  /** Box filter and search live in the address too, so every view can be shared (Matti 15.11.2026); they only replace the entry. */
+  function setParam(key, value) {
+    const q = new URLSearchParams(location.search); if (value) q.set(key, value); else q.delete(key);
+    history.replaceState(null, '', `${location.pathname}${q.toString() ? `?${q}` : ''}`); listKey = keyOf(); resetButton();
+  }
+  const THIS_YEAR = String(new Date().getFullYear());
+  /** Anything that differs from the plain list of this year's private accounts. */
+  const anyActive = () => { const q = new URLSearchParams(location.search); return (allYears || String(year || THIS_YEAR) !== THIS_YEAR) || ['category', 'account', 'scope', 'show', 'q'].some((k) => q.get(k)); };
+  function resetButton() {
+    const b = pageHost && pageHost.querySelector('[data-reset-filters]'); if (b) b.hidden = !anyActive();
+  }
+
+  /** Filters for year, category and account (Matti 15.11.2026); typing dropdowns, kept in the address, highlighted when set. */
   function filters(years) {
-    const cur = allYears ? 'all' : String(year || new Date().getFullYear());
-    const mount = (id, options, value, label, onPick) => {
+    const cur = allYears ? 'all' : String(year || THIS_YEAR);
+    const mount = (id, options, value, label, onPick, plain) => {
       const el = pageHost.querySelector(id); if (!el) return;
+      el.classList.toggle('is-on', value !== plain);
       const pick = BHSelectCore.create(el, { options, value, label, searchPlaceholder: `${label} suchen …`, onChange: (v) => { pick.update({ value: v }); onPick(v); } });
     };
     const ys = [...new Set([...(years || []), Number(cur)].filter(Boolean))].sort((a, b) => b - a);
-    mount('#fin-year-filter', [{ value: 'all', label: 'Alle Jahre' }].concat(ys.map((y) => ({ value: String(y), label: String(y) }))), cur, 'Jahr', (v) => go(v, () => {}));
+    mount('#fin-year-filter', [{ value: 'all', label: 'Alle Jahre' }].concat(ys.map((y) => ({ value: String(y), label: String(y) }))), cur, 'Jahr', (v) => go(v, () => {}), THIS_YEAR);
     const catNow = new URLSearchParams(location.search).get('category') || '';
     mount('#fin-cat-filter', [{ value: '', label: 'Alle Kategorien' }, { value: 'OFFEN', label: 'Noch nicht zugeordnet' }].concat(cats.map((c) => ({ value: c.code, label: c.name, hint: c.art }))), catNow, 'Kategorie',
-      (v) => go(cur, (q) => { q.delete('category'); if (v) q.set('category', v); }));
+      (v) => go(cur, (q) => { q.delete('category'); if (v) q.set('category', v); }), '');
     mount('#fin-acc-filter', [{ value: '', label: 'Alle Privatkonten' }, { value: '*all', label: 'Alle Konten' }].concat(accts.map((x) => ({ value: x.name, label: x.name, hint: scopes[x.scope] || '' }))),
-      account || (everyAccount ? '*all' : ''), 'Konto', (v) => go(cur, (q) => { q.delete('account'); q.delete('scope'); if (v === '*all') q.set('scope', 'all'); else if (v) q.set('account', v); }));
+      account || (everyAccount ? '*all' : ''), 'Konto', (v) => go(cur, (q) => { q.delete('account'); q.delete('scope'); if (v === '*all') q.set('scope', 'all'); else if (v) q.set('account', v); }), '');
+    pageHost.querySelector('[data-reset-filters]').addEventListener('click', () => { history.pushState(null, '', Fin.yearHref(THIS_YEAR, 'transactions')); render(pageHost, Number(THIS_YEAR)); });
+    resetButton();
   }
 
   async function render(host, y, id, jumped = false) {
     year = y; category = new URLSearchParams(location.search).get('category'); account = new URLSearchParams(location.search).get('account'); everyAccount = new URLSearchParams(location.search).get('scope') === 'all'; allYears = !jumped && Fin.allYears(); pageHost = host; listKey = keyOf();
-    filter = 'all'; if (category === 'OFFEN') { filter = 'open'; category = null; } // a new list starts from all lines unless it asks for the open ones
+    const params = new URLSearchParams(location.search); const search = params.get('q') || '';
+    filter = ['open', 'in', 'out'].includes(params.get('show')) ? params.get('show') : 'all'; if (category === 'OFFEN') { filter = 'open'; category = null; } // a new list starts from all lines unless the address asks for a box
     const [c, a] = await Promise.all([Fin.api('GET', '/categories'), Fin.api('GET', '/accounts')]);
     cats = c.categories; accts = a.accounts; scopes = a.scopes;
     const catName = category ? cats.find((c) => c.code === category)?.name || category : null;
     page = BHListPage.render(host, {
-      toolbarRight: '<div class="fin-filters"><div class="fin-acc-filter" id="fin-year-filter"></div><div class="fin-acc-filter" id="fin-cat-filter"></div><div class="fin-acc-filter" id="fin-acc-filter"></div></div>',
-      title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || new Date().getFullYear()}`} · ${account ? 'ein Konto' : everyAccount ? 'alle Konten' : 'Privatkonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …' },
-      kpis: kpis(), kpiActive: filter, onKpi: (k) => { filter = k; page.setKpis(kpis(), k); page.table.setRows(visible()); },
+      toolbarRight: '<div class="fin-filters" role="group" aria-label="Filter"><div class="fin-acc-filter" id="fin-year-filter"></div><div class="fin-acc-filter" id="fin-acc-filter"></div><div class="fin-acc-filter" id="fin-cat-filter"></div><button type="button" class="bh-btn bh-btn-sm fin-reset" data-reset-filters hidden>Filter zurücksetzen</button></div>',
+      title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || new Date().getFullYear()}`} · ${account ? 'ein Konto' : everyAccount ? 'alle Konten' : 'Privatkonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …', value: search, onInput: (v) => { page.table.setFilter(v); setParam('q', v); } },
+      kpis: kpis(), kpiActive: filter, onKpi: (k) => { filter = k; page.setKpis(kpis(), k); page.table.setRows(visible()); setParam('show', k === 'all' ? '' : k); },
       topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }],
       countLabel: ['Buchung', 'Buchungen'],
       table: { storageKey: 'finance-transactions', rowHref: (r) => `${BASE}/transactions/${r.id}${location.search}`, itemLabel: ['Buchung', 'Buchungen'], emptyMessage: 'Keine Buchungen in dieser Auswahl.',
         columns: [
-          { key: 'booked_on', label: 'Datum', width: 124, render: (r) => esc(date(r.booked_on)), sortValue: (r) => r.booked_on },
+          { key: 'booked_on', label: 'Datum', width: 132, render: (r) => esc(date(r.booked_on)), sortValue: (r) => r.booked_on },
           { key: 'counterparty', label: 'Gegenpartei', width: 220 },
           { key: 'amount_cents', label: 'Betrag', width: 130, align: 'right', render: (r) => Fin.amount(r.amount_cents), sortValue: (r) => r.amount_cents },
           { key: 'category', label: 'Kategorie', width: 200, render: catCell, sortValue: (r) => r.category || '' },
-          { key: 'account', label: 'Konto', width: 110 }, { key: 'text', label: 'Text', width: 320, render: (r) => (r.amazon_titles ? `<span class="fin-amazon-titles">Amazon: ${esc(r.amazon_titles)}</span>` : esc(r.text)), sortValue: (r) => r.amazon_titles || r.text },
+          { key: 'account', label: 'Konto', width: 170 }, { key: 'text', label: 'Text', width: 280, render: (r) => (r.amazon_titles ? `<span class="fin-amazon-titles">Amazon: ${esc(r.amazon_titles)}</span>` : esc(r.text)), sortValue: (r) => r.amazon_titles || r.text },
         ].filter((c) => !(account && c.key === 'account')) },
     });
     const data = await load();
+    if (search) page.table.setFilter(search);
     filters(data.years);
     if (!year && data.years.length) year = data.years[0];
     // A link to a transaction of another year opens that year, so every transaction address works on its own.

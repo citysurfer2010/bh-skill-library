@@ -121,8 +121,21 @@
 .fin-kind-immobilien { background: var(--bh-info-bg); color: var(--bh-info); }
 .fin-kind-treuhand { background: var(--bh-warn-bg); color: var(--bh-warn); }
 
-.fin-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.fin-filters .fin-acc-filter { min-width: 150px; }
+/* Filter bar of the transactions (Matti 15.11.2026): one row right of the count, a set filter is highlighted; on the phone a grid below the count. */
+.bhlp-toolbar-right:has(.fin-filters) { flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
+.fin-filters { flex: 1 1 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; padding-block: 6px; }
+.fin-filters .fin-acc-filter { min-width: 120px; }
+@media (min-width: 721px) { #fin-year-filter { width: 120px; } #fin-acc-filter, #fin-cat-filter { width: 200px; } }
+.fin-filters .fin-reset[hidden] { display: none; }
+.bhlp-search input:not(:placeholder-shown) { border-color: var(--bh-primary); box-shadow: 0 0 0 1px var(--bh-primary); background: var(--bh-primary-soft); }
+.fin-filters .fin-acc-filter.is-on .bhs__btn { border-color: var(--bh-primary); box-shadow: 0 0 0 1px var(--bh-primary); background: var(--bh-primary-soft); color: var(--bh-primary); font-weight: 600; }
+@media (max-width: 720px) {
+  .bhlp-toolbar:has(.fin-filters) { flex-wrap: wrap; padding-block: 8px; }
+  .bhlp-toolbar-right:has(.fin-filters) { width: 100%; }
+  .fin-filters { display: grid; grid-template-columns: 1fr 1fr; width: 100%; padding-block: 0; }
+  .fin-filters .fin-acc-filter { min-width: 0; }
+  .fin-filters #fin-cat-filter, .fin-filters .fin-reset { grid-column: 1 / -1; }
+}
 .fin-row-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .fin-bank-error-inline { color: var(--bh-danger); font-size: 12px; }
 .fin-csv-result { margin: 0; padding-left: 18px; }
@@ -166,3 +179,21 @@
 }
 .fin-conn-list .fin-badge-danger { white-space: normal; }
 @media (min-width: 641px) { .fin-conn-list td:nth-child(5) { max-width: 200px; } }
+
+/* Phone (UX check 15.11.2026): KPI boxes 2 x 2 so filters and results stay in view. */
+@media (max-width: 720px) { .bhlp-kpis { grid-template-columns: 1fr 1fr; gap: 8px; padding-block: 12px; } .bhlp-kpis .bhlp-kpi { padding: 8px 12px; } }
+
+/* Categories: a fixed code shows as locked; on the phone each row is a card (name, then kind and budget). */
+.bh-modal-body .bh-input:disabled { background: var(--bh-bg-subtle); color: var(--bh-muted); cursor: not-allowed; }
+.fin-cat-list .fin-acc-name strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: unset; display: block; } .fin-cat-list .fin-tag { flex-shrink: 0; }
+@media (max-width: 640px) {
+  .fin-cat-list table, .fin-cat-list tbody { display: block; }
+  .fin-cat-list colgroup, .fin-cat-list thead { display: none; }
+  .fin-cat-list tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; padding: 12px 16px; border-bottom: 1px solid var(--bh-border-light); }
+  .fin-cat-list td { padding: 0 !important; border: 0 !important; min-width: 0 !important; width: auto !important; }
+  .fin-cat-list td:first-child { grid-column: 1 / -1; }
+  .fin-cat-list td:nth-child(2), .fin-cat-list td:nth-child(3):not(:last-child) { color: var(--bh-muted); font-size: 13px; }
+  .fin-cat-list td:nth-child(3):not(:last-child) { grid-column: 1 / -1; grid-row: 3; }
+  .fin-cat-list td:last-child { grid-row: 2; grid-column: 2; } .fin-cat-list .fin-budget { width: 120px; }
+}
+@media (max-width: 480px) { .bhdt-footer button, .bhdt-footer span, .bhdt-footer label { white-space: nowrap; } }
