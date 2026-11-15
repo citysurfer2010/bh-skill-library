@@ -32,9 +32,9 @@ window.Fin = (() => {
   }
 
   /** Amazon puts the order number (302-1234567-1234567) into the payment text; it links straight to the order. */
-  const amazonOrder = (text) => /\b(\d{3}-\d{7}-\d{7})\b/.exec(String(text || ''))?.[1] || null;
+  const amazonOrder = (text) => /\b([0-9D]\d{2}-\d{7}-\d{7})\b/.exec(String(text || ''))?.[1] || null;
   const amazonLink = (text) => {
-    const id = /^\d{3}-\d{7}-\d{7}$/.test(String(text || '')) ? text : amazonOrder(text);
+    const id = /^[0-9D]\d{2}-\d{7}-\d{7}$/.test(String(text || '')) ? text : amazonOrder(text);
     return id ? `<a class="bh-btn bh-btn-sm fin-amazon" href="https://www.amazon.de/gp/your-account/order-details?orderID=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">Bestellung <span class="fin-num">${esc(id)}</span> ansehen</a>` : '';
   };
 

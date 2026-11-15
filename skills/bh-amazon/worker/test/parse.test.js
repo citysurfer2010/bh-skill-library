@@ -42,3 +42,8 @@ test('payment rows in the format of the real page (Nov 2026): English amount, ow
   assert.equal(parsePayment({ text: '3. März 2025·Amazon.de Visa •••1234 Bestellnummer 028-3333333-4444444 +€1,234.50 Erstattet' }).cents, 123450);
   assert.equal(parsePayment({ text: '3. März 2025·Amazon.de Lastschrift Bestellnummer 028-3333333-4444444 -1.234,50 €' }).cents, -123450);
 });
+
+test('order cards as on the history page: digital orders, English totals, items with product links', () => {
+  const o = parseCards([{ text: 'Bestellung aufgegeben 3. Februar 2025 Summe €23.98 Bestellnr. D01-1234567-7654321', products: [{ text: '', href: '/dp/B0ABCDEF12' }, { text: 'Hörbuch: Der kleine Drache', href: '/gp/product/B0ABCDEF12?ref=x' }] }])[0];
+  assert.deepEqual(o, { id: 'D01-1234567-7654321', date: '2025-02-03', totalCents: 2398, items: [{ asin: 'B0ABCDEF12', title: 'Hörbuch: Der kleine Drache', url: 'https://www.amazon.de/dp/B0ABCDEF12' }] });
+});

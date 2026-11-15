@@ -73,6 +73,8 @@ function migrate(conn) {
     CREATE INDEX IF NOT EXISTS idx_amazon_pay_amount ON amazon_payments(amount_cents, paid_on);
     CREATE TABLE IF NOT EXISTS amazon_items (order_id TEXT NOT NULL, asin TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL, PRIMARY KEY (order_id, asin));
     CREATE TABLE IF NOT EXISTS amazon_orders_seen (order_id TEXT PRIMARY KEY, fetched_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS amazon_orders (order_id TEXT PRIMARY KEY, ordered_on TEXT, total_cents INTEGER, fetched_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS idx_amazon_orders_date ON amazon_orders(ordered_on);
     CREATE TABLE IF NOT EXISTS app_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
   `);
   const txCols = conn.prepare('PRAGMA table_info(transactions)').all().map((c) => c.name);

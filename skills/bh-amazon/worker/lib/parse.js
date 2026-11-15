@@ -3,7 +3,8 @@
  * Reads Amazon order cards from their visible text, not from page structure: Amazon changes its markup often,
  * the words "Bestellung aufgegeben", "Summe" and the order number pattern stay. Pure functions, tested with sample text.
  */
-const ORDER_ID = /\b(\d{3}-\d{7}-\d{7})\b/;
+// Physical orders 302-…, digital ones (Prime Video, Kindle) D01-….
+const ORDER_ID = /\b([0-9D]\d{2}-\d{7}-\d{7})\b/;
 const MONTHS = { januar: 1, februar: 2, märz: 3, maerz: 3, april: 4, mai: 5, juni: 6, juli: 7, august: 8, september: 9, oktober: 10, november: 11, dezember: 12 };
 
 /** "3. Februar 2025" → "2025-02-03" */
@@ -15,8 +16,8 @@ function germanDate(text) {
 
 /** "12,34 €", "€ 12,34", "1.234,56 €" → cents */
 function euroCents(text) {
-  const m = /(?:€\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})(?:\s*€)?/.exec(text || '');
-  return m ? Math.round(Number(m[1].replace(/\./g, '').replace(',', '.')) * 100) : null;
+  const m = /€\s?(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})(?!\d)/.exec(text || '') || /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*€/.exec(text || '');
+  return m ? Math.round(Number(m[1].replace(/[.,](?=\d{3}(?:[.,]|$))/g, '').replace(',', '.')) * 100) : null;
 }
 
 /** One card: its full text plus the texts of its product links. */
@@ -24,8 +25,13 @@ function parseCard({ text, products = [] }) {
   const id = ORDER_ID.exec(text || '')?.[1];
   if (!id) return null;
   const after = (label) => { const i = text.search(label); return i < 0 ? '' : text.slice(i, i + 80); };
-  const items = [...new Set(products.map((p) => String(p).replace(/\s+/g, ' ').trim()).filter((p) => p.length > 2 && !/^(artikel ansehen|erneut kaufen|produktsupport|bewertung|rücksendung|lieferung verfolgen)/i.test(p)))];
-  return { id, date: germanDate(after(/Bestellung aufgegeben|Bestelldatum/i)), totalCents: euroCents(after(/Summe|Gesamtbetrag/i)), items: items.slice(0, 20) };
+  // products: plain titles (older callers) or { text, href } links of the card, which give the product page too.
+  const links = products.map((p) => (typeof p === 'string' ? { text: p, href: '' } : p));
+  const withAsin = parseItems(links);
+  const titles = [...new Set(links.map((p) => String(p.text || '').replace(/\s+/g, ' ').trim()).filter((p) => p.length > 2 && !/^(artikel ansehen|erneut kaufen|produktsupport|bewertung|rücksendung|lieferung verfolgen)/i.test(p)))];
+  const items = withAsin.length ? withAsin : titles.map((title) => ({ asin: '', title, url: '' }));
+  const card = { id, date: germanDate(after(/Bestellung aufgegeben|Bestelldatum/i)), totalCents: euroCents(after(/Summe|Gesamtbetrag/i)), items: items.slice(0, 20) };
+  return products.length && typeof products[0] === 'string' ? { ...card, items: card.items.map((i) => i.title) } : card;
 }
 
 function parseCards(cards) {

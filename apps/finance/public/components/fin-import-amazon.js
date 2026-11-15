@@ -24,7 +24,7 @@ window.FinAmazon = (() => {
     const relogin = s.lastError === 'login';
     if (!s.connected || relogin || step) return `<section class="card fin-upload fin-amz">${head}${relogin && !step ? '<p class="fin-bank-error" role="status">Die Amazon-Anmeldung ist abgelaufen. Bitte neu verbinden.</p>' : ''}${form(s)}</section>`;
     const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-    const facts = s.payments ? `${n(s.payments, 'Zahlung', 'Zahlungen')} seit ${Fin.esc(Fin.date(s.first))} · ${n(s.withItems, 'Bestellung', 'Bestellungen')} mit Artikeln · ${n(s.linked, 'Buchung', 'Buchungen')} zugeordnet` : 'Noch nichts abgerufen.';
+    const facts = s.orders || s.payments ? `${n(s.orders, 'Bestellung', 'Bestellungen')} seit ${Fin.esc(Fin.date(s.first))} · ${n(s.withItems, 'mit Artikeln', 'mit Artikeln')} · ${n(s.linked, 'Buchung', 'Buchungen')} zugeordnet` : 'Noch nichts abgerufen.';
     return `<section class="card fin-upload fin-amz">${head}<p class="fin-hint">${facts}${s.lastSync ? ` · zuletzt ${Fin.esc(when(s.lastSync))}` : ''}</p>
       ${s.running ? '<p class="fin-hint" role="status" aria-live="polite">Abruf läuft. Beim ersten Mal dauert er einige Minuten, die Seite aktualisiert sich selbst.</p>' : ''}
       ${s.lastError && !relogin ? `<p class="fin-bank-error" role="status">Letzter Abruf fehlgeschlagen: ${Fin.esc(s.lastError)}</p>` : ''}

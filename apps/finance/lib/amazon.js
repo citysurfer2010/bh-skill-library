@@ -7,7 +7,7 @@
 const { getDb } = require('./db');
 const api = require('./amazon-api');
 
-const ORDER = /\b(\d{3}-\d{7}-\d{7})\b/;
+const ORDER = /\b([0-9D]\d{2}-\d{7}-\d{7})\b/; // physical 302-…, digital D01-…
 const FIRST_FROM = '2021-01-01';
 const OVERLAP_DAYS = 10;
 const MIN_GAP_MS = 20 * 3600_000;
@@ -21,7 +21,7 @@ function link() {
   db.exec('BEGIN IMMEDIATE');
   try {
     const set = db.prepare('UPDATE transactions SET amazon_order = ? WHERE id = ?');
-    for (const r of db.prepare("SELECT id, text FROM transactions WHERE amazon_order IS NULL AND text GLOB '*[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*'").all()) {
+    for (const r of db.prepare("SELECT id, text FROM transactions WHERE amazon_order IS NULL AND text GLOB '*[0-9D][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*'").all()) {
       const id = ORDER.exec(r.text)?.[1]; if (id) byText += set.run(id, r.id).changes;
     }
     const open = db.prepare("SELECT id, booked_on, amount_cents FROM transactions WHERE amazon_order IS NULL AND (lower(text) LIKE '%amazon%' OR lower(counterparty) LIKE '%amazon%' OR text LIKE '%AMZN%')").all();
@@ -47,8 +47,30 @@ function storeItems(map) {
   const ins = db.prepare('INSERT OR REPLACE INTO amazon_items (order_id, asin, title, url) VALUES (?, ?, ?, ?)');
   const seen = db.prepare('INSERT OR REPLACE INTO amazon_orders_seen (order_id, fetched_at) VALUES (?, ?)');
   let n = 0;
-  for (const [orderId, items] of Object.entries(map)) { for (const i of items) n += ins.run(orderId, i.asin, i.title, i.url).changes; seen.run(orderId, now()); }
+  // A fresh list replaces the old one, so items read wrongly before (e.g. recommendations) disappear on the next fetch.
+  const clear = db.prepare('DELETE FROM amazon_items WHERE order_id = ?');
+  for (const [orderId, items] of Object.entries(map)) {
+    if (items.length) clear.run(orderId);
+    for (const i of items) n += ins.run(orderId, i.asin, i.title, i.url).changes;
+    seen.run(orderId, now());
+  }
   return n;
+}
+
+/** Orders from the history pages, with their items; each order counts as done for the item lookup. */
+function storeOrders(list) {
+  const db = getDb(); let added = 0;
+  const ins = db.prepare('INSERT INTO amazon_orders (order_id, ordered_on, total_cents, fetched_at) VALUES (?, ?, ?, ?) ON CONFLICT (order_id) DO UPDATE SET ordered_on = COALESCE(excluded.ordered_on, ordered_on), total_cents = COALESCE(excluded.total_cents, total_cents), fetched_at = excluded.fetched_at');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    for (const o of list) {
+      added += db.prepare('SELECT 1 FROM amazon_orders WHERE order_id = ?').get(o.id) ? 0 : 1;
+      ins.run(o.id, o.date || null, o.totalCents ?? null, now());
+    }
+    db.exec('COMMIT');
+  } catch (e) { db.exec('ROLLBACK'); throw e; }
+  storeItems(Object.fromEntries(list.map((o) => [o.id, (o.items || []).filter((i) => i && i.asin)])));
+  return added;
 }
 
 let running = null;
@@ -59,15 +81,20 @@ function sync({ force = false } = {}) {
     const last = state('amazon_last_sync');
     if (!force && last && Date.now() - Date.parse(last) < MIN_GAP_MS) return { skipped: true };
     try {
+      // History: all years once, then daily only up to the newest orders already known.
+      const known = getDb().prepare('SELECT order_id FROM amazon_orders ORDER BY ordered_on DESC LIMIT 30').all().map((r) => r.order_id);
+      const { orders } = await api.orders(known.length ? `${new Date().getFullYear() - 1}-01-01` : FIRST_FROM, known);
+      const newOrders = storeOrders(orders);
+      // Charges of the last weeks (one row per shipment) from the payments page.
       const lastPaid = getDb().prepare('SELECT max(paid_on) AS d FROM amazon_payments').get().d;
       const { payments } = await api.payments(lastPaid ? shift(lastPaid, -OVERLAP_DAYS) : FIRST_FROM);
       const added = storePayments(payments);
+      // Items only for paid orders the history did not cover (rare); the history already brings them.
       const need = getDb().prepare('SELECT order_id FROM amazon_payments WHERE order_id NOT IN (SELECT order_id FROM amazon_orders_seen) GROUP BY order_id ORDER BY max(paid_on) DESC LIMIT 60').all().map((r) => r.order_id);
-      // Every order asked for counts as done, also when Amazon shows no items for it (e.g. a gift card), so it is not asked again daily.
       const items = need.length ? storeItems({ ...Object.fromEntries(need.map((id) => [id, []])), ...(await api.items(need)) }) : 0;
       const linked = link();
       state('amazon_last_sync', now()); state('amazon_last_error', '');
-      return { payments: payments.length, added, items, linked };
+      return { orders: orders.length, newOrders, payments: payments.length, added, items, linked };
     } catch (e) {
       const plain = e.code === 'login' ? 'login' : /timeout|aborted/i.test(e.message) ? 'Amazon hat zu lange gebraucht, morgen geht es weiter.' : /captcha/i.test(e.message) ? 'Amazon verlangt eine Sicherheitsabfrage. Bitte neu verbinden.' : e.status === 502 ? 'Amazon-Dienst nicht erreichbar.' : String(e.message).slice(0, 200);
       state('amazon_last_sync', now()); state('amazon_last_error', plain);
@@ -82,13 +109,13 @@ function status() {
   return {
     configured: api.configured(), running: !!running,
     lastSync: state('amazon_last_sync') || null, lastError: state('amazon_last_error') || null,
-    payments: one('SELECT count(*) AS n FROM amazon_payments'), orders: one('SELECT count(DISTINCT order_id) AS n FROM amazon_payments'),
+    payments: one('SELECT count(*) AS n FROM amazon_payments'), orders: one('SELECT count(*) AS n FROM amazon_orders'),
     withItems: one('SELECT count(DISTINCT order_id) AS n FROM amazon_items'), linked: one('SELECT count(*) AS n FROM transactions WHERE amazon_order IS NOT NULL'),
-    first: db.prepare('SELECT min(paid_on) AS d FROM amazon_payments').get().d,
+    first: db.prepare('SELECT min(d) AS d FROM (SELECT min(ordered_on) AS d FROM amazon_orders UNION ALL SELECT min(paid_on) FROM amazon_payments)').get().d,
   };
 }
 
 /** Items of one order for a transaction's detail. */
 const itemsOf = (orderId) => (orderId ? getDb().prepare('SELECT asin, title, url FROM amazon_items WHERE order_id = ? ORDER BY title').all(orderId).map((r) => ({ ...r })) : []);
 
-module.exports = { link, sync, status, itemsOf, storePayments, storeItems, MIN_GAP_MS };
+module.exports = { link, sync, status, itemsOf, storePayments, storeItems, storeOrders, MIN_GAP_MS };

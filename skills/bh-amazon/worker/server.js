@@ -26,6 +26,7 @@ const routes = {
   'POST /login/answer': async (b) => serial(() => login.answer({ code: b.code, captcha: b.captcha })),
   'POST /logout': async () => { forget(); return { connected: false }; },
   'POST /payments': async (b) => serial(() => fetcher.payments({ since: /^\d{4}-\d{2}-\d{2}$/.test(b.since || '') ? b.since : undefined })),
+  'POST /orders': async (b) => serial(() => fetcher.orders({ since: /^\d{4}-\d{2}-\d{2}$/.test(b.since || '') ? b.since : undefined, stopAt: [].concat(b.stopAt || []).slice(0, 200) })),
   'POST /items': async (b) => serial(() => fetcher.items([].concat(b.orderIds || []).filter((x) => /^\d{3}-\d{7}-\d{7}$/.test(x)))),
 };
 

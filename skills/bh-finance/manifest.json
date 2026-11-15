@@ -1,7 +1,7 @@
 {
   "skill_id": "bh-finance",
   "name": "bh-finance",
-  "version": "26.11.23",
+  "version": "26.11.24",
   "description": "Private Haushaltsfinanzen: Buchungen, Kategorien, Auswertung und Investments",
   "author": "bh-platform",
   "schema_version": "2.0"
