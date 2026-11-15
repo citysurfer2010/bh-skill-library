@@ -6,7 +6,8 @@ cd "$(dirname "$0")"
 ENV=/srv/bh-platform/.env; D=/srv/edge
 val() { sed -n "s/^$1=//p" "$ENV" | head -1; }
 domain=$(val EDGE_DOMAIN); [ -n "$domain" ] && [ -n "$(val CLOUDFLARE_TUNNEL_TOKEN)" ] || { echo "EDGE_DOMAIN oder Tunnel-Token fehlt" >&2; exit 1; }
-install -d -m 711 "$D"; install -d -m 755 "$D/conf" "$D/conf/apps"
+install -d -m 711 "$D"; install -d -m 755 "$D/conf" "$D/conf/apps" "$D/conf/legal"
+install -m 644 legal/*.html "$D/conf/legal/"
 sed "s/__DOMAIN__/$domain/g" nginx.conf.template >"$D/conf/default.conf"; chmod 644 "$D/conf/default.conf"
 (umask 077; printf 'TUNNEL_TOKEN=%s\n' "$(val CLOUDFLARE_TUNNEL_TOKEN)" >"$D/tunnel.env")
 docker network inspect bh-apps-net >/dev/null 2>&1 || docker network create bh-apps-net >/dev/null

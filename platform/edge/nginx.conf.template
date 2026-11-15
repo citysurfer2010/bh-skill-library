@@ -45,6 +45,10 @@ server {
     return 302 /login?next=$request_uri;
   }
 
+  # Public legal pages (named at the bank access provider Enable Banking), no login.
+  location = /datenschutz { default_type "text/html; charset=utf-8"; alias /etc/nginx/conf.d/legal/datenschutz.html; }
+  location = /nutzungsbedingungen { default_type "text/html; charset=utf-8"; alias /etc/nginx/conf.d/legal/nutzungsbedingungen.html; }
+
   # Pure display screen; technically served by the Beamer app because it shows its data.
   location = /heute { return 301 /today; }
 
