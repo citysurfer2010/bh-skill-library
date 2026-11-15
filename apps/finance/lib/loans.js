@@ -8,6 +8,7 @@
  */
 const { getDb } = require('./db');
 const statements = require('./loan-statements');
+const estateLinks = require('./estate-links');
 
 const num = (s) => (s == null ? 0 : Math.round(Number(String(s).replace(/\./g, '').replace(',', '.')) * 100));
 const digits = (s) => String(s || '').replace(/\D/g, '');
@@ -69,7 +70,7 @@ function overview() {
   for (const l of loans) {
     const s = l.ref ? statements.of(l.ref) : { history: [], rate: null, docs: null };
     const last = s.history.at(-1);
-    Object.assign(l, { rate_pct: s.rate, docs_url: s.docs, history: s.history, bank_balance: last || null,
+    Object.assign(l, { rate_pct: s.rate, docs_url: s.docs || estateLinks.of(l.unit_key).finance_url || null, history: s.history, bank_balance: last || null,
       balance_now_cents: last ? last.cents - l.paid.filter((x) => x.on > last.on).reduce((a, x) => a + x.principal, 0) : l.balance_cents });
     delete l.paid;
   }
@@ -89,7 +90,7 @@ function estate() {
   const db = getDb();
   const now = new Map(); for (const l of overview().loans) now.set(l.unit_key, (now.get(l.unit_key) || 0) + (l.balance_now_cents || 0));
   const units = db.prepare(`SELECT u.*, (SELECT count(*) FROM loans l WHERE l.unit_key = u.unit_key) AS loans FROM estate_units u ORDER BY u.address, u.unit`).all()
-    .map((u) => ({ ...u, balance_cents: u.loans ? now.get(u.unit_key) ?? null : null }));
+    .map((u) => ({ ...u, balance_cents: u.loans ? now.get(u.unit_key) ?? null : null, ...estateLinks.of(u.unit_key) }));
   const sum = (k) => units.reduce((s, u) => s + (u[k] || 0), 0);
   return { asOf: db.prepare("SELECT value FROM app_state WHERE key = 'loans_as_of'").get()?.value || null, units,
     totals: { units: units.length, sqm: sum('sqm'), marketValue: sum('market_value_cents'), rentYear: sum('rent_year_cents'), balance: sum('balance_cents') } };

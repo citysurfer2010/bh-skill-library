@@ -39,6 +39,8 @@
   .fin-estate-list td:nth-child(3) { text-align: right !important; }
   .fin-estate-list td:nth-child(5) { grid-column: 1; }
   .fin-estate-list td:nth-child(6) { grid-column: 2; text-align: right !important; }
+  .fin-estate-list td:nth-child(7) { grid-column: 1 / -1; }
+  .fin-estate-list td:nth-child(7):empty { display: none; }
   .fin-estate-list td:nth-child(5)::before { content: 'Kaltmiete '; color: var(--bh-muted); font-size: 12px; }
   .fin-estate-list td:nth-child(6):has(a)::before { content: 'Restschuld '; color: var(--bh-muted); font-size: 12px; }
   .fin-estate-list .fin-nowrap { white-space: normal; }

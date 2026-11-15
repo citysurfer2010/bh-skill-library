@@ -22,6 +22,7 @@ window.FinEstate = (() => {
     { key: 'market_value_cents', label: 'Marktwert', align: 'right', sortValue: (u) => u.market_value_cents ?? -1, html: (u) => `<span class="fin-num">${esc(euro(u.market_value_cents))}</span>` },
     { key: 'rent_year_cents', label: 'Kaltmiete p. M.', align: 'right', sortValue: (u) => u.rent_year_cents ?? -1, html: (u) => (u.rent_year_cents ? `<span class="fin-num">${esc(euro(Math.round(u.rent_year_cents / 12)))}</span><div class="fin-hint">Rendite ${pct(u.rent_year_cents, u.market_value_cents)}</div>` : '–') },
     { key: 'balance_cents', label: 'Restschuld', align: 'right', sortValue: (u) => u.balance_cents ?? -1, html: (u) => (u.loans ? `<a class="fin-num" href="${BASE}/loans">${esc(euro(u.balance_cents))}</a><div class="fin-hint">Beleihung ${pct(u.balance_cents, u.market_value_cents)}</div>` : '<span class="fin-hint">schuldenfrei</span>') },
+    { key: 'links', label: 'Ordner', srOnly: true, sortable: false, html: (u) => (u.folder_url ? `<a href="${esc(u.folder_url)}" target="_blank" rel="noopener noreferrer" aria-label="Drive-Ordner ${esc(street(u.address))} ${esc(u.unit)} (Google Drive)">Ordner</a>` : '') },
   ], rows: d.units, empty: 'Noch keine Wohnungen. Sie kommen aus der Portfolioübersicht (scripts/import-portfolio.js).' })}`);
   }
 
