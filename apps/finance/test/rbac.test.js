@@ -96,7 +96,7 @@ test('Marken-Dateien laden ohne Anmeldung, die Oberfläche nicht', async () => {
 
 test('GET /api/transactions/:id: eigene Adresse je Buchung, 404 für unbekannte, 403 ohne Finanzzugang', async () => {
   const { getDb } = require('../lib/db');
-  const id = getDb().prepare("INSERT INTO transactions (account, booked_on, amount_cents, hash, created_at) VALUES ('t', '2023-05-04', -100, 'rbac-deeplink', '2026-11-15')").run().lastInsertRowid;
+  const id = getDb().prepare("INSERT INTO transactions (account, booked_on, amount_cents, hash, created_at) VALUES ('t', '2023-05-04', -100, ?, '2026-11-15')").run(`rbac-deeplink-${process.pid}-${Date.now()}`).lastInsertRowid;
   const ok = await t.call(`/api/transactions/${id}`, { as: 'a@beispiel.de', role: 'admin' });
   assert.equal(ok.status, 200); assert.equal((await ok.json()).transaction.booked_on, '2023-05-04');
   assert.equal((await t.call('/api/transactions/999999', { as: 'a@beispiel.de', role: 'admin' })).status, 404);
