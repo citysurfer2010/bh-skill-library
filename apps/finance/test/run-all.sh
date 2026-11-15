@@ -24,8 +24,8 @@ echo "Testinstanz auf Port $PORT"
 
 FAIL=0
 PASSED=0
-SUITES=("Validate" "Smoke" "RBAC" "Restart" "E2E" "Unit" "No-Native-Select" "No-Blocking-Resources" "Branding" "BH-Table" "Finanzen" "Bank" "Regression Auswahl" "Konten" "Geldtransfer" "Amazon" "Amazon-Verbindung" "Textregeln" "Kategorien")
-FILES=("validate" "smoke" "rbac" "restart" "e2e" "unit-server" "no-native-select" "no-blocking-resources" "branding" "no-bare-table" "unit-finance" "unit-bank" "regression-select-shows-choice" "unit-accounts" "unit-transfers" "unit-amazon" "unit-amazon-http" "unit-text-rules" "unit-categories")
+SUITES=("Validate" "Smoke" "RBAC" "Restart" "E2E" "Unit" "No-Native-Select" "No-Blocking-Resources" "Branding" "BH-Table" "Finanzen" "Bank" "Regression Auswahl" "Konten" "Geldtransfer" "Amazon" "Amazon-Verbindung" "Textregeln" "Kategorien" "Regression Amazon je Jahr")
+FILES=("validate" "smoke" "rbac" "restart" "e2e" "unit-server" "no-native-select" "no-blocking-resources" "branding" "no-bare-table" "unit-finance" "unit-bank" "regression-select-shows-choice" "unit-accounts" "unit-transfers" "unit-amazon" "unit-amazon-http" "unit-text-rules" "unit-categories" "regression-amazon-saves-each-year")
 TOTAL_OK=0
 for i in "${!FILES[@]}"; do
   log="$TEST_TMP/${FILES[$i]}.log"

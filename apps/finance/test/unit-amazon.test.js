@@ -34,16 +34,17 @@ test('sync: order history first (items from its cards), then recent payments, it
     : url.endsWith('/payments') ? { payments: [{ orderId: '302-1234567-7654321', date: '2026-01-04', cents: -2398, method: 'Visa' }, { orderId: 'D01-0000000-0000009', date: '2026-01-05', cents: -499, method: 'Visa' }] }
       : { 'D01-0000000-0000009': [{ asin: 'B0FILM0001', title: 'Film', url: 'https://www.amazon.de/dp/B0FILM0001' }] });
   const r = await amazon.sync({ force: true });
-  const ord = calls.find((c) => c.url.endsWith('/orders'));
-  assert.equal(ord.body.since, '2021-01-01', 'first run reads all years'); assert.equal(ord.auth, 'Bearer k');
+  const Y = new Date().getFullYear(); const ords = calls.filter((c) => c.url.endsWith('/orders'));
+  assert.deepEqual(ords.map((c) => c.body.year), Array.from({ length: Y - 2020 }, (_, i) => Y - i), 'first run reads every year, one call each, newest first');
+  assert.equal(ords[0].auth, 'Bearer k');
   assert.equal(r.newOrders, 1); assert.equal(r.added, 2);
   const asked = calls.filter((c) => c.url.endsWith('/items')).flatMap((c) => c.body.orderIds);
   assert.ok(asked.includes('D01-0000000-0000009') && !asked.includes('302-1234567-7654321'), 'history items are not fetched again');
   assert.deepEqual(amazon.itemsOf('302-1234567-7654321').map((i) => i.title), ['USB-C Kabel']);
   assert.deepEqual(await amazon.sync(), { skipped: true });
-  await amazon.sync({ force: true });
-  const second = calls.filter((c) => c.url.endsWith('/orders')).at(-1).body;
-  assert.equal(second.since, `${new Date().getFullYear() - 1}-01-01`); assert.ok(second.stopAt.includes('302-1234567-7654321'));
+  const before = calls.length; await amazon.sync({ force: true });
+  const second = calls.slice(before).find((c) => c.url.endsWith('/orders')).body;
+  assert.equal(second.year, Y, 'history complete: daily run reads this year up to the known orders'); assert.ok(second.stopAt.includes('302-1234567-7654321'));
   const s = amazon.status();
   assert.equal(s.orders, 1); assert.ok(s.withItems >= 2); assert.ok(s.linked >= 2);
 });

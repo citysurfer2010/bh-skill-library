@@ -1,6 +1,6 @@
 {
   "name": "bh-amazon-worker",
-  "version": "26.11.8",
+  "version": "26.11.9",
   "private": true,
   "description": "Amazon-Zahlungen und Bestellungen lesend abrufen (Browser im eigenen Container)",
   "main": "server.js",

@@ -53,7 +53,7 @@ module.exports = {
   answer: (a) => call('POST', '/login/answer', a),
   logout: () => call('POST', '/logout'),
   payments: (since) => call('POST', '/payments', { since }, 30 * 60_000),
-  orders: (since, stopAt) => call('POST', '/orders', { since, stopAt }, 60 * 60_000),
+  orders: (since, stopAt, year) => call('POST', '/orders', { since, stopAt, year }, 30 * 60_000), // one year per call
   items: (orderIds) => call('POST', '/items', { orderIds }, 20 * 60_000),
   _setFetch: (f) => { fetchImpl = f; },
   _call: (...a) => call(...a),

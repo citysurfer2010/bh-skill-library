@@ -73,28 +73,49 @@ function storeOrders(list) {
   return added;
 }
 
+/** Past years whose history is stored completely; a broken run continues with the next missing year. */
+const doneYears = () => { try { return JSON.parse(state('amazon_history_years') || '[]'); } catch { return []; } };
+const firstYear = Number(FIRST_FROM.slice(0, 4));
+
+/**
+ * History one year per call, each year stored and linked at once (Matti 15.11.2026: "schreibt er nicht live in die
+ * Datenbank?"). Full run: every year not yet complete, newest first. Daily run: this year up to the newest known
+ * order, the year before only if that order was not reached.
+ */
+async function history(progress) {
+  const thisYear = new Date().getFullYear(); const done = new Set(doneYears());
+  const known = getDb().prepare('SELECT order_id FROM amazon_orders ORDER BY ordered_on DESC LIMIT 30').all().map((r) => r.order_id);
+  const complete = known.length && [...Array(thisYear - firstYear).keys()].every((i) => done.has(firstYear + i));
+  const years = complete ? [thisYear, thisYear - 1] : [...Array(thisYear - firstYear + 1).keys()].map((i) => thisYear - i).filter((y) => y === thisYear || !done.has(y));
+  for (const year of years) {
+    const { orders, reachedKnown } = await api.orders(`${year}-01-01`, complete ? known : [], year);
+    progress.orders += orders.length; progress.newOrders += storeOrders(orders); link();
+    if (year < thisYear && !complete) { done.add(year); state('amazon_history_years', JSON.stringify([...done].sort())); }
+    state('amazon_progress', `${year}: ${orders.length} Bestellungen gespeichert`);
+    if (complete && reachedKnown) break;
+  }
+}
+
 let running = null;
-/** Payments since the last fetch (with overlap), then items for orders without them, newest first. */
+/** Payments since the last fetch (with overlap), the order history year by year, then items for orders without them. */
 function sync({ force = false } = {}) {
   if (running) return running;
   running = (async () => {
     const last = state('amazon_last_sync');
     if (!force && last && Date.now() - Date.parse(last) < MIN_GAP_MS) return { skipped: true };
     try {
-      // History: all years once, then daily only up to the newest orders already known.
-      const known = getDb().prepare('SELECT order_id FROM amazon_orders ORDER BY ordered_on DESC LIMIT 30').all().map((r) => r.order_id);
-      const { orders } = await api.orders(known.length ? `${new Date().getFullYear() - 1}-01-01` : FIRST_FROM, known);
-      const newOrders = storeOrders(orders);
-      // Charges of the last weeks (one row per shipment) from the payments page.
+      // Charges (one row per shipment) from the payments page first: quick, and stored before the long history.
       const lastPaid = getDb().prepare('SELECT max(paid_on) AS d FROM amazon_payments').get().d;
       const { payments } = await api.payments(lastPaid ? shift(lastPaid, -OVERLAP_DAYS) : FIRST_FROM);
-      const added = storePayments(payments);
+      const added = storePayments(payments); link();
+      const progress = { orders: 0, newOrders: 0 };
+      await history(progress);
       // Items only for paid orders the history did not cover (rare); the history already brings them.
       const need = getDb().prepare('SELECT order_id FROM amazon_payments WHERE order_id NOT IN (SELECT order_id FROM amazon_orders_seen) GROUP BY order_id ORDER BY max(paid_on) DESC LIMIT 60').all().map((r) => r.order_id);
       const items = need.length ? storeItems({ ...Object.fromEntries(need.map((id) => [id, []])), ...(await api.items(need)) }) : 0;
       const linked = link();
       state('amazon_last_sync', now()); state('amazon_last_error', '');
-      return { orders: orders.length, newOrders, payments: payments.length, added, items, linked };
+      return { orders: progress.orders, newOrders: progress.newOrders, payments: payments.length, added, items, linked };
     } catch (e) {
       const plain = e.code === 'login' ? 'login' : /closed/i.test(e.message) ? 'Der Abruf wurde unterbrochen, beim nächsten Mal geht er weiter.' : /Timeout \d+ms exceeded|timed out|aborted/i.test(e.message) ? 'Amazon hat zu lange gebraucht, morgen geht es weiter.' : /captcha/i.test(e.message) ? 'Amazon verlangt eine Sicherheitsabfrage. Bitte neu verbinden.' : e.status === 502 ? 'Amazon-Dienst nicht erreichbar.' : String(e.message).slice(0, 200);
       state('amazon_last_sync', now()); state('amazon_last_error', plain);
@@ -108,7 +129,7 @@ function status() {
   const db = getDb(); const one = (sql) => db.prepare(sql).get().n;
   return {
     configured: api.configured(), running: !!running,
-    lastSync: state('amazon_last_sync') || null, lastError: state('amazon_last_error') || null,
+    lastSync: state('amazon_last_sync') || null, lastError: state('amazon_last_error') || null, progress: state('amazon_progress') || null, yearsDone: doneYears(),
     payments: one('SELECT count(*) AS n FROM amazon_payments'), orders: one('SELECT count(*) AS n FROM amazon_orders'),
     withItems: one('SELECT count(DISTINCT order_id) AS n FROM amazon_items'), linked: one('SELECT count(*) AS n FROM transactions WHERE amazon_order IS NOT NULL'),
     first: db.prepare('SELECT min(d) AS d FROM (SELECT min(ordered_on) AS d FROM amazon_orders UNION ALL SELECT min(paid_on) FROM amazon_payments)').get().d,

@@ -74,27 +74,28 @@ async function readPayments({ since = '2021-01-01' } = {}) {
 /**
  * Order history by year, ten orders a page: number, date, total and the items with their product links.
  * The payments page only shows the last weeks, so the history comes from here. stopAt: an order already known
- * (daily run: read the current year only up to there).
+ * (daily run: read the current year only up to there). year: read only this year, so the caller can store each
+ * year at once and a broken run loses at most one year (Matti 15.11.2026).
  */
 async function orders(opts = {}) { return withLogin(() => readOrders(opts)); }
-async function readOrders({ since = '2021-01-01', stopAt = [] } = {}) {
+async function readOrders({ since = '2021-01-01', stopAt = [], year: only = null } = {}) {
   if (!hasSession()) throw new LoginNeeded();
-  const known = new Set(stopAt); const out = new Map(); let pages = 0;
+  const known = new Set(stopAt); const out = new Map(); let pages = 0; let reachedKnown = false;
   const ctx = await context(); const page = await ctx.newPage();
   try {
-    for (let year = new Date().getFullYear(); year >= Number(since.slice(0, 4)); year -= 1) {
+    for (let year = only || new Date().getFullYear(); year >= (only || Number(since.slice(0, 4))); year -= 1) {
       let stop = false;
       for (let start = 0; start < 500 && !stop; start += 10) {
         await page.goto(HISTORY(year, start), { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page); await pause(page); pages += 1;
         const cards = await page.$$eval('.order-card, .js-order-card', (cs) => cs.map((c) => ({ text: c.innerText, products: [...c.querySelectorAll('a[href*="/dp/"], a[href*="/gp/product/"]')].map((a) => ({ text: a.innerText || a.getAttribute('title') || '', href: a.getAttribute('href') })) })));
-        for (const o of parseCards(cards)) { if (known.has(o.id)) stop = true; else if (!o.date || o.date >= since) out.set(o.id, o); }
+        for (const o of parseCards(cards)) { if (known.has(o.id)) { stop = true; reachedKnown = true; } else if (!o.date || o.date >= since) out.set(o.id, o); }
         if (cards.length < 10) stop = true;
       }
       if (known.size && stop) break; // daily run: the newest known order reached
     }
     await save(ctx);
   } finally { await ctx.close().catch(() => {}); }
-  return { pages, orders: [...out.values()] };
+  return { pages, reachedKnown, orders: [...out.values()] };
 }
 
 async function items(orderIds) { return withLogin(() => readItems(orderIds)); }
