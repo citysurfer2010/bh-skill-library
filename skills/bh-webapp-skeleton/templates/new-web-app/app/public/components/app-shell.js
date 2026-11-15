@@ -6,7 +6,7 @@
  * Loading standard: draw the frame at once from what is known, content shows placeholders until data arrives; never a white page.
  *   AppShell.loading(host, title, kind)  'table' | 'cards' | 'form'     AppShell.links(prefix, go)  in-module links without reload
  * Lists are borderless, never in a .card. Small static lists (up to 10 rows):
- *   AppShell.list({ columns: [{ key, label, html?, align? }], rows | groups: [{ label, rows }], title?, empty?, rowHref?, className? })
+ *   AppShell.list({ columns: [{ key, label, html?, align?, sortValue?(row), sortable? }], storageKey?, rows | groups: [{ label, rows }], title?, empty?, rowHref?, className? })
  *   AppShell.kpis([{ label, value, sub? }])   AppShell.listPage(host, { title, sub?, search?, count, countLabel?, toolbarLeft?, toolbarRight?, list })
  *   AppShell.chips(items: [[key, label, n?]], active, href(key))
  */
@@ -23,6 +23,7 @@ window.AppShell = (() => {
   function render(host, html) {
     host.innerHTML = html;
     // Remembered list column widths; on a narrower window they shrink in proportion instead of pushing columns out of view.
+    host.querySelectorAll('table[data-list-key]').forEach((table) => { const s = listSort(table.dataset.listKey); if (s) sortTable(table, s.col, s.dir); });
     host.querySelectorAll('table[data-list-key]').forEach((table) => {
       const cols = [...table.querySelectorAll('col[data-w]')]; if (!cols.length) return;
       const sum = cols.reduce((s, c) => s + Number(c.dataset.w), 0); const room = table.parentElement.clientWidth || sum;
@@ -84,6 +85,37 @@ window.AppShell = (() => {
   };
   const freeze = (table) => { table.querySelectorAll('col').forEach((c, j) => { if (!c.style.width) c.style.width = `${Math.round(table.querySelectorAll('thead th')[j].getBoundingClientRect().width)}px`; }); table.classList.add('is-sized'); };
   const resetWidths = (table) => { try { localStorage.removeItem(`bh-list:${table.dataset.listKey}:widths`); } catch (_) { /* nothing stored */ } table.querySelectorAll('col').forEach((c) => { c.style.width = ''; }); table.classList.remove('is-sized'); };
+  /**
+   * Sorting is the standard of every list (Matti 15.11.2026): a click on a header sorts, a second click reverses.
+   * Rows sort by their cell's data-v (from column.sortValue) or text, numbers and dates naturally; group rows stay put.
+   */
+  const collator = typeof Intl !== 'undefined' ? new Intl.Collator('de', { numeric: true, sensitivity: 'base' }) : null;
+  function sortTable(table, col, dir) {
+    const tbody = table.tBodies[0]; if (!tbody) return;
+    const value = (tr) => { const td = tr.children[col]; return td ? (td.dataset.v ?? td.textContent.trim()) : ''; };
+    const cmp = (a, b) => {
+      const x = value(a); const y = value(b); const nx = Number(x); const ny = Number(y);
+      const r = x !== '' && y !== '' && !Number.isNaN(nx) && !Number.isNaN(ny) ? nx - ny : collator ? collator.compare(x, y) : String(x).localeCompare(String(y));
+      return dir === 'desc' ? -r : r;
+    };
+    let seg = [];
+    const flush = (before) => { seg.sort(cmp).forEach((tr) => tbody.insertBefore(tr, before)); seg = []; };
+    for (const tr of [...tbody.rows]) { if (tr.classList.contains('app-list-group')) flush(tr); else seg.push(tr); }
+    flush(null);
+    table.querySelectorAll('thead th').forEach((th, i) => { if (th.querySelector('.app-list-sort')) th.setAttribute('aria-sort', i === col ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'); });
+  }
+  const listSort = (key) => { try { return JSON.parse(localStorage.getItem(`bh-list:${key}:sort`) || 'null'); } catch (_) { return null; } };
+  if (typeof document !== 'undefined' && !window.__bhListSort) {
+    window.__bhListSort = true;
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest && e.target.closest('.app-list-sort'); if (!b) return;
+      const th = b.closest('th'); const table = th.closest('table'); const col = [...th.parentElement.children].indexOf(th);
+      const dir = th.getAttribute('aria-sort') === 'ascending' ? 'desc' : 'asc';
+      sortTable(table, col, dir);
+      if (table.dataset.listKey) { try { localStorage.setItem(`bh-list:${table.dataset.listKey}:sort`, JSON.stringify({ col, dir })); } catch (_) { /* this view only */ } }
+    });
+  }
+
   if (typeof document !== 'undefined' && !window.__bhListResize) {
     window.__bhListResize = true;
     document.addEventListener('pointerdown', (e) => {
@@ -114,12 +146,15 @@ window.AppShell = (() => {
     const al = (c) => (c.align ? ` class="is-${c.align}"` : '');
     const widths = storageKey ? listWidths(storageKey) : {};
     const handle = (i) => (storageKey && i < columns.length - 1 ? `<span class="app-list-resize" data-col="${i}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Breite der Spalte ${esc(columns[i].label)} (Pfeiltasten, Pos1 setzt zurück)"></span>` : '');
-    const head = `<thead><tr>${columns.map((c, i) => `<th scope="col"${al(c)}>${esc(c.label)}${handle(i)}</th>`).join('')}</tr></thead>`;
+    const label = (c) => (c.sortable === false || !c.label ? esc(c.label) : `<button type="button" class="app-list-sort">${esc(c.label)}</button>`);
+    const head = `<thead><tr>${columns.map((c, i) => `<th scope="col"${al(c)}${c.sortable === false || !c.label ? '' : ' aria-sort="none"'}>${label(c)}${handle(i)}</th>`).join('')}</tr></thead>`;
     const sized = storageKey && Object.keys(widths).length;
     const cols = storageKey ? `<colgroup>${columns.map((_, i) => `<col${widths[i] ? ` data-w="${Number(widths[i])}"` : ''}>`).join('')}</colgroup>` : '';
     const cell = (c, r, i) => {
       const v = c.html ? c.html(r) : esc(r[c.key]);
-      return i === 0 && rowHref ? `<td${al(c)}><a href="${esc(rowHref(r))}">${v}</a></td>` : `<td${al(c)}>${v}</td>`;
+      const sv = c.sortValue ? c.sortValue(r) : (typeof r[c.key] === 'number' ? r[c.key] : null);
+      const dv = sv == null ? '' : ` data-v="${esc(String(sv))}"`;
+      return i === 0 && rowHref ? `<td${al(c)}${dv}><a href="${esc(rowHref(r))}">${v}</a></td>` : `<td${al(c)}${dv}>${v}</td>`;
     };
     const tr = (r) => `<tr>${columns.map((c, i) => cell(c, r, i)).join('')}</tr>`;
     // groups: [{ label (trusted HTML), rows }] → ONE table with a group row per group, so the columns stay aligned.

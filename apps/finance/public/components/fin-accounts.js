@@ -37,11 +37,11 @@ window.FinAccounts = (() => {
     });
     AppShell.render(host, `<header class="app-topbar"><div><h1>Konten</h1><div class="sub">${accounts.length} Konten, davon ${household} im Haushalt</div></div></header>
       ${AppShell.list({ className: 'fin-acc-list', storageKey: 'finance-accounts', groups, empty: 'Noch keine Konten. Sie entstehen mit dem ersten Import oder Bankabruf.', columns: [
-    { key: 'name', label: 'Konto', html: nameCell },
-    { key: 'bank', label: 'Bank und Produkt', html: origin },
-    { key: 'scope', label: 'Bereich', html: (a) => `<div class="fin-acc-scope" data-scope-for="${esc(a.name)}" data-value="${esc(a.scope)}"></div>` },
+    { key: 'name', label: 'Konto', html: nameCell, sortValue: (a) => a.name },
+    { key: 'bank', label: 'Bank und Produkt', html: origin, sortValue: (a) => (a.bank ? `${a.bank.aspsp} ${a.bank.product || ''}` : 'zzz CSV') },
+    { key: 'scope', label: 'Bereich', sortable: false, html: (a) => `<div class="fin-acc-scope" data-scope-for="${esc(a.name)}" data-value="${esc(a.scope)}"></div>` },
     { key: 'n', label: 'Buchungen', align: 'right', html: (a) => `<span class="fin-num">${a.n}</span>` },
-    { key: 'range', label: 'Zeitraum', html: (a) => (a.first ? `<span class="fin-num">${Fin.esc(Fin.date(a.first))} –</span> <span class="fin-num">${Fin.esc(Fin.date(a.last))}</span>` : '–') }, // two lines keep "Offen" in view at 1280 px
+    { key: 'range', label: 'Zeitraum', sortValue: (a) => a.first || '', html: (a) => (a.first ? `<span class="fin-num">${Fin.esc(Fin.date(a.first))} –</span> <span class="fin-num">${Fin.esc(Fin.date(a.last))}</span>` : '–') }, // two lines keep "Offen" in view at 1280 px
     { key: 'open', label: 'Offen', align: 'right', html: openCell },
   ] })}`);
     bind(host, scopes);

@@ -107,3 +107,10 @@
 .app-list-resize:focus-visible { outline: 2px solid var(--bh-focus-ring); outline-offset: -2px; }
 .app-list table.is-sized { table-layout: fixed; }
 .app-list table.is-sized td { overflow-wrap: anywhere; }
+/* Sortable headers of AppShell.list (standard): the label is a button, the arrow shows the order. */
+.app-list-sort { all: unset; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; }
+.app-list-sort:hover { color: var(--bh-text); }
+.app-list-sort:focus-visible { outline: 2px solid var(--bh-focus-ring); outline-offset: 2px; border-radius: 2px; }
+.app-list-sort::after { content: "↕"; opacity: .35; font-size: 10px; }
+th[aria-sort="ascending"] > .app-list-sort::after { content: "▲"; opacity: 1; }
+th[aria-sort="descending"] > .app-list-sort::after { content: "▼"; opacity: 1; }
