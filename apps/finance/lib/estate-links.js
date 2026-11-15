@@ -6,7 +6,8 @@
  */
 const { getDb } = require('./db');
 
-const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+/** Lower case, "straße" and "str." alike, a house number glued to the street ("Musterstr.20") separated. */
+const norm = (s) => String(s || '').toLowerCase().replace(/stra(ß|ss)e\b/g, 'str').replace(/str\./g, 'str').replace(/([a-zäöü])(\d)/g, '$1 $2').replace(/\s+/g, ' ').trim();
 const street = (s) => String(s || '').split(',').slice(0, 3).map(norm).join(',');
 const flats = (s) => new Set([...String(s || '').matchAll(/WE\s*(\d+)/gi)].map((m) => m[1].replace(/^0+/, '')));
 const url = (id) => (id && /^[\w-]{10,}$/.test(id) ? `https://drive.google.com/drive/folders/${id}` : null);

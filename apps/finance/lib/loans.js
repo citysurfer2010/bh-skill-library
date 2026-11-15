@@ -75,6 +75,17 @@ function overview() {
       balance_now_cents: last ? last.cents - l.paid.filter((x) => x.on > last.on).reduce((a, x) => a + x.principal, 0) : l.balance_cents });
     delete l.paid;
   }
+  // One loan account for several flats (e.g. one bank loan secured on two flats): the bank's figures are split by the
+  // sheet's balance of each part (else its amount, else equally) instead of counting the whole loan twice.
+  const groups = new Map(); for (const l of loans) if (l.bank_balance && l.ref) groups.set(l.ref, [...(groups.get(l.ref) || []), l]);
+  for (const g of groups.values()) {
+    if (g.length < 2) continue;
+    const w = (l) => l.balance_cents || l.amount_cents || 0; const sumW = g.reduce((s, l) => s + w(l), 0);
+    for (const l of g) {
+      const f = sumW ? w(l) / sumW : 1 / g.length; const part = (c) => Math.round(c * f);
+      Object.assign(l, { balance_now_cents: part(l.balance_now_cents), bank_balance: { ...l.bank_balance, cents: part(l.bank_balance.cents) }, history: l.history.map((h) => ({ ...h, cents: part(h.cents) })), shared: g.length });
+    }
+  }
   const sum = (k) => loans.reduce((s, l) => s + (l[k] || 0), 0);
   const value = db.prepare('SELECT sum(market_value_cents) AS v FROM estate_units WHERE unit_key IN (SELECT unit_key FROM loans)').get().v || 0;
   const years = {}; for (const l of loans) for (const [y, v] of Object.entries(l.years)) { const s = (years[y] ||= { interest: 0, principal: 0, paid: 0 }); s.interest += v.interest; s.principal += v.principal; s.paid += v.paid; }

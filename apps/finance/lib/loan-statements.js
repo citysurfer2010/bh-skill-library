@@ -2,7 +2,9 @@
 /**
  * Loan statements of the banks: account number, balances, interest rate.
  *   BBBank / PSD  "Kontonummer …", "alter/neuer Kontostand vom DD.MM.YYYY 1.234,56 S", "1,39000% Sollzins(en)", "nomin.Festzinssatz … p.a. 1,23 %"
- *   NordLB        "Darlehen 1234567890, DE…", "Kontostand am DD.MM.YYYY -123.456,78" (Jahresauszug) Each statement gives two balances, so a missing year is covered by the next one's old balance.
+ *   NordLB / Sparkasse "Darlehen 1234567890, DE…", "Kontostand am DD.MM.YYYY -123.456,78" (Jahresauszug, also from OCR)
+ *   Signal Iduna  "IBAN für dieses Konto DE…", "Alter/Neuer Kontostand in EUR am DD.MM.YYYY 123.456,78 -"
+ * Each statement gives two balances, so a missing year is covered by the next one's old balance.
  * Only accounts of a known loan are kept; the papers' folder of a loan is stored as a link.
  */
 const { getDb } = require('./db');
@@ -13,22 +15,35 @@ const cents = (s) => Math.round(Number(String(s).replace(/\./g, '').replace(',',
 const accountNo = (iban) => { const d = String(iban || '').replace(/\s/g, ''); return /^DE\d{20}$/.test(d) ? d.slice(12).replace(/^0+/, '') : ''; };
 const iso = (d) => { const [dd, mm, yy] = d.split('.'); return `${yy}-${mm}-${dd}`; };
 
-/** { ref, balances: [{ on, cents }], rate } or null when the text is no loan statement. */
+const num = (m) => (m ? Number(m.replace(',', '.')) : null);
+/** Original loan amount when the statement names it; helps to tell several loans of one bank apart. */
+const amountOf = (t) => { const m = /(?:Ursprüngliche Darlehenshöhe|Bausparsumme) in EUR[^\n]*\n[^\n]*?([\d.]+,\d{2}) \d+ von \d+/.exec(t) || /(?:Bewilligtes Darlehen EUR:|Ursprungsdarlehen) ?([\d.]+,\d{2})/.exec(t); return m ? cents(m[1]) : null; };
+
+/** { ref, balances: [{ on, cents }], rate, amount, place? } or null when the text is no loan statement. OCR typos ("Kontöstand") are tolerated. */
 function parse(text) {
-  const t = String(text || '').replace(/[ \t]+/g, ' ');
+  const t = String(text || '').replace(/[ \t]+/g, ' ').replace(/Kont[öo0]stand/g, 'Kontostand');
+  const amount = amountOf(t);
+  // Signal Iduna: "IBAN für dieses Konto" then the IBAN; "Alter/Neuer Kontostand in EUR am DD.MM.YYYY 123,45 -" ("-" = debt).
+  const si = /IBAN für dieses Konto\s*(DE\d{2}(?: ?\d){18})/.exec(t)?.[1];
+  if (si && /Kontostand in EUR am/.test(t)) {
+    const balances = [...t.matchAll(/(?:Alter|Neuer) Kontostand in EUR am (\d{2}\.\d{2}\.\d{4}) ([\d.]+,\d{2}) ?([-+])?/g)].map((m) => ({ on: iso(m[1]), cents: (m[3] === '+' ? -1 : 1) * cents(m[2]) }));
+    return balances.length ? { ref: accountNo(si), balances, rate: null, amount } : null;
+  }
+  // NordLB / Sparkasse year statement: "Darlehen 1234567890, DE…, place", "Kontostand am DD.MM.YYYY -123.456,78".
   const nord = /Darlehen (\d{8,12}),/.exec(t)?.[1];
   if (nord && /Kontostand am/.test(t)) {
     const place = (/Darlehen \d{8,12}, (?:DE[\d ]{20,30},)?([^\n]*)/.exec(t)?.[1] || '').trim();
     const balances = [...t.matchAll(/Kontostand am (\d{2}\.\d{2}\.\d{4}) (-?[\d.]+,\d{2})/g)].map((m) => ({ on: iso(m[1]), cents: -Math.round(Number(m[2].replace(/\./g, '').replace(',', '.')) * 100) }));
     const rate = /Sollzins(?:satz)?(?: p\.a\.)?:? ([\d]+,\d+) ?%/.exec(t)?.[1];
-    return balances.length ? { ref: nord.replace(/^0+/, ''), balances, rate: rate ? Number(rate.replace(',', '.')) : null, place } : null;
+    return balances.length ? { ref: nord.replace(/^0+/, ''), balances, rate: num(rate), amount, place } : null;
   }
+  // BBBank / PSD: "Kontonummer …", "alter/neuer Kontostand vom DD.MM.YYYY 1.234,56 S".
   const ref = /Kontonummer (\d{6,12})/.exec(t)?.[1];
   if (!ref || !/Kontostand/.test(t)) return null;
   const balances = [];
   for (const m of t.matchAll(/(?:alter|neuer) Kontostand vom (\d{2}\.\d{2}\.\d{4}) ([\d.]+,\d{2}) ?([SH])/g)) balances.push({ on: iso(m[1]), cents: (m[3] === 'S' ? 1 : -1) * cents(m[2]) });
   const rate = /([\d]+,\d+)% Sollzins/.exec(t)?.[1] || /Festzinssatz.*?p\.a\. ([\d]+,\d+) ?%/.exec(t)?.[1];
-  return balances.length ? { ref: ref.replace(/^0+/, ''), balances, rate: rate ? Number(rate.replace(',', '.')) : null } : null;
+  return balances.length ? { ref: ref.replace(/^0+/, ''), balances, rate: num(rate), amount } : null;
 }
 
 /**
@@ -46,7 +61,11 @@ function assign(db, parsed, knownRefs) {
     const known = new Set(parsed.filter((x) => knownRefs.has(x.ref) && units(x).some((k) => keys.includes(k))).map((x) => x.ref));
     const banks = new Set(inFolder.filter((l) => known.has(accountNo(l.account_iban)) || known.has(l.known_ref)).map((l) => l.lender));
     const free = inFolder.filter((l) => !l.account_iban && !l.known_ref && banks.has(l.lender));
-    if (free.length === 1) { add.run(free[0].unit_key, free[0].position, p.ref); knownRefs.add(p.ref); }
+    // The statement's original amount must fit (5 % room for rounded sheet values); among several loans of that bank it
+    // decides to the euro. Nothing is guessed.
+    const fits = (l, tol) => !p.amount || l.amount_cents == null || Math.abs(l.amount_cents - p.amount) <= tol;
+    const pick = free.length === 1 ? free.filter((l) => fits(l, Math.max(100, p.amount * 0.05))) : p.amount ? free.filter((l) => l.amount_cents != null && fits(l, 100)) : [];
+    if (pick.length === 1) { add.run(pick[0].unit_key, pick[0].position, p.ref); knownRefs.add(p.ref); }
   }
 }
 
