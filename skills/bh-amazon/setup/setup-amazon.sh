@@ -6,7 +6,9 @@ LIB=/opt/bh-skill-library/skills/bh-amazon; ENV=/srv/bh-platform/.env; S=/srv/bh
 val() { sed -n "s/^$1=//p" "$ENV" | head -1; }
 [ -n "$(val BH_AMAZON_TOKEN)" ] || (umask 077; echo "BH_AMAZON_TOKEN=$(openssl rand -hex 32)" >>"$ENV")
 docker build -q -t bh-amazon:current "$LIB/worker" >/dev/null
-PW=$(docker run --rm --entrypoint id bh-amazon:current -u)
+# Docker runs with user namespace remapping here: uid N in the container is OFFSET+N on the host (like bh-apps: 1000 → 101000).
+OFFSET=$(awk -F: '$1=="dockremap"{print $2; exit}' /etc/subuid 2>/dev/null); OFFSET=${OFFSET:-0}
+PW=$(( OFFSET + $(docker run --rm --entrypoint id bh-amazon:current -u) ))
 install -d -m 711 "$S"; install -d -m 700 -o "$PW" -g "$PW" "$S/state" "$S/run"
 printf '%s' "$(val BH_AMAZON_TOKEN)" >"$S/run/token.new"; chown "$PW:$PW" "$S/run/token.new"; chmod 400 "$S/run/token.new"; mv "$S/run/token.new" "$S/run/token"
 printf '%s' "$(val BH_AMAZON_TOKEN)" >"$L/amazon-token.new"; chown 101000:101000 "$L/amazon-token.new"; chmod 400 "$L/amazon-token.new"; mv "$L/amazon-token.new" "$L/amazon-token"
