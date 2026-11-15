@@ -37,7 +37,8 @@ test('importers: comdirect with preamble and latin1, BBBank, PayPal, unknown for
   assert.equal(c.format, 'comdirect'); assert.equal(c.rows.length, 1); assert.equal(c.rows[0].cents, -320); assert.equal(c.rows[0].counterparty, 'Bäckerei');
   const bb = parseBankFile(Buffer.from('Buchungstag;Valutadatum;Name Zahlungsbeteiligter;IBAN Zahlungsbeteiligter;Buchungstext;Verwendungszweck;Betrag\n05.01.2024;05.01.2024;Arbeitgeber AG;DE00;Lohn/Gehalt/Rente;Gehalt Januar;3.000,00\n'));
   assert.equal(bb.account, 'BBB'); assert.equal(bb.rows[0].counterparty, 'Arbeitgeber AG'); assert.equal(bb.rows[0].cents, 300000);
-  const pp = parseBankFile(Buffer.from('"Datum","Uhrzeit","Name","Beschreibung","Brutto"\n"07.01.2024","10:00","Shop","Website-Zahlung","-19,99"\n'));
+  const pp = parseBankFile(Buffer.from('"Datum","Uhrzeit","Name","Beschreibung","Brutto"\n"07.01.2024","10:00","Shop","Website-Zahlung","-19,99"\n"07.01.2024","10:00","Matti","Bankgutschrift auf PayPal-Konto","19,99"\n'));
+  assert.equal(pp.rows.length, 1, 'PayPal top-ups are skipped, the bank account already holds them');
   assert.equal(pp.format, 'paypal'); assert.equal(pp.rows[0].cents, -1999);
   assert.throws(() => parseBankFile(Buffer.from('a;b;c\n1;2;3\n')), /Format nicht erkannt/);
   assert.equal(parseBankFile(comdirect, 'CD-CCM').account, 'CD-CCM');

@@ -29,3 +29,9 @@ Eine Buchung ist doppelt, wenn Konto, Tag, Betrag und Text gleich sind. Gleiche 
 - Steht dieselbe Buchung schon aus einem CSV im Konto (gleicher Betrag, ±3 Tage), wird sie verknüpft statt neu angelegt. Ein CSV nach dem Bankabruf überspringt Zeilen mit gleichem Konto, Tag und Betrag.
 - Kontoname: Girokonto bekommt den bisherigen Namen (`comdirect`, `BBB`, `PayPal`), die comdirect-Karte `CD-CCM`, alles andere Bank plus IBAN-Ende. Umbenennen zieht die Bank-Buchungen mit und führt sie mit CSV-Buchungen unter dem neuen Namen zusammen (das CSV behält seine Kategorie).
 - Läuft die Zustimmung ab oder widerruft die Bank, bleibt der Fehler am Konto stehen und es wird nicht mehr automatisch abgerufen, bis neu verbunden ist.
+
+## PayPal und Vorjahre
+
+- PayPal-Aufladungen und -Abbuchungen („Bankgutschrift auf PayPal-Konto“, „Von Nutzer eingeleitete Abbuchung“, ACH-Rückbuchungen) werden beim PayPal-Import übersprungen: Sie stehen schon auf dem Bankkonto (dort Kategorie TRANS). Gezählt wird nur der echte Kauf auf dem PayPal-Konto.
+- Es gelten nur die neuesten Kategorien (Tabelle 2025, Matti 15.11.2026). Vergangene Buchungen behalten ihre Kategorie, wenn es sie noch gibt; die alte Kategorie IMMO ist aufgeteilt: Darlehen/Kredit/Rate/BauGeld → IMMORATE, Gutschriften → IMMOEIN, Rest → IMMOAUS, jeweils mit Bemerkung „früher IMMO“.
+- Alte Kontonamen der Tabellen: Comdirect → comdirect, BBBank/BBBank-Bezügekonto → BBB, KK Matti/Visa-Matti/comdirect CC Matti → CD-CCM, DKB Hauptkonto → DKB.
