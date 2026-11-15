@@ -39,7 +39,7 @@ Nur über `lib/llm.js`: Gateway `http://llm-gateway:18790/v1`, Token aus `/etc/d
 ## Oberfläche (Pflicht)
 
 - **Farben:** nur `--bh-*` aus `public/css/tokens.css`, hell und dunkel.
-- **Dropdown:** `BHSelectCore`: `<div data-bh-select data-options='[{"value":"a","label":"A"}]'>` + `BHSelectCore.mountAll(root)`. Kein natives `<select>`.
+- **Dropdown:** `BHSelectCore`: `<div data-bh-select data-options='[{"value":"a","label":"A"}]'>` + `BHSelectCore.mountAll(root)`. Kein natives `<select>`. Standard (Matti 15.11.2026): jede Auswahl ist zum Tippen (Suchfeld, Tippen auf dem geschlossenen Feld öffnet sie) und behält die Breite des längsten Eintrags; `searchable: false` nur in begründeten Sonderfällen.
 - **Tabellen:** nur `BHDataTable` über `BHListPage`, mit `storageKey`, nie in einer `.card`. Ausnahme ist `AppShell.list` für kleine statische Listen.
 - **Rahmen:** `Navbar.render(tab, me)`, `ModuleSidebar.show(...)`, `AppShell.crumbs(...)`. Seitenknöpfe gehören in den Seitenkopf.
 - **Laden:** Rahmen vor dem ersten Request zeichnen, `AppShell.loading` bis die Daten da sind, Links im Modul über `AppShell.links`.

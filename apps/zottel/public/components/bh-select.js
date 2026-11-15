@@ -1,10 +1,12 @@
 /* bh-select.js — the BH dropdown (framework-neutral), no native <select>.
  * window.BHSelectCore.create(host, opts) -> { update(partialOpts), destroy() }.
- * opts: value, options [{value,label,disabled,hint}], onChange(value), placeholder, searchable (default: more than 8 entries), disabled,
+ * opts: value, options [{value,label,disabled,hint}], onChange(value), placeholder, searchable (default: always, false turns it off), disabled,
  *       size 'md'|'sm', label (aria-label), triggerText, searchPlaceholder, testId.
- * List in a portal (position: fixed), opens up/down; keyboard: arrows, Enter, Esc, Home/End, type-ahead; phone: bottom sheet. */
+ * List in a portal (position: fixed), opens up/down; keyboard: arrows, Enter, Esc, Home/End; typing on the closed field opens it
+ * with the typed text in the search; phone: bottom sheet. The field keeps the width of its longest entry, whatever is chosen.
+ * Standard since 15.11.2026 (Matti): every dropdown is a typing dropdown with a fixed width. */
 (function () {
-  const SEARCH_FROM = 9; // Search only with more than 8 entries
+  const SEARCH_FROM = 0; // Kept for callers that read it; every list is searchable unless searchable: false
   let uid = 0;
   function h(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   const CHEV = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>';
@@ -16,7 +18,17 @@
     host.classList.add('bhs');
     const btn = h('button', 'bhs__btn'); btn.type = 'button'; btn.setAttribute('aria-haspopup', 'listbox');
     host.appendChild(btn);
-    const searchable = () => (o.searchable == null ? o.options.length >= SEARCH_FROM : !!o.searchable);
+    const searchable = () => o.searchable !== false;
+    let fitted = '';
+    /** Stable width: the longest label decides, so choosing an entry never makes the field jump. */
+    function fit() {
+      if (o.triggerText || !o.options.length) return;
+      const key = o.options.map((x) => x.label).join('\u0001'); if (key === fitted) return; fitted = key;
+      const ctx = (fit.c = fit.c || document.createElement('canvas')).getContext('2d');
+      ctx.font = (window.getComputedStyle && getComputedStyle(btn).font) || '13px sans-serif';
+      const text = Math.max(...o.options.map((x) => ctx.measureText(x.label).width), ctx.measureText(o.placeholder || 'Bitte wählen').width);
+      host.style.minWidth = 'min(' + Math.ceil(text + 48) + 'px, 100%)'; // padding, gap, chevron and border
+    }
 
     function drawBtn() {
       const cur = o.options.find((x) => x.value === o.value);
@@ -26,6 +38,7 @@
       if (o.testId) btn.setAttribute('data-testid', o.testId); else btn.removeAttribute('data-testid');
       btn.innerHTML = ''; btn.appendChild(h('span', 'bhs__val', o.triggerText || (cur ? cur.label : (o.placeholder || 'Bitte wählen'))));
       if (!o.triggerText) btn.insertAdjacentHTML('beforeend', CHEV);
+      fit();
     }
     function filter() {
       const t = q.trim().toLowerCase();
@@ -60,7 +73,7 @@
     }
     const onDoc = (e) => { if (!btn.contains(e.target) && !pop.contains(e.target)) close(false); };
     const onMove = (e) => { if (!(e && e.target && pop && pop.contains(e.target))) place(); };
-    function openIt() {
+    function openIt(typed) {
       if (isOpen || o.disabled) return;
       isOpen = true; q = ''; act = Math.max(0, o.options.filter((x) => !x.disabled).findIndex((x) => x.value === o.value));
       scrim = h('div', 'bhs__scrim'); pop = h('div', 'bhs__pop'); pop.tabIndex = -1;
@@ -68,6 +81,7 @@
         input = h('input', 'bhs__search'); input.setAttribute('role', 'combobox'); input.setAttribute('aria-expanded', 'true'); input.setAttribute('aria-controls', id + '-l');
         input.setAttribute('aria-label', 'Suchen'); input.placeholder = o.searchPlaceholder || 'Suchen …'; input.autocomplete = 'off';
         input.addEventListener('input', () => { q = input.value; act = 0; drawList(); }); pop.appendChild(input);
+        if (typed) { input.value = typed; q = typed; act = 0; }
       }
       list = h('div', 'bhs__list'); list.id = id + '-l'; list.setAttribute('role', 'listbox'); if (o.label) list.setAttribute('aria-label', o.label); pop.appendChild(list);
       pop.addEventListener('keydown', onKey); document.body.appendChild(scrim); document.body.appendChild(pop);
@@ -96,8 +110,11 @@
       else if (!input && e.key.length === 1 && !e.ctrlKey && !e.metaKey && e.key !== ' ') typeAhead(e.key);
     }
     btn.addEventListener('click', () => (isOpen ? close(true) : openIt()));
-    btn.addEventListener('keydown', (e) => { if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isOpen) { e.preventDefault(); openIt(); } });
-    drawBtn();
+    btn.addEventListener('keydown', (e) => {
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isOpen) { e.preventDefault(); openIt(); }
+      else if (!isOpen && searchable() && e.key.length === 1 && e.key !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openIt(e.key); }
+    });
+    drawBtn(); if (window.requestAnimationFrame) requestAnimationFrame(() => { fitted = ''; fit(); }); // again once attached and styled
     return {
       update(next) { o = Object.assign(o, next); drawBtn(); if (isOpen && !o.disabled) drawList(); else if (isOpen) close(false); },
       destroy() { close(false); clearTimeout(bufT); host.innerHTML = ''; host.classList.remove('bhs'); },

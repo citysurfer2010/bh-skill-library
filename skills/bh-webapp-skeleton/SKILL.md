@@ -80,7 +80,7 @@ Listet jedes Pflicht-Artefakt mit `ok` oder `FEHLT`, Exit-Code 1 bei Lücken.
 4. **Anmeldung nur über `lib/auth.js`.** Mit `TRUST_PROXY_AUTH=1` gelten nur `X-User-Email`, `X-User-Name` und `X-User-Role` des BH-Auth-Proxys, und die App darf ausschließlich hinter ihm erreichbar sein. Sonst gelten nur `DEV_USER_EMAIL` und `DEV_USER_ROLE`. Ohne gültige E-Mail gibt es keinen Zugang, eine unbekannte Rolle ist `user`.
 5. **KI-Aufrufe nur über das Gateway:** `lib/llm.js`, also `http://llm-gateway:18790/v1` mit dem Token aus `/etc/devbox/llm/token`. Nie direkt beim Anbieter.
 6. **Farben nur als `--bh-*`-Tokens** aus `public/css/tokens.css`, hell und dunkel. Nie feste Werte in `public/css/`, keine `style=`-Attribute.
-7. **Dropdown ist BHSelect, Tabelle ist BHDataTable,** Listen randlos und nie in einer `.card`, kein `window.alert/confirm/prompt`.
+7. **Dropdown ist BHSelect (immer zum Tippen, feste Breite), Tabelle ist BHDataTable,** Listen randlos und nie in einer `.card`, kein `window.alert/confirm/prompt`.
 8. **Ladestandard:** Rahmen sofort zeichnen, Platzhalter bis die Daten da sind, nichts Fremdes blockiert das erste Zeichnen.
 9. **Standalone:** kein Import außerhalb des App-Ordners. Geheimnisse nur in `.env`, nie im Repo.
 10. **Dateien klein halten,** Richtwert 200 Zeilen. Das Gate blockt neue oder wachsende größere Dateien.

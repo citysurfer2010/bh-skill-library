@@ -70,6 +70,18 @@ window.FinBank = (() => {
     });
   }
 
+  /** Confirmation in place (no window.confirm, skeleton rule 7): the account row asks, the safe choice gets the focus. */
+  function askDrop(li, rerender) {
+    const actions = li.querySelector('.fin-bank-actions'); const keep = actions.innerHTML;
+    actions.innerHTML = `<p class="fin-hint fin-bank-ask" role="status">„${Fin.esc(li.dataset.name)}“ trennen? Neue Umsätze kommen dann nicht mehr, die bisherigen Buchungen bleiben.</p>
+      <button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-drop-yes>Ja, trennen</button><button type="button" class="bh-btn bh-btn-sm" data-drop-no>Abbrechen</button>`;
+    actions.querySelector('[data-drop-no]').focus();
+    actions.querySelector('[data-drop-no]').addEventListener('click', () => rerender());
+    actions.querySelector('[data-drop-yes]').addEventListener('click', async () => {
+      try { await Fin.api('DELETE', `/bank/accounts/${encodeURIComponent(li.dataset.uid)}`); focusHead = true; rerender(); } catch (x) { Toast.error(x.message); actions.innerHTML = keep; }
+    });
+  }
+
   function bind(host, s, rerender) {
     if (focusHead) { host.querySelector('[data-bank-head]')?.focus(); focusHead = false; }
     if (!s.configured) return;
@@ -85,10 +97,7 @@ window.FinBank = (() => {
     host.querySelectorAll('.fin-bank-item').forEach((li) => {
       li.querySelector('[data-renew]')?.addEventListener('click', (e) => connect(e.currentTarget.dataset.renew, e.currentTarget));
       li.querySelector('[data-rename]').addEventListener('click', () => { if (!li.classList.contains('is-editing')) renameForm(li, rerender); });
-      li.querySelector('[data-drop]').addEventListener('click', async () => {
-        if (!confirm(`„${li.dataset.name}“ trennen? Neue Umsätze werden dann nicht mehr abgerufen. Die bisherigen Buchungen bleiben erhalten.`)) return;
-        try { await Fin.api('DELETE', `/bank/accounts/${encodeURIComponent(li.dataset.uid)}`); focusHead = true; rerender(); } catch (x) { Toast.error(x.message); }
-      });
+      li.querySelector('[data-drop]').addEventListener('click', () => askDrop(li, rerender));
     });
   }
 

@@ -59,3 +59,4 @@
   .fin-bank-actions { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
   .fin-bank-actions .bh-btn, .fin-bank-rename .bh-btn { min-height: 40px; }
 }
+.fin-bank-ask { flex: 1 1 100%; grid-column: 1 / -1; margin: 0; }

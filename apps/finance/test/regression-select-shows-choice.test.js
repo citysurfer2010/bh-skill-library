@@ -17,3 +17,9 @@ test('selects that keep their page call update with the new value', () => {
     }
   }
 });
+
+test('no browser dialogs (window.confirm/alert/prompt) in the finance pages, skeleton rule 7', () => {
+  for (const f of fs.readdirSync(DIR).filter((n) => n.startsWith('fin-'))) {
+    assert.doesNotMatch(fs.readFileSync(path.join(DIR, f), 'utf8'), /(^|[^.\w])(confirm|alert|prompt)\(/m, `${f} uses a browser dialog`);
+  }
+});
