@@ -63,7 +63,21 @@ function migrate(conn) {
     CREATE INDEX IF NOT EXISTS idx_accounts_scope ON accounts(scope);
     CREATE INDEX IF NOT EXISTS idx_tx_account_date ON transactions(account, booked_on);
   `);
+  conn.exec(`
+    -- Amazon: jede Belastung von der Zahlungsseite und die Artikel je Bestellung (skills/bh-amazon).
+    CREATE TABLE IF NOT EXISTS amazon_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, order_id TEXT NOT NULL, paid_on TEXT NOT NULL, amount_cents INTEGER NOT NULL, method TEXT NOT NULL DEFAULT '',
+      fetched_at TEXT NOT NULL, UNIQUE (order_id, paid_on, amount_cents, method)
+    );
+    CREATE INDEX IF NOT EXISTS idx_amazon_pay_order ON amazon_payments(order_id);
+    CREATE INDEX IF NOT EXISTS idx_amazon_pay_amount ON amazon_payments(amount_cents, paid_on);
+    CREATE TABLE IF NOT EXISTS amazon_items (order_id TEXT NOT NULL, asin TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL, PRIMARY KEY (order_id, asin));
+    CREATE TABLE IF NOT EXISTS amazon_orders_seen (order_id TEXT PRIMARY KEY, fetched_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS app_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+  `);
   const txCols = conn.prepare('PRAGMA table_info(transactions)').all().map((c) => c.name);
+  if (!txCols.includes('amazon_order')) conn.exec('ALTER TABLE transactions ADD COLUMN amazon_order TEXT');
+  conn.exec('CREATE INDEX IF NOT EXISTS idx_tx_amazon_order ON transactions(amazon_order) WHERE amazon_order IS NOT NULL');
   if (!txCols.includes('counterparty_iban')) conn.exec('ALTER TABLE transactions ADD COLUMN counterparty_iban TEXT');
   conn.exec('CREATE INDEX IF NOT EXISTS idx_tx_amount_date ON transactions(amount_cents, booked_on)');
   const bankCols = conn.prepare('PRAGMA table_info(bank_accounts)').all().map((c) => c.name);

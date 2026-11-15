@@ -5,9 +5,10 @@ window.FinImport = (() => {
   const ACCOUNTS = [['', 'Aus der Datei erkennen'], ['comdirect', 'comdirect Girokonto'], ['CD-CCM', 'comdirect Kreditkarte'], ['BBB', 'BBBank'], ['PayPal', 'PayPal']];
 
   async function render(host) {
-    const [{ imports }, access, bank] = await Promise.all([Fin.api('GET', '/imports'), Fin.api('GET', '/access'), Fin.api('GET', '/bank/status')]);
+    const [{ imports }, access, bank, amazonStatus] = await Promise.all([Fin.api('GET', '/imports'), Fin.api('GET', '/access'), Fin.api('GET', '/bank/status'), Fin.api('GET', '/amazon/status').catch(() => null)]);
     AppShell.render(host, `<header class="app-topbar"><div><h1>Konten und Import</h1><div class="sub">Banken direkt verbinden oder CSV-Exporte hochladen. Doppelte Buchungen werden erkannt und übersprungen.</div></div></header>
       ${FinBank.html(bank)}
+      ${FinAmazon.html(amazonStatus)}
       <section class="card fin-upload"><h2>CSV importieren</h2><form data-import>
         <span class="bh-label">Dateien</span><label class="fin-drop" for="fin-file"><input id="fin-file" class="fin-file" type="file" name="file" accept=".csv,text/csv" multiple required><span class="bh-btn">Dateien auswählen</span><span data-files>oder CSV-Dateien hierher ziehen</span></label>
         <label class="bh-label" for="fin-account">Konto</label><div id="fin-account"></div>
@@ -17,7 +18,7 @@ window.FinImport = (() => {
       ${access.admin ? `<section class="card fin-upload"><h2>Wer die Finanzen sieht</h2><p class="fin-hint">Admins sehen sie immer. Weitere Personen hier mit ihrer Anmelde-Adresse freigeben.</p>
         ${access.users.length ? `<ul class="fin-people">${access.users.map((u) => `<li>${esc(u.email)} <button type="button" class="bh-btn bh-btn-sm" data-remove="${esc(u.email)}">Entfernen</button></li>`).join('')}</ul>` : ''}
         <form data-access class="fin-inline"><label class="bh-label" for="fin-email">E-Mail</label><input id="fin-email" class="bh-input" type="email" required><button type="submit" class="bh-btn">Freigeben</button></form></section>` : ''}`);
-    FinBank.bind(host, bank, () => render(host)); FinBank.afterReturn(host, bank, () => render(host));
+    FinBank.bind(host, bank, () => render(host)); FinAmazon.bind(host, amazonStatus, () => render(host)); FinBank.afterReturn(host, bank, () => render(host));
     let account = '';
     const pick = BHSelectCore.create(host.querySelector('#fin-account'), { options: ACCOUNTS.map(([value, label]) => ({ value, label })), value: '', label: 'Konto', onChange: (v) => { account = v; pick.update({ value: v }); } });
     const input = host.querySelector('#fin-file'); const drop = host.querySelector('.fin-drop');

@@ -18,9 +18,18 @@ window.FinTransactions = (() => {
     return r.suggestion ? `<span class="fin-open">Vorschlag: ${esc(name || r.suggestion)}</span>` : '<span class="fin-open">Zu prüfen</span>';
   }
 
+  /** Items of the Amazon order, loaded when the detail opens; each links to its product page. */
+  async function amazonItems(r, panel) {
+    try {
+      const { transaction } = await Fin.api('GET', `/transactions/${r.id}`);
+      const box = panel?.querySelector('[data-amazon]'); if (!box || !transaction.amazon_items?.length) return;
+      box.querySelector('.fin-amazon-head').insertAdjacentHTML('afterend', `<ul class="fin-amazon-items">${transaction.amazon_items.map((i) => `<li><a href="${esc(i.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(i.title)} (öffnet Amazon)">${esc(i.title)}</a></li>`).join('')}</ul>`);
+    } catch { /* the order link is still there */ }
+  }
+
   function detail(r) {
     const i = visible().indexOf(r); const list = visible();
-    const body = `<dl class="app-dl"><dt>Datum</dt><dd>${esc(date(r.booked_on))}</dd><dt>Betrag</dt><dd>${Fin.amount(r.amount_cents)}</dd><dt>Konto</dt><dd>${esc(r.account)}</dd><dt>Vorgang</dt><dd>${esc(r.kind)}</dd><dt>Gegenpartei</dt><dd>${esc(r.counterparty)}</dd><dt>Text</dt><dd class="fin-wrap">${esc(r.text)}</dd></dl>${Fin.amazonLink(r.text) ? `<p class="fin-amazon-row">${Fin.amazonLink(r.text)}</p>` : ''}
+    const body = `<dl class="app-dl"><dt>Datum</dt><dd>${esc(date(r.booked_on))}</dd><dt>Betrag</dt><dd>${Fin.amount(r.amount_cents)}</dd><dt>Konto</dt><dd>${esc(r.account)}</dd><dt>Vorgang</dt><dd>${esc(r.kind)}</dd><dt>Gegenpartei</dt><dd>${esc(r.counterparty)}</dd><dt>Text</dt><dd class="fin-wrap">${esc(r.text)}</dd></dl>${r.amazon_order || Fin.amazonOrder(r.text) ? `<div class="fin-amazon-box" data-amazon><h3 class="fin-amazon-head">Amazon-Bestellung</h3><p class="fin-amazon-row">${Fin.amazonLink(r.amazon_order || r.text)}</p></div>` : ''}
       <div class="fin-form"><label class="bh-label" for="fin-cat">Kategorie</label><div id="fin-cat"></div>
       ${r.suggestion && !r.category ? `<p class="fin-hint">Vorschlag, weil diese Gegenpartei schon so zugeordnet wurde:</p><button type="button" class="bh-btn bh-btn-sm" data-take="${esc(r.suggestion)}">${esc(cats.find((c) => c.code === r.suggestion)?.name || r.suggestion)} übernehmen</button>` : ''}
       <label class="bh-label" for="fin-note">Bemerkung</label><input id="fin-note" class="bh-input" maxlength="300" value="${esc(r.note)}">
@@ -30,6 +39,7 @@ window.FinTransactions = (() => {
       prev: i > 0 ? () => open(list[i - 1]) : null, next: i < list.length - 1 ? () => open(list[i + 1]) : null, onClose: () => history.replaceState(null, '', `${listHref()}${location.search}`) };
     if (BHSideDrawer.isOpen()) BHSideDrawer.update(o); else BHSideDrawer.open(o);
     const panel = document.querySelector('.bh-sd-panel');
+    if (r.amazon_order) amazonItems(r, panel);
     const save = async (patch) => {
       try {
         const { transaction, applied } = await Fin.api('PATCH', `/transactions/${r.id}`, patch);
@@ -72,7 +82,7 @@ window.FinTransactions = (() => {
     cats = (await Fin.api('GET', '/categories')).categories;
     const catName = category ? cats.find((c) => c.code === category)?.name || category : null;
     page = BHListPage.render(host, {
-      title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || 'aktuell'}`} · ${account ? 'ein Konto' : 'Haushaltskonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …' },
+      title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || new Date().getFullYear()}`} · ${account ? 'ein Konto' : 'Haushaltskonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …' },
       kpis: kpis(), kpiActive: filter, onKpi: (k) => { filter = k; page.setKpis(kpis(), k); page.table.setRows(visible()); },
       topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }].concat(category ? [{ label: 'Alle Kategorien', href: listHref() }] : []).concat(account ? [{ label: 'Alle Konten', href: `${BASE}/accounts` }] : []),
       countLabel: ['Buchung', 'Buchungen'],
@@ -82,7 +92,7 @@ window.FinTransactions = (() => {
           { key: 'counterparty', label: 'Gegenpartei', width: 220 },
           { key: 'amount_cents', label: 'Betrag', width: 130, align: 'right', render: (r) => Fin.amount(r.amount_cents), sortValue: (r) => r.amount_cents },
           { key: 'category', label: 'Kategorie', width: 200, render: catCell, sortValue: (r) => r.category || '' },
-          { key: 'account', label: 'Konto', width: 110 }, { key: 'text', label: 'Text', width: 320 },
+          { key: 'account', label: 'Konto', width: 110 }, { key: 'text', label: 'Text', width: 320, render: (r) => (r.amazon_titles ? `<span class="fin-amazon-titles">Amazon: ${esc(r.amazon_titles)}</span>` : esc(r.text)), sortValue: (r) => r.amazon_titles || r.text },
         ].filter((c) => !(account && c.key === 'account')) },
     });
     const data = await load();

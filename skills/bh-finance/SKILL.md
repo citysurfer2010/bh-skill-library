@@ -21,6 +21,7 @@ Die App `apps/finance` ersetzt die alte Tabelle „Finanzreport“: Kontoauszüg
 | `lib/ledger.js` | Import mit Dublettenprüfung, Korrekturen |
 | `lib/categorize.js` | Lernt Gegenpartei → Kategorie aus Entscheidungen |
 | `lib/report.js` | Übersicht je Art und Kategorie, Investments und Rücklagen |
+| `lib/amazon.js`, `lib/amazon-api.js` | Amazon-Zahlungen und Artikel vom Dienst `bh-amazon` holen, Abbuchungen zuordnen (Bestellnummer im Text, sonst eindeutiger Betrag ±4 Tage) |
 | `lib/transfers.js` | Erkennt Geldtransfers zwischen eigenen Konten (eigene IBAN, eindeutiges Paar mit Kontoinhaber) |
 | `scripts/relabel-bank-accounts.js` | Einmal nach einem Update: Produkt/Beschreibung von der Bank holen, Bereich raten, automatisch vergebene Namen nach den aktuellen Regeln umbenennen (`--dry` zeigt nur) |
 | `scripts/import-sheet.js` | Einmalige Übernahme der alten Tabelle als JSON |

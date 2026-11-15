@@ -26,6 +26,7 @@ Kanonische Skills und Server-Einrichtung der BH Platform. Dieses Repo ist oeffen
 | `bh-mcp-gateway` | Zentrales MCP-Gateway, ueber das alle Werkzeuge laufen |
 | `bh-zottel` | Zottel, der persönliche Assistent je User |
 | `bh-opencode` | Gleicher Kontext, gleiche Regeln und Hooks für OpenCode bei jedem User |
+| `bh-amazon` | Amazon-Zahlungen und Artikel lesend abrufen (Browser im eigenen Container) |
 | `bh-finance` | Private Haushaltsfinanzen: Bankabruf, Import, Kategorien, Auswertung, Investments |
 | `bh-github` | Git, GitHub und Pull Requests |
 | `bh-google-workspace` | Gmail, Drive, Docs, Sheets, Slides, Kalender und Chat |

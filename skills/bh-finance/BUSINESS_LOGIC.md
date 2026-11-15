@@ -51,3 +51,10 @@ Eine Buchung ist doppelt, wenn Konto, Tag, Betrag und Text gleich sind. Gleiche 
 - Erkennung (`lib/transfers.js`), nach jedem CSV-Import, Bankabruf und beim Start: (1) Gegen-IBAN oder eine IBAN im Text gehört zu einem eigenen Konto (nicht dem eigenen); (2) ohne IBAN: gleicher Betrag mit umgekehrtem Vorzeichen auf zwei eigenen Konten innerhalb von 3 Tagen, nur wenn das Paar eindeutig ist und eine Seite einen Kontoinhaber nennt.
 - Gesetzt wird nur bei offenen oder per Regel gebuchten Zeilen (`category_source` = transfer); manuelle und aus der Tabelle übernommene Kategorien bleiben.
 - Übersicht: „Extern rein“ und „Extern raus“ = alle Haushaltsbuchungen des Jahres ohne Übertrag, auch noch nicht zugeordnete.
+
+## Amazon (15.11.2026)
+
+- Quelle: Dienst `bh-amazon` (Browser, siehe Skill bh-amazon). Matti meldet sich einmal unter „Importieren“ an; gespeichert wird nur die Sitzung.
+- Zuordnung: Bestellnummer aus dem Verwendungszweck (94 % der Abbuchungen); sonst eine Amazon-Zahlung gleichen Betrags im Abstand von höchstens 4 Tagen, nur bei Amazon-Buchungen und nur bei genau einem Treffer.
+- Erster Abruf ab 01.01.2021, danach täglich ab letzter Zahlung minus 10 Tage. Artikel je Bestellung höchstens 60 je Abruf, neueste zuerst; jede angefragte Bestellung gilt danach als erledigt.
+- Anzeige: Buchungsliste „Amazon: ‹Artikel›“, Detail mit Artikeln und Links zum Produkt sowie Link zur Bestellung.

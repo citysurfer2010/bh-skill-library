@@ -106,6 +106,22 @@
   .fin-acc-scope { min-width: 128px; }
   .fin-acc-rename { width: 40px; height: 40px; }
 }
-.fin-amazon-row { margin: 8px 0 12px; }
-.fin-amazon::after { content: " ↗"; }
+.fin-amazon-row { margin: 0; }
+.fin-amazon::after, .fin-amazon-items a::after { content: "\00a0↗"; }
 .fin-nowrap { white-space: nowrap; }
+.fin-amazon-box { margin: 16px 0 0; padding-bottom: 16px; border-bottom: 1px solid var(--bh-border-light); }
+.fin-amazon-head { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+.fin-amazon-items { margin: 0 0 12px; padding-left: 18px; font-size: 13px; line-height: 1.4; }
+.fin-amazon-items a { overflow-wrap: anywhere; }
+.fin-amazon-items li + li { margin-top: 6px; }
+.fin-amazon-titles { color: var(--bh-text); }
+.fin-amz-form { display: grid; gap: 8px; max-width: 420px; }
+.fin-amz-form .fin-inline .bh-input { flex: 1 1 180px; }
+.fin-amz-captcha { max-width: 220px; border: 1px solid var(--bh-border); border-radius: var(--bh-radius-sm); }
+.fin-amazon { white-space: normal; max-width: 100%; text-align: left; height: auto; min-height: var(--bh-control-h-sm); padding-block: 6px; overflow-wrap: anywhere; }
+.fin-amz [data-amz-drop] { margin-left: auto; }
+@media (max-width: 560px) {
+  .fin-amz .bh-btn { min-height: 40px; }
+  [data-amz-login] > div > .bh-btn { width: 100%; }
+  .fin-amz-form .fin-inline > .bh-btn { flex: 1 1 0; }
+}

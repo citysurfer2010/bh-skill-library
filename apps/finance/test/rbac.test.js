@@ -15,6 +15,7 @@ const PROTECTED = [
   ['GET', '/api/transactions', 'admin'],
   ['GET', '/api/bank/status', 'admin'],
   ['GET', '/api/accounts', 'admin'],
+  ['GET', '/api/amazon/status', 'admin'],
   ['GET', '/accounts', 'user'],
   ['GET', '/2026', 'user'],
   ['GET', '/2026/transactions', 'user'],

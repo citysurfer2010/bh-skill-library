@@ -46,13 +46,13 @@ function buildRouter() {
     if (req.query.open === '1') where.push('category IS NULL');
     if (req.query.category) { where.push(req.query.category === 'OFFEN' ? 'category IS NULL' : 'category = ?'); if (req.query.category !== 'OFFEN') args.push(String(req.query.category)); }
     if (/^\d{1,2}$/.test(String(req.query.month || ''))) { where.push("CAST(substr(booked_on, 6, 2) AS INTEGER) = ?"); args.push(Number(req.query.month)); }
-    const rows = getDb().prepare(`SELECT t.*, c.name AS category_name, c.art FROM transactions t LEFT JOIN categories c ON c.code = t.category WHERE ${where.join(' AND ')} ORDER BY booked_on DESC, id DESC`).all(...args);
+    const rows = getDb().prepare(`SELECT t.*, c.name AS category_name, c.art, (SELECT group_concat(title, ' · ') FROM (SELECT title FROM amazon_items i WHERE i.order_id = t.amazon_order ORDER BY title)) AS amazon_titles FROM transactions t LEFT JOIN categories c ON c.code = t.category WHERE ${where.join(' AND ')} ORDER BY booked_on DESC, id DESC`).all(...args);
     res.json({ transactions: rows, years: report.years() });
   });
   // Every transaction has its own address (/finance/transactions/<id>); the page asks here when the id is not in the year shown.
   r.get('/transactions/:id', (req, res) => {
     const t = getDb().prepare('SELECT t.*, c.name AS category_name, c.art FROM transactions t LEFT JOIN categories c ON c.code = t.category WHERE t.id = ?').get(Number(req.params.id));
-    return t ? res.json({ transaction: t }) : res.status(404).json({ error: 'Buchung nicht gefunden' });
+    return t ? res.json({ transaction: { ...t, amazon_items: require('../lib/amazon').itemsOf(t.amazon_order) } }) : res.status(404).json({ error: 'Buchung nicht gefunden' });
   });
   r.patch('/transactions/:id', (req, res) => {
     try {

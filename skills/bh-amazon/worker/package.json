@@ -1,0 +1,9 @@
+{
+  "name": "bh-amazon-worker",
+  "version": "26.11.1",
+  "private": true,
+  "description": "Amazon-Zahlungen und Bestellungen lesend abrufen (Browser im eigenen Container)",
+  "main": "server.js",
+  "scripts": { "test": "node --test test/*.test.js" },
+  "dependencies": { "playwright-core": "1.65.0" }
+}
