@@ -8,7 +8,7 @@
 window.BHModal = (() => {
   const CSS = `
 .bh-modal { width: min(480px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0; border: 1px solid var(--bh-border); border-radius: var(--bh-radius-lg); background: var(--bh-surface); color: var(--bh-text); box-shadow: var(--bh-shadow-md); }
-.bh-modal::backdrop { background: color-mix(in srgb, var(--bh-text) 45%, transparent); }
+.bh-modal::backdrop { background: var(--bh-overlay); }
 .bh-modal-form { display: grid; gap: 12px; padding: 20px; }
 .bh-modal-title { margin: 0; font-size: 18px; line-height: 1.3; }
 .bh-modal-body { display: grid; gap: 8px; font-size: 14px; }
@@ -26,20 +26,26 @@ window.BHModal = (() => {
     d.addEventListener('close', () => { d.remove(); if (opener && opener.isConnected) opener.focus(); });
 
     function draw(o) {
-      d.innerHTML = `<form class="bh-modal-form" novalidate><h2 id="bh-modal-title" class="bh-modal-title">${o.title}</h2><div class="bh-modal-body">${o.body || ''}</div>
-        <p class="bh-modal-error" role="alert" hidden></p><div class="bh-modal-actions"><button type="button" class="bh-btn" data-cancel>${o.cancelLabel || 'Abbrechen'}</button>
+      d.innerHTML = `<form class="bh-modal-form" novalidate><h2 id="bh-modal-title" class="bh-modal-title">${o.title}</h2><div class="bh-modal-body" id="bh-modal-body">${o.body || ''}</div>
+        <p class="bh-modal-error" id="bh-modal-error" role="alert" hidden></p><div class="bh-modal-actions"><button type="button" class="bh-btn" data-cancel>${o.cancelLabel || 'Abbrechen'}</button>
         <button type="submit" class="bh-btn ${o.danger ? 'bh-btn-danger' : 'bh-btn-primary'}">${o.submitLabel || 'Speichern'}</button></div></form>`;
-      const form = d.querySelector('form'); const err = d.querySelector('.bh-modal-error'); const submit = form.querySelector('[type=submit]');
+      // A dangerous follow-up is an alert dialog, so screen readers read the warning, not just the focused button.
+      d.setAttribute('role', o.danger ? 'alertdialog' : 'dialog'); d.setAttribute('aria-describedby', 'bh-modal-body');
+      const form = d.querySelector('form'); const err = d.querySelector('.bh-modal-error'); const submit = form.querySelector('[type=submit]'); const label = submit.textContent;
       d.querySelector('[data-cancel]').addEventListener('click', close);
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!form.checkValidity()) { form.reportValidity(); return; }
-        submit.disabled = true; err.hidden = true;
+        submit.disabled = true; submit.textContent = 'Speichert …'; form.setAttribute('aria-busy', 'true'); err.hidden = true;
         try {
           const r = await o.onSubmit(form);
           if (r && r.next) { draw(r.next); return; }
           close();
-        } catch (x) { err.textContent = x.message || 'Das hat nicht geklappt'; err.hidden = false; submit.disabled = false; }
+        } catch (x) {
+          err.textContent = x.message || 'Das hat nicht geklappt'; err.hidden = false; submit.disabled = false; submit.textContent = label; form.removeAttribute('aria-busy');
+          const field = form.querySelector('input, select, textarea');
+          if (field) { field.setAttribute('aria-invalid', 'true'); field.setAttribute('aria-describedby', 'bh-modal-error'); field.focus(); } else submit.focus();
+        }
       });
       (d.querySelector('[autofocus]') || (o.danger ? d.querySelector('[data-cancel]') : d.querySelector('input, select, textarea')) || submit).focus();
     }

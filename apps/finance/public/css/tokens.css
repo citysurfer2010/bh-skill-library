@@ -9,6 +9,7 @@
   --bh-focus-ring: rgba(29, 78, 216, .16);
   --bh-navbar: #1d4ed8;
   --bh-hero-idle: linear-gradient(100deg, #dbeafe 0%, #ede9fe 55%, #ffedd5 100%);
+  --bh-overlay: rgba(15, 31, 61, .45); /* behind dialogs */
   --bh-hero-scrim: linear-gradient(100deg, rgba(23, 37, 84, .86) 0%, rgba(23, 37, 84, .42) 45%, rgba(23, 37, 84, .08) 80%);
   --bh-tile-scrim: linear-gradient(to top, rgba(11, 23, 48, .86) 0%, rgba(11, 23, 48, .68) 50%, transparent 100%);
   --bh-hero-stage: #172554;
@@ -60,6 +61,7 @@
 }
 
 html[data-theme="dark"] {
+  --bh-overlay: rgba(0, 0, 0, .6);
   --bh-primary: #60a5fa;
   --bh-primary-hover: #93c5fd;
   --bh-primary-soft: #1e3a8a;

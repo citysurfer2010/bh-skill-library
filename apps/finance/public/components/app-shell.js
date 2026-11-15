@@ -22,7 +22,13 @@ window.AppShell = (() => {
 
   function render(host, html) {
     host.innerHTML = html;
-    host.querySelectorAll('col[data-w]').forEach((c) => { c.style.width = `${c.dataset.w}px`; }); // remembered list column widths
+    // Remembered list column widths; on a narrower window they shrink in proportion instead of pushing columns out of view.
+    host.querySelectorAll('table[data-list-key]').forEach((table) => {
+      const cols = [...table.querySelectorAll('col[data-w]')]; if (!cols.length) return;
+      const sum = cols.reduce((s, c) => s + Number(c.dataset.w), 0); const room = table.parentElement.clientWidth || sum;
+      const f = sum > room ? room / sum : 1;
+      cols.forEach((c) => { c.style.width = `${Math.max(64, Math.floor(Number(c.dataset.w) * f))}px`; });
+    });
     const top = host.querySelector(':scope > .app-topbar');
     const content = document.createElement('div');
     content.className = 'app-content';
@@ -72,29 +78,42 @@ window.AppShell = (() => {
    */
   /** Column widths of a list, dragged at the header's right edge and remembered per storageKey in this browser. */
   const listWidths = (key) => { try { return JSON.parse(localStorage.getItem(`bh-list:${key}:widths`) || '{}'); } catch (_) { return {}; } };
+  const saveWidths = (table) => {
+    const w = {}; table.querySelectorAll('col').forEach((c, j) => { w[j] = parseInt(c.style.width, 10); });
+    try { localStorage.setItem(`bh-list:${table.dataset.listKey}:widths`, JSON.stringify(w)); } catch (_) { /* widths stay for this view only */ }
+  };
+  const freeze = (table) => { table.querySelectorAll('col').forEach((c, j) => { if (!c.style.width) c.style.width = `${Math.round(table.querySelectorAll('thead th')[j].getBoundingClientRect().width)}px`; }); table.classList.add('is-sized'); };
+  const resetWidths = (table) => { try { localStorage.removeItem(`bh-list:${table.dataset.listKey}:widths`); } catch (_) { /* nothing stored */ } table.querySelectorAll('col').forEach((c) => { c.style.width = ''; }); table.classList.remove('is-sized'); };
   if (typeof document !== 'undefined' && !window.__bhListResize) {
     window.__bhListResize = true;
     document.addEventListener('pointerdown', (e) => {
-      const h = e.target.closest && e.target.closest('.app-list-resize'); if (!h) return;
+      const h = e.target.closest && e.target.closest('.app-list-resize'); if (!h || e.button !== 0) return;
       e.preventDefault();
-      const table = h.closest('table'); const key = table.dataset.listKey; const i = Number(h.dataset.col);
-      const col = table.querySelectorAll('col')[i]; const th = h.closest('th'); const startX = e.clientX; const startW = th.getBoundingClientRect().width;
-      table.querySelectorAll('col').forEach((c, j) => { if (!c.style.width) c.style.width = `${Math.round(table.querySelectorAll('thead th')[j].getBoundingClientRect().width)}px`; });
-      table.classList.add('is-sized');
+      const table = h.closest('table'); const col = table.querySelectorAll('col')[Number(h.dataset.col)];
+      const startX = e.clientX; const startW = h.closest('th').getBoundingClientRect().width;
+      freeze(table); h.setPointerCapture?.(e.pointerId);
       const move = (ev) => { col.style.width = `${Math.max(64, Math.round(startW + ev.clientX - startX))}px`; };
-      const up = () => {
-        document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up);
-        const w = {}; table.querySelectorAll('col').forEach((c, j) => { w[j] = parseInt(c.style.width, 10); });
-        try { localStorage.setItem(`bh-list:${key}:widths`, JSON.stringify(w)); } catch (_) { /* widths stay for this view only */ }
-      };
-      document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+      const up = () => { h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); saveWidths(table); };
+      h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
     });
+    // Keyboard: arrows change the width by 16 px, Home resets all widths of this list; double click resets too.
+    document.addEventListener('keydown', (e) => {
+      const h = e.target.closest && e.target.closest('.app-list-resize'); if (!h) return;
+      const table = h.closest('table');
+      if (e.key === 'Home') { e.preventDefault(); resetWidths(table); return; }
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault(); freeze(table);
+      const col = table.querySelectorAll('col')[Number(h.dataset.col)];
+      const w = Math.max(64, parseInt(col.style.width, 10) + (e.key === 'ArrowRight' ? 16 : -16));
+      col.style.width = `${w}px`; h.setAttribute('aria-valuenow', String(w)); saveWidths(table);
+    });
+    document.addEventListener('dblclick', (e) => { const h = e.target.closest && e.target.closest('.app-list-resize'); if (h) resetWidths(h.closest('table')); });
   }
 
   function list({ columns = [], rows = [], title = '', empty = 'Keine Einträge.', rowHref = null, groups = null, className = '', storageKey = '' } = {}) {
     const al = (c) => (c.align ? ` class="is-${c.align}"` : '');
     const widths = storageKey ? listWidths(storageKey) : {};
-    const handle = (i) => (storageKey && i < columns.length - 1 ? `<span class="app-list-resize" data-col="${i}" aria-hidden="true"></span>` : '');
+    const handle = (i) => (storageKey && i < columns.length - 1 ? `<span class="app-list-resize" data-col="${i}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Breite der Spalte ${esc(columns[i].label)} (Pfeiltasten, Pos1 setzt zurück)"></span>` : '');
     const head = `<thead><tr>${columns.map((c, i) => `<th scope="col"${al(c)}>${esc(c.label)}${handle(i)}</th>`).join('')}</tr></thead>`;
     const sized = storageKey && Object.keys(widths).length;
     const cols = storageKey ? `<colgroup>${columns.map((_, i) => `<col${widths[i] ? ` data-w="${Number(widths[i])}"` : ''}>`).join('')}</colgroup>` : '';
