@@ -2,7 +2,7 @@
 /** Transactions: list with work lists, detail panel to assign a category. Every assignment teaches the rules. */
 window.FinTransactions = (() => {
   const { esc, euro, date, BASE } = Fin;
-  let page = null; let rows = []; let cats = []; let year = null; let filter = 'all'; let category = null; let account = null; let allYears = false;
+  let page = null; let rows = []; let cats = []; let year = null; let filter = 'all'; let category = null; let account = null; let allYears = false; let everyAccount = false; let accts = []; let scopes = {}; let pageHost = null; let listKey = '';
 
   const kpis = () => [
     { key: 'all', label: 'Alle', value: rows.length },
@@ -60,7 +60,7 @@ window.FinTransactions = (() => {
 
   async function load() {
     page.table.setLoading(true);
-    const q = new URLSearchParams({ year: allYears ? 'all' : year || '' }); if (category) q.set('category', category); if (account) q.set('account', account);
+    const q = new URLSearchParams({ year: allYears ? 'all' : year || '' }); if (category) q.set('category', category); if (account) q.set('account', account); else if (everyAccount) q.set('scope', 'all');
     const data = await Fin.api('GET', `/transactions?${q}`);
     rows = data.transactions.map((r) => ({ ...r })); page.setKpis(kpis(), filter); page.table.setRows(visible());
     return data;
@@ -71,20 +71,48 @@ window.FinTransactions = (() => {
     const r = id && rows.find((x) => String(x.id) === String(id));
     if (r) detail(r); else if (BHSideDrawer.isOpen()) BHSideDrawer.close({ silent: true });
   }
-  const isOpen = (host) => !!page && host.contains(page.root);
+  // The list a route belongs to: year path plus filters, without the opened transaction.
+  const keyOf = () => `${location.pathname.replace(/\/transactions\/\d+$/, '/transactions')}?${new URLSearchParams(location.search).toString()}`;
+  /** Only when the same list is on screen may a route just open or close the detail; a new filter or year reloads it. */
+  const isOpen = (host) => !!page && host.contains(page.root) && keyOf() === listKey;
 
   /** The list this transaction belongs to; the detail itself has a year-free address (/finance/transactions/<id>). */
   const listHref = () => Fin.yearHref(allYears ? 'all' : year || new Date().getFullYear(), 'transactions');
 
+  /** Moves to another list (year in the path, filters in the query) and loads it; the back button returns. */
+  function go(yearPart, set) {
+    const q = new URLSearchParams(location.search); set(q);
+    history.pushState(null, '', `${Fin.yearHref(yearPart, 'transactions')}${q.toString() ? `?${q}` : ''}`);
+    render(pageHost, yearPart === 'all' ? null : Number(yearPart));
+  }
+
+  /** Filters for year, category and account (Matti 15.11.2026); all of them typing dropdowns, kept in the address. */
+  function filters(years) {
+    const cur = allYears ? 'all' : String(year || new Date().getFullYear());
+    const mount = (id, options, value, label, onPick) => {
+      const el = pageHost.querySelector(id); if (!el) return;
+      const pick = BHSelectCore.create(el, { options, value, label, searchPlaceholder: `${label} suchen …`, onChange: (v) => { pick.update({ value: v }); onPick(v); } });
+    };
+    const ys = [...new Set([...(years || []), Number(cur)].filter(Boolean))].sort((a, b) => b - a);
+    mount('#fin-year-filter', [{ value: 'all', label: 'Alle Jahre' }].concat(ys.map((y) => ({ value: String(y), label: String(y) }))), cur, 'Jahr', (v) => go(v, () => {}));
+    const catNow = new URLSearchParams(location.search).get('category') || '';
+    mount('#fin-cat-filter', [{ value: '', label: 'Alle Kategorien' }, { value: 'OFFEN', label: 'Noch nicht zugeordnet' }].concat(cats.map((c) => ({ value: c.code, label: c.name, hint: c.art }))), catNow, 'Kategorie',
+      (v) => go(cur, (q) => { q.delete('category'); if (v) q.set('category', v); }));
+    mount('#fin-acc-filter', [{ value: '', label: 'Alle Privatkonten' }, { value: '*all', label: 'Alle Konten' }].concat(accts.map((x) => ({ value: x.name, label: x.name, hint: scopes[x.scope] || '' }))),
+      account || (everyAccount ? '*all' : ''), 'Konto', (v) => go(cur, (q) => { q.delete('account'); q.delete('scope'); if (v === '*all') q.set('scope', 'all'); else if (v) q.set('account', v); }));
+  }
+
   async function render(host, y, id, jumped = false) {
-    year = y; category = new URLSearchParams(location.search).get('category'); account = new URLSearchParams(location.search).get('account'); allYears = !jumped && Fin.allYears();
-    if (category === 'OFFEN') { filter = 'open'; category = null; }
-    cats = (await Fin.api('GET', '/categories')).categories;
+    year = y; category = new URLSearchParams(location.search).get('category'); account = new URLSearchParams(location.search).get('account'); everyAccount = new URLSearchParams(location.search).get('scope') === 'all'; allYears = !jumped && Fin.allYears(); pageHost = host; listKey = keyOf();
+    filter = 'all'; if (category === 'OFFEN') { filter = 'open'; category = null; } // a new list starts from all lines unless it asks for the open ones
+    const [c, a] = await Promise.all([Fin.api('GET', '/categories'), Fin.api('GET', '/accounts')]);
+    cats = c.categories; accts = a.accounts; scopes = a.scopes;
     const catName = category ? cats.find((c) => c.code === category)?.name || category : null;
     page = BHListPage.render(host, {
-      title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || new Date().getFullYear()}`} · ${account ? 'ein Konto' : 'Haushaltskonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …' },
+      toolbarRight: '<div class="fin-filters"><div class="fin-acc-filter" id="fin-year-filter"></div><div class="fin-acc-filter" id="fin-cat-filter"></div><div class="fin-acc-filter" id="fin-acc-filter"></div></div>',
+      title: account ? `Buchungen: ${account}` : catName ? `Buchungen: ${catName}` : 'Buchungen', sub: `${allYears ? 'Alle Jahre' : `Jahr ${year || new Date().getFullYear()}`} · ${account ? 'ein Konto' : everyAccount ? 'alle Konten' : 'Privatkonten'}`, search: { placeholder: 'Gegenpartei, Text, Betrag …' },
       kpis: kpis(), kpiActive: filter, onKpi: (k) => { filter = k; page.setKpis(kpis(), k); page.table.setRows(visible()); },
-      topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }].concat(category ? [{ label: 'Alle Kategorien', href: listHref() }] : []).concat(account ? [{ label: 'Alle Konten', href: `${BASE}/accounts` }] : []),
+      topActions: [{ label: 'Kontoauszug importieren', primary: true, icon: 'upload', href: `${BASE}/import` }],
       countLabel: ['Buchung', 'Buchungen'],
       table: { storageKey: 'finance-transactions', rowHref: (r) => `${BASE}/transactions/${r.id}${location.search}`, itemLabel: ['Buchung', 'Buchungen'], emptyMessage: 'Keine Buchungen in dieser Auswahl.',
         columns: [
@@ -96,6 +124,7 @@ window.FinTransactions = (() => {
         ].filter((c) => !(account && c.key === 'account')) },
     });
     const data = await load();
+    filters(data.years);
     if (!year && data.years.length) year = data.years[0];
     // A link to a transaction of another year opens that year, so every transaction address works on its own.
     if (id && !allYears && !rows.some((x) => String(x.id) === String(id))) {

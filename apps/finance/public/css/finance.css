@@ -120,3 +120,6 @@
 .fin-kind-haushalt { background: var(--bh-ok-bg); color: var(--bh-ok); }
 .fin-kind-immobilien { background: var(--bh-info-bg); color: var(--bh-info); }
 .fin-kind-treuhand { background: var(--bh-warn-bg); color: var(--bh-warn); }
+
+.fin-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fin-filters .fin-acc-filter { min-width: 150px; }
