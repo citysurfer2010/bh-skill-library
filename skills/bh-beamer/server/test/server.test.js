@@ -83,14 +83,14 @@ test('Entwickler-App: Start gilt mit Antwort true oder Timeout als Erfolg, Ausfa
 });
 
 test('YouTube per DIAL: Kennung aus Adresse, Origin-Kopf, Fehler gemeldet', async () => {
-  process.env.BH_BEAMER_IP = '10.0.0.5';
+  process.env.BH_BEAMER_IP = '192.0.2.10';
   const d = require('../lib/dial.js');
   for (const u of ['jNQXAC9IVRw', 'https://www.youtube.com/watch?v=jNQXAC9IVRw&t=3s', 'https://youtu.be/jNQXAC9IVRw?si=x', 'https://m.youtube.com/shorts/jNQXAC9IVRw', 'https://www.youtube-nocookie.com/embed/jNQXAC9IVRw']) assert.equal(d.videoId(u), 'jNQXAC9IVRw');
   for (const u of ['https://vimeo.com/123', 'https://www.youtube.com/', 'javascript:alert(1)', 'abc', '']) assert.throws(() => d.videoId(u), /YouTube/);
   const calls = [];
   d.setFetch(async (u, o = {}) => { calls.push([u, o]); return { status: 201, text: async () => '<state>running</state>' }; });
   assert.equal(await d.playYoutube('https://youtu.be/jNQXAC9IVRw'), 'jNQXAC9IVRw');
-  assert.equal(calls[0][0], 'http://10.0.0.5:8080/ws/apps/YouTube');
+  assert.equal(calls[0][0], 'http://192.0.2.10:8080/ws/apps/YouTube');
   assert.equal(calls[0][1].headers.origin, 'https://www.youtube.com'); assert.equal(calls[0][1].body, 'v=jNQXAC9IVRw');
   assert.equal(await d.youtubeState(), 'running');
   d.setFetch(async () => ({ status: 403, text: async () => '' }));
@@ -204,7 +204,7 @@ test('Anzeige: nur https, Inhalt geht mit Schreib-Schluessel an den Dienst', asy
 });
 
 test('Stream: Steueradresse wird gefunden, Adresse maskiert, Fehler gemeldet', async () => {
-  process.env.BH_BEAMER_IP = '10.0.0.5';
+  process.env.BH_BEAMER_IP = '192.0.2.10';
   const d = require('../lib/dlna.js');
   const calls = [];
   d.setFetch(async (u, o = {}) => {
@@ -214,7 +214,7 @@ test('Stream: Steueradresse wird gefunden, Adresse maskiert, Fehler gemeldet', a
   });
   await d.play('https://a.de/v.mp4?a=1&b=2', 'T<i>');
   const posts = calls.filter((c) => c[1].method === 'POST');
-  assert.equal(posts[0][0], 'http://10.0.0.5:9197/upnp/control/AVTransport1');
+  assert.equal(posts[0][0], 'http://192.0.2.10:9197/upnp/control/AVTransport1');
   assert.match(posts[0][1].body, /a=1&amp;b=2/); assert.doesNotMatch(posts[0][1].body, /T<i>/);
   assert.match(posts[1][1].headers.soapaction, /#Play/);
   assert.equal(await d.state(), 'PLAYING');

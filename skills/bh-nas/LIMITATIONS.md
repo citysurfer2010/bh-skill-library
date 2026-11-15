@@ -2,7 +2,7 @@
 
 ## Grenzen
 
-- Die Verbindung vertraut dem eigenen Zertifikat `192.0.2.10` (2048 Bit, gültig bis 2036) und prüft seinen Fingerabdruck. Der Zugriff läuft ausschließlich durch den WireGuard-Tunnel. Nach einem Zertifikatswechsel `platform/home-link/pin-nas-cert.sh` ausführen.
+- Die Verbindung vertraut dem eigenen Zertifikat `BH_NAS_IP` (2048 Bit, gültig bis 2036) und prüft seinen Fingerabdruck. Der Zugriff läuft ausschließlich durch den WireGuard-Tunnel. Nach einem Zertifikatswechsel `platform/home-link/pin-nas-cert.sh` ausführen.
 - Nur lesend. Schreiben, Verschieben, Löschen, Updates und Einstellungen gibt es bewusst nicht.
 - `nas_health` meldet nur auf Abruf; eine automatische Benachrichtigung gibt es noch nicht.
 - Die Slideshow zeigt nur JPEG-Dateien von 150 KB bis 14 MB. HEIC und PNG bleiben draußen.

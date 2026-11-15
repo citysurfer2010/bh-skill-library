@@ -32,7 +32,7 @@ Tizen-Web-App (`app/`), Kennung `bhscreen01.BHScreen`. Sie fragt alle 3 Sekunden
 
 ## Entwicklermodus und Installation
 
-1. Entwicklermodus: Im Apps-Bereich die Tasten 1 2 3 4 5 (per Netzwerk gesendet, die Fernbedienung hat keine Ziffern), Schalter On, Host-IP = Tunnel-Adresse des Servers (`192.168.2.201`). Danach **echter Neustart** (Power-Taste lang drücken); Standby reicht nicht, sonst bleibt Port 26101 zu.
+1. Entwicklermodus: Im Apps-Bereich die Tasten 1 2 3 4 5 (per Netzwerk gesendet, die Fernbedienung hat keine Ziffern), Schalter On, Host-IP = Tunnel-Adresse des Servers (steht als Tunnel-Adresse in `/srv/bh-platform/.env`). Danach **echter Neustart** (Power-Taste lang drücken); Standby reicht nicht, sonst bleibt Port 26101 zu.
 2. Tizen Studio (Web-CLI) auf dem Server unter dem Benutzer `tizen` (der Installer verweigert root): `/home/tizen/tizen-studio`, `sdb connect <ip>:26101`.
 3. Samsung-Zertifikat: Samsung stellt es nur über den **Certificate Manager** aus. Der Paketmanager scheiterte („Directory creation failed“), deshalb `Certificate-Manager` und `certificate-manager-product` direkt aus `download.tizen.org/sdk/tizenstudio/official` geladen (SHA256 geprüft) und entpackt.
 4. Grafische Oberfläche ohne Monitor: Xvfb + fluxbox + x11vnc + noVNC (`platform/beamer-dev/bh-desktop`), Bedienung per SSH-Tunnel `ssh -L 6080:127.0.0.1:6080` und `http://localhost:6080/vnc.html`.

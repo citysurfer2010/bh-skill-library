@@ -3,7 +3,7 @@
 # The Apple password is typed only here and stays in the macOS keychain. Nothing is ever deleted in iCloud.
 set -euo pipefail
 
-NAS=192.0.2.10; SHARE=photo; TARGET=iCloud-Matti; MOUNT="/Volumes/$SHARE"
+NAS="${BH_NAS_IP:?BH_NAS_IP setzen (Adresse der Synology im Heimnetz, steht in /srv/bh-platform/.env)}"; SHARE=photo; TARGET=iCloud-Matti; MOUNT="/Volumes/$SHARE"
 LABEL=de.familiebiskup.icloud-photos
 HOME_DIR="$HOME/.bh-icloud-photos"; RUNNER="$HOME_DIR/run.sh"; AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"; LOG="$HOME/Library/Logs/bh-icloud-photos.log"
 
