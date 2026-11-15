@@ -97,6 +97,7 @@ if (require.main === module) {
   bankRoutes.startSchedule();
   amazonRoutes.startSchedule();
   try { require('./lib/amazon').link(); } catch (e) { console.error(`[${APP_ID}] Amazon-Zuordnung:`, e.message); }
+  try { const r = require('./lib/text-rules').detect(); if (r.changed) console.log(`[${APP_ID}] Textregeln: ${r.changed} Buchungen zugeordnet`); } catch (e) { console.error(`[${APP_ID}] Textregeln:`, e.message); }
   try { const t = require('./lib/transfers').detect(); if (t.byIban + t.byPair) console.log(`[${APP_ID}] Geldtransfers erkannt: ${t.byIban} über IBAN, ${t.byPair} als Paar`); } catch (e) { console.error(`[${APP_ID}] Transfer-Erkennung:`, e.message); }
   const stop = () => server.close(() => { closeDb(); process.exit(0); });
   process.on('SIGTERM', stop);

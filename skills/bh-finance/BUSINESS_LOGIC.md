@@ -65,3 +65,8 @@ Eine Buchung ist doppelt, wenn Konto, Tag, Betrag und Text gleich sind. Gleiche 
 - Kontoart je Konto: Privat (intern `haushalt`), Immobilien, Treuhand; eigene Spalte, Filter `?scope=` auf der Kontenseite.
 - Kontostand je Bankkonto aus Enable Banking bei jedem Abruf: gebuchter Tagesendstand (CLBD) vor verfügbarem (ITAV/XPCD). Kennzahlen oben = Summe je Kontoart mit ältestem Stand-Datum; CSV-Konten haben keinen Stand und werden als „ohne Kontostand“ gezählt.
 - Depots sind keine PSD2-Zahlungskonten und kommen nicht über Enable Banking; DKB-Depot geplant über FinTS im Skill bh-banking.
+
+## Textregeln (15.11.2026)
+
+- Für Gegenparteien mit gemischten Buchungen (z. B. „DKB AG“: ETF-Sparplan und Gebühren vom DKB-Geschäftskonto) gelten feste Regeln am Verwendungszweck (`lib/text-rules.js`): Wertpapierabrechnung, „Wertpapier“, „Sparplan“ oder ISIN bei Abbuchung → AKTIEN; Depotgebühren, Kontoabrechnung, Kontoführungsentgelt, „Entgelt Visa/Konto/Karte“ → KONTO.
+- Nur offene oder per gelernter Regel gebuchte Zeilen; Herkunft `text`. Läuft nach Import, Bankabruf und beim Start.
