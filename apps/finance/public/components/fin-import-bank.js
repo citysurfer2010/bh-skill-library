@@ -1,108 +1,99 @@
 'use strict';
-/** "Bankkonten" on the import page: connect a bank, see each account's last fetch, fetch now, rename or disconnect. */
+/** Bank connections on the import page: rows for the connections table and the dialogs (connect, rename, disconnect). */
 window.FinBank = (() => {
-  const when = (iso) => new Date(iso).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const BANK_NAMES = { Comdirect: 'comdirect', BBBank: 'BBBank', DKB: 'DKB', PayPal: 'PayPal' };
   const WARN_DAYS = 14;
   const PEN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   const REASONS = { access_denied: 'Du hast die Freigabe bei der Bank abgebrochen. Es wurde nichts geändert.' };
-  let wasRunning = false; let focusHead = false;
+  let wasRunning = false;
+  const soon = (a) => a.valid_until && Date.parse(a.valid_until) - Date.now() < WARN_DAYS * 86_400_000;
 
-  function badge(a) {
+  function access(a) {
     const { esc, date } = Fin;
-    if (a.status !== 'active') return '<span class="fin-badge fin-badge-warn">Zugriff abgelaufen</span>';
-    if (!a.valid_until) return '';
-    const day = esc(date(a.valid_until.slice(0, 10)));
-    const soon = Date.parse(a.valid_until) - Date.now() < WARN_DAYS * 86_400_000;
-    return soon ? `<span class="fin-badge fin-badge-warn">Zugriff endet am ${day}</span>` : `<span class="fin-badge">Zugriff erlaubt bis ${day}</span>`;
+    if (a.status !== 'active') return '<span class="fin-badge fin-badge-warn">abgelaufen</span>';
+    if (!a.valid_until) return '–';
+    return `<span class="fin-badge${soon(a) ? ' fin-badge-warn' : ''}">bis ${esc(date(a.valid_until.slice(0, 10)))}</span>`;
   }
 
-  function account(a) {
-    const { esc, date } = Fin;
-    const renew = a.status !== 'active' || (a.valid_until && Date.parse(a.valid_until) - Date.now() < WARN_DAYS * 86_400_000);
-    const facts = [BANK_NAMES[a.aspsp] || a.aspsp, a.name, a.iban].filter(Boolean).map(esc).join(' · ');
-    const fetched = a.last_sync_at ? `Zuletzt abgerufen ${esc(when(a.last_sync_at))}${a.first_booked_on ? ` · Buchungen ab ${esc(date(a.first_booked_on))}` : ''}` : 'Noch nicht abgerufen';
-    const l = esc(a.label);
-    return `<li class="fin-bank-item" data-uid="${esc(a.uid)}" data-name="${l}">
-      <div class="fin-bank-main"><div class="fin-bank-head"><strong>${l}</strong><button type="button" class="fin-acc-rename" data-rename aria-label="${l} umbenennen">${PEN}</button>${badge(a)}</div><div class="fin-hint">${facts}</div><div class="fin-hint">${fetched}</div>
-        ${a.last_error && a.status === 'active' ? `<div class="fin-bank-error" role="status">Letzter Abruf fehlgeschlagen: ${esc(a.last_error)}</div>` : ''}</div>
-      <div class="fin-bank-actions">${renew ? `<button type="button" class="bh-btn bh-btn-sm bh-btn-primary" data-renew="${esc(a.aspsp)}" aria-label="${l} neu verbinden">Neu verbinden</button>` : ''}
-        <button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-drop aria-label="${l} trennen">Trennen</button></div></li>`;
+  /** Status as a badge in plain words; the bank's raw message stays in the tooltip. */
+  function status(a) {
+    const { esc } = Fin; const synced = a.last_sync_at ? ` <span class="fin-hint fin-conn-synced">· abgerufen ${esc(new Date(a.last_sync_at).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))}</span>` : '';
+    if (a.last_error && a.status === 'active') {
+      const down = /\b5\d\d\b|nicht erreichbar|timeout|zu lange/i.test(a.last_error);
+      return `<span class="fin-badge fin-badge-danger" title="${esc(`${down ? 'Der nächste tägliche Abruf versucht es wieder. ' : ''}Meldung der Bank: ${a.last_error}`)}">${down ? 'Bank nicht erreichbar' : 'Abruf fehlgeschlagen'}</span>${synced}`;
+    }
+    if (a.status !== 'active') return '<span class="fin-badge fin-badge-warn">bitte neu verbinden</span>';
+    return a.last_sync_at ? `<span class="fin-badge fin-badge-ok">OK</span>${synced}` : '<span class="fin-hint">noch nicht abgerufen</span>';
   }
 
-  function html(s) {
-    if (!s.configured) return '<section class="card fin-upload"><h2>Bankkonten</h2><p class="fin-hint">Die Bankanbindung ist auf diesem Server nicht eingerichtet. CSV-Import geht weiter.</p></section>';
-    return `<section class="card fin-upload fin-bank"><h2 tabindex="-1" data-bank-head>Bankkonten</h2>
-      <p class="fin-hint">Umsätze kommen einmal am Tag direkt von der Bank, nur lesend. Der Zugriff gilt 180 Tage, danach einmal neu verbinden.</p>
-      ${s.accounts.length ? `<ul class="fin-bank-list">${s.accounts.map(account).join('')}</ul>` : '<p class="fin-hint">Noch keine Bank verbunden.</p>'}
-      <div class="fin-bank-footer"><div class="fin-inline"><div id="fin-bank-pick"></div><button type="button" class="bh-btn bh-btn-primary" data-connect>Bank verbinden</button>
-        ${s.accounts.length ? `<button type="button" class="bh-btn" data-sync ${s.running ? 'disabled' : ''}>${s.running ? 'Abruf läuft …' : 'Jetzt abrufen'}</button>` : ''}</div>
-        <p class="fin-hint">Du meldest dich bei deiner Bank an und landest danach wieder hier.</p></div></section>`;
+  /** One row per bank account for AppShell.list (the connections table). */
+  function rows(s) {
+    const { esc } = Fin;
+    return (s.accounts || []).map((a) => ({
+      kind: 'bank', name: a.label, uid: a.uid, aspsp: a.aspsp, synced: a.last_sync_at, from: a.first_booked_on, sortAccess: a.status === 'active' ? a.valid_until || '' : '',
+      nameHtml: `<div class="fin-acc-name" data-uid="${esc(a.uid)}" data-name="${esc(a.label)}"><strong>${esc(a.label)}</strong><button type="button" class="fin-acc-rename" data-bank-rename aria-label="${esc(a.label)} umbenennen">${PEN}</button></div>`,
+      sourceHtml: `<span class="fin-acc-bank">${esc(BANK_NAMES[a.aspsp] || a.aspsp)}</span>${a.iban ? `<div class="fin-hint fin-num">${esc(a.iban)}</div>` : ''}${a.name ? `<div class="fin-hint">${esc(a.name)}</div>` : ''}`,
+      accessHtml: access(a),
+      statusHtml: status(a),
+      actionsHtml: `${a.status !== 'active' || soon(a) ? `<button type="button" class="bh-btn bh-btn-sm bh-btn-primary" data-renew="${esc(a.aspsp)}" title="${a.status !== 'active' ? 'Zugriff abgelaufen' : 'Zugriff endet bald'}">Neu verbinden</button>` : ''}<button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-bank-drop="${esc(a.uid)}" data-name="${esc(a.label)}">Trennen</button>`,
+    }));
+  }
+
+  async function connect(aspsp) {
+    const { url } = await Fin.api('POST', '/bank/connect', { aspsp });
+    location.href = url; // the bank sends the browser back to /finance/import?bank=ok
+  }
+
+  function connectDialog(s) {
+    let bank = s.banks[0];
+    BHModal.open({
+      title: 'Bank verbinden', submitLabel: 'Weiter zur Bank', busyLabel: 'Weiter zur Bank …',
+      body: `<label class="bh-label" for="fin-bank-pick">Bank</label><div id="fin-bank-pick"></div>
+        <p class="fin-hint">Du meldest dich bei deiner Bank an, gibst den Zugriff frei (nur lesend, 180 Tage) und landest danach wieder hier. Der erste Abruf startet dann von selbst.</p>`,
+      onOpen: (d) => { const pick = BHSelectCore.create(d.querySelector('#fin-bank-pick'), { options: s.banks.map((b) => ({ value: b, label: BANK_NAMES[b] || b })), value: bank, label: 'Bank', onChange: (v) => { bank = v; pick.update({ value: v }); } }); },
+      onSubmit: () => connect(bank).then(() => new Promise(() => {})), // stays open until the page leaves for the bank
+    });
+  }
+
+  function dropDialog(uid, name, rerender) {
+    BHModal.open({
+      title: `„${Fin.esc(name)}“ trennen?`, submitLabel: 'Trennen', danger: true,
+      body: '<p>Neue Umsätze dieses Kontos werden dann nicht mehr abgerufen. Die bisherigen Buchungen bleiben erhalten. Später lässt es sich wieder verbinden.</p>',
+      onSubmit: async () => { await Fin.api('DELETE', `/bank/accounts/${encodeURIComponent(uid)}`); Toast.success('Getrennt'); rerender(); },
+    });
+  }
+
+  function bind(host, s, rerender) {
+    host.querySelectorAll('[data-bank-rename]').forEach((b) => b.addEventListener('click', () => {
+      const box = b.closest('[data-uid]');
+      FinRename.open({ current: box.dataset.name,
+        save: ({ name: label }, merge) => Fin.api('PATCH', `/bank/accounts/${encodeURIComponent(box.dataset.uid)}`, merge ? { label, merge: true } : { label }),
+        done: () => rerender() });
+    }));
+    host.querySelectorAll('[data-renew]').forEach((b) => b.addEventListener('click', async () => { b.disabled = true; b.textContent = 'Weiter zur Bank …'; try { await connect(b.dataset.renew); } catch (x) { Toast.error(x.message); rerender(); } }));
+    host.querySelectorAll('[data-bank-drop]').forEach((b) => b.addEventListener('click', () => dropDialog(b.dataset.bankDrop, b.dataset.name, rerender)));
   }
 
   function summary(results) {
     const bad = results.filter((r) => r.error);
     const added = results.reduce((n, r) => n + (r.added || 0), 0);
-    const errors = bad.length ? `, ${bad.length === 1 ? '1 Konto' : `${bad.length} Konten`} mit Fehler (siehe unten)` : '';
+    const errors = bad.length ? `, ${bad.length === 1 ? '1 Konto' : `${bad.length} Konten`} mit Fehler (siehe Tabelle)` : '';
     return { text: `${added} neue ${added === 1 ? 'Buchung' : 'Buchungen'}${errors}`, ok: !bad.length };
   }
 
-  async function connect(aspsp, btn) {
-    if (btn) { btn.disabled = true; btn.textContent = 'Weiter zur Bank …'; }
-    try { const { url } = await Fin.api('POST', '/bank/connect', { aspsp }); location.href = url; } catch (x) {
-      Toast.error(x.message); if (btn) { btn.disabled = false; btn.textContent = btn.dataset.text || 'Bank verbinden'; }
-    }
-  }
-
-  function renameForm(li, rerender) {
-    FinRename.open({ current: li.dataset.name,
-      save: ({ name: label }, merge) => Fin.api('PATCH', `/bank/accounts/${encodeURIComponent(li.dataset.uid)}`, merge ? { label, merge: true } : { label }),
-      done: () => { focusHead = true; rerender(); } });
-  }
-
-  function askDrop(li, rerender) {
-    const actions = li.querySelector('.fin-bank-actions'); const keep = actions.innerHTML;
-    actions.innerHTML = `<p class="fin-hint fin-bank-ask" role="status">„${Fin.esc(li.dataset.name)}“ trennen? Neue Umsätze kommen dann nicht mehr, die bisherigen Buchungen bleiben.</p>
-      <button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-drop-yes>Ja, trennen</button><button type="button" class="bh-btn bh-btn-sm" data-drop-no>Abbrechen</button>`;
-    actions.querySelector('[data-drop-no]').focus();
-    actions.querySelector('[data-drop-no]').addEventListener('click', () => rerender());
-    actions.querySelector('[data-drop-yes]').addEventListener('click', async () => {
-      try { await Fin.api('DELETE', `/bank/accounts/${encodeURIComponent(li.dataset.uid)}`); focusHead = true; rerender(); } catch (x) { Toast.error(x.message); actions.innerHTML = keep; }
-    });
-  }
-
-  function bind(host, s, rerender) {
-    if (focusHead) { host.querySelector('[data-bank-head]')?.focus(); focusHead = false; }
-    if (!s.configured) return;
-    let bank = s.banks[0];
-    // The select only shows a new choice when told so (update); without it the button keeps the first bank.
-    const pick = BHSelectCore.create(host.querySelector('#fin-bank-pick'), { options: s.banks.map((b) => ({ value: b, label: BANK_NAMES[b] || b })), value: bank, label: 'Bank', onChange: (v) => { bank = v; pick.update({ value: v }); } });
-    host.querySelector('[data-connect]').addEventListener('click', (e) => connect(bank, e.currentTarget));
-    host.querySelector('[data-sync]')?.addEventListener('click', async (e) => {
-      e.currentTarget.disabled = true; e.currentTarget.textContent = 'Abruf läuft …';
-      try { const { results } = await Fin.api('POST', '/bank/sync'); const m = summary(results); (m.ok ? Toast.success : Toast.error)(m.text); } catch (x) { Toast.error(x.message); }
-      rerender();
-    });
-    host.querySelectorAll('.fin-bank-item').forEach((li) => {
-      li.querySelector('[data-renew]')?.addEventListener('click', (e) => connect(e.currentTarget.dataset.renew, e.currentTarget));
-      li.querySelector('[data-rename]').addEventListener('click', () => renameForm(li, rerender));
-      li.querySelector('[data-drop]').addEventListener('click', () => askDrop(li, rerender));
-    });
-  }
-
-  /** Message after coming back from the bank; while the first fetch runs, the page refreshes itself and reports the end. */
-  function afterReturn(host, s, rerender) {
+  /** Message after coming back from the bank; while a fetch runs the page refreshes itself and reports the end. */
+  function afterReturn(s, rerender) {
     const q = new URLSearchParams(location.search);
     if (q.get('bank') === 'ok') Toast.success('Bank verbunden. Der erste Abruf läuft.');
     if (q.get('bank') === 'error') { const r = q.get('reason') || ''; Toast.error(REASONS[r] || (r && !/^[a-z_]+$/.test(r) ? r : 'Die Bank hat die Verbindung abgelehnt. Bitte später noch einmal versuchen.')); }
     if (q.has('bank')) history.replaceState(null, '', location.pathname);
     if (wasRunning && !s.running) {
-      const bad = s.accounts.filter((a) => a.last_error && a.status === 'active').length;
-      (bad ? Toast.error : Toast.success)(bad ? `Abruf fertig, ${bad === 1 ? '1 Konto' : `${bad} Konten`} mit Fehler (siehe unten)` : 'Abruf fertig.');
+      const bad = (s.accounts || []).filter((a) => a.last_error && a.status === 'active').length;
+      (bad ? Toast.error : Toast.success)(bad ? `Abruf fertig, ${bad === 1 ? '1 Konto' : `${bad} Konten`} mit Fehler (siehe Tabelle)` : 'Abruf fertig.');
     }
     wasRunning = s.running;
     if (s.running) setTimeout(function again() { if (document.querySelector('dialog.bh-modal[open]')) setTimeout(again, 4000); else rerender(); }, 4000);
   }
 
-  return { html, bind, afterReturn, summary };
+  return { rows, bind, connectDialog, summary, afterReturn };
 })();

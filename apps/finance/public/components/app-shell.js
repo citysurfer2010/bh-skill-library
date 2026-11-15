@@ -1,14 +1,12 @@
 'use strict';
 /**
  * Page helpers. The frame (bh-app-shell.js) draws navbar, breadcrumb and sidebar; list pages use BHListPage + BHDataTable.
- * A page = page header (title left, actions right) + content. Buttons belong in the page header, never in the breadcrumb.
- *   AppShell.crumbs([['App', href], ['Page']]) · AppShell.render(host, html) · AppShell.actions(html)
+ * Page header (title left, actions right) + content; buttons never in the breadcrumb. AppShell.crumbs([['App', href], ['Page']]) · AppShell.render(host, html) · AppShell.actions(html)
  * Loading standard: draw the frame at once from what is known, content shows placeholders until data arrives; never a white page.
  *   AppShell.loading(host, title, kind)  'table' | 'cards' | 'form'     AppShell.links(prefix, go)  in-module links without reload
  * Lists are borderless, never in a .card. Small static lists (up to 10 rows):
  *   AppShell.list({ columns: [{ key, label, html?, align?, sortValue?(row), sortable? }], storageKey?, rows | groups: [{ label, rows }], title?, empty?, rowHref?, className? })
- *   AppShell.kpis([{ label, value, sub? }])   AppShell.listPage(host, { title, sub?, search?, count, countLabel?, toolbarLeft?, toolbarRight?, list })
- *   AppShell.chips(items: [[key, label, n?]], active, href(key))
+ *   AppShell.kpis([{ label, value, sub? }]) · AppShell.chips([[key, label, n?]], active, href) · AppShell.listPage(host, { title, sub?, search?, count, countLabel?, toolbarLeft?, toolbarRight?, list })
  */
 window.AppShell = (() => {
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -145,8 +143,9 @@ window.AppShell = (() => {
   function list({ columns = [], rows = [], title = '', empty = 'Keine Einträge.', rowHref = null, groups = null, className = '', storageKey = '' } = {}) {
     const al = (c) => (c.align ? ` class="is-${c.align}"` : '');
     const widths = storageKey ? listWidths(storageKey) : {};
-    const handle = (i) => (storageKey && i < columns.length - 1 ? `<span class="app-list-resize" data-col="${i}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Breite der Spalte ${esc(columns[i].label)} (Pfeiltasten, Pos1 setzt zurück)"></span>` : '');
-    const label = (c) => (c.sortable === false || !c.label ? esc(c.label) : `<button type="button" class="app-list-sort">${esc(c.label)}</button>`);
+    const handle = (i) => (storageKey && i < columns.length - 1 && !columns[i].srOnly && !columns[i + 1].srOnly ? `<span class="app-list-resize" data-col="${i}" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Breite der Spalte ${esc(columns[i].label)} (Pfeiltasten, Pos1 setzt zurück)"></span>` : '');
+    // srOnly: the header is read out but not shown (e.g. an actions column); such columns get no resize handle.
+    const label = (c) => (c.srOnly ? `<span class="sr-only">${esc(c.label)}</span>` : c.sortable === false || !c.label ? esc(c.label) : `<button type="button" class="app-list-sort">${esc(c.label)}</button>`);
     const head = `<thead><tr>${columns.map((c, i) => `<th scope="col"${al(c)}${c.sortable === false || !c.label ? '' : ' aria-sort="none"'}>${label(c)}${handle(i)}</th>`).join('')}</tr></thead>`;
     const sized = storageKey && Object.keys(widths).length;
     const cols = storageKey ? `<colgroup>${columns.map((_, i) => `<col${widths[i] ? ` data-w="${Number(widths[i])}"` : ''}>`).join('')}</colgroup>` : '';

@@ -1,7 +1,7 @@
 'use strict';
 /**
  * BHModal — a small dialog on the native <dialog>: the browser traps the focus and closes on Esc; focus returns to the opener.
- *   BHModal.open({ title, body, submitLabel, danger, onSubmit(form), onOpen?(dialog) })  onOpen e.g. mounts BHSelect fields
+ *   BHModal.open({ title, body, submitLabel, busyLabel?, danger, onSubmit(form), onOpen?(dialog) })  onOpen e.g. mounts BHSelect fields
  * onSubmit may throw (the message shows in the dialog) or return { next: { title, body, submitLabel, danger, onSubmit } }
  * to ask a follow-up question in the same dialog (e.g. "merge with the existing account?"). title and body are HTML, escaped by the caller.
  */
@@ -36,7 +36,7 @@ window.BHModal = (() => {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!form.checkValidity()) { form.reportValidity(); return; }
-        submit.disabled = true; submit.textContent = 'Speichert …'; form.setAttribute('aria-busy', 'true'); err.hidden = true;
+        submit.disabled = true; submit.textContent = o.busyLabel || 'Speichert …'; form.setAttribute('aria-busy', 'true'); err.hidden = true;
         try {
           const r = await o.onSubmit(form);
           if (r && r.next) { draw(r.next); return; }

@@ -1,50 +1,49 @@
 'use strict';
-/** Import of bank exports, history of imports, and who may see the finances. */
+/**
+ * „Konten und Import“ (Matti 15.11.2026: as tables, actions in the page header, each in a dialog):
+ * connections (bank accounts and Amazon) and the import history. Who may see the finances lives on the admin page.
+ */
 window.FinImport = (() => {
-  const { esc, date, BASE } = Fin;
-  const ACCOUNTS = [['', 'Aus der Datei erkennen'], ['comdirect', 'comdirect Girokonto'], ['CD-CCM', 'comdirect Kreditkarte'], ['BBB', 'BBBank'], ['PayPal', 'PayPal']];
+  const when = (iso) => (iso ? new Date(iso).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '');
 
   async function render(host) {
-    const [{ imports }, access, bank, amazonStatus] = await Promise.all([Fin.api('GET', '/imports'), Fin.api('GET', '/access'), Fin.api('GET', '/bank/status'), Fin.api('GET', '/amazon/status').catch(() => null)]);
-    AppShell.render(host, `<header class="app-topbar"><div><h1>Konten und Import</h1><div class="sub">Banken direkt verbinden oder CSV-Exporte hochladen. Doppelte Buchungen werden erkannt und übersprungen.</div></div></header>
-      ${FinBank.html(bank)}
-      ${FinAmazon.html(amazonStatus)}
-      <section class="card fin-upload"><h2>CSV importieren</h2><form data-import>
-        <span class="bh-label">Dateien</span><label class="fin-drop" for="fin-file"><input id="fin-file" class="fin-file" type="file" name="file" accept=".csv,text/csv" multiple required><span class="bh-btn">Dateien auswählen</span><span data-files>oder CSV-Dateien hierher ziehen</span></label>
-        <label class="bh-label" for="fin-account">Konto</label><div id="fin-account"></div>
-        <p class="fin-hint">Die Kreditkarte nutzt dasselbe Format wie das Girokonto. Wähle sie hier aus, damit die Buchungen beim richtigen Konto landen.</p>
-        <div><button type="submit" class="bh-btn bh-btn-primary">Importieren</button></div><p class="fin-result" role="status" aria-live="polite"></p></form></section>
-      ${AppShell.list({ title: 'Bisherige Importe', columns: [{ key: 'created_at', label: 'Am', html: (r) => esc(date(r.created_at.slice(0, 10))) }, { key: 'filename', label: 'Datei' }, { key: 'account', label: 'Konto' }, { key: 'range', label: 'Zeitraum', html: (r) => (r.first ? `${esc(date(r.first))} – ${esc(date(r.last))}` : '–') }, { key: 'added', label: 'Neu' }, { key: 'duplicates', label: 'Schon vorhanden' }], rows: imports, empty: 'Noch keine Importe.' })}
-      ${access.admin ? `<section class="card fin-upload"><h2>Wer die Finanzen sieht</h2><p class="fin-hint">Admins sehen sie immer. Weitere Personen hier mit ihrer Anmelde-Adresse freigeben.</p>
-        ${access.users.length ? `<ul class="fin-people">${access.users.map((u) => `<li>${esc(u.email)} <button type="button" class="bh-btn bh-btn-sm" data-remove="${esc(u.email)}">Entfernen</button></li>`).join('')}</ul>` : ''}
-        <form data-access class="fin-inline"><label class="bh-label" for="fin-email">E-Mail</label><input id="fin-email" class="bh-input" type="email" required><button type="submit" class="bh-btn">Freigeben</button></form></section>` : ''}`);
-    FinBank.bind(host, bank, () => render(host)); FinAmazon.bind(host, amazonStatus, () => render(host)); FinBank.afterReturn(host, bank, () => render(host));
-    let account = '';
-    const pick = BHSelectCore.create(host.querySelector('#fin-account'), { options: ACCOUNTS.map(([value, label]) => ({ value, label })), value: '', label: 'Konto', onChange: (v) => { account = v; pick.update({ value: v }); } });
-    const input = host.querySelector('#fin-file'); const drop = host.querySelector('.fin-drop');
-    const showFiles = () => { host.querySelector('[data-files]').textContent = input.files.length ? [...input.files].map((f) => f.name).join(', ') : 'oder CSV-Dateien hierher ziehen'; };
-    input.addEventListener('change', showFiles);
-    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('is-over'); });
-    drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
-    drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('is-over'); input.files = e.dataTransfer.files; showFiles(); });
-    host.querySelector('[data-import]').addEventListener('submit', async (e) => {
-      e.preventDefault(); const out = host.querySelector('.fin-result'); const btn = e.target.querySelector('button[type=submit]');
-      btn.disabled = true; const lines = []; let open = 0;
-      for (const file of input.files) {
-        out.textContent = `${file.name} wird importiert …`;
-        const body = new FormData(); body.set('file', file); if (account) body.set('account', account);
-        try { const r = await Fin.api('POST', '/imports', body); lines.push(`${esc(file.name)}: ${r.added} neu für ${esc(r.account)}, ${r.duplicates} schon vorhanden`); open = r.open; } catch (x) { lines.push(`${esc(file.name)}: ${esc(x.message)}`); }
-      }
-      out.innerHTML = `${lines.join('<br>')}${open ? `<br><a class="bh-btn bh-btn-primary bh-btn-sm" href="${BASE}/transactions?category=OFFEN">${open} Buchungen zuordnen</a>` : ''}`;
-      btn.disabled = false;
+    const { esc, date } = Fin;
+    // A refresh while a fetch runs keeps the keyboard focus where it was.
+    const fx = document.activeElement; const refocus = fx && host.contains(fx) ? ['data-act', 'data-renew', 'data-bank-drop', 'data-amazon-open', 'data-bank-rename'].map((a) => (fx.hasAttribute(a) ? `[${a}${fx.getAttribute(a) ? `="${CSS.escape(fx.getAttribute(a))}"` : ''}]` : null)).find(Boolean) : null;
+    const [{ imports }, bank, amazon] = await Promise.all([Fin.api('GET', '/imports'), Fin.api('GET', '/bank/status'), Fin.api('GET', '/amazon/status').catch(() => null)]);
+    const rows = FinBank.rows(bank).concat(FinAmazon.rows(amazon));
+    const running = bank.running || amazon?.running;
+    AppShell.render(host, `<header class="app-topbar"><div><h1>Konten und Import</h1><div class="sub">Banken und Amazon liefern einmal am Tag von selbst; CSV-Exporte für alles andere.</div></div>
+      <div class="app-topbar-actions"><button type="button" class="bh-btn" data-act="sync" ${running ? 'disabled' : ''}>${running ? 'Abruf läuft …' : 'Jetzt abrufen'}</button>
+        <button type="button" class="bh-btn" data-act="csv">CSV importieren</button>${amazon?.configured ? `<button type="button" class="bh-btn" data-act="amazon">${amazon.connected ? 'Amazon' : 'Amazon verbinden'}</button>` : ''}
+        ${bank.configured ? '<button type="button" class="bh-btn bh-btn-primary" data-act="bank">Bank verbinden</button>' : ''}</div></header>
+      ${AppShell.list({ title: 'Verbindungen', className: 'fin-conn-list', storageKey: 'finance-connections', rows, empty: bank.configured ? 'Noch keine Bank verbunden. Oben „Bank verbinden“.' : 'Die Bankanbindung ist auf diesem Server nicht eingerichtet.', columns: [
+    { key: 'name', label: 'Verbindung', html: (r) => r.nameHtml, sortValue: (r) => r.name },
+    { key: 'source', label: 'Quelle', html: (r) => r.sourceHtml, sortValue: (r) => (r.kind === 'amazon' ? 'zz' : r.aspsp) },
+    { key: 'access', label: 'Zugriff', html: (r) => r.accessHtml, sortValue: (r) => r.sortAccess },
+    { key: 'synced', label: 'Abgerufen', html: (r) => `${r.synced ? `<span class="fin-num fin-nowrap">${esc(when(r.synced))}</span>` : '–'}${r.from ? `<div class="fin-hint fin-nowrap">Daten ab ${esc(date(r.from))}</div>` : ''}`, sortValue: (r) => r.synced || '' },
+    { key: 'status', label: 'Status', html: (r) => r.statusHtml, sortable: false },
+    { key: 'actions', label: 'Aktionen', srOnly: true, html: (r) => `<div class="fin-row-actions">${r.actionsHtml}</div>`, sortable: false },
+  ] })}
+      ${AppShell.list({ title: 'Bisherige Importe', className: 'fin-imp-list', storageKey: 'finance-imports', rows: imports, empty: 'Noch keine Importe.', columns: [
+    { key: 'created_at', label: 'Am', html: (r) => esc(date(r.created_at.slice(0, 10))), sortValue: (r) => r.created_at },
+    { key: 'filename', label: 'Quelle' }, { key: 'account', label: 'Konto' },
+    { key: 'range', label: 'Zeitraum', html: (r) => (r.first ? `${esc(date(r.first))} – ${esc(date(r.last))}` : '–'), sortValue: (r) => r.first || '' },
+    { key: 'added', label: 'Neu', align: 'right' }, { key: 'duplicates', label: 'Schon vorhanden', align: 'right' },
+  ] })}`);
+    const again = () => render(host);
+    if (refocus) host.querySelector(refocus)?.focus();
+    FinBank.bind(host, bank, again); FinAmazon.bind(host, amazon, again); FinBank.afterReturn(bank, again);
+    const act = (name, fn) => host.querySelector(`[data-act="${name}"]`)?.addEventListener('click', fn);
+    act('bank', () => FinBank.connectDialog(bank));
+    act('amazon', () => FinAmazon.dialog(amazon, again));
+    act('csv', () => FinCsv.open(again));
+    act('sync', async (e) => {
+      e.currentTarget.disabled = true; e.currentTarget.textContent = 'Abruf läuft …';
+      const amz = amazon?.configured && amazon.connected ? Fin.api('POST', '/amazon/sync').catch(() => null) : null;
+      try { const { results } = await Fin.api('POST', '/bank/sync'); const m = FinBank.summary(results); (m.ok ? Toast.success : Toast.error)(`Banken: ${m.text}${amz ? '. Amazon läuft im Hintergrund.' : ''}`); } catch (x) { Toast.error(x.message); }
+      again();
     });
-    host.querySelector('[data-access]')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try { await Fin.api('POST', '/access', { email: host.querySelector('#fin-email').value }); Toast.success('Freigegeben'); render(host); } catch (x) { Toast.error(x.message); }
-    });
-    host.querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', async () => {
-      try { await Fin.api('DELETE', `/access/${encodeURIComponent(b.dataset.remove)}`); render(host); } catch (x) { Toast.error(x.message); }
-    }));
   }
 
   return { render };
