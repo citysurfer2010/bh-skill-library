@@ -76,6 +76,17 @@ function migrate(conn) {
     CREATE TABLE IF NOT EXISTS amazon_orders (order_id TEXT PRIMARY KEY, ordered_on TEXT, total_cents INTEGER, fetched_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_amazon_orders_date ON amazon_orders(ordered_on);
     CREATE TABLE IF NOT EXISTS app_state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+    -- Flats (module Immobilien) and their loans (Finanzen → Kredite), taken over from the sheet "Portfolioübersicht – Bankübersicht Finanzierung" (scripts/import-loans.js).
+    CREATE TABLE IF NOT EXISTS estate_units (
+      unit_key TEXT PRIMARY KEY, address TEXT NOT NULL, unit TEXT NOT NULL DEFAULT '', floor TEXT NOT NULL DEFAULT '', owner TEXT NOT NULL DEFAULT '', sqm REAL,
+      market_value_cents INTEGER, land_charge_cents INTEGER, rent_year_cents INTEGER, note TEXT NOT NULL DEFAULT ''
+    );
+    CREATE TABLE IF NOT EXISTS loans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, unit_key TEXT NOT NULL REFERENCES estate_units(unit_key) ON DELETE CASCADE, position INTEGER NOT NULL,
+      lender TEXT NOT NULL DEFAULT '', account_iban TEXT NOT NULL DEFAULT '', amount_cents INTEGER, balance_cents INTEGER, annuity_cents INTEGER, ends_on TEXT,
+      UNIQUE (unit_key, position)
+    );
+    CREATE INDEX IF NOT EXISTS idx_loans_unit ON loans(unit_key);
   `);
   const txCols = conn.prepare('PRAGMA table_info(transactions)').all().map((c) => c.name);
   if (!txCols.includes('amazon_order')) conn.exec('ALTER TABLE transactions ADD COLUMN amazon_order TEXT');

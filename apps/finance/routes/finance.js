@@ -28,9 +28,11 @@ function sameOrigin(req, res, next) {
 
 function buildRouter() {
   const r = express.Router();
-  r.use(['/overview', '/investments', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
+  r.use(['/overview', '/investments', '/loans', '/estate', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
   r.get('/overview', (req, res) => res.json(report.overview(yearOf(req.query.year))));
   r.get('/investments', (req, res) => res.json(report.investments(yearOf(req.query.year))));
+  r.get('/loans', (_req, res) => res.json(require('../lib/loans').overview()));
+  r.get('/estate', (_req, res) => res.json(require('../lib/loans').estate()));
   r.get('/categories', (_req, res) => res.json({ categories: getDb().prepare('SELECT * FROM categories ORDER BY art, name').all(), arts: categories.ARTS }));
   const catErr = (res, e) => { if (!e.status) throw e; return res.status(e.status).json({ error: e.message }); };
   r.post('/categories', (req, res) => { try { res.status(201).json({ category: categories.create(req.body || {}) }); } catch (e) { catErr(res, e); } });

@@ -39,7 +39,7 @@ test('angemeldet: Seite kommt, jedes verlinkte Asset lädt', async () => {
 });
 
 test('Tiefe Pfade liefern dieselbe Seite', async () => {
-  for (const p of ['/transactions', '/transactions/5', '/investments', '/import', '/categories']) {
+  for (const p of ['/transactions', '/transactions/5', '/investments', '/import', '/categories', '/loans', '/estate']) {
     const res = await get(p, user);
     assert.equal(res.status, 200, p);
     assert.match(await res.text(), /home-page\.js/);

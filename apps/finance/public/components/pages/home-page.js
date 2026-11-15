@@ -1,6 +1,7 @@
 'use strict';
 /**
- * Finance pages: / overview · /transactions(/id) · /investments · /accounts · /import · /categories.
+ * Finance pages: / overview · /transactions(/id) · /investments · /loans · /accounts · /import · /categories.
+ * Module Immobilien (own navbar tab and sidebar): /estate.
  * Loading standard: frame at once, placeholders until the data arrives, in-module links without reload.
  */
 (async () => {
@@ -10,10 +11,13 @@
     { id: 'overview', label: 'Übersicht', href: `${BASE}/`, icon: 'chart', match: /^\/(?:\d{4}\/?)?$/ },
     { id: 'transactions', label: 'Buchungen', href: `${BASE}/transactions`, icon: 'list', match: /^\/(?:(?:\d{4}|all)\/)?transactions(?:\/(\d+))?\/?$/ },
     { id: 'investments', label: 'Investments und Rücklagen', href: `${BASE}/investments`, icon: 'euro', match: /^\/(?:\d{4}\/)?investments\/?$/ },
+    { id: 'loans', label: 'Kredite', href: `${BASE}/loans`, icon: 'page', match: /^\/loans\/?$/ },
     { id: 'accounts', label: 'Konten', href: `${BASE}/accounts`, icon: 'building', match: /^\/accounts\/?$/ },
     { id: 'import', label: 'Importieren', href: `${BASE}/import`, icon: 'upload', match: /^\/import\/?$/ },
     { id: 'categories', label: 'Kategorien', href: `${BASE}/categories`, icon: 'settings', match: /^\/categories\/?$/ },
   ];
+  // Module Immobilien: its own tab and sidebar; loans stay in Finanzen (Matti 15.11.2026).
+  const ESTATE = [{ id: 'estate', label: 'Wohnungen', href: `${BASE}/estate`, icon: 'home', match: /^\/estate\/?$/ }];
   let me = null;
 
   /** Old links with ?year=2026 become /finance/2026/… (other query parameters stay). */
@@ -28,10 +32,13 @@
 
   async function route() {
     yearQueryToPath();
-    const p = PAGES.find((x) => x.match.test(path())) || PAGES[0];
+    const estate = ESTATE.find((x) => x.match.test(path()));
+    const p = estate || PAGES.find((x) => x.match.test(path())) || PAGES[0];
     const id = p.match.exec(path())?.[1];
-    ModuleSidebar.show({ title: 'Finanzen', active: p.id, storageKey: 'finance-sidebar-collapsed', items: PAGES.map(({ id: i, label, href, icon }) => ({ id: i, label, href, icon })) });
-    AppShell.crumbs([['Finanzen', `${BASE}/`], [p.label]]);
+    const [mod, items, home] = estate ? ['Immobilien', ESTATE, `${BASE}/estate`] : ['Finanzen', PAGES, `${BASE}/`];
+    Navbar.render(estate ? 'estate' : 'home', me);
+    ModuleSidebar.show({ title: mod, active: p.id, storageKey: 'finance-sidebar-collapsed', items: items.map(({ id: i, label, href, icon }) => ({ id: i, label, href, icon })) });
+    AppShell.crumbs([[mod, home], [p.label]]);
     if (p.id === 'transactions' && FinTransactions.isOpen(host)) return FinTransactions.show(id);
     if (BHSideDrawer.isOpen()) BHSideDrawer.close({ silent: true });
     AppShell.loading(host, p.label, p.id === 'transactions' ? 'table' : 'cards');
@@ -41,6 +48,8 @@
     if (p.id === 'overview') return FinOverview.render(host, year);
     if (p.id === 'transactions') return FinTransactions.render(host, year, id);
     if (p.id === 'investments') return FinInvestments.render(host, year);
+    if (p.id === 'estate') return FinEstate.render(host);
+    if (p.id === 'loans') return FinLoans.render(host);
     if (p.id === 'accounts') return FinAccounts.render(host);
     if (p.id === 'import') return FinImport.render(host);
     return FinCategories.render(host);
@@ -51,9 +60,9 @@
   AppShell.links(`${BASE}/`, go);
   window.addEventListener('popstate', () => route().catch(fail));
   try {
-    Navbar.render('home', null);
+    Navbar.render(/^\/estate/.test(path()) ? 'estate' : 'home', null);
     const pending = route();
-    Navbar.render('home', await FinanceApi.me());
+    Navbar.render(/^\/estate/.test(path()) ? 'estate' : 'home', await FinanceApi.me());
     await pending;
   } catch (e) { fail(e); }
 })();
