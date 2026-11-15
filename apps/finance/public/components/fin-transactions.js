@@ -20,7 +20,7 @@ window.FinTransactions = (() => {
 
   function detail(r) {
     const i = visible().indexOf(r); const list = visible();
-    const body = `<dl class="app-dl"><dt>Datum</dt><dd>${esc(date(r.booked_on))}</dd><dt>Betrag</dt><dd>${Fin.amount(r.amount_cents)}</dd><dt>Konto</dt><dd>${esc(r.account)}</dd><dt>Vorgang</dt><dd>${esc(r.kind)}</dd><dt>Gegenpartei</dt><dd>${esc(r.counterparty)}</dd><dt>Text</dt><dd class="fin-wrap">${esc(r.text)}</dd></dl>
+    const body = `<dl class="app-dl"><dt>Datum</dt><dd>${esc(date(r.booked_on))}</dd><dt>Betrag</dt><dd>${Fin.amount(r.amount_cents)}</dd><dt>Konto</dt><dd>${esc(r.account)}</dd><dt>Vorgang</dt><dd>${esc(r.kind)}</dd><dt>Gegenpartei</dt><dd>${esc(r.counterparty)}</dd><dt>Text</dt><dd class="fin-wrap">${esc(r.text)}</dd></dl>${Fin.amazonLink(r.text) ? `<p class="fin-amazon-row">${Fin.amazonLink(r.text)}</p>` : ''}
       <div class="fin-form"><label class="bh-label" for="fin-cat">Kategorie</label><div id="fin-cat"></div>
       ${r.suggestion && !r.category ? `<p class="fin-hint">Vorschlag, weil diese Gegenpartei schon so zugeordnet wurde:</p><button type="button" class="bh-btn bh-btn-sm" data-take="${esc(r.suggestion)}">${esc(cats.find((c) => c.code === r.suggestion)?.name || r.suggestion)} übernehmen</button>` : ''}
       <label class="bh-label" for="fin-note">Bemerkung</label><input id="fin-note" class="bh-input" maxlength="300" value="${esc(r.note)}">

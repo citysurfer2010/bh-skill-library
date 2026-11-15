@@ -26,5 +26,12 @@ window.Fin = (() => {
     return [{ value: '', label: 'Noch nicht zugeordnet' }].concat(categories.map((c) => ({ value: c.code, label: `${c.name} (${c.code})`, hint: c.art })));
   }
 
-  return { BASE, esc, euro, short, amount, date, MONTHS, api, yearChips, yearOf, categoryOptions, tone };
+  /** Amazon puts the order number (302-1234567-1234567) into the payment text; it links straight to the order. */
+  const amazonOrder = (text) => /\b(\d{3}-\d{7}-\d{7})\b/.exec(String(text || ''))?.[1] || null;
+  const amazonLink = (text) => {
+    const id = amazonOrder(text);
+    return id ? `<a class="bh-btn bh-btn-sm fin-amazon" href="https://www.amazon.de/gp/your-account/order-details?orderID=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">Bestellung ${esc(id)} bei Amazon ansehen</a>` : '';
+  };
+
+  return { amazonOrder, amazonLink, BASE, esc, euro, short, amount, date, MONTHS, api, yearChips, yearOf, categoryOptions, tone };
 })();

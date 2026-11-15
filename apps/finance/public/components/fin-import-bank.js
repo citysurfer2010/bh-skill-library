@@ -70,7 +70,7 @@ window.FinBank = (() => {
         if (x.code !== 'merge') { Toast.error(x.message); return; }
         // Joining an existing account cannot be undone: ask in place, the safe choice has the focus.
         main.innerHTML = `<div class="fin-acc-ask" role="status">Mit bestehendem Konto „${esc(label)}“ zusammenführen? Die Bank-Buchungen werden mit den vorhandenen verbunden, das lässt sich nicht rückgängig machen.</div>
-          <div class="fin-inline"><button type="button" class="bh-btn bh-btn-sm bh-btn-primary" data-merge-yes>Zusammenführen</button><button type="button" class="bh-btn bh-btn-sm" data-merge-no>Abbrechen</button></div>`;
+          <div class="fin-inline"><button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-merge-yes>Zusammenführen</button><button type="button" class="bh-btn bh-btn-sm" data-merge-no>Abbrechen</button></div>`;
         main.querySelector('[data-merge-no]').focus();
         main.querySelector('[data-merge-no]').addEventListener('click', close);
         main.querySelector('[data-merge-yes]').addEventListener('click', () => { input.value = label; save(true); });

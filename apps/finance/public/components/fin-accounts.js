@@ -16,13 +16,13 @@ window.FinAccounts = (() => {
 
   function origin(a) {
     const { esc } = Fin;
-    const meta = `<div class="fin-acc-meta">${a.n} Buchungen · ${range(a)} · ${a.open} offen</div>`; // phone only
+    const meta = `<div class="fin-acc-meta"><span class="fin-nowrap">${a.n} Buchungen</span> ·&nbsp;${range(a)} <span class="fin-nowrap">·&nbsp;${a.open} offen</span></div>`; // phone only
     if (!a.bank) return `<span class="fin-badge">CSV-Import</span>${meta}`;
     const b = a.bank; const product = [b.product, b.details && b.details !== b.product && !b.details.endsWith(a.name) ? b.details : ''].filter(Boolean).join(' · ');
     const expired = b.status !== 'active' ? ' <span class="fin-badge fin-badge-warn">Verbindung abgelaufen</span>' : '';
-    const line = [product, b.status === 'active' && b.last_sync_at ? `abgerufen ${when(b.last_sync_at)}` : ''].filter(Boolean).join(' · ');
+    const line = [product ? Fin.esc(product) : '', b.status === 'active' && b.last_sync_at ? `<span class="fin-acc-synced">abgerufen ${Fin.esc(when(b.last_sync_at))}</span>` : ''].filter(Boolean).join(' · ');
     return `<div><span class="fin-acc-bank">${esc(BANK_NAMES[b.aspsp] || b.aspsp)}</span>${b.iban ? ` <span class="fin-hint fin-num fin-acc-iban">${esc(b.iban)}</span>` : ''}${expired}</div>`
-      + `${line ? `<div class="fin-hint">${esc(line)}</div>` : ''}${meta}`;
+      + `${line ? `<div class="fin-hint">${line}</div>` : ''}${meta}`; // line is escaped above
   }
 
   const nameCell = (a) => `<div class="fin-acc-name" data-name="${Fin.esc(a.name)}"><strong title="${Fin.esc(a.name)}">${Fin.esc(a.name)}</strong><button type="button" class="bh-btn bh-btn-sm fin-acc-rename" data-rename aria-label="${Fin.esc(a.name)} umbenennen">${PEN}</button></div>`;
@@ -41,7 +41,7 @@ window.FinAccounts = (() => {
     { key: 'bank', label: 'Bank und Produkt', html: origin },
     { key: 'scope', label: 'Bereich', html: (a) => `<div class="fin-acc-scope" data-scope-for="${esc(a.name)}" data-value="${esc(a.scope)}"></div>` },
     { key: 'n', label: 'Buchungen', align: 'right', html: (a) => `<span class="fin-num">${a.n}</span>` },
-    { key: 'range', label: 'Zeitraum', html: range },
+    { key: 'range', label: 'Zeitraum', html: (a) => (a.first ? `<span class="fin-num">${Fin.esc(Fin.date(a.first))} –</span> <span class="fin-num">${Fin.esc(Fin.date(a.last))}</span>` : '–') }, // two lines keep "Offen" in view at 1280 px
     { key: 'open', label: 'Offen', align: 'right', html: openCell },
   ] })}`);
     bind(host, scopes);
@@ -81,7 +81,7 @@ window.FinAccounts = (() => {
         if (x.code !== 'merge') { Toast.error(x.message); return; }
         box.classList.add('is-asking');
         box.innerHTML = `<div class="fin-acc-ask" role="status">Mit bestehendem Konto „${esc(name)}“ zusammenführen? Die Bank-Buchungen werden mit den vorhandenen verbunden, das lässt sich nicht rückgängig machen.</div>
-          <div class="fin-inline"><button type="button" class="bh-btn bh-btn-sm bh-btn-primary" data-merge-yes>Zusammenführen</button><button type="button" class="bh-btn bh-btn-sm" data-merge-no>Abbrechen</button></div>`;
+          <div class="fin-inline"><button type="button" class="bh-btn bh-btn-sm bh-btn-danger" data-merge-yes>Zusammenführen</button><button type="button" class="bh-btn bh-btn-sm" data-merge-no>Abbrechen</button></div>`;
         box.querySelector('[data-merge-no]').focus();
         box.querySelector('[data-merge-no]').addEventListener('click', () => back(old));
         box.querySelector('[data-merge-yes]').addEventListener('click', () => { input.value = name; save(true); });
