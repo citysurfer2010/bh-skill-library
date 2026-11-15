@@ -2,7 +2,7 @@
 /** "Bankkonten" on the import page: connect a bank, see each account's last fetch, fetch now, rename or disconnect. */
 window.FinBank = (() => {
   const when = (iso) => new Date(iso).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  const BANK_NAMES = { Comdirect: 'comdirect', BBBank: 'BBBank', PayPal: 'PayPal' };
+  const BANK_NAMES = { Comdirect: 'comdirect', BBBank: 'BBBank', DKB: 'DKB', PayPal: 'PayPal' };
   const WARN_DAYS = 14;
   const REASONS = { access_denied: 'Du hast die Freigabe bei der Bank abgebrochen. Es wurde nichts geändert.' };
   let wasRunning = false; let focusHead = false;

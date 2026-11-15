@@ -11,7 +11,7 @@ const { toRows } = require('./bank-convert');
 const { classify, hashOf } = require('./ledger');
 
 // Ledger names as in the old spreadsheet: the current account gets the bank's usual name, a card its card name.
-const BANKS = [{ name: 'Comdirect', label: 'comdirect', card: 'CD-CCM' }, { name: 'BBBank', label: 'BBB' }, { name: 'PayPal', label: 'PayPal' }];
+const BANKS = [{ name: 'Comdirect', label: 'comdirect', card: 'CD-CCM' }, { name: 'BBBank', label: 'BBB' }, { name: 'DKB', label: 'DKB' }, { name: 'PayPal', label: 'PayPal' }];
 const MIN_GAP_MS = 20 * 3600_000;
 const OVERLAP_DAYS = 7;
 const FIRST_FROM = '2025-01-01'; // The spreadsheet ends with 2024; the first fetch closes the gap as far as the bank allows.

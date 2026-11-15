@@ -67,6 +67,7 @@ test('connect: only known banks, state bound to the person, names by account typ
   const labels = Object.fromEntries(sync.status().accounts.map((a) => [a.uid, a.label]));
   assert.deepEqual([labels['u-giro'], labels['u-card'], labels['u-tg']], ['comdirect', 'CD-CCM', 'comdirect 9999']);
   assert.equal(sync.status().accounts.find((a) => a.uid === 'u-giro').iban, 'DE00 … 1111');
+  assert.deepEqual(sync.status().banks, ['Comdirect', 'BBBank', 'DKB', 'PayPal']);
 });
 
 test('fetch: pages, links CSV lines, adds new ones, second run with overlap adds nothing', async () => {
