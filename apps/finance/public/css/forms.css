@@ -1,0 +1,83 @@
+/* ── Global inputs + legacy form-row/help ────────────────────────────── */
+input[type="text"], input[type="url"], input[type="color"], textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--bh-border);
+  border-radius: var(--bh-radius);
+  font-family: inherit; font-size: 14px;
+  background: var(--bh-surface); color: var(--bh-text);
+  transition: border-color .15s, box-shadow .15s;
+}
+input[type="color"] { padding: 4px; height: 36px; }
+input:focus, textarea:focus, select:focus {
+  outline: none; border-color: var(--bh-primary);
+  box-shadow: 0 0 0 3px var(--bh-primary-border);
+}
+input::placeholder, textarea::placeholder { color: var(--bh-placeholder); }
+label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: var(--bh-text); }
+.form-row { margin-bottom: 16px; }
+.help { color: var(--bh-muted); font-size: 12px; margin-top: 4px; }
+
+/* Form extensions. .bh-btn*, .bh-label*, .bh-field live in bh-controls.css. */
+.bh-form-card {
+  background: var(--bh-surface);
+  border: 1px solid var(--bh-border);
+  border-radius: 12px;
+  box-shadow: var(--bh-shadow-sm);
+  padding: 32px;
+  max-width: 768px;
+}
+.bh-form .bh-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 24px; }
+.bh-form input[type="text"],
+.bh-form input[type="url"],
+.bh-form textarea {
+  background: var(--bh-surface);
+  border: 1px solid var(--bh-border-mid);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--bh-text);
+  box-shadow: var(--bh-shadow-sm);
+  transition: border-color .15s, box-shadow .15s;
+}
+.bh-form textarea { padding: 12px; min-height: 120px; line-height: 1.5; }
+.bh-form input:focus, .bh-form textarea:focus {
+  outline: none;
+  border-color: var(--bh-primary);
+  box-shadow: 0 0 0 1px var(--bh-primary);
+}
+.bh-help { color: var(--bh-placeholder); font-size: 12px; margin-top: 4px; }
+.bh-help-inline {
+  display: inline; font-weight: 400;
+  text-transform: none; letter-spacing: 0;
+  margin-left: 4px; margin-top: 0;
+}
+.bh-form-actions {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 32px;
+}
+.bh-form-actions .bh-btn-primary { margin-left: auto; }
+
+/* Drop zone for file uploads */
+.dropzone {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 28px 16px; text-align: center;
+  border: 2px dashed var(--bh-border);
+  border-radius: var(--bh-radius-lg);
+  background: var(--bh-bg);
+  color: var(--bh-muted);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.dropzone:hover, .dropzone:focus-visible {
+  border-color: var(--bh-primary);
+  color: var(--bh-text);
+  outline: none;
+}
+.dropzone.is-dragover {
+  border-color: var(--bh-primary);
+  background: var(--bh-primary-soft);
+  color: var(--bh-text);
+}
+.dropzone-icon { font-size: 28px; line-height: 1; }
+.dropzone-text { font-size: 14px; }
