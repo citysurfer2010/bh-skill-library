@@ -29,12 +29,21 @@ async function connect({ aspsp, user, redirectUrl }) {
   return url;
 }
 
+const productOf = (a) => [a.product, a.details].filter(Boolean).join(' ');
+/** Current accounts first, so they get the usual ledger name before any other account of the same bank. */
+const rank = (a) => (/giro|current|privatkonto/i.test(productOf(a)) ? 0 : /tagesgeld|spar|festgeld/i.test(productOf(a)) ? 2 : 1);
+
 /** A free ledger name for a new bank account: the usual name by account type first, then bank plus IBAN end. */
 function labelFor(aspsp, account) {
   const db = getDb(); const b = BANKS.find((x) => x.name === aspsp) || { label: aspsp };
   const iban = account.account_id?.iban || ''; const type = account.cash_account_type || '';
   const taken = (l) => !!db.prepare('SELECT 1 FROM bank_accounts WHERE label = ?').get(l);
-  const wanted = type === 'CARD' && b.card ? b.card : !type || type === 'CACC' || aspsp === 'PayPal' ? b.label : null;
+  // comdirect reports its Tagesgeld as CACC too; only the product name tells a current account from savings.
+  const product = productOf(account);
+  const savings = /tagesgeld|spar|festgeld|savings/i.test(product) || type === 'SVGS';
+  const card = type === 'CARD' || /kredit|visa|card/i.test(product);
+  const giro = /giro|current|privatkonto/i.test(product) || (!product && (!type || type === 'CACC'));
+  const wanted = card && b.card ? b.card : !savings && !card && (giro || aspsp === 'PayPal') ? b.label : null;
   if (wanted && !taken(wanted)) return wanted;
   const alt = `${b.label} ${iban ? iban.slice(-4) : crypto.randomBytes(2).toString('hex')}`;
   return taken(alt) ? `${alt}-${crypto.randomBytes(2).toString('hex')}` : alt;
@@ -48,13 +57,13 @@ async function finish({ code, state, user }) {
   const s = await bank.createSession(String(code || ''));
   db.prepare('INSERT OR REPLACE INTO bank_sessions (session_id, aspsp, valid_until, status, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(s.session_id, st.aspsp, s.access?.valid_until || null, 'active', user, now());
   const accounts = [];
-  for (const a of s.accounts || []) {
+  for (const a of [...(s.accounts || [])].sort((x, y) => rank(x) - rank(y))) {
     const iban = a.account_id?.iban || '';
     const old = db.prepare('SELECT label FROM bank_accounts WHERE aspsp = ? AND iban = ? AND iban != ?').get(st.aspsp, iban, '');
     // Renewing the consent gives new account uids; the ledger name stays with the IBAN.
     if (old) db.prepare('DELETE FROM bank_accounts WHERE aspsp = ? AND iban = ?').run(st.aspsp, iban);
     const label = old?.label || labelFor(st.aspsp, a);
-    db.prepare('INSERT OR REPLACE INTO bank_accounts (uid, session_id, aspsp, iban, name, label, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(a.uid, s.session_id, st.aspsp, iban, String(a.name || a.product || '').slice(0, 80), label, now());
+    db.prepare('INSERT OR REPLACE INTO bank_accounts (uid, session_id, aspsp, iban, name, label, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(a.uid, s.session_id, st.aspsp, iban, String(a.details || a.product || a.name || '').slice(0, 80), label, now());
     accounts.push(a.uid);
   }
   db.prepare("DELETE FROM bank_sessions WHERE session_id NOT IN (SELECT session_id FROM bank_accounts) AND session_id != ?").run(s.session_id);

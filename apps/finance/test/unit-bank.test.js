@@ -70,6 +70,18 @@ test('connect: only known banks, state bound to the person, names by account typ
   assert.deepEqual(sync.status().banks, ['Comdirect', 'BBBank', 'DKB', 'PayPal']);
 });
 
+test('names: the current account gets the usual name even when the bank lists savings first as CACC', async () => {
+  const { accounts } = await connectWith([
+    { uid: 'x-tg', account_id: { iban: 'DE771405' }, cash_account_type: 'CACC', product: 'Tagesgeldkonto', details: 'Tagesgeld PLUS-Konto', name: 'M B' },
+    { uid: 'x-giro', account_id: { iban: 'DE771400' }, cash_account_type: 'CACC', product: 'Girokonto', details: 'Girokonto', name: 'M B' }]);
+  assert.equal(accounts.length, 2);
+  const byUid = Object.fromEntries(sync.status().accounts.map((a) => [a.uid, a]));
+  // 'comdirect' already belongs to u-giro above, so the new current account falls back; savings never take a base name.
+  assert.equal(byUid['x-tg'].label, 'comdirect 1405'); assert.equal(byUid['x-tg'].name, 'Tagesgeld PLUS-Konto');
+  assert.equal(byUid['x-giro'].label, 'comdirect 1400');
+  for (const uid of ['x-tg', 'x-giro']) await sync.disconnect(uid);
+});
+
 test('fetch: pages, links CSV lines, adds new ones, second run with overlap adds nothing', async () => {
   ledger.importRows({ filename: 'a.csv', format: 'comdirect', account: 'comdirect', rows: [{ date: '2025-01-10', cents: -4000, text: 'Strom alt', counterparty: 'Stadtwerke' }], user: 't' });
   const pages = [{ transactions: [tx('b1', '2025-01-11', '40', 'DBIT')], continuation_key: 'k2' }, { transactions: [tx('b2', '2025-01-12', '9.99', 'DBIT', { creditor: { name: 'Netflix' } })] }];
@@ -116,10 +128,11 @@ test('rename moves bank lines and merges with CSV lines under the new name; name
 test('disconnect keeps the transactions and ends the session at the bank with its last account', async () => {
   const before = getDb().prepare('SELECT count(*) AS n FROM transactions').get().n;
   reply = () => ({});
+  const deletes = () => calls.filter((c) => c.init.method === 'DELETE').length; const start = deletes();
   for (const uid of ['u-giro', 'u-card']) assert.ok(await sync.disconnect(uid));
-  assert.equal(calls.filter((c) => c.init.method === 'DELETE').length, 0);
+  assert.equal(deletes(), start);
   assert.ok(await sync.disconnect('u-tg'));
-  assert.equal(calls.filter((c) => c.init.method === 'DELETE').length, 1);
+  assert.equal(deletes(), start + 1);
   assert.equal(getDb().prepare('SELECT count(*) AS n FROM transactions').get().n, before);
   assert.equal(sync.status().accounts.length, 0);
 });
