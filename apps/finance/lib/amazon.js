@@ -96,7 +96,7 @@ function sync({ force = false } = {}) {
       state('amazon_last_sync', now()); state('amazon_last_error', '');
       return { orders: orders.length, newOrders, payments: payments.length, added, items, linked };
     } catch (e) {
-      const plain = e.code === 'login' ? 'login' : /timeout|aborted/i.test(e.message) ? 'Amazon hat zu lange gebraucht, morgen geht es weiter.' : /captcha/i.test(e.message) ? 'Amazon verlangt eine Sicherheitsabfrage. Bitte neu verbinden.' : e.status === 502 ? 'Amazon-Dienst nicht erreichbar.' : String(e.message).slice(0, 200);
+      const plain = e.code === 'login' ? 'login' : /closed/i.test(e.message) ? 'Der Abruf wurde unterbrochen, beim nächsten Mal geht er weiter.' : /Timeout \d+ms exceeded|timed out|aborted/i.test(e.message) ? 'Amazon hat zu lange gebraucht, morgen geht es weiter.' : /captcha/i.test(e.message) ? 'Amazon verlangt eine Sicherheitsabfrage. Bitte neu verbinden.' : e.status === 502 ? 'Amazon-Dienst nicht erreichbar.' : String(e.message).slice(0, 200);
       state('amazon_last_sync', now()); state('amazon_last_error', plain);
       throw e;
     }
