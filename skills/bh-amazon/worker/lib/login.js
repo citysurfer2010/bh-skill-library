@@ -17,16 +17,18 @@ const SEL = {
 let pending = null;
 
 /** Looks at the page after an action and says what is needed next. */
-async function inspect(page) {
+/** passwordSent: before that, a visible password field always wins (Amazon shows a passkey error next to it on its own). */
+async function inspect(page, { passwordSent = false } = {}) {
   await page.waitForLoadState('domcontentloaded').catch(() => {}); await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {}); await page.waitForTimeout(1000);
   const url = new URL(page.url());
   if (!url.pathname.startsWith('/ap/') && !url.pathname.startsWith('/ax/') && !url.pathname.includes('/cvf/') && !(await page.locator(SEL.password).count()) && !(await page.locator(SEL.email).count())) return { state: 'ok' };
+  if (!passwordSent && await page.locator(SEL.password).count()) return { state: 'password' };
   const img = page.locator(SEL.captchaImg).first();
   if (await img.count()) return { state: 'captcha', image: `data:image/png;base64,${(await img.screenshot()).toString('base64')}` };
   if (await page.locator(SEL.code).count()) return { state: 'code', prompt: ((await page.locator('h1').first().textContent().catch(() => '')) || 'Code eingeben').replace(/\s+/g, ' ').trim().slice(0, 160) };
   if (await page.locator(SEL.approve).count()) return { state: 'approve', prompt: 'Bitte die Anmeldung bei Amazon bestätigen (App oder E-Mail) und danach „Weiter“ wählen.' };
   const err = await page.locator(SEL.error).first().textContent().catch(() => null);
-  if (err) return { state: 'error', message: err.replace(/\s+/g, ' ').trim().slice(0, 300) };
+  if (err && !/passkey/i.test(err)) return { state: 'error', message: err.replace(/\s+/g, ' ').trim().slice(0, 300) };
   if (await page.locator(SEL.password).count()) return { state: 'password' };
   return { state: 'error', message: `Unerwartete Seite bei Amazon (${url.pathname})` };
 }
@@ -35,7 +37,7 @@ async function typePassword(page) {
   await page.locator(SEL.password).first().fill(pending.password);
   await page.locator(SEL.remember).check().catch(() => {});
   await page.locator(SEL.submit).first().click();
-  return inspect(page);
+  return inspect(page, { passwordSent: true });
 }
 
 async function conclude(r) {

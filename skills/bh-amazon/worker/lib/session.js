@@ -20,7 +20,9 @@ async function getBrowser() {
 }
 async function closeBrowser() { const b = browser; browser = null; if (b) await b.close().catch(() => {}); }
 
-const hasSession = () => fs.existsSync(SESSION);
+// A session counts only with Amazon's sign-in cookies; an empty file from a failed login is no session.
+const SIGNED_IN = /^(at|sess-at|x)-acbde$/;
+const hasSession = () => { try { return (JSON.parse(fs.readFileSync(SESSION, 'utf8')).cookies || []).some((c) => SIGNED_IN.test(c.name)); } catch { return false; } };
 const forget = () => fs.rmSync(SESSION, { force: true });
 
 async function context(fresh = false) {
@@ -39,7 +41,7 @@ function credentials() {
 }
 
 /** Amazon only hands out these cookies after a real login; without them the session is empty, whatever the page shows. */
-async function signedIn(ctx) { return (await ctx.cookies('https://www.amazon.de')).some((c) => /^(at|sess-at|x)-acbde$/.test(c.name)); }
+async function signedIn(ctx) { return (await ctx.cookies('https://www.amazon.de')).some((c) => SIGNED_IN.test(c.name)); }
 
 class LoginNeeded extends Error { constructor() { super('Die Amazon-Anmeldung ist abgelaufen. Bitte in der App neu verbinden.'); this.code = 'login'; } }
 
