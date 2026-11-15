@@ -35,3 +35,10 @@ test('order page items: ASIN links, longest title wins, action links dropped', (
   const items = parseItems([{ text: 'USB-C', href: '/dp/B0ABCDEF12?ref=x' }, { text: 'USB-C Kabel 2 m, geflochten', href: 'https://www.amazon.de/gp/product/B0ABCDEF12' }, { text: 'Erneut kaufen', href: '/dp/B0ZZZZZZZZ' }, { text: 'Hilfe', href: '/help' }]);
   assert.deepEqual(items, [{ asin: 'B0ABCDEF12', title: 'USB-C Kabel 2 m, geflochten', url: 'https://www.amazon.de/dp/B0ABCDEF12' }]);
 });
+
+test('payment rows in the format of the real page (Nov 2026): English amount, own date, bank as method', () => {
+  const p = parsePayment({ date: '02. November 2026', text: '25. Oktober 2026·Amazon.de COMMERZBANK AG (FORMERLY COMDIRECT BANK AG)•••400 Bestellnummer 302-1111111-2222222 -€12.74 Berechnet' });
+  assert.deepEqual(p, { orderId: '302-1111111-2222222', date: '2026-10-25', cents: -1274, method: 'COMMERZBANK AG (FORMERLY COMDIRECT BANK AG)•••400' });
+  assert.equal(parsePayment({ text: '3. März 2025·Amazon.de Visa •••1234 Bestellnummer 028-3333333-4444444 +€1,234.50 Erstattet' }).cents, 123450);
+  assert.equal(parsePayment({ text: '3. März 2025·Amazon.de Lastschrift Bestellnummer 028-3333333-4444444 -1.234,50 €' }).cents, -123450);
+});

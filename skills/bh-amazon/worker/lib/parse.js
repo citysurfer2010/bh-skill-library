@@ -40,12 +40,15 @@ function parseCards(cards) {
  */
 function parsePayment({ text, date }) {
   const id = ORDER_ID.exec(text || '')?.[1];
-  const m = /([-+−]?)\s*(\d{1,3}(?:\.\d{3})*,\d{2})\s*€/.exec(text || '');
+  // Amazon writes "-€12.74" (English) as well as "-12,74 €" (German); the separator before the last two digits is the decimal one.
+  const m = /([-+−]?)\s*€\s?(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})(?!\d)/.exec(text || '') || /([-+−]?)\s*(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*€/.exec(text || '');
   if (!id || !m) return null;
-  const cents = Math.round(Number(m[2].replace(/\./g, '').replace(',', '.')) * 100);
-  const refund = /erstattung|gutschrift|rückerstattung/i.test(text) || m[1] === '+';
-  const method = /(visa|mastercard|american express|amex|lastschrift|kreditkarte|girocard|paypal|geschenkgutschein)(?:\s*[*•·]+\s*\d{2,4})?/i.exec(text)?.[0].replace(/\s+/g, ' ').trim() || '';
-  return { orderId: id, date: germanDate(date || text), cents: refund ? cents : -cents, method };
+  const digits = m[2].replace(/[.,](?=\d{3}(?:[.,]|$))/g, '').replace(',', '.');
+  const cents = Math.round(Number(digits) * 100);
+  const refund = /erstattet|erstattung|gutschrift|rückerstattung|refund/i.test(text) || m[1] === '+';
+  // "25. Oktober 2026·Amazon.de COMMERZBANK AG (FORMERLY COMDIRECT BANK AG)•••400 Bestellnummer …": the row's own date wins over the heading above it.
+  const method = (/(?:amazon\.de|amazon\s+marketplace|amazon)\s+(.+?)\s*Bestellnummer/i.exec(text || '')?.[1] || /(visa|mastercard|american express|amex|lastschrift|kreditkarte|girocard|paypal|geschenkgutschein)(?:\s*[*•·]+\s*\d{2,4})?/i.exec(text || '')?.[0] || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  return { orderId: id, date: germanDate(text) || germanDate(date), cents: refund ? cents : -cents, method };
 }
 
 /** Rows without date or amount are dropped; the same charge listed twice (same order, day, amount) counts once. */
