@@ -74,7 +74,8 @@ window.FinBank = (() => {
     if (focusHead) { host.querySelector('[data-bank-head]')?.focus(); focusHead = false; }
     if (!s.configured) return;
     let bank = s.banks[0];
-    BHSelectCore.create(host.querySelector('#fin-bank-pick'), { options: s.banks.map((b) => ({ value: b, label: BANK_NAMES[b] || b })), value: bank, label: 'Bank', onChange: (v) => { bank = v; } });
+    // The select only shows a new choice when told so (update); without it the button keeps the first bank.
+    const pick = BHSelectCore.create(host.querySelector('#fin-bank-pick'), { options: s.banks.map((b) => ({ value: b, label: BANK_NAMES[b] || b })), value: bank, label: 'Bank', onChange: (v) => { bank = v; pick.update({ value: v }); } });
     host.querySelector('[data-connect]').addEventListener('click', (e) => connect(bank, e.currentTarget));
     host.querySelector('[data-sync]')?.addEventListener('click', async (e) => {
       e.currentTarget.disabled = true; e.currentTarget.textContent = 'Abruf läuft …';

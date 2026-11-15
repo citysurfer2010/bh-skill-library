@@ -19,7 +19,7 @@ window.FinImport = (() => {
         <form data-access class="fin-inline"><label class="bh-label" for="fin-email">E-Mail</label><input id="fin-email" class="bh-input" type="email" required><button type="submit" class="bh-btn">Freigeben</button></form></section>` : ''}`);
     FinBank.bind(host, bank, () => render(host)); FinBank.afterReturn(host, bank, () => render(host));
     let account = '';
-    BHSelectCore.create(host.querySelector('#fin-account'), { options: ACCOUNTS.map(([value, label]) => ({ value, label })), value: '', label: 'Konto', onChange: (v) => { account = v; } });
+    const pick = BHSelectCore.create(host.querySelector('#fin-account'), { options: ACCOUNTS.map(([value, label]) => ({ value, label })), value: '', label: 'Konto', onChange: (v) => { account = v; pick.update({ value: v }); } });
     const input = host.querySelector('#fin-file'); const drop = host.querySelector('.fin-drop');
     const showFiles = () => { host.querySelector('[data-files]').textContent = input.files.length ? [...input.files].map((f) => f.name).join(', ') : 'oder CSV-Dateien hierher ziehen'; };
     input.addEventListener('change', showFiles);
