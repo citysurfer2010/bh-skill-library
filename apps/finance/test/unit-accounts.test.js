@@ -58,3 +58,14 @@ test('a bank account joins an existing account only after a yes (409 code merge 
   assert.ok(accounts.rename('DKB 1406', 'comdirect', { mergeBank, merge: true }));
   assert.deepEqual(calls, [['u-m', 'comdirect']]);
 });
+
+test('totals per kind from bank balances; accounts without a balance are counted apart', () => {
+  db.prepare("INSERT INTO bank_sessions (session_id, aspsp, status, created_by, created_at) VALUES ('s9', 'DKB', 'active', 'm', 'x')").run();
+  db.prepare("INSERT INTO bank_accounts (uid, session_id, aspsp, iban, name, label, balance_cents, balance_on, created_at) VALUES ('m1', 's9', 'DKB', 'DE1', 'x', 'WE01 Musterweg', 345600, '2026-11-14', 'x'), ('g1', 's9', 'DKB', 'DE2', 'x', 'comdirect', 120000, '2026-11-15', 'x')").run();
+  const t = accounts.totals();
+  assert.equal(t.haushalt.cents, 120000); assert.equal(t.haushalt.asOf, '2026-11-15');
+  assert.equal(t.haushalt.accounts - t.haushalt.withoutBalance, 1, 'one private account has a balance, the others are counted apart');
+  assert.deepEqual({ ...t.immobilien }, { cents: 345600, accounts: 1, withoutBalance: 0, asOf: '2026-11-14' });
+  assert.equal(t.treuhand.accounts, 0);
+  assert.equal(accounts.SCOPES.haushalt, 'Privat');
+});

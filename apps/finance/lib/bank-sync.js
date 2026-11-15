@@ -75,6 +75,18 @@ function store(acc, rows) {
   return { added, linked, known };
 }
 
+/** The booked end-of-day balance first (CLBD), otherwise what the bank calls available or expected. */
+const BALANCE_ORDER = ['CLBD', 'ITBD', 'ITAV', 'CLAV', 'XPCD', 'OPBD'];
+async function storeBalance(uid) {
+  const b = await bank.balances(uid).catch(() => null);
+  const list = (b?.balances || []).filter((x) => x.balance_amount && x.balance_amount.amount != null);
+  if (!list.length) return;
+  const pick = list.slice().sort((x, y) => (BALANCE_ORDER.indexOf(x.balance_type) + 99) % 99 - (BALANCE_ORDER.indexOf(y.balance_type) + 99) % 99)[0];
+  const cents = Math.round(Number(pick.balance_amount.amount) * 100);
+  if (!Number.isFinite(cents)) return;
+  getDb().prepare('UPDATE bank_accounts SET balance_cents = ?, balance_type = ?, balance_on = ? WHERE uid = ?').run(cents, pick.balance_type || '', pick.reference_date || new Date().toISOString().slice(0, 10), uid);
+}
+
 function dateFrom(acc) {
   const db = getDb();
   const lastBank = db.prepare('SELECT max(booked_on) AS d FROM transactions WHERE account = ? AND bank_ref IS NOT NULL').get(acc.label).d;
@@ -91,6 +103,7 @@ async function syncAccount(acc, { force = false, psuIp } = {}) {
       db.prepare('UPDATE bank_accounts SET product = ?, details = ?, usage = ? WHERE uid = ?').run(d.product || null, d.details || null, d.usage || null, acc.uid);
       ledgerAccounts.ensure(acc.label, ledgerAccounts.defaultScope(d));
     }
+    await storeBalance(acc.uid);
     const list = []; let continuation; let pages = 0;
     do {
       const page = await bank.transactions(acc.uid, { dateFrom: dateFrom(acc), continuation, psuIp });

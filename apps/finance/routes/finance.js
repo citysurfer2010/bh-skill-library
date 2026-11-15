@@ -73,7 +73,7 @@ function buildRouter() {
     } catch (e) { return res.status(400).json({ error: e.message }); }
   });
 
-  r.get('/accounts', (_req, res) => res.json({ accounts: accounts.list(), scopes: accounts.SCOPES }));
+  r.get('/accounts', (_req, res) => { const list = accounts.list(); res.json({ accounts: list, scopes: accounts.SCOPES, totals: accounts.totals(list) }); });
   r.patch('/accounts/:name', (req, res) => {
     const name = String(req.params.name);
     try {

@@ -58,3 +58,9 @@ Eine Buchung ist doppelt, wenn Konto, Tag, Betrag und Text gleich sind. Gleiche 
 - Zuordnung: Bestellnummer aus dem Verwendungszweck (94 % der Abbuchungen); sonst eine Amazon-Zahlung gleichen Betrags im Abstand von höchstens 4 Tagen, nur bei Amazon-Buchungen und nur bei genau einem Treffer.
 - Erster Abruf ab 01.01.2021, danach täglich ab letzter Zahlung minus 10 Tage. Artikel je Bestellung höchstens 60 je Abruf, neueste zuerst; jede angefragte Bestellung gilt danach als erledigt.
 - Anzeige: Buchungsliste „Amazon: ‹Artikel›“, Detail mit Artikeln und Links zum Produkt sowie Link zur Bestellung.
+
+## Kontoart und Kontostände (15.11.2026)
+
+- Kontoart je Konto: Privat (intern `haushalt`), Immobilien, Treuhand; eigene Spalte, Filter `?scope=` auf der Kontenseite.
+- Kontostand je Bankkonto aus Enable Banking bei jedem Abruf: gebuchter Tagesendstand (CLBD) vor verfügbarem (ITAV/XPCD). Kennzahlen oben = Summe je Kontoart mit ältestem Stand-Datum; CSV-Konten haben keinen Stand und werden als „ohne Kontostand“ gezählt.
+- Depots sind keine PSD2-Zahlungskonten und kommen nicht über Enable Banking; DKB-Depot geplant über FinTS im Skill bh-banking.

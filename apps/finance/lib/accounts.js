@@ -6,7 +6,8 @@
  */
 const { getDb } = require('./db');
 
-const SCOPES = { haushalt: 'Haushalt', immobilien: 'Immobilien', treuhand: 'Treuhand' };
+// Shown as „Privat“ (Matti 15.11.2026); stored as haushalt because the overview counts it as the household.
+const SCOPES = { haushalt: 'Privat', immobilien: 'Immobilien', treuhand: 'Treuhand' };
 const now = () => new Date().toISOString();
 /** SQL condition on transactions.account: true for household accounts only. */
 const HOUSEHOLD = "account NOT IN (SELECT name FROM accounts WHERE scope != 'haushalt')";
@@ -27,16 +28,27 @@ function ensure(name, scope = 'haushalt') {
 function list() {
   const db = getDb();
   const stats = db.prepare('SELECT account AS name, count(*) AS n, sum(category IS NULL) AS open, min(booked_on) AS first, max(booked_on) AS last FROM transactions GROUP BY account').all();
-  const bank = db.prepare('SELECT a.label, a.aspsp, a.iban, a.product, a.details, a.name AS holder, a.last_sync_at, s.status FROM bank_accounts a JOIN bank_sessions s ON s.session_id = a.session_id').all();
+  const bank = db.prepare('SELECT a.label, a.aspsp, a.iban, a.product, a.details, a.name AS holder, a.last_sync_at, a.balance_cents, a.balance_on, s.status FROM bank_accounts a JOIN bank_sessions s ON s.session_id = a.session_id').all();
   const scopes = Object.fromEntries(db.prepare('SELECT name, scope FROM accounts').all().map((r) => [r.name, r.scope]));
   const byName = new Map(stats.map((s) => [s.name, { ...s }]));
   for (const b of bank) if (!byName.has(b.label)) byName.set(b.label, { name: b.label, n: 0, open: 0, first: null, last: null });
   const mask = (iban) => (iban ? `${iban.slice(0, 4)} … ${iban.slice(-4)}` : '');
   return [...byName.values()].map((a) => {
     const b = bank.find((x) => x.label === a.name);
-    return { ...a, scope: scopes[a.name] || 'haushalt', bank: b ? { aspsp: b.aspsp, iban: mask(b.iban), product: b.product || '', details: b.details || b.holder || '', status: b.status, last_sync_at: b.last_sync_at } : null };
+    return { ...a, scope: scopes[a.name] || 'haushalt', balance: b && b.balance_cents != null ? b.balance_cents : null, balance_on: b?.balance_on || null, bank: b ? { aspsp: b.aspsp, iban: mask(b.iban), product: b.product || '', details: b.details || b.holder || '', status: b.status, last_sync_at: b.last_sync_at } : null };
   }).sort((x, y) => Object.keys(SCOPES).indexOf(x.scope) - Object.keys(SCOPES).indexOf(y.scope) || x.name.localeCompare(y.name, 'de'));
 }
+
+/** Money per scope from the bank balances; accounts without a balance (CSV only) are counted apart. */
+function totals(list = listCache()) {
+  const out = Object.fromEntries(Object.keys(SCOPES).map((k) => [k, { cents: 0, accounts: 0, withoutBalance: 0, asOf: null }]));
+  for (const a of list) {
+    const t = out[a.scope]; t.accounts += 1;
+    if (a.balance == null) t.withoutBalance += 1; else { t.cents += a.balance; if (!t.asOf || a.balance_on < t.asOf) t.asOf = a.balance_on; }
+  }
+  return out;
+}
+const listCache = () => list();
 
 function setScope(name, scope) {
   if (!SCOPES[scope]) throw Object.assign(new Error('Bereich unbekannt'), { status: 400 });
@@ -73,4 +85,4 @@ function rename(oldName, newName, { mergeBank, merge = false } = {}) {
   return true;
 }
 
-module.exports = { SCOPES, HOUSEHOLD, defaultScope, ensure, list, setScope, rename };
+module.exports = { SCOPES, HOUSEHOLD, defaultScope, ensure, list, totals, setScope, rename };

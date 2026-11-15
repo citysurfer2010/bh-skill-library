@@ -81,7 +81,8 @@ function migrate(conn) {
   if (!txCols.includes('counterparty_iban')) conn.exec('ALTER TABLE transactions ADD COLUMN counterparty_iban TEXT');
   conn.exec('CREATE INDEX IF NOT EXISTS idx_tx_amount_date ON transactions(amount_cents, booked_on)');
   const bankCols = conn.prepare('PRAGMA table_info(bank_accounts)').all().map((c) => c.name);
-  for (const col of ['product', 'details', 'usage']) if (!bankCols.includes(col)) conn.exec(`ALTER TABLE bank_accounts ADD COLUMN ${col} TEXT`);
+  for (const col of ['product', 'details', 'usage', 'balance_type', 'balance_on']) if (!bankCols.includes(col)) conn.exec(`ALTER TABLE bank_accounts ADD COLUMN ${col} TEXT`);
+  if (!bankCols.includes('balance_cents')) conn.exec('ALTER TABLE bank_accounts ADD COLUMN balance_cents INTEGER');
   // Link to the bank's own booking id, so the daily overlap never books anything twice.
   if (!conn.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 'bank_ref')) conn.exec('ALTER TABLE transactions ADD COLUMN bank_ref TEXT');
   conn.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_bank_ref ON transactions(account, bank_ref) WHERE bank_ref IS NOT NULL; CREATE INDEX IF NOT EXISTS idx_tx_account_amount ON transactions(account, amount_cents, booked_on);');

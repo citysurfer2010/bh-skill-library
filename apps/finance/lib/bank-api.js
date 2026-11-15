@@ -52,6 +52,8 @@ function startAuth({ aspsp, state, redirectUrl }) {
 const createSession = (code) => call('POST', '/sessions', { code });
 /** Product, description and usage (PRIV/ORGA) of one account, e.g. "Mietenkonto - privat" with the flat it belongs to. */
 const details = (uid) => call('GET', `/accounts/${encodeURIComponent(uid)}/details`);
+/** Balances of one account; banks give several kinds (CLBD booked end of day, ITAV/XPCD available or expected). */
+const balances = (uid) => call('GET', `/accounts/${encodeURIComponent(uid)}/balances`);
 const deleteSession = (id) => call('DELETE', `/sessions/${encodeURIComponent(id)}`);
 
 /** One page of booked transactions; psuIp marks a request the person started themselves. */
@@ -62,4 +64,4 @@ function transactions(uid, { dateFrom, continuation, psuIp } = {}) {
   return call('GET', `/accounts/${encodeURIComponent(uid)}/transactions?${q}`, null, psuIp ? { 'psu-ip-address': psuIp } : {});
 }
 
-module.exports = { configured, startAuth, createSession, deleteSession, details, transactions, token, BankError, _setFetch: (f) => { fetchImpl = f; } };
+module.exports = { configured, startAuth, createSession, deleteSession, details, balances, transactions, token, BankError, _setFetch: (f) => { fetchImpl = f; } };

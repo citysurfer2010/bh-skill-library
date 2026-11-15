@@ -100,9 +100,10 @@ test('names from the bank description: rent and deposit accounts by flat, busine
 test('fetch: pages, links CSV lines, adds new ones, second run with overlap adds nothing', async () => {
   ledger.importRows({ filename: 'a.csv', format: 'comdirect', account: 'comdirect', rows: [{ date: '2025-01-10', cents: -4000, text: 'Strom alt', counterparty: 'Stadtwerke' }], user: 't' });
   const pages = [{ transactions: [tx('b1', '2025-01-11', '40', 'DBIT')], continuation_key: 'k2' }, { transactions: [tx('b2', '2025-01-12', '9.99', 'DBIT', { creditor: { name: 'Netflix' } })] }];
-  reply = (url) => (url.includes('u-giro') ? (url.includes('continuation_key=k2') ? pages[1] : pages[0]) : { transactions: [] });
+  reply = (url) => (url.endsWith('/balances') ? { balances: [{ balance_type: 'ITAV', balance_amount: { amount: '999.00' } }, { balance_type: 'CLBD', balance_amount: { amount: '1234.56' }, reference_date: '2026-11-15' }] } : url.includes('u-giro') ? (url.includes('continuation_key=k2') ? pages[1] : pages[0]) : { transactions: [] });
   const res = await sync.syncAll({ force: true });
   const giro = res.find((r) => r.uid === 'u-giro');
+  assert.equal(getDb().prepare("SELECT balance_cents FROM bank_accounts WHERE uid = 'u-giro'").get().balance_cents, 123456, 'booked balance (CLBD) wins over available');
   assert.deepEqual([giro.added, giro.linked], [1, 1]);
   assert.match(calls.find((c) => c.url.includes('u-giro/transactions')).url, /date_from=2025-01-01/);
   const rows = rowsOf('comdirect');
