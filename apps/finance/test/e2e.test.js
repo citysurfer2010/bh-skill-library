@@ -83,6 +83,20 @@ test('unbekannte Adresse: 404-Seite, unter /api/ JSON', async () => {
 const admin2 = { 'x-user-email': 'chef@beispiel.de', 'x-user-role': 'admin', 'content-type': 'application/json', origin: BASE };
 const guest = { 'x-user-email': 'gast@beispiel.de', 'x-user-role': 'user', 'content-type': 'application/json', origin: BASE };
 
+test('Kategorien: hinzufügen und bearbeiten nur mit Finanz-Zugriff', async () => {
+  const post = (h, body) => fetch(`${BASE}/api/categories`, { method: 'POST', headers: h, body: JSON.stringify(body) });
+  assert.equal((await post(guest, { name: 'Gast', art: 'Ausgaben' })).status, 403);
+  const name = `E2E Haustiere ${Date.now().toString(36)}`; // run-all.sh runs every suite twice against one database
+  const res = await post(admin2, { name, art: 'Ausgaben', code: `E${Date.now().toString(36).slice(-6).toUpperCase()}`, budget_cents: 5000 });
+  assert.equal(res.status, 201);
+  const { category } = await res.json();
+  assert.equal((await post(admin2, { name, art: 'Ausgaben', code: 'E2EX' })).status, 409);
+  assert.equal((await fetch(`${BASE}/api/categories/${encodeURIComponent(category.code)}`, { method: 'PATCH', headers: admin2, body: JSON.stringify({ art: 'Einnahmen' }) })).status, 204);
+  const list = await (await get('/api/categories', admin2)).json();
+  assert.ok(list.arts.includes('Rücklagen'));
+  assert.equal(list.categories.find((c) => c.code === category.code).art, 'Einnahmen');
+});
+
 test('Finanzen: privat, Admin immer, andere erst nach Freigabe', async () => {
   assert.equal((await get('/api/overview', guest)).status, 403);
   assert.equal((await get('/api/overview', admin2)).status, 200);

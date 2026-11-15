@@ -7,6 +7,7 @@ const report = require('../lib/report');
 const ledger = require('../lib/ledger');
 const { parseBankFile } = require('../lib/importers');
 const accounts = require('../lib/accounts');
+const categories = require('../lib/categories');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 const yearOf = (v) => { const y = Number(v); return Number.isInteger(y) && y > 1990 && y < 2100 ? y : new Date().getFullYear(); };
@@ -30,12 +31,10 @@ function buildRouter() {
   r.use(['/overview', '/investments', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
   r.get('/overview', (req, res) => res.json(report.overview(yearOf(req.query.year))));
   r.get('/investments', (req, res) => res.json(report.investments(yearOf(req.query.year))));
-  r.get('/categories', (_req, res) => res.json({ categories: getDb().prepare('SELECT * FROM categories ORDER BY art, name').all() }));
-  r.patch('/categories/:code', (req, res) => {
-    const b = req.body?.budget_cents; const budget = b === null || b === '' ? null : Math.round(Number(b));
-    if (budget !== null && !Number.isFinite(budget)) return res.status(400).json({ error: 'Budget ungültig' });
-    return getDb().prepare('UPDATE categories SET budget_cents = ? WHERE code = ?').run(budget, req.params.code).changes ? res.status(204).end() : res.status(404).json({ error: 'Kategorie nicht gefunden' });
-  });
+  r.get('/categories', (_req, res) => res.json({ categories: getDb().prepare('SELECT * FROM categories ORDER BY art, name').all(), arts: categories.ARTS }));
+  const catErr = (res, e) => { if (!e.status) throw e; return res.status(e.status).json({ error: e.message }); };
+  r.post('/categories', (req, res) => { try { res.status(201).json({ category: categories.create(req.body || {}) }); } catch (e) { catErr(res, e); } });
+  r.patch('/categories/:code', (req, res) => { try { categories.update(req.params.code, req.body || {}); res.status(204).end(); } catch (e) { catErr(res, e); } });
 
   r.get('/transactions', (req, res) => {
     // year=all: every year at once (e.g. all open lines of one account).
