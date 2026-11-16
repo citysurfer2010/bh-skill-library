@@ -104,6 +104,9 @@ function migrate(conn) {
   for (const col of ['product', 'details', 'usage', 'balance_type', 'balance_on']) if (!bankCols.includes(col)) conn.exec(`ALTER TABLE bank_accounts ADD COLUMN ${col} TEXT`);
   if (!bankCols.includes('balance_cents')) conn.exec('ALTER TABLE bank_accounts ADD COLUMN balance_cents INTEGER');
   // Link to the bank's own booking id, so the daily overlap never books anything twice.
+  // Since 16.11.2026: NLW ("Besitzer seit") of a flat and the sheet's interest rate of a loan (fallback when no statement names one).
+  if (!conn.prepare('PRAGMA table_info(estate_units)').all().some((c) => c.name === 'owned_since')) conn.exec('ALTER TABLE estate_units ADD COLUMN owned_since TEXT');
+  if (!conn.prepare('PRAGMA table_info(loans)').all().some((c) => c.name === 'rate_pct')) conn.exec('ALTER TABLE loans ADD COLUMN rate_pct REAL');
   if (!conn.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 'bank_ref')) conn.exec('ALTER TABLE transactions ADD COLUMN bank_ref TEXT');
   conn.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_bank_ref ON transactions(account, bank_ref) WHERE bank_ref IS NOT NULL; CREATE INDEX IF NOT EXISTS idx_tx_account_amount ON transactions(account, amount_cents, booked_on);');
 }

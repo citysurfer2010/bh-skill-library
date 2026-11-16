@@ -38,6 +38,7 @@ window.FinEstate = (() => {
   function table(list) {
     return AppShell.list({ storageKey: 'fin-estate', className: 'fin-estate-list', columns: [
       { key: 'address', label: 'Wohnung', sortValue: (u) => `${street(u.address)} ${u.unit}`, html: (u) => `<strong><span class="fin-nowrap">${esc(street(u.address))}</span> · <span class="fin-nowrap">${esc(u.unit)}</span></strong><div class="fin-hint">${esc(city(u.address))}${u.floor ? ` · ${esc(u.floor)}` : ''}</div>` },
+      { key: 'owned_since', label: 'NLW', sortValue: (u) => u.owned_since || '', html: (u) => `<span class="fin-mob-label" title="Nutzen-Lasten-Wechsel">NLW </span>${u.owned_since ? `<span class="fin-num" title="Nutzen-Lasten-Wechsel (Besitzer seit)">${esc(date(u.owned_since))}</span>` : '–'}` },
       { key: 'owner', label: 'Eigentümer', html: (u) => `<span class="fin-mob-label">Eigentümer </span>${esc(u.owner || '–')}` },
       { key: 'sqm', label: 'Fläche', align: 'right', sortValue: (u) => u.sqm ?? -1, html: (u) => (u.sqm ? `<span class="fin-num">${esc(area(u.sqm))}</span>` : '–') },
       { key: 'market_value_cents', label: 'Marktwert', align: 'right', sortValue: (u) => u.market_value_cents ?? -1, html: (u) => `<span class="fin-num">${esc(euro(u.market_value_cents))}</span>` },

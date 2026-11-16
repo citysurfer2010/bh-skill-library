@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * bh-finance MCP Server v26.11.37
+ * bh-finance MCP Server v26.11.38
  *
  *
  * Architecture:
@@ -33,7 +33,7 @@ rl.on('line', async (line) => {
       result: {
         protocolVersion: params?.protocolVersion || '2024-11-05',
         capabilities:    { tools: {} },
-        serverInfo:      { name: 'bh-finance', version: '26.11.37' },
+        serverInfo:      { name: 'bh-finance', version: '26.11.38' },
       },
     });
     return;
@@ -69,4 +69,4 @@ rl.on('line', async (line) => {
 rl.on('close', () => process.exit(0));
 process.stdin.on('error', () => {});
 
-process.stderr.write(`[bh-finance] v26.11.37 started — ${TOOL_NAMES.length} Tools registriert.\n`);
+process.stderr.write(`[bh-finance] v26.11.38 started — ${TOOL_NAMES.length} Tools registriert.\n`);

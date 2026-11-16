@@ -128,3 +128,22 @@ test('one loan account for two flats is split by the sheet balances, not counted
   assert.equal(o.loans[0].shared, 2);
 });
 
+test('regression 16.11.2026: account at the wrong one of two loans of one bank for two flats; an empty sheet slot is no loan', () => {
+  const links = require('../lib/estate-links');
+  loans.importSheet({ units: [
+    { address: '8, Beispielort, Ulmenstraße 20, WE 30', unit: 'WE 30', market_value: 1, loans: [
+      { position: 1, amount: 150000, balance: 1, lender: 'NordLB', account: 'DE00250500000600001111' }, { position: 2, amount: 300000, balance: 1, lender: 'NordLB' }] },
+    { address: '8, Beispielort, Ulmenstraße 20, WE 31', unit: 'WE 31', market_value: 1, loans: [{ position: 1, amount: 0, balance: 0, lender: '' }] },
+  ] });
+  const nord = (no, granted, to) => `Darlehen ${no}, DE00, Beispielort,Ulmenstr.20 WE30,31\nBewilligtes Darlehen EUR: ${granted} Rate EUR: 1,00\nKontostand am 01.01.2025 -0,00\nKontostand am 31.12.2025 -${to}`;
+  st.importStatements({ statements: [{ text: nord('0600001111', '300.000,00', '300.000,00') }, { text: nord('0600002222', '150.000,00', '150.000,00') }] }, new Set(['600001111']));
+  const o = loans.overview().loans;
+  assert.equal(o.find((l) => l.amount_cents === 30000000).ref, '600001111', 'the bank amount moves the account to the larger loan');
+  assert.equal(o.find((l) => l.amount_cents === 15000000).ref, '600002222', 'the smaller loan gets the other account');
+  assert.equal(o.length, 2, 'the empty slot of WE 31 is no loan');
+  assert.equal(loans.estate().units.find((u) => u.unit === 'WE 31').loans, 0);
+  loans.importSheet({ units: [{ address: '8, Beispielort, Ulmenstraße 20, WE 30', unit: 'WE 30', market_value: 1, loans: [
+    { position: 1, amount: 150000, balance: 1, lender: 'NordLB', account: 'DE00250500000600001111' }, { position: 2, amount: 300000, balance: 1, lender: 'NordLB' }] }] });
+  assert.equal(loans.overview().loans.find((l) => l.position === 1).ref, '600002222', 'the correction survives a new sheet import');
+});
+

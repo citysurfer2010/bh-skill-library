@@ -31,18 +31,20 @@ function parse(text) {
 /** Sheet data in, all loans replaced (the sheet is the source). Amounts in euros. */
 function importSheet({ asOf, units = [] }) {
   const db = getDb(); const c = (v) => (v == null || v === '' || Number.isNaN(Number(v)) ? null : Math.round(Number(v) * 100));
-  const unit = db.prepare('INSERT INTO estate_units (unit_key, address, unit, floor, owner, sqm, market_value_cents, land_charge_cents, rent_year_cents, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-  const loan = db.prepare('INSERT INTO loans (unit_key, position, lender, account_iban, amount_cents, balance_cents, annuity_cents, ends_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+  const unit = db.prepare('INSERT INTO estate_units (unit_key, address, unit, floor, owner, sqm, market_value_cents, land_charge_cents, rent_year_cents, note, owned_since) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const loan = db.prepare('INSERT INTO loans (unit_key, position, lender, account_iban, amount_cents, balance_cents, annuity_cents, ends_on, rate_pct) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const day = (v) => (/^\d{4}-\d{2}-\d{2}/.test(v || '') ? String(v).slice(0, 10) : null);
+  const pct = (v) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? (n < 1 ? Math.round(n * 100000) / 1000 : n) : null; }; // 0.0139 or 1.39 → 1.39
   let n = 0;
   db.exec('BEGIN IMMEDIATE');
   try {
     db.exec('DELETE FROM loans; DELETE FROM estate_units');
     for (const u of units) {
       const key = `${u.address} – ${u.unit}`.trim();
-      unit.run(key, String(u.address || ''), String(u.unit || ''), String(u.floor || ''), String(u.owner || ''), u.sqm == null || Number.isNaN(Number(u.sqm)) ? null : Number(u.sqm), c(u.market_value), c(u.land_charge), c(u.rent_year), String(u.note || ''));
+      unit.run(key, String(u.address || ''), String(u.unit || ''), String(u.floor || ''), String(u.owner || ''), u.sqm == null || Number.isNaN(Number(u.sqm)) ? null : Number(u.sqm), c(u.market_value), c(u.land_charge), c(u.rent_year), String(u.note || ''), day(u.owned_since));
       for (const l of u.loans || []) {
-        if (c(l.amount) == null && c(l.balance) == null) continue;
-        loan.run(key, l.position, String(l.lender || ''), String(l.account || '').replace(/\s/g, ''), c(l.amount), c(l.balance), c(l.annuity), /^\d{4}-\d{2}-\d{2}/.test(l.ends_on || '') ? l.ends_on.slice(0, 10) : null); n += 1;
+        if (!(c(l.amount) > 0) && !(c(l.balance) > 0)) continue; // an empty slot of the sheet is no loan
+        loan.run(key, l.position, String(l.lender || ''), String(l.account || '').replace(/\s/g, ''), c(l.amount), c(l.balance), c(l.annuity), day(l.ends_on), pct(l.rate)); n += 1;
       }
     }
     db.prepare("INSERT INTO app_state (key, value) VALUES ('loans_as_of', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value").run(asOf || new Date().toISOString().slice(0, 10));
@@ -55,8 +57,10 @@ function importSheet({ asOf, units = [] }) {
 function overview() {
   const db = getDb();
   const loans = db.prepare('SELECT l.*, u.address, u.unit, u.floor, u.owner, u.market_value_cents, r.ref AS found_ref FROM loans l JOIN estate_units u USING (unit_key) LEFT JOIN loan_refs r USING (unit_key, position) ORDER BY u.address, u.unit, l.position').all()
-    .map(({ found_ref: found, ...l }) => ({ ...l, years: {}, last_paid: null, ref: accountNo(l.account_iban) || found || '', paid: [] }));
-  const byRef = new Map(); for (const l of loans) for (const r of [l.account_iban, l.ref]) if (r) byRef.set(r, l);
+    .filter((l) => l.lender || l.amount_cents > 0 || l.balance_cents > 0) // an empty slot of the sheet is no loan
+    .map(({ found_ref: found, ...l }) => ({ ...l, years: {}, last_paid: null, ref: found === '-' ? '' : found || accountNo(l.account_iban) || '', paid: [] }));
+  const byRef = new Map(); // The full IBAN only while it is still this loan's account (a corrected sheet account belongs to another loan).
+  for (const l of loans) for (const r of [l.ref && accountNo(l.account_iban) === l.ref ? l.account_iban : '', l.ref]) if (r) byRef.set(r, l);
   let unmatched = 0;
   const lines = db.prepare("SELECT booked_on, amount_cents, text FROM transactions WHERE amount_cents < 0 AND (text LIKE '%TILG%' OR text LIKE '%Darl.-Leistung%' OR text LIKE '%Darlehensrate%')").all();
   for (const t of lines) {
@@ -71,7 +75,7 @@ function overview() {
   for (const l of loans) {
     const s = l.ref ? statements.of(l.ref) : { history: [], rate: null, docs: null };
     const last = s.history.at(-1);
-    Object.assign(l, { rate_pct: s.rate, docs_url: s.docs || estateLinks.of(l.unit_key).finance_url || null, history: s.history, bank_balance: last || null,
+    Object.assign(l, { rate_pct: s.rate ?? l.rate_pct ?? null, rate_source: s.rate != null ? 'bank' : l.rate_pct != null ? 'sheet' : null, docs_url: s.docs || estateLinks.of(l.unit_key).finance_url || null, history: s.history, bank_balance: last || null,
       balance_now_cents: last ? last.cents - l.paid.filter((x) => x.on > last.on).reduce((a, x) => a + x.principal, 0) : l.balance_cents });
     delete l.paid;
   }
@@ -101,7 +105,7 @@ function overview() {
 function estate() {
   const db = getDb();
   const now = new Map(); for (const l of overview().loans) now.set(l.unit_key, (now.get(l.unit_key) || 0) + (l.balance_now_cents || 0));
-  const units = db.prepare(`SELECT u.*, (SELECT count(*) FROM loans l WHERE l.unit_key = u.unit_key) AS loans FROM estate_units u ORDER BY u.address, u.unit`).all()
+  const units = db.prepare(`SELECT u.*, (SELECT count(*) FROM loans l WHERE l.unit_key = u.unit_key AND (l.lender != '' OR l.amount_cents > 0 OR l.balance_cents > 0)) AS loans FROM estate_units u ORDER BY u.address, u.unit`).all()
     .map((u) => ({ ...u, balance_cents: u.loans ? now.get(u.unit_key) ?? null : null, ...estateLinks.of(u.unit_key) }));
   const sum = (k) => units.reduce((s, u) => s + (u[k] || 0), 0);
   return { asOf: db.prepare("SELECT value FROM app_state WHERE key = 'loans_as_of'").get()?.value || null, units,

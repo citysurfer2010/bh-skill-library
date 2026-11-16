@@ -55,17 +55,32 @@ function assign(db, parsed, knownRefs) {
   // Folder of the flat first, then the place the statement came from (tax folder), then the address in the statement's header.
   const units = (p) => [byFolder(p.folderId), unitsFor(p.from), unitsFor(p.place)].find((k) => k.length) || [];
   const add = db.prepare('INSERT OR IGNORE INTO loan_refs (unit_key, position, ref) VALUES (?, ?, ?)');
+  const put = db.prepare('INSERT OR REPLACE INTO loan_refs (unit_key, position, ref) VALUES (?, ?, ?)');
+  const near = (a, b, tol) => a != null && b != null && Math.abs(a - b) <= tol;
+  // The sheet may name an account at the wrong one of several loans of the same bank (Matti 16.11.2026: two NordLB loans
+  // together for two flats). When the statement's granted amount contradicts that loan but fits exactly one other loan
+  // of the same bank for the same flats, the account moves there; the first loan is marked "-" (sheet account wrong).
+  const all = db.prepare('SELECT l.*, r.ref AS known_ref FROM loans l LEFT JOIN loan_refs r USING (unit_key, position)').all();
+  for (const p of parsed.filter((x) => knownRefs.has(x.ref) && x.amount)) {
+    const wrong = all.find((l) => !l.known_ref && accountNo(l.account_iban) === p.ref);
+    if (!wrong || near(wrong.amount_cents, p.amount, Math.max(100, p.amount * 0.05))) continue;
+    const keys = new Set([wrong.unit_key, ...units(p)]);
+    const right = all.filter((l) => l !== wrong && keys.has(l.unit_key) && l.lender === wrong.lender && near(l.amount_cents, p.amount, Math.max(100, p.amount * 0.05)) && (!l.known_ref || l.known_ref === '-'));
+    if (right.length !== 1) continue;
+    put.run(right[0].unit_key, right[0].position, p.ref); put.run(wrong.unit_key, wrong.position, '-');
+    right[0].known_ref = p.ref; wrong.known_ref = '-';
+  }
   for (const p of parsed.filter((x) => !knownRefs.has(x.ref))) {
     const keys = units(p); if (!keys.length) continue;
     const inFolder = db.prepare(`SELECT l.*, r.ref AS known_ref FROM loans l LEFT JOIN loan_refs r USING (unit_key, position) WHERE l.unit_key IN (${keys.map(() => '?').join(',')})`).all(...keys);
     const known = new Set(parsed.filter((x) => knownRefs.has(x.ref) && units(x).some((k) => keys.includes(k))).map((x) => x.ref));
     const banks = new Set(inFolder.filter((l) => known.has(accountNo(l.account_iban)) || known.has(l.known_ref)).map((l) => l.lender));
-    const free = inFolder.filter((l) => !l.account_iban && !l.known_ref && banks.has(l.lender));
+    const free = inFolder.filter((l) => (!l.account_iban || l.known_ref === '-') && (!l.known_ref || l.known_ref === '-') && banks.has(l.lender));
     // The statement's original amount must fit (5 % room for rounded sheet values); among several loans of that bank it
     // decides to the euro. Nothing is guessed.
     const fits = (l, tol) => !p.amount || l.amount_cents == null || Math.abs(l.amount_cents - p.amount) <= tol;
     const pick = free.length === 1 ? free.filter((l) => fits(l, Math.max(100, p.amount * 0.05))) : p.amount ? free.filter((l) => l.amount_cents != null && fits(l, 100)) : [];
-    if (pick.length === 1) { add.run(pick[0].unit_key, pick[0].position, p.ref); knownRefs.add(p.ref); }
+    if (pick.length === 1) { (pick[0].known_ref === '-' ? put : add).run(pick[0].unit_key, pick[0].position, p.ref); pick[0].known_ref = p.ref; knownRefs.add(p.ref); }
   }
 }
 

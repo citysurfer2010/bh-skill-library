@@ -2,8 +2,8 @@
 'use strict';
 /**
  * Takes over the flats and their loans from the sheet "Portfolioübersicht – Bankübersicht Finanzierung". Reads JSON from stdin:
- *   { asOf, units: [{ address, unit, floor, owner, sqm, market_value, land_charge, rent_year, note,
- *                     loans: [{ position, amount, balance, annuity, ends_on, lender, account }] }] }
+ *   { asOf, units: [{ address, unit, floor, owner, owned_since, sqm, market_value, land_charge, rent_year, note,
+ *                     loans: [{ position, amount, balance, annuity, ends_on, rate, lender, account }] }] }
  * Replaces all flats and loans (the sheet is the source). Data stays on the server, never in git.
  *   node scripts/import-portfolio.js < portfolio.json
  */

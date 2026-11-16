@@ -34,15 +34,16 @@
   .fin-estate-list tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 16px; border-bottom: 1px solid var(--bh-border-light); }
   .fin-estate-list td { padding: 0 !important; border: 0 !important; min-width: 0 !important; width: auto !important; text-align: left !important; }
   .fin-estate-list td:nth-child(1) { grid-column: 1; grid-row: 1; }
-  .fin-estate-list td:nth-child(4) { grid-column: 2; grid-row: 1; text-align: right !important; }
-  .fin-estate-list td:nth-child(2), .fin-estate-list td:nth-child(3) { color: var(--bh-muted); font-size: 13px; }
-  .fin-estate-list td:nth-child(3) { text-align: right !important; }
-  .fin-estate-list td:nth-child(5) { grid-column: 1; }
-  .fin-estate-list td:nth-child(6) { grid-column: 2; text-align: right !important; }
-  .fin-estate-list td:nth-child(7) { grid-column: 1 / -1; }
-  .fin-estate-list td:nth-child(7):empty { display: none; }
-  .fin-estate-list td:nth-child(5)::before { content: 'Kaltmiete '; color: var(--bh-muted); font-size: 12px; }
-  .fin-estate-list td:nth-child(6):has(a)::before { content: 'Restschuld '; color: var(--bh-muted); font-size: 12px; }
+  .fin-estate-list td:nth-child(5) { grid-column: 2; grid-row: 1; text-align: right !important; }
+  .fin-estate-list td:nth-child(2), .fin-estate-list td:nth-child(3), .fin-estate-list td:nth-child(4) { color: var(--bh-muted); font-size: 13px; }
+  .fin-estate-list td:nth-child(3) { grid-column: 1 / -1; grid-row: 2; }
+  .fin-estate-list td:nth-child(2) { grid-column: 1; grid-row: 3; } .fin-estate-list td:nth-child(4) { grid-column: 2; grid-row: 3; text-align: right !important; }
+  .fin-estate-list td:nth-child(6) { grid-column: 1; grid-row: 4; }
+  .fin-estate-list td:nth-child(7) { grid-column: 2; grid-row: 4; text-align: right !important; }
+  .fin-estate-list td:nth-child(8) { grid-column: 1 / -1; grid-row: 5; }
+  .fin-estate-list td:nth-child(8):empty { display: none; }
+  .fin-estate-list td:nth-child(6)::before { content: 'Kaltmiete '; color: var(--bh-muted); font-size: 12px; }
+  .fin-estate-list td:nth-child(7):has(a)::before { content: 'Restschuld '; color: var(--bh-muted); font-size: 12px; }
 }
 @media (max-width: 720px) {
   .fin-loan-list td:last-child:empty { display: none; }
@@ -59,7 +60,7 @@
 .fin-estate-bar [data-count] { font-size: 13px; white-space: nowrap; }
 .fin-estate-search { width: 300px; max-width: 100%; }
 /* Fixed column widths, so filtering does not move the columns. */
-@media (min-width: 721px) { .fin-estate-list table { table-layout: fixed; width: 100%; } .fin-estate-list th:nth-child(1) { width: 26%; } .fin-estate-list th:nth-child(2) { width: 14%; } .fin-estate-list th:nth-child(3) { width: 10%; } .fin-estate-list th:nth-child(4) { width: 13%; } .fin-estate-list th:nth-child(5) { width: 14%; } .fin-estate-list th:nth-child(6) { width: 15%; } .fin-estate-list th:nth-child(7) { width: 8%; } }
+@media (min-width: 721px) { .fin-estate-list table { table-layout: fixed; width: 100%; } .fin-estate-list th:nth-child(1) { width: 20%; } .fin-estate-list th:nth-child(2) { width: 9%; } .fin-estate-list th:nth-child(3) { width: 15%; } .fin-estate-list th:nth-child(4) { width: 8%; } .fin-estate-list th:nth-child(5) { width: 12%; } .fin-estate-list th:nth-child(6) { width: 13%; } .fin-estate-list th:nth-child(7) { width: 15%; } .fin-estate-list th:nth-child(8) { width: 7%; } .fin-estate-list td:nth-child(6) .fin-hint, .fin-estate-list td:nth-child(7) .fin-hint { white-space: nowrap; } }
 @media (min-width: 721px) { .fin-estate-bar [data-filter] { width: 200px; } .fin-estate-bar [data-filter="debt"] { width: 220px; } }
 @media (max-width: 720px) { .fin-estate-bar { padding: 8px 0; } .fin-estate-bar [data-filter="debt"], .fin-estate-bar [data-filter="link"] { grid-column: 1 / -1; } .fin-estate-search { width: 100%; } .fin-estate-list .fin-mob-label { display: inline; color: var(--bh-muted); font-size: 12px; } }
 /* Amazon: items as a short list, dates and amounts never wrap; on the phone each order is a card. */
