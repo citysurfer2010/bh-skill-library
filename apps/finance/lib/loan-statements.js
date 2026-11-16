@@ -8,7 +8,7 @@
  * Only accounts of a known loan are kept; the papers' folder of a loan is stored as a link.
  */
 const { getDb } = require('./db');
-const { unitsFor } = require('./estate-links');
+const { unitsFor, flats } = require('./estate-links');
 
 const cents = (s) => Math.round(Number(String(s).replace(/\./g, '').replace(',', '.')) * 100);
 /** Account number inside a German IBAN (same rule as loans.js, kept here to avoid a require cycle). */
@@ -93,6 +93,14 @@ function importStatements({ statements = [], docs = [] }, knownRefs) {
   db.exec('BEGIN IMMEDIATE');
   try {
     assign(db, parsed.filter(Boolean), knownRefs);
+    // A header naming several flats ("WE30,31") marks a loan shared by them (Matti 16.11.2026); one flat number never does.
+    const share = db.prepare('INSERT OR IGNORE INTO loan_shares (ref, unit_key) VALUES (?, ?)');
+    for (const p of parsed) {
+      if (!p || !knownRefs.has(p.ref)) continue;
+      const place = [p.place, p.from].find((s) => flats(s).size >= 2); if (!place) continue;
+      const keys = unitsFor(place); if (keys.length < 2) continue;
+      db.prepare('DELETE FROM loan_shares WHERE ref = ?').run(p.ref); for (const k of keys) share.run(p.ref, k);
+    }
     for (const p of parsed) {
       if (!p || !knownRefs.has(p.ref)) { skipped += 1; continue; }
       for (const b of p.balances) balances += ins.run(p.ref, b.on, b.cents, p.rate).changes;

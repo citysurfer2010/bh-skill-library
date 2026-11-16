@@ -141,9 +141,26 @@ test('regression 16.11.2026: account at the wrong one of two loans of one bank f
   assert.equal(o.find((l) => l.amount_cents === 30000000).ref, '600001111', 'the bank amount moves the account to the larger loan');
   assert.equal(o.find((l) => l.amount_cents === 15000000).ref, '600002222', 'the smaller loan gets the other account');
   assert.equal(o.length, 2, 'the empty slot of WE 31 is no loan');
-  assert.equal(loans.estate().units.find((u) => u.unit === 'WE 31').loans, 0);
+  assert.equal(loans.estate().units.find((u) => u.unit === 'WE 31').loans, 2, 'the two shared loans count for WE 31 too (header WE30,31)');
   loans.importSheet({ units: [{ address: '8, Beispielort, Ulmenstraße 20, WE 30', unit: 'WE 30', market_value: 1, loans: [
     { position: 1, amount: 150000, balance: 1, lender: 'NordLB', account: 'DE00250500000600001111' }, { position: 2, amount: 300000, balance: 1, lender: 'NordLB' }] }] });
   assert.equal(loans.overview().loans.find((l) => l.position === 1).ref, '600002222', 'the correction survives a new sheet import');
+});
+
+test('a loan whose statement names several flats ("WE30,31") is split by market value; one street alone shares nothing', () => {
+  loans.importSheet({ units: [
+    { address: '9, Beispielort, Kiefernstraße 4, WE 30', unit: 'WE 30', market_value: 300000, loans: [{ position: 1, amount: 100000, balance: 1, lender: 'NordLB', account: 'DE00250500000600003333' }] },
+    { address: '9, Beispielort, Kiefernstraße 4, WE 31', unit: 'WE 31', market_value: 100000, loans: [{ position: 1, amount: 0, balance: 0, lender: '' }] },
+    { address: '9, Beispielort, Birkenstraße 1', unit: 'WE 01', market_value: 100000, loans: [{ position: 1, amount: 50000, balance: 1, lender: 'NordLB', account: 'DE00250500000600004444' }] },
+  ] });
+  const head = (no, place, to) => `Darlehen ${no}, DE00, ${place}\nBewilligtes Darlehen EUR: ${no.endsWith('3333') ? '100.000,00' : '50.000,00'} Rate EUR: 1,00\nKontostand am 01.01.2025 -0,00\nKontostand am 31.12.2025 -${to}`;
+  st.importStatements({ statements: [{ text: head('0600003333', 'Beispielort,Kiefernstr.4 WE30,31', '80.000,00') }, { text: head('0600004444', 'Beispielort, Birkenstraße 1,1', '40.000,00') }] }, new Set(['600003333', '600004444']));
+  const o = loans.overview(); const shared = o.loans.find((l) => l.ref === '600003333');
+  assert.deepEqual(shared.shared_units.map((k) => k.split('–').pop().trim()), ['WE 30', 'WE 31']);
+  assert.deepEqual(o.loans.find((l) => l.ref === '600004444').shared_units, []);
+  const e = loans.estate().units; const we = (u) => e.find((x) => x.unit === u);
+  assert.equal(we('WE 30').balance_cents, 6000000, '3/4 of 80.000 by market value'); assert.equal(we('WE 31').balance_cents, 2000000);
+  assert.equal(we('WE 31').loans, 1);
+  assert.equal(e.reduce((s, u) => s + (u.balance_cents || 0), 0), o.totals.balance, 'the total stays the same');
 });
 

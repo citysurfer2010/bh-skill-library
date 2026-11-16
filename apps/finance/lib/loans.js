@@ -78,6 +78,8 @@ function overview() {
     Object.assign(l, { rate_pct: s.rate ?? l.rate_pct ?? null, rate_source: s.rate != null ? 'bank' : l.rate_pct != null ? 'sheet' : null, docs_url: s.docs || estateLinks.of(l.unit_key).finance_url || null, history: s.history, bank_balance: last || null,
       balance_now_cents: last ? last.cents - l.paid.filter((x) => x.on > last.on).reduce((a, x) => a + x.principal, 0) : l.balance_cents });
     delete l.paid;
+    const shared = l.ref ? db.prepare('SELECT unit_key FROM loan_shares WHERE ref = ? ORDER BY unit_key').all(l.ref).map((r) => r.unit_key) : [];
+    l.shared_units = shared.length > 1 ? shared : [];
   }
   // One loan account for several flats (e.g. one bank loan secured on two flats): the bank's figures are split by the
   // sheet's balance of each part (else its amount, else equally) instead of counting the whole loan twice.
@@ -104,9 +106,15 @@ function overview() {
 /** Flats with value, rent and the balance of their loans (module Immobilien). */
 function estate() {
   const db = getDb();
-  const now = new Map(); for (const l of overview().loans) now.set(l.unit_key, (now.get(l.unit_key) || 0) + (l.balance_now_cents || 0));
-  const units = db.prepare(`SELECT u.*, (SELECT count(*) FROM loans l WHERE l.unit_key = u.unit_key AND (l.lender != '' OR l.amount_cents > 0 OR l.balance_cents > 0)) AS loans FROM estate_units u ORDER BY u.address, u.unit`).all()
-    .map((u) => ({ ...u, balance_cents: u.loans ? now.get(u.unit_key) ?? null : null, ...estateLinks.of(u.unit_key) }));
+  const value = new Map(db.prepare('SELECT unit_key, market_value_cents v FROM estate_units').all().map((r) => [r.unit_key, r.v || 0]));
+  // A loan shared by several flats counts for each by its share of their market value (equal shares without values).
+  const now = new Map(); const count = new Map(); const add = (k, c) => { now.set(k, (now.get(k) || 0) + c); count.set(k, (count.get(k) || 0) + 1); };
+  for (const l of overview().loans) {
+    const keys = l.shared_units?.length ? l.shared_units : [l.unit_key]; const total = keys.reduce((s, k) => s + (value.get(k) || 0), 0);
+    for (const k of keys) add(k, Math.round((l.balance_now_cents || 0) * (total ? (value.get(k) || 0) / total : 1 / keys.length)));
+  }
+  const units = db.prepare('SELECT u.* FROM estate_units u ORDER BY u.address, u.unit').all()
+    .map((u) => ({ ...u, loans: count.get(u.unit_key) || 0, balance_cents: count.get(u.unit_key) ? now.get(u.unit_key) ?? null : null, ...estateLinks.of(u.unit_key) }));
   const sum = (k) => units.reduce((s, u) => s + (u[k] || 0), 0);
   return { asOf: db.prepare("SELECT value FROM app_state WHERE key = 'loans_as_of'").get()?.value || null, units,
     totals: { units: units.length, sqm: sum('sqm'), marketValue: sum('market_value_cents'), rentYear: sum('rent_year_cents'), balance: sum('balance_cents') } };

@@ -49,4 +49,4 @@ function unitsFor(place) {
 
 const of = (unitKey) => getDb().prepare('SELECT folder_url, finance_url FROM estate_links WHERE unit_key = ?').get(unitKey) || {};
 
-module.exports = { match, importLinks, of, unitsFor };
+module.exports = { match, importLinks, of, unitsFor, flats };

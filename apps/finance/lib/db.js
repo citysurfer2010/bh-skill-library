@@ -91,6 +91,8 @@ function migrate(conn) {
     CREATE TABLE IF NOT EXISTS loan_balances (ref TEXT NOT NULL, balance_on TEXT NOT NULL, balance_cents INTEGER NOT NULL, rate_pct REAL, PRIMARY KEY (ref, balance_on));
     CREATE TABLE IF NOT EXISTS loan_docs (ref TEXT PRIMARY KEY, url TEXT NOT NULL);
     -- Account of a loan the sheet lists without one, found from its statement (same flat folder, same bank as a known loan).
+    -- A loan that finances several flats together, named by its statement ("…str.20 WE30,31"); its balance is split by market value.
+    CREATE TABLE IF NOT EXISTS loan_shares (ref TEXT NOT NULL, unit_key TEXT NOT NULL, PRIMARY KEY (ref, unit_key));
     CREATE TABLE IF NOT EXISTS loan_refs (unit_key TEXT NOT NULL, position INTEGER NOT NULL, ref TEXT NOT NULL, PRIMARY KEY (unit_key, position));
     -- Drive folder of each flat and its financing papers (scripts/import-estate-links.js); kept across sheet imports.
     CREATE TABLE IF NOT EXISTS estate_links (unit_key TEXT PRIMARY KEY, folder_url TEXT, finance_url TEXT);
