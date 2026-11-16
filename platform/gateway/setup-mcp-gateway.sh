@@ -20,7 +20,8 @@ ENV=/srv/bh-platform/.env; val() { sed -n "s/^$1=//p" "$ENV" | tail -1; }
   printf 'BH_NETATMO_USER=%s\nBH_NETATMO_PASSWORD=%s\nBH_FAMILY_DIR=/var/lib/mcp-gateway/family\n' "$(val BH_NETATMO_USER)" "$(val BH_NETATMO_PASSWORD)" >>"$D/nas.env"
   printf 'BH_SCREEN_URL=%s/screen/%s\nBH_SCREEN_WRITE=%s\nBH_AUTH_INTERNAL=http://bh-auth:3337\n' "$(val BH_PUBLIC_URL)" "$(val BH_SCREEN_READ)" "$(val BH_SCREEN_WRITE)" >>"$D/nas.env"
   # Finance tools for Zottel: read-only key with scope "finance" (apps/finance, created once by the admin), app reached inside bh-apps-net.
-  printf 'BH_FINANCE_URL=http://bh-apps:3302/finance\nBH_FINANCE_KEY=%s\n' "$(val BH_FINANCE_KEY)" >>"$D/nas.env")
+  # Inside bh-apps-net the app is reached on its own port and without the /finance prefix (that one belongs to the edge).
+  printf 'BH_FINANCE_URL=http://bh-apps:%s\nBH_FINANCE_KEY=%s\n' "$(jq -r .port /srv/bh-apps/finance/app.json 2>/dev/null)" "$(val BH_FINANCE_KEY)" >>"$D/nas.env")
 docker build -q -t mcp-gateway:current /opt/bh-skill-library/services/bh-mcp-gateway
 docker network inspect mcp-gateway-net >/dev/null 2>&1 || docker network create mcp-gateway-net >/dev/null
 docker rm -f mcp-gateway >/dev/null 2>&1 || true

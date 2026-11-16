@@ -9,7 +9,8 @@ const { getDb } = require('./db');
 /** Lower case, "straße" and "str." alike, a house number glued to the street ("Musterstr.20") separated. */
 const norm = (s) => String(s || '').toLowerCase().replace(/stra(ß|ss)e\b/g, 'str').replace(/str\./g, 'str').replace(/([a-zäöü])(\d)/g, '$1 $2').replace(/\s+/g, ' ').trim();
 const street = (s) => String(s || '').split(',').slice(0, 3).map(norm).join(',');
-const flats = (s) => new Set([...String(s || '').matchAll(/WE\s*(\d+)/gi)].map((m) => m[1].replace(/^0+/, '')));
+/** Flat numbers: "WE 30", "WE30, WE31" and the short form "WE30,31" (statement headers). */
+const flats = (s) => new Set([...String(s || '').matchAll(/WE\s*(\d+(?:\s*,\s*\d+(?![\d.]))*)/gi)].flatMap((m) => m[1].split(',').map((n) => n.trim().replace(/^0+/, ''))));
 const url = (id) => (id && /^[\w-]{10,}$/.test(id) ? `https://drive.google.com/drive/folders/${id}` : null);
 
 /** Folders [{ name, id, financeId }] onto flats [{ unit_key, address, unit }]: one folder per flat or none. */

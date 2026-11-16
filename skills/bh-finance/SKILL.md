@@ -61,5 +61,5 @@ Server `skills/bh-finance/server` im MCP-Gateway (`servers.json`, Eintrag `finan
 | `finance_get_loans` | Kredite mit Restschuld laut Bank, Rate, Zins, Tilgung, Jahresendständen |
 | `finance_get_estate` | Wohnungen mit Fläche, Marktwert, Miete, Restschuld, Drive-Ordner |
 
-Beträge kommen in Euro. Dahinter liegt `/api/external/finance/*` der App mit einem API-Schlüssel im Scope `finance`: Nur wer die Finanzen sehen darf, kann ihn anlegen, und wer von der Liste „Wer die Finanzen sieht“ entfernt wird, verliert seine Finanz-Schlüssel sofort. Der Schlüssel steht als `BH_FINANCE_KEY` in `/srv/bh-platform/.env`, `platform/gateway/setup-mcp-gateway.sh` reicht ihn an das Gateway weiter.
+Beträge kommen in Euro. Dahinter liegt `/api/external/finance/*` der App mit einem API-Schlüssel im Scope `finance`: Nur wer die Finanzen sehen darf, kann ihn anlegen, und wer von der Liste „Wer die Finanzen sieht“ entfernt wird, verliert seine Finanz-Schlüssel sofort. Der Schlüssel steht als `BH_FINANCE_KEY` in `/srv/bh-platform/.env`, `platform/gateway/setup-mcp-gateway.sh` reicht ihn an das Gateway weiter; die App erreicht das Gateway intern über ihren Port aus `/srv/bh-apps/finance/app.json`, ohne den Präfix `/finance` (der gehört zum Edge).
 

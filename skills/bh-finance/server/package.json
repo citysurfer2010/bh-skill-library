@@ -1,1 +1,1 @@
-{ "name": "bh-finance", "version": "26.11.36", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }
+{ "name": "bh-finance", "version": "26.11.37", "private": true, "main": "server.js", "scripts": { "test": "node --test test/*.test.js" } }

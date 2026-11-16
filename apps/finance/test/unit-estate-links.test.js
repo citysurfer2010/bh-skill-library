@@ -39,3 +39,9 @@ test('links survive a new sheet import; loans use the financing folder, the modu
   assert.equal(u.folder_url, 'https://drive.google.com/drive/folders/folderMusterweg01');
   assert.equal(links.match([{ name: '10000, Musterstadt, Musterweg 1, WE 02', id: 'bad id!' }], [{ unit_key: 'k', address: '10000, Musterstadt, Musterweg 1', unit: 'WE 02' }])[0].folder_url, null, 'odd ids give no link');
 });
+
+test('a statement header like "Lindenallee20 WE30,31" names both flats', () => {
+  assert.deepEqual(links.unitsFor('Musterstadt,Lindenallee 20 WE30,31').sort(), ['10000, Musterstadt, Lindenallee 20, WE 30 – WE 30', '10000, Musterstadt, Lindenallee 20, WE 31 – WE 31']);
+  assert.deepEqual(links.unitsFor('Musterstadt, Lindenallee 20, WE 31'), ['10000, Musterstadt, Lindenallee 20, WE 31 – WE 31']);
+});
+
