@@ -32,10 +32,9 @@ Datenbank der App und im Drive.
   Arbeitnehmer-Pauschbetrag übersteigen; der private Teil (Mantelbogen, Kinder, Sonderausgaben) wirkt gar nicht.
   Deshalb: Rechnung der Steuerberatung nach Tätigkeiten aufschlüsseln lassen und den Vermietungsanteil je Wohnung
   ansetzen, im Jahr der Zahlung. Der Anteil richtet sich nach der Rechnung, nicht nach Wunsch.
-- **Fahrten.** Hin- und Rückfahrt zählen beide. Im Fahrtenbuch gefahrene Kilometer eintragen. Satz: 0,30 € je
-  gefahrenem Kilometer, oder die tatsächlichen Kosten des Autos je Kilometer (Leasing inkl. Sonderzahlung anteilig,
-  Versicherung, Steuer, Sprit, Werkstatt, geteilt durch die Jahreskilometer); dafür Kilometerstand zum 1.1. und 31.12.
-  festhalten. Verpflegungspauschale bei mehr als 8 Stunden Abwesenheit.
+- **Fahrten.** Hin- und Rückfahrt zählen beide: bei „Zweifach“ muss die Kostenspalte die Strecke verdoppeln (prüfen,
+  dass die Formel das tut). Kilometersatz: wie bisher im Fahrtenbuch hinterlegt (Entscheidung 22.11.2026). Eine
+  Verpflegungspauschale setzen wir nicht an (Entscheidung 22.11.2026).
 - **Kontoführung** der Objektkonten in die jeweilige Anlage V (tatsächliche Gebühren).
 - **Schuldzinsen** je Darlehen laut Zinsbescheinigung. Wird ein anderer Kredit für eine Wohnung verwendet
   (Sonderumlage, Sanierung), die Mittelverwendung dokumentieren; dann sind auch dessen Zinsen Werbungskosten.
