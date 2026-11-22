@@ -66,7 +66,7 @@ function store(acc, rows) {
       if (byRef.get(acc.label, r.ref)) { known += 1; continue; }
       const match = csv.get(acc.label, r.cents, shiftDay(r.date, -3), shiftDay(r.date, 3), r.date);
       if (match) { link.run(r.ref, match.id); linked += 1; continue; }
-      const c = classify(r.counterparty);
+      const c = classify(r.counterparty, acc.label);
       added += insert.run(acc.label, r.date, r.cents, r.kind, r.text, r.counterparty, c.category, c.source, c.suggestion, '', hashOf(acc.label, { ...r, text: `bank:${r.ref}` }, 1), imp.lastInsertRowid, now(), r.ref, r.counterpartyIban || null).changes;
     }
     db.prepare('UPDATE imports SET added = ?, duplicates = ? WHERE id = ?').run(added, rows.length - added, imp.lastInsertRowid);

@@ -9,8 +9,8 @@ const now = () => new Date().toISOString();
 const hashOf = (account, r, n) => crypto.createHash('sha256').update([account, r.date, r.cents, r.text.replace(/\s+/g, ' ').trim(), n].join('|')).digest('hex');
 
 /** Rule lookup for a new line: sure rules book it, otherwise the suggestion waits for the person. */
-function classify(counterparty) {
-  const s = categorize.suggest(counterparty);
+function classify(counterparty, account) {
+  const s = categorize.suggest(counterparty, account);
   if (s?.sure) return { category: s.category, source: 'rule', suggestion: null };
   return { category: null, source: null, suggestion: s ? s.category : null };
 }
@@ -35,7 +35,7 @@ function importRows({ filename, format, account, rows, user, keepCategories = fa
     for (const r of rows) {
       const key = [r.date, r.cents, r.text].join('|'); const n = (seen.get(key) || 0) + 1; seen.set(key, n);
       if (fromBank(r.account || account, r.date, r.cents)) continue;
-      const { category, source, suggestion } = keepCategories && knownCategory(r.category) ? { category: r.category, source: 'import', suggestion: null } : classify(r.counterparty);
+      const { category, source, suggestion } = keepCategories && knownCategory(r.category) ? { category: r.category, source: 'import', suggestion: null } : classify(r.counterparty, r.account || account);
       added += insert.run(r.account || account, r.date, r.cents, r.kind || '', r.text || '', r.counterparty || '', category, source, suggestion, r.note || '', hashOf(r.account || account, r, n), imp.lastInsertRowid, now()).changes;
     }
     db.prepare('UPDATE imports SET added = ?, duplicates = ? WHERE id = ?').run(added, rows.length - added, imp.lastInsertRowid);
@@ -52,15 +52,15 @@ function setCategory(id, category, note) {
   if (category !== undefined) {
     if (category !== null && !knownCategory(category)) throw new Error('Unbekannte Kategorie');
     db.prepare("UPDATE transactions SET category = ?, category_source = 'manual', suggestion = NULL WHERE id = ?").run(category, id);
-    if (category) categorize.learn(tx.counterparty, category);
+    if (category) categorize.learn(tx.counterparty, category, tx.account);
   }
   if (note !== undefined) db.prepare('UPDATE transactions SET note = ? WHERE id = ?').run(String(note).slice(0, 300), id);
   let applied = 0;
   if (category) {
-    const s = categorize.suggest(tx.counterparty);
     const key = normalize(tx.counterparty);
-    const open = db.prepare('SELECT id, counterparty FROM transactions WHERE category IS NULL').all().filter((o) => normalize(o.counterparty) === key);
+    const open = db.prepare('SELECT id, account, counterparty FROM transactions WHERE category IS NULL').all().filter((o) => normalize(o.counterparty) === key);
     for (const o of open) {
+      const s = categorize.suggest(tx.counterparty, o.account);
       if (s?.sure) applied += db.prepare("UPDATE transactions SET category = ?, category_source = 'rule', suggestion = NULL WHERE id = ?").run(s.category, o.id).changes;
       else db.prepare('UPDATE transactions SET suggestion = ? WHERE id = ?').run(category, o.id);
     }
