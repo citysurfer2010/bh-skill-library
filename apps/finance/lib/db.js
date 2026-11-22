@@ -119,6 +119,8 @@ function migrate(conn) {
   // Since 16.11.2026: NLW ("Besitzer seit") of a flat and the sheet's interest rate of a loan (fallback when no statement names one).
   if (!conn.prepare('PRAGMA table_info(estate_units)').all().some((c) => c.name === 'owned_since')) conn.exec('ALTER TABLE estate_units ADD COLUMN owned_since TEXT');
   if (!conn.prepare('PRAGMA table_info(loans)').all().some((c) => c.name === 'rate_pct')) conn.exec('ALTER TABLE loans ADD COLUMN rate_pct REAL');
+  // Optional link per asset (22.11.2026: portal of an employee participation), kept across value points.
+  if (!conn.prepare('PRAGMA table_info(wealth_assets)').all().some((c) => c.name === 'url')) conn.exec('ALTER TABLE wealth_assets ADD COLUMN url TEXT');
   if (!conn.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 'bank_ref')) conn.exec('ALTER TABLE transactions ADD COLUMN bank_ref TEXT');
   conn.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_bank_ref ON transactions(account, bank_ref) WHERE bank_ref IS NOT NULL; CREATE INDEX IF NOT EXISTS idx_tx_account_amount ON transactions(account, amount_cents, booked_on);');
 }

@@ -34,7 +34,7 @@ function buildRouter() {
   r.get('/housing', (_req, res) => res.json(require('../lib/housing').overview()));
   r.get('/wealth', (_req, res) => res.json(require('../lib/wealth').overview()));
   r.post('/wealth/assets', (req, res) => {
-    try { require('../lib/wealth').addAsset({ name: req.body?.name, kind: req.body?.kind, value_cents: req.body?.value_cents, as_of: req.body?.as_of }); return res.status(204).end(); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
+    try { require('../lib/wealth').addAsset({ name: req.body?.name, kind: req.body?.kind, value_cents: req.body?.value_cents, as_of: req.body?.as_of, url: req.body?.url }); return res.status(204).end(); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
   });
   // Depot export (positions with price and quantity) on the page "Vermögen".
   r.post('/wealth/depot', upload.single('file'), (req, res) => {

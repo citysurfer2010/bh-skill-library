@@ -65,12 +65,13 @@ window.FinWealth = (() => {
       body: `<label class="bh-label" for="fin-w-name">Name</label><input id="fin-w-name" class="bh-input" name="name" required maxlength="80" value="${esc(preset.name || '')}" placeholder="z. B. Depot DKB">
         <span class="bh-label">Art</span><div id="fin-w-kind"></div>
         <label class="bh-label" for="fin-w-value">Wert in €</label><input id="fin-w-value" class="bh-input" name="value" type="number" min="0" step="0.01" inputmode="decimal" required>
+        <label class="bh-label" for="fin-w-url">Link (optional)</label><input id="fin-w-url" class="bh-input" name="url" type="url" maxlength="300" placeholder="https://…" value="${esc(preset.url || '')}">
         <label class="bh-label" for="fin-w-on">Stand</label><input id="fin-w-on" class="bh-input" name="on" type="date" required value="${new Date().toISOString().slice(0, 10)}">
         <p class="fin-hint">Jeder Eintrag ist ein Punkt im Verlauf; ein neuer Wert ersetzt nicht die alten.</p>`,
       onOpen: (dlg) => { const pick = BHSelectCore.create(dlg.querySelector('#fin-w-kind'), { options: d.kinds.map((k) => ({ value: k, label: k })), value: kind, label: 'Art', searchable: false, onChange: (v) => { kind = v; pick.update({ value: v }); } }); },
       onSubmit: async (form) => {
         const v = Number(form.elements.value.value); if (!(v >= 0)) throw new Error('Bitte einen Wert eingeben.');
-        await Fin.api('POST', '/wealth/assets', { name: form.elements.name.value.trim(), kind, value_cents: Math.round(v * 100), as_of: form.elements.on.value });
+        await Fin.api('POST', '/wealth/assets', { name: form.elements.name.value.trim(), kind, value_cents: Math.round(v * 100), as_of: form.elements.on.value, url: form.elements.url.value.trim() || null });
         Toast.success('Gespeichert'); render(host);
       },
     });
@@ -117,10 +118,10 @@ window.FinWealth = (() => {
       ${line(d.months)}
       <p class="fin-hint">Verlauf ab ${esc(date(d.start))} (seitdem liegen für alle Konten Buchungen vor). Wohnungen mit heutigem Marktwert ab „Besitzer seit“; Restschuld aus den Kontoauszügen, dazwischen gleichmäßig verteilt.${d.missing.length ? ` Ohne Kontostand und daher nicht mitgezählt: ${esc(d.missing.join(', '))}.` : ''}</p>
       ${AppShell.list({ title: 'Depot und Sonstiges', className: 'fin-wealth-assets', columns: [
-    { key: 'name', label: 'Name', html: (a) => `<strong>${esc(a.name)}</strong><div class="fin-hint">${esc(a.kind)} · ${a.history.length} ${a.history.length === 1 ? 'Eintrag' : 'Einträge'}</div>` },
+    { key: 'name', label: 'Name', html: (a) => `<strong>${a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(a.name)}</a>` : esc(a.name)}</strong><div class="fin-hint">${esc(a.kind)} · ${a.history.length} ${a.history.length === 1 ? 'Eintrag' : 'Einträge'}</div>` },
     { key: 'value_cents', label: 'Wert', align: 'right', html: (a) => amt(a.value_cents) },
     { key: 'as_of', label: 'Stand', html: (a) => `<span class="fin-num">${esc(date(a.as_of))}</span>` },
-    { key: 'act', label: 'Aktion', srOnly: true, sortable: false, html: (a) => `<button type="button" class="fin-link-btn" data-update="${esc(a.name)}" data-kind="${esc(a.kind)}">Neuer Wert</button>` },
+    { key: 'act', label: 'Aktion', srOnly: true, sortable: false, html: (a) => `<button type="button" class="fin-link-btn" data-update="${esc(a.name)}" data-kind="${esc(a.kind)}" data-url="${esc(a.url || '')}">Neuer Wert</button>` },
   ], rows: d.assets, empty: 'Noch nichts eingetragen. Depot-Export hochladen oder Bausparvertrag und Beteiligungen über „Wert eintragen“ erfassen.' })}
       ${positionsList(d.positions || [])}
       ${AppShell.list({ title: 'Je Monatsende', className: 'fin-wealth-list', columns: [
@@ -134,7 +135,7 @@ window.FinWealth = (() => {
     bindChart(host, d.months);
     host.querySelector('[data-add]').addEventListener('click', () => assetDialog(d, host));
     host.querySelector('[data-depot]').addEventListener('click', () => depotDialog(host));
-    host.querySelectorAll('[data-update]').forEach((b) => b.addEventListener('click', () => assetDialog(d, host, { name: b.dataset.update, kind: b.dataset.kind })));
+    host.querySelectorAll('[data-update]').forEach((b) => b.addEventListener('click', () => assetDialog(d, host, { name: b.dataset.update, kind: b.dataset.kind, url: b.dataset.url })));
   }
 
   return { render };

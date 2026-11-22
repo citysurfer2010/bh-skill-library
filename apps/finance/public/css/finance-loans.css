@@ -110,3 +110,40 @@
 .fin-wealth-list .fin-num, .fin-wealth-assets .fin-num { white-space: nowrap; }
 @media (max-width: 720px) { .fin-wealth-list th:nth-child(2), .fin-wealth-list td:nth-child(2), .fin-wealth-list th:nth-child(3), .fin-wealth-list td:nth-child(3) { display: none; } }
 @media (max-width: 720px) { .fin-wealth-chart { overflow-x: auto; } .fin-wealth-chart svg { min-width: 560px; } }
+
+/* Mieten oder Kaufen: Vermögen über die Jahre */
+.fin-rbw { margin-top: 32px; max-width: 900px; }
+.fin-rbw h2 { margin: 0 0 8px; font-size: 18px; }
+.fin-rbw-verdict { margin: 0 0 16px; font-size: 16px; }
+.fin-rbw-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.fin-rbw-tile { display: grid; gap: 2px; padding: 12px 16px; border: 1px solid var(--bh-border); border-radius: var(--bh-radius); background: var(--bh-surface); }
+.fin-rbw-tile strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.fin-rbw-tile-label { display: flex; align-items: center; gap: 8px; color: var(--bh-muted); }
+.fin-rbw-key { display: inline-block; width: 12px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.fin-rbw-tile-label .fin-rbw-key { margin-right: 0; }
+.fin-rbw-key-buy { background: var(--fin-series-buy); }
+.fin-rbw-key-rent { background: var(--fin-series-rent); }
+.fin-rbw-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 24px; margin-bottom: 8px; }
+.fin-rbw-slider { display: grid; gap: 4px; min-width: 0; }
+.fin-rbw-slider-head { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.fin-rbw-slider output { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-rbw-slider input[type="range"] { width: 100%; accent-color: var(--bh-primary); min-height: 24px; }
+.fin-rbw-more { grid-column: 1 / -1; }
+.fin-rbw-more summary { cursor: pointer; color: var(--bh-muted); font-size: 14px; padding: 4px 0; }
+.fin-rbw-more[open] { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 24px; }
+.fin-rbw-more[open] summary { grid-column: 1 / -1; }
+.fin-rbw-chart { margin: 16px 0 8px; }
+.fin-rbw-chart svg { display: block; width: 100%; height: auto; overflow: visible; outline: none; cursor: crosshair; }
+.fin-rbw-chart svg:focus-visible { box-shadow: 0 0 0 3px var(--bh-focus-ring); border-radius: 4px; }
+.fin-rbw-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.fin-rbw-buy { stroke: var(--fin-series-buy); }
+.fin-rbw-rent { stroke: var(--fin-series-rent); }
+.fin-rbw-dot { stroke: var(--bh-surface); stroke-width: 2; }
+.fin-rbw-buy-dot { fill: var(--fin-series-buy); }
+.fin-rbw-rent-dot { fill: var(--fin-series-rent); }
+.fin-rbw-chart .fin-grid { stroke: var(--bh-border-light); stroke-width: 1; }
+.fin-rbw-chart .fin-axis { fill: var(--bh-muted); font-size: 12px; }
+.fin-rbw-chart .fin-endlabel { fill: var(--bh-text); font-size: 13px; font-weight: 600; }
+.fin-rbw-chart .fin-cross { stroke: var(--bh-muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.fin-rbw-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; margin: 16px 0 0; font-size: 14px; }
+.fin-rbw-legend + .fin-rbw-chart { margin-top: 4px; }

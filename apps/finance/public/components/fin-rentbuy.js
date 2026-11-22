@@ -36,9 +36,15 @@
     for (const k of Object.keys(DEFAULTS)) { const n = Number(String(q.get(k) ?? '').replace(',', '.')); if (q.has(k) && Number.isFinite(n) && (n >= 0 || k === 'free')) v[k] = n; }
     return { ...DEFAULTS, ...v };
   }
+  function readW() {
+    const WD = window.FinRentBuyWealth.WDEFAULTS; const q = new URLSearchParams(location.search); const w = { ...WD };
+    for (const k of Object.keys(WD)) { const n = Number(q.get(k)); if (q.has(k) && Number.isFinite(n) && n >= 0) w[k] = n; }
+    return w;
+  }
   function writeUrl(v) {
     const q = new URLSearchParams(location.search);
-    for (const k of Object.keys(DEFAULTS)) { if (v[k] === DEFAULTS[k]) q.delete(k); else q.set(k, String(v[k])); }
+    const all = { ...DEFAULTS, ...(typeof window !== 'undefined' && window.FinRentBuyWealth ? window.FinRentBuyWealth.WDEFAULTS : {}) };
+    for (const k of Object.keys(all)) { if (v[k] === undefined) continue; if (v[k] === all[k]) q.delete(k); else q.set(k, String(v[k])); }
     history.replaceState(null, '', `${location.pathname}${q.toString() ? `?${q}` : ''}`);
   }
 
@@ -71,23 +77,33 @@
   }
 
   function render(host, d) {
-    const { esc, euro } = Fin; let v = readUrl();
+    const { esc, euro } = Fin; const W = window.FinRentBuyWealth; let v = readUrl(); let w = readW();
     const free = Math.max(0, (d.liquid || 0) / 100 - v.buffer);
     host.innerHTML = `<section class="fin-rb" aria-labelledby="fin-rb-title"><div class="fin-rb-head"><h2 id="fin-rb-title">Mieten oder Kaufen</h2><button type="button" class="bh-btn" data-rb-reset>Zurücksetzen</button></div>
       <p class="fin-hint">Heute: ${esc(euro(d.estimate ? -d.estimate.perMonth : 0))} Wohnkosten im Monat. Auf den Privatkonten liegen ${esc(euro(d.liquid || 0))}; über dem Puffer frei: <span data-rb-free>${esc(euro(Math.round(free * 100)))}</span>. Die Werte stehen in der Adresse und lassen sich als Link teilen.</p>
       <form class="fin-rb-form" novalidate>${FIELDS.map(([group, fields]) => `<fieldset class="fin-rb-group"><legend>${esc(group)}</legend>${fields.map(([k, label, hint]) => `<label class="bh-label" for="fin-rb-${k}">${esc(label)}</label><input class="bh-input" id="fin-rb-${k}" name="${k}" type="number"${k === 'free' ? '' : ' min="0"'} step="any" inputmode="decimal" value="${v[k]}"${hint ? ` aria-describedby="fin-rb-${k}-hint"` : ''}>${hint ? `<span class="fin-hint" id="fin-rb-${k}-hint">${esc(hint)}</span>` : ''}`).join('')}</fieldset>`).join('')}</form>
-      <div class="fin-rb-result" aria-live="polite"></div></section>`;
-    const out = host.querySelector('.fin-rb-result'); const form = host.querySelector('form');
+      <div class="fin-rb-result" aria-live="polite"></div></section>${W.section(w)}`;
+    const out = host.querySelector('.fin-rb-result'); const form = host.querySelector('.fin-rb-form'); const wv = host.querySelector('.fin-rbw');
+    const wform = host.querySelector('.fin-rbw-form'); const all = W.SLIDERS;
+    wform.addEventListener('input', () => {
+      for (const [k, , , , , showV] of all) { const n = Number(wform.elements[k].value); if (Number.isFinite(n)) w[k] = n; wform.querySelector(`[data-out="${k}"]`).textContent = showV(w[k]); }
+      writeUrl({ ...v, ...w }); W.view(wv, v, w);
+    });
+    let lastW = 0; if (typeof ResizeObserver === 'function') new ResizeObserver(() => { const cw = wv.querySelector('.fin-rbw-chart').clientWidth; if (Math.abs(cw - lastW) > 24) { lastW = cw; W.view(wv, v, w); } }).observe(wv);
     const update = () => {
       const next = { ...v };
       for (const k of Object.keys(DEFAULTS)) { const n = Number(form.elements[k].value); if (form.elements[k].value !== '' && Number.isFinite(n) && (n >= 0 || k === 'free')) next[k] = n; }
-      v = next; writeUrl(v);
+      v = next; writeUrl({ ...v, ...w });
       host.querySelector('[data-rb-free]').textContent = euro(Math.round(Math.max(0, (d.liquid || 0) / 100 - v.buffer) * 100));
-      result(out, v, d);
+      result(out, v, d); W.view(wv, v, w);
     };
     form.addEventListener('input', update);
-    host.querySelector('[data-rb-reset]').addEventListener('click', () => { v = { ...DEFAULTS }; for (const k of Object.keys(DEFAULTS)) form.elements[k].value = v[k]; update(); });
-    result(out, v, d);
+    host.querySelector('[data-rb-reset]').addEventListener('click', () => {
+      v = { ...DEFAULTS }; w = { ...W.WDEFAULTS }; for (const k of Object.keys(DEFAULTS)) form.elements[k].value = v[k];
+      for (const [k, , , , , showV] of all) { wform.elements[k].value = w[k]; wform.querySelector(`[data-out="${k}"]`).textContent = showV(w[k]); }
+      update();
+    });
+    result(out, v, d); W.view(wv, v, w);
   }
 
   const api = { DEFAULTS, calc, render };

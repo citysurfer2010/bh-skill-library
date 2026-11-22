@@ -59,7 +59,7 @@ function overview(today = new Date()) {
   const units = db.prepare('SELECT unit_key, market_value_cents AS v, owned_since FROM estate_units').all();
   const unitBy = new Map(units.map((u) => [u.unit_key, u]));
   const ctxOf = (l) => { const keys = l.shared_units?.length ? l.shared_units : [l.unit_key]; const us = keys.map((k) => unitBy.get(k)).filter(Boolean); return { ownedSince: us.map((u) => u.owned_since).filter(Boolean).sort()[0], value: us.reduce((s, u) => s + (u.v || 0), 0), groupAmount: ln.filter((x) => x.unit_key === l.unit_key && x.lender === l.lender).reduce((s, x) => s + (x.amount_cents || 0), 0) }; };
-  const assets = db.prepare('SELECT id, name, kind, value_cents, as_of FROM wealth_assets ORDER BY name, as_of').all();
+  const assets = db.prepare('SELECT id, name, kind, value_cents, as_of, url FROM wealth_assets ORDER BY name, as_of').all();
   const firstOf = Object.fromEntries(withBalance.map((a) => [a.name, a.first || now]));
   // From the first month all accounts with a balance have bookings (before that a flat account is simply unknown).
   // Without any bank balance (e.g. a fresh install) the last 24 months are shown.
@@ -75,7 +75,7 @@ function overview(today = new Date()) {
     return { on, estate, debt, cash_private: cash.haushalt, cash_property: cash.immobilien, other, net: estate - debt + cash.haushalt + cash.immobilien + other };
   };
   const months = ends.map(point);
-  const current = new Map(); for (const x of assets) current.set(x.name, x);
+  const current = new Map(); for (const x of assets) current.set(x.name, { ...x, url: x.url || current.get(x.name)?.url || null });
   return {
     asOf: now, start, months, now: months.at(-1), kinds: KINDS, positions: require('./depot').positions(),
     assets: [...current.values()].map((x) => ({ ...x, history: assets.filter((y) => y.name === x.name).map((y) => ({ id: y.id, on: y.as_of, cents: y.value_cents })) })),
@@ -84,13 +84,15 @@ function overview(today = new Date()) {
 }
 
 /** A value of a depot or other asset at a date (a new point; the same name and date replaces the value). */
-function addAsset({ name, kind, value_cents: cents, as_of: on }) {
+function addAsset({ name, kind, value_cents: cents, as_of: on, url }) {
+  const link = url == null || url === '' ? null : String(url).trim();
+  if (link && (!/^https:\/\/[^\s<>"]+$/.test(link) || link.length > 300)) throw Object.assign(new Error('Link muss mit https:// beginnen'), { status: 400 });
   const n = String(name || '').trim().slice(0, 80);
   if (!n) throw Object.assign(new Error('Name fehlt'), { status: 400 });
   if (!KINDS.includes(kind)) throw Object.assign(new Error('Art unbekannt'), { status: 400 });
   if (!Number.isInteger(cents) || cents < 0) throw Object.assign(new Error('Wert ungültig'), { status: 400 });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(on || ''))) throw Object.assign(new Error('Datum ungültig'), { status: 400 });
-  getDb().prepare('INSERT INTO wealth_assets (name, kind, value_cents, as_of, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT (name, as_of) DO UPDATE SET kind = excluded.kind, value_cents = excluded.value_cents').run(n, kind, cents, on, new Date().toISOString());
+  getDb().prepare('INSERT INTO wealth_assets (name, kind, value_cents, as_of, created_at, url) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (name, as_of) DO UPDATE SET kind = excluded.kind, value_cents = excluded.value_cents, url = COALESCE(excluded.url, wealth_assets.url)').run(n, kind, cents, on, new Date().toISOString(), link);
 }
 function removeAsset(id) { return getDb().prepare('DELETE FROM wealth_assets WHERE id = ?').run(Number(id)).changes; }
 

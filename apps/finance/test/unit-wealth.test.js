@@ -63,3 +63,11 @@ test('entered assets: the latest value up to the month end counts; same name and
   assert.throws(() => wealth.addAsset({ name: 'X', kind: 'Aktien?', value_cents: 1, as_of: '2026-01-01' }), /Art/);
   assert.throws(() => wealth.addAsset({ name: '', kind: 'Depot', value_cents: 1, as_of: '2026-01-01' }), /Name/);
 });
+
+test('asset link: only https, kept for later value points without a link', () => {
+  wealth.addAsset({ name: 'Beteiligung Test', kind: 'Beteiligung', value_cents: 100000, as_of: '2026-01-31', url: 'https://portal.example.com/p/1' });
+  wealth.addAsset({ name: 'Beteiligung Test', kind: 'Beteiligung', value_cents: 120000, as_of: '2026-02-28' });
+  const a = wealth.overview(new Date('2026-03-10T12:00:00Z')).assets.find((x) => x.name === 'Beteiligung Test');
+  assert.equal(a.value_cents, 120000); assert.equal(a.url, 'https://portal.example.com/p/1');
+  assert.throws(() => wealth.addAsset({ name: 'X', kind: 'Sonstiges', value_cents: 1, as_of: '2026-01-01', url: 'javascript:alert(1)' }), /https/);
+});

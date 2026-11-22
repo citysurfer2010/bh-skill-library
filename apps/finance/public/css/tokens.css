@@ -4,6 +4,8 @@
   --fin-n: 4;
   --fin-p: 0%;
   --tip-x: 50%;
+  --fin-series-buy: #2a78d6;
+  --fin-series-rent: #eb6834;
   --bh-primary: #1d4ed8;
   --bh-primary-hover: #1e40af;
   --bh-primary-soft: #dbeafe;
@@ -64,6 +66,8 @@
 }
 
 html[data-theme="dark"] {
+  --fin-series-buy: #3987e5;
+  --fin-series-rent: #d95926;
   --bh-overlay: rgba(0, 0, 0, .6);
   --bh-primary: #60a5fa;
   --bh-primary-hover: #93c5fd;
