@@ -33,7 +33,26 @@ function link() {
     }
     db.exec('COMMIT');
   } catch (e) { db.exec('ROLLBACK'); throw e; }
+  pairRefunds();
   return { byText, byAmount };
+}
+
+/**
+ * A refund belongs to its payment (Matti 22.11.2026: "die Erstattung sollte immer mit der Zahlung verbunden sein"):
+ * refunds of an order take the category of its payments when these agree. Returns how many refunds changed.
+ */
+function pairRefunds() {
+  const db = getDb(); let n = 0;
+  const pay = db.prepare('SELECT DISTINCT category FROM transactions WHERE amazon_order = ? AND amount_cents < 0 AND category IS NOT NULL');
+  const upd = db.prepare("UPDATE transactions SET category = ?, category_source = CASE WHEN category_source = 'manual' THEN 'manual' ELSE 'amazon' END, suggestion = NULL WHERE amazon_order = ? AND amount_cents > 0 AND (category IS NULL OR category != ?)");
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    for (const { o } of db.prepare('SELECT amazon_order AS o FROM transactions WHERE amazon_order IS NOT NULL AND amount_cents > 0 GROUP BY amazon_order').all()) {
+      const c = pay.all(o); if (c.length === 1) n += upd.run(c[0].category, o, c[0].category).changes;
+    }
+    db.exec('COMMIT');
+  } catch (e) { db.exec('ROLLBACK'); throw e; }
+  return n;
 }
 
 function storePayments(list) {
@@ -141,4 +160,4 @@ function status() {
 /** Items of one order for a transaction's detail. */
 const itemsOf = (orderId) => (orderId ? getDb().prepare('SELECT asin, title, url FROM amazon_items WHERE order_id = ? ORDER BY title').all(orderId).map((r) => ({ ...r })) : []);
 
-module.exports = { link, sync, status, itemsOf, storePayments, storeItems, storeOrders, MIN_GAP_MS };
+module.exports = { link, pairRefunds, sync, status, itemsOf, storePayments, storeItems, storeOrders, MIN_GAP_MS };
