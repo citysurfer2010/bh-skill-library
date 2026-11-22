@@ -11,10 +11,21 @@ const RULES = [
   { code: 'KONTO', test: (t, cents) => cents < 0 && /Depotgeb(?:ue|ü|u)hr|Abrechnung .*Information zur Abrechnung|Kontof(?:ue|ü|u)hrungsentgelt|\bEntgelt[;:]?\s+(?:Visa|Konto|Karte|Girocard)/i.test(t) },
 ];
 
+/**
+ * Savings plans for a person with an own reserve category ("Kapitalrücklagen <Name>", code SPAR_…) go there instead of
+ * the family's shares (22.11.2026: one category for analysis and the yearly report). The names come from the
+ * categories in the database, never from the code.
+ */
+function personRules(categories) {
+  return categories.map((c) => ({ code: c.code, name: /^Kapitalr(?:ü|ue)cklagen\s+(\S+)/i.exec(c.name || '')?.[1] }))
+    .filter((c) => /^SPAR_/.test(c.code) && c.name && c.name.length >= 2)
+    .map(({ code, name }) => { const re = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'); return { code, test: (t, cents) => cents < 0 && re.test(t) && /Sparplan|\bETF\b/i.test(t) }; });
+}
+
 function detect() {
   const db = getDb();
-  const known = new Set(db.prepare('SELECT code FROM categories').all().map((r) => r.code));
-  const rules = RULES.filter((r) => known.has(r.code));
+  const cats = db.prepare('SELECT code, name FROM categories').all(); const known = new Set(cats.map((r) => r.code));
+  const rules = personRules(cats).concat(RULES.filter((r) => known.has(r.code)));
   if (!rules.length) return { changed: 0 };
   const mark = db.prepare("UPDATE transactions SET category = ?, category_source = 'text', suggestion = NULL WHERE id = ?");
   let changed = 0;
@@ -28,4 +39,4 @@ function detect() {
   return { changed };
 }
 
-module.exports = { detect, RULES };
+module.exports = { detect, RULES, personRules };

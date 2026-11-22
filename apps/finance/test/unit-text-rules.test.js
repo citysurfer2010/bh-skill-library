@@ -28,3 +28,13 @@ test('securities settlements become AKTIEN, depot fees KONTO, the rest stays ope
   assert.equal(cat(refund), null, 'a sale is money back, not an investment'); assert.equal(cat(mine), 'LEBEN', 'a manual choice stays');
   assert.deepEqual(rules.detect(), { changed: 0 });
 });
+
+test('savings plans for a person with an own reserve category go there; the family plan stays shares', () => {
+  const { RULES, personRules } = require('../lib/text-rules');
+  const rules = personRules([{ code: 'SPAR_K', name: 'Kapitalrücklagen Kima' }, { code: 'SPAR_L', name: 'Kapitalrücklagen Lou' }, { code: 'SPAR', name: 'Kapitalrücklagen' }]).concat(RULES);
+  const pick = (text) => rules.find((r) => r.test(text, -7500))?.code;
+  assert.equal(pick('Kima - 75 - ETF Nasdaq-100 Lastschrift Sparplan 1'), 'SPAR_K');
+  assert.equal(pick('Lou - 25 - ETF MSCI World Sparplan 2'), 'SPAR_L');
+  assert.equal(pick('DKB AG Sparplan ETF MSCI World'), 'AKTIEN');
+  assert.equal(pick('Kimani Shop Sparplan'), 'AKTIEN', 'a name only as a whole word');
+});
