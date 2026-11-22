@@ -4,7 +4,7 @@
  * Amazon (Matti 15.11.2026): every order with its items and the bank line it was paid with. Search (item, order number)
  * and filters (year, category, with/without bank line) live in the address (?q=, ?year=, ?category=, ?link=).
  */
-window.FinAmazon = (() => {
+window.FinPurchases = (() => {
   const { esc, euro, date, BASE } = Fin;
   const KEYS = ['q', 'year', 'category', 'link'];
   let host = null; let cats = []; let years = [];

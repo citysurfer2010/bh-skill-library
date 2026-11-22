@@ -52,7 +52,7 @@
     if (p.id === 'investments') return FinInvestments.render(host, year);
     if (p.id === 'estate') return FinEstate.render(host);
     if (p.id === 'loans') return FinLoans.render(host);
-    if (p.id === 'amazon') return FinAmazon.render(host);
+    if (p.id === 'amazon') return FinPurchases.render(host);
     if (p.id === 'housing') return FinHousing.render(host);
     if (p.id === 'accounts') return FinAccounts.render(host);
     if (p.id === 'import') return FinImport.render(host);
