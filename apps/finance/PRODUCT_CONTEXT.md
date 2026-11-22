@@ -15,6 +15,8 @@ _(Welche Leitlinien gelten, zum Beispiel „ein Klick bis zur Einreichung“?)_
 ## 4. Fachregeln
 _(Fachliche Invarianten, zum Beispiel „Rechnungen über 5000 € brauchen eine zweite Unterschrift“.)_
 
+- Steuern: Ablauf, Belege und Regeln für Anlage V und private Kosten stehen in [TAX.md](TAX.md) (22.11.2026).
+
 ## 5. Integrationen
 _(Mit welchen Systemen spricht die App?)_
 
