@@ -33,7 +33,8 @@ Datenbank der App und im Drive.
   Deshalb: Rechnung der Steuerberatung nach Tätigkeiten aufschlüsseln lassen und den Vermietungsanteil je Wohnung
   ansetzen, im Jahr der Zahlung. Der Anteil richtet sich nach der Rechnung, nicht nach Wunsch.
 - **Fahrten.** Hin- und Rückfahrt zählen beide: bei „Zweifach“ muss die Kostenspalte die Strecke verdoppeln (prüfen,
-  dass die Formel das tut). Kilometersatz: wie bisher im Fahrtenbuch hinterlegt (Entscheidung 22.11.2026). Eine
+  dass die Formel das tut). Entfernungen in Kilometern: eine Entfernungsfunktion, die Meilen liefert, mit 1,609344
+  umrechnen (Fehler bis 2024 bemerkt am 22.11.2026). Kilometersatz: wie bisher im Fahrtenbuch hinterlegt (Entscheidung 22.11.2026). Eine
   Verpflegungspauschale setzen wir nicht an (Entscheidung 22.11.2026).
 - **Kontoführung** der Objektkonten in die jeweilige Anlage V (tatsächliche Gebühren).
 - **Schuldzinsen** je Darlehen laut Zinsbescheinigung. Wird ein anderer Kredit für eine Wohnung verwendet
