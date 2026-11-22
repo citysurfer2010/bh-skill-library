@@ -24,9 +24,10 @@ function parse(text) {
   const t = String(text || '').replace(/[ \t]+/g, ' ').replace(/Kont[öo0]stand/g, 'Kontostand');
   const amount = amountOf(t);
   // Signal Iduna: "IBAN für dieses Konto" then the IBAN; "Alter/Neuer Kontostand in EUR am DD.MM.YYYY 123,45 -" ("-" = debt).
-  const si = /IBAN für dieses Konto\s*(DE\d{2}(?: ?\d){18})/.exec(t)?.[1];
+  // OCR leaves noise between label and IBAN (" : ", "= ", a stray digit), so a few non-letters are allowed in between.
+  const si = /IBAN für dieses Konto[^A-Za-z]{0,12}?(DE\d{2}(?: ?\d){18})/.exec(t)?.[1];
   if (si && /Kontostand in EUR am/.test(t)) {
-    const balances = [...t.matchAll(/(?:Alter|Neuer) Kontostand in EUR am (\d{2}\.\d{2}\.\d{4}) ([\d.]+,\d{2}) ?([-+])?/g)].map((m) => ({ on: iso(m[1]), cents: (m[3] === '+' ? -1 : 1) * cents(m[2]) }));
+    const balances = [...t.matchAll(/(?:Alter|Neuer) Kontostand in EUR am[ .:]*(\d{2}\.\d{2}\.\d{4}) ([\d.]+,\d{2}) ?([-+])?/g)].map((m) => ({ on: iso(m[1]), cents: (m[3] === '+' ? -1 : 1) * cents(m[2]) }));
     return balances.length ? { ref: accountNo(si), balances, rate: null, amount } : null;
   }
   // NordLB / Sparkasse year statement: "Darlehen 1234567890, DE…, place", "Kontostand am DD.MM.YYYY -123.456,78".

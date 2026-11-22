@@ -23,3 +23,8 @@ test('a single statement is read as before', () => {
   assert.equal(parseAll(part('DE00 1234 5678 0000 3333 00', '300.000,00', '290.000,00', '285.000,00')).length, 1);
   assert.deepEqual(parseAll('kein Auszug'), []);
 });
+
+test('OCR noise: characters between label and IBAN, a stray dot after "am", an amount without thousands dot', () => {
+  const ocr = 'Kontoauszug 2023\n= IBAN für dieses Konto :\n2 DE00 1234 5678 0000 4444 00\n| 1234 567-00 | Gebäudedarlehen 300.000,00 1 von 1\n| Alter Kontostand in EUR am 31.12.2022 290.000,00 -\n3 Lastschrifteinzug 29.12.2023 31.12.2023 900,00 +\n7 Neuer Kontostand in EUR am . 31.12.2023 286500,50 -\n';
+  assert.deepEqual(parseAll(ocr).map((p) => ({ ref: p.ref, balances: p.balances.map((b) => `${b.on}=${b.cents}`) })), [{ ref: '444400', balances: ['2022-12-31=29000000', '2023-12-31=28650050'] }]);
+});
