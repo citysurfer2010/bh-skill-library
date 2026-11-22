@@ -7,13 +7,16 @@ const MONTHS = 12;
 const years = () => getDb().prepare("SELECT DISTINCT substr(booked_on, 1, 4) AS y FROM transactions ORDER BY y DESC").all().map((r) => Number(r.y));
 
 /** Per category: 12 monthly sums, year sum, previous year sum and budget per month. Open transactions count as "OFFEN". */
-function overview(year) {
+function overview(year, today = new Date()) {
   const db = getDb();
+  // The running year is compared with the same span of the year before, and averages use the months that have passed.
+  const running = year === today.getUTCFullYear(); const elapsed = running ? today.getUTCMonth() + 1 : 12;
+  const cut = running ? new Date(Date.UTC(year - 1, today.getUTCMonth(), today.getUTCDate() + 1)).toISOString().slice(0, 10) : `${year}-01-01`;
   const cats = db.prepare('SELECT code, art, name, budget_cents FROM categories').all().map((c) => ({ ...c }));
   const rows = db.prepare(`SELECT COALESCE(category, 'OFFEN') AS code, CAST(substr(booked_on, 6, 2) AS INTEGER) AS m, SUM(amount_cents) AS cents, COUNT(*) AS n FROM transactions WHERE ${HOUSEHOLD} AND booked_on >= ? AND booked_on < ? GROUP BY code, m`)
     .all(`${year}-01-01`, `${year + 1}-01-01`);
   const prev = Object.fromEntries(db.prepare(`SELECT COALESCE(category, 'OFFEN') AS code, SUM(amount_cents) AS cents FROM transactions WHERE ${HOUSEHOLD} AND booked_on >= ? AND booked_on < ? GROUP BY code`)
-    .all(`${year - 1}-01-01`, `${year}-01-01`).map((r) => [r.code, r.cents]));
+    .all(`${year - 1}-01-01`, cut).map((r) => [r.code, r.cents]));
   const byCode = new Map(cats.map((c) => [c.code, { ...c, months: Array(MONTHS).fill(0), total: 0, count: 0, previous: prev[c.code] ?? null }]));
   for (const r of rows) {
     if (!byCode.has(r.code)) byCode.set(r.code, { code: r.code, art: r.code === 'OFFEN' ? 'Offen' : 'Unbekannt', name: r.code === 'OFFEN' ? 'Noch nicht zugeordnet' : r.code, budget_cents: null, months: Array(MONTHS).fill(0), total: 0, count: 0, previous: prev[r.code] ?? null });
@@ -32,7 +35,7 @@ function overview(year) {
   const income = sum('Einnahmen'); const spending = sum('Ausgaben');
   const invested = -sum('Investment'); const reserved = -sum('Rücklagen');
   return {
-    year, years: years(), categories, arts: Object.values(arts),
+    year, years: years(), categories, arts: Object.values(arts), elapsed, previousUntil: running ? cut : null,
     totals: { externIn: ext.rein, externOut: ext.raus, income, spending, result: income + spending, invested, reserved, savingsRate: income > 0 ? Math.round(((invested + reserved) / income) * 1000) / 10 : null, open: categories.find((c) => c.code === 'OFFEN')?.count || 0 },
   };
 }

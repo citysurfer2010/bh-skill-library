@@ -39,7 +39,7 @@
 .fin-matrix thead th { white-space: nowrap; }
 .fin-prev .fin-num { color: var(--bh-muted); }
 @media (max-width: 560px) {
-  .fin-matrix table td:first-child, .fin-matrix table th:first-child { min-width: 104px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fin-matrix table td:first-child, .fin-matrix table th:first-child { min-width: 140px; max-width: 150px; white-space: normal; overflow-wrap: break-word; }
   .fin-bar-value { font-size: 11px; color: var(--bh-text); margin-top: 4px; }
 }
 .fin-bank-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

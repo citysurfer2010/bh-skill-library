@@ -15,26 +15,30 @@ window.FinOverview = (() => {
     return out;
   }
 
+  /** Last day of the compared span of the year before, e.g. "22.11.". */
+  const until = (data) => { const d = new Date(`${data.previousUntil}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - 1); return `${String(d.getUTCDate()).padStart(2, '0')}.${String(d.getUTCMonth() + 1).padStart(2, '0')}.`; };
+
   function table(data) {
     const link = (r) => (r.head ? `<strong class="fin-group">${esc(r.name)}</strong>` : `<a href="${Fin.yearHref(data.year, 'transactions')}?category=${encodeURIComponent(r.code)}">${esc(r.name)}</a>`);
     const cell = (v) => `<span class="fin-num ${Fin.tone(v)}">${esc(short(v))}</span>`;
     // Average spending above the budget is marked; budgets are positive, spending negative.
-    const avg = (r) => { const a = Math.round(r.total / 12); const over = r.budget != null && -a > r.budget; return `<span class="fin-num ${over ? 'fin-over' : Fin.tone(a)}"${over ? ' title="Über dem Budget"' : ''}>${esc(short(a))}${over ? ' ▲' : ''}</span>`; };
+    const months = data.elapsed || 12;
+    const avg = (r) => { const a = Math.round(r.total / months); const over = r.budget != null && -a > r.budget; return `<span class="fin-num ${over ? 'fin-over' : Fin.tone(a)}"${over ? ' title="Über dem Budget"' : ''}>${esc(short(a))}${over ? ' ▲' : ''}</span>`; };
     const columns = [
       { key: 'name', label: 'Kategorie', html: link },
       { key: 'total', label: 'Summe', html: (r) => `<strong>${cell(r.total)}</strong>` },
-      { key: 'avg', label: 'Ø/Mon.', html: avg },
+      { key: 'avg', label: months < 12 ? `Ø/Mon. (${months})` : 'Ø/Mon.', html: avg },
       { key: 'budget', label: 'Budget', html: (r) => (r.budget == null ? '' : cell(-r.budget)) },
-      { key: 'previous', label: `Vorjahr ${data.year - 1}`, html: (r) => (r.previous == null ? '' : `<span class="fin-prev">${cell(r.previous)}</span>`) },
+      { key: 'previous', label: data.previousUntil ? `${data.year - 1} bis ${until(data)}` : `Vorjahr ${data.year - 1}`, html: (r) => (r.previous == null ? '' : `<span class="fin-prev">${cell(r.previous)}</span>`) },
     ].concat(MONTHS.map((m, i) => ({ key: `m${i}`, label: m, html: (r) => cell(r.months[i]) })));
     return `<div class="fin-matrix">${AppShell.list({ columns, rows: rowsOf(data), empty: 'Für dieses Jahr gibt es noch keine Buchungen.' })}</div>
-      <p class="fin-hint">Eingänge grün, Ausgänge mit −. ▲ heißt: Der Monatsdurchschnitt liegt über dem Budget. Die Monate stehen rechts, auf dem Handy seitlich wischen.</p>`;
+      <p class="fin-hint">Eingänge grün, Ausgänge mit −. ▲ heißt: Der Monatsdurchschnitt liegt über dem Budget.${data.previousUntil ? ` Das laufende Jahr wird mit demselben Zeitraum des Vorjahrs verglichen, der Durchschnitt teilt durch ${months} Monate.` : ''} Die Monate stehen rechts, auf dem Handy seitlich wischen.</p>`;
   }
 
   async function render(host, year) {
     const data = await Fin.api('GET', `/overview?year=${year || ''}`);
     const t = data.totals;
-    const prev = (art) => { const a = data.arts.find((x) => x.art === art); return a?.previous ? `${data.year - 1}: ${euro(a.previous)}` : 'Summe des Jahres'; };
+    const prev = (art) => { const a = data.arts.find((x) => x.art === art); return a?.previous ? `${data.year - 1}${data.previousUntil ? ` bis ${until(data)}` : ''}: ${euro(a.previous)}` : 'Summe des Jahres'; };
     const kpis = AppShell.kpis([
       { label: 'Extern rein', value: euro(t.externIn), sub: 'Geld von außen, ohne Transfers' },
       { label: 'Extern raus', value: euro(t.externOut), sub: 'Geld nach außen, ohne Transfers' },
