@@ -70,7 +70,8 @@ function overview(today = new Date()) {
     e.total = e.rent + e.settlement + e.energy + e.broadcast; e.perMonth = Math.round(e.total / 12);
     estimate = { ...e, rentLeftMonths: left, settlementSource: source, settlementEntered: enteredCents, settlementAverage: avg };
   }
-  return { thisYear, landlord: landlord ? lines.find((l) => keyOf(l.counterparty) === landlord)?.counterparty.replace(/Kto\/IBAN.*$/i, '').trim() : null, rentNow, years: list, settlements, estimate };
+  const liquid = require('./accounts').totals().haushalt?.cents || 0; // private accounts' bank balances
+  return { thisYear, liquid, landlord: landlord ? lines.find((l) => keyOf(l.counterparty) === landlord)?.counterparty.replace(/Kto\/IBAN.*$/i, '').trim() : null, rentNow, years: list, settlements, estimate };
 }
 
 module.exports = { overview, setSettlement };

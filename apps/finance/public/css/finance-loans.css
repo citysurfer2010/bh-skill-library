@@ -78,3 +78,14 @@
 .fin-bar-fill.is-estimate { background: repeating-linear-gradient(135deg, var(--bh-primary) 0 3px, transparent 3px 7px); border: 1px solid var(--bh-primary); border-bottom: 0; }
 .fin-housing-list .fin-num { white-space: nowrap; }
 @media (max-width: 760px) { .fin-years-bars { gap: 8px; grid-template-columns: repeat(var(--fin-n, 4), minmax(0, 1fr)); } .fin-years-bars .fin-bar-value { font-size: 11px; writing-mode: horizontal-tb; transform: none; } }
+/* Mieten oder Kaufen */
+.fin-rb { margin-top: 32px; }
+.fin-rb-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fin-rb-head h2 { margin: 0; font-size: 18px; }
+.fin-rb-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 16px 0; }
+.fin-rb-group { display: grid; gap: 4px; align-content: start; align-self: start; margin: 0; padding: 12px 16px 16px; border: 1px solid var(--bh-border); border-radius: 8px; min-width: 0; }
+.fin-rb-group legend { padding: 0 4px; font-weight: 600; }
+.fin-rb-group .bh-label { margin-top: 8px; }
+.fin-rb-verdict { margin: 8px 0 12px; }
+.fin-rb-warn { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--bh-border); border-left: 4px solid var(--bh-primary); border-radius: 4px; }
+.fin-rb-list .fin-num { white-space: nowrap; }

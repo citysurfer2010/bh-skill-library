@@ -66,9 +66,11 @@ window.FinHousing = (() => {
       ${e ? `<p class="fin-hint">* Schätzung ${d.thisYear}: Miete für die restlichen ${e.rentLeftMonths} Monate zum aktuellen Betrag, Strom nach dem Schnitt der letzten 12 Monate, Nebenkostenabrechnung ${esc(e.settlementSource)} (${esc(euro(e.settlement))}).</p>` : ''}
       ${table(d)}
       ${d.years.some((y) => y.furnishing) ? `<p class="fin-hint">Nicht enthalten, weil keine laufenden Kosten: Einrichtung und Baumarkt unter „Wohnung“ (${d.years.filter((y) => y.furnishing).map((y) => `${y.year}: ${esc(euro(y.furnishing))}`).join(', ')}).</p>` : ''}
+      <div data-rentbuy></div>
       ${d.settlements.length ? AppShell.list({ title: 'Abrechnungen (Nachzahlungen und Erstattungen)', columns: [{ key: 'on', label: 'Gezahlt am', html: (s) => `<span class="fin-num">${esc(date(s.on))}</span>` }, { key: 'cents', label: 'Betrag', align: 'right', html: (s) => amt(s.cents) }], rows: [...d.settlements].reverse() }) : ''}`);
     host.querySelectorAll('.fin-years-bars').forEach((b) => b.style.setProperty('--fin-n', b.dataset.n));
     host.querySelectorAll('.fin-bar-fill').forEach((b) => b.style.setProperty('--fin-bar-h', `${b.dataset.h}%`));
+    FinRentBuy.render(host.querySelector('[data-rentbuy]'), d);
     host.querySelector('[data-nka]')?.addEventListener('click', () => settleDialog(d, host));
   }
 

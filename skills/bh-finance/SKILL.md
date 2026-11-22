@@ -29,6 +29,7 @@ Die App `apps/finance` ersetzt die alte Tabelle „Finanzreport“: Kontoauszüg
 | `lib/loan-split.js` | Darlehensraten in Zins (Ausgabe „Immobilienkredite“) und Tilgung (Investment „Tilgung Immobilienkredite“) teilen, aus dem Banktext; Tabelle `transaction_splits` |
 | `lib/wallets.js` | PayPal und Kreditkarte: Abbuchung nur Transfer, solange das Geldbörsen-Konto selbst importiert ist; sonst Ausgabe (Händler aus dem Text) |
 | `lib/housing.js` | Wohnkosten der Mietwohnung je Jahr (Seite „Wohnkosten“): Miete, Nebenkostenabrechnung, Strom/Energie, Rundfunk; Schätzung des laufenden Jahres |
+| `public/components/fin-rentbuy.js` | Rechner „Mieten oder Kaufen“ auf der Wohnkosten-Seite (Annuität, Restschuld nach 10 Jahren, Laufzeit, Vergleich mit dem Spielraum); Werte in der Adresse |
 | `lib/text-rules.js` | Feste Regeln am Verwendungszweck (Wertpapierkäufe → Aktien, Gebühren → Bankkosten) |
 | `lib/transfers.js` | Erkennt Geldtransfers zwischen eigenen Konten (eigene IBAN, eindeutiges Paar mit Kontoinhaber) |
 | `scripts/relabel-bank-accounts.js` | Einmal nach einem Update: Produkt/Beschreibung von der Bank holen, Bereich raten, automatisch vergebene Namen nach den aktuellen Regeln umbenennen (`--dry` zeigt nur) |
