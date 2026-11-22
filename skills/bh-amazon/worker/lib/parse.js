@@ -69,14 +69,20 @@ function parsePayments(rows) {
   return out;
 }
 
-/** Product links of an order page: title and a clean link to the product (/dp/ASIN). */
+/**
+ * Product links of an order page: title and a clean link to the product (/dp/ASIN). Prime Video titles link to
+ * /gp/video/detail/<ASIN or amzn1.dv.gti.…> instead (22.11.2026: 51 digital orders had no items because of that).
+ */
+const VIDEO = /\/gp\/video\/detail\/(amzn1\.dv\.gti\.[0-9a-f-]{20,40}|[A-Z0-9]{10})/;
 function parseItems(links) {
   const out = new Map();
   for (const { text, href } of links) {
-    const asin = /\/(?:dp|gp\/product)\/([A-Z0-9]{10})/.exec(href || '')?.[1];
+    const video = VIDEO.exec(href || '')?.[1];
+    const asin = video || /\/(?:dp|gp\/product)\/([A-Z0-9]{10})/.exec(href || '')?.[1];
     const title = String(text || '').replace(/\s+/g, ' ').trim();
     if (!asin || title.length < 3 || /^(artikel ansehen|erneut kaufen|bewertung|produktsupport)/i.test(title)) continue;
-    if (!out.has(asin) || out.get(asin).title.length < title.length) out.set(asin, { asin, title: title.slice(0, 300), url: `https://www.amazon.de/dp/${asin}` });
+    const url = video ? `https://www.amazon.de/gp/video/detail/${asin}` : `https://www.amazon.de/dp/${asin}`;
+    if (!out.has(asin) || out.get(asin).title.length < title.length) out.set(asin, { asin, title: title.slice(0, 300), url });
   }
   return [...out.values()];
 }

@@ -47,3 +47,15 @@ test('order cards as on the history page: digital orders, English totals, items 
   const o = parseCards([{ text: 'Bestellung aufgegeben 3. Februar 2025 Summe €23.98 Bestellnr. D01-1234567-7654321', products: [{ text: '', href: '/dp/B0ABCDEF12' }, { text: 'Hörbuch: Der kleine Drache', href: '/gp/product/B0ABCDEF12?ref=x' }] }])[0];
   assert.deepEqual(o, { id: 'D01-1234567-7654321', date: '2025-02-03', totalCents: 2398, items: [{ asin: 'B0ABCDEF12', title: 'Hörbuch: Der kleine Drache', url: 'https://www.amazon.de/dp/B0ABCDEF12' }] });
 });
+
+test('digital orders (22.11.2026): Prime Video detail links and the order page links (ppx_hzod) count as items', () => {
+  const items = parseItems([
+    { text: 'The Complete Matrix Trilogy (3pk)', href: '/gp/video/detail/amzn1.dv.gti.73d0b76f-bcf8-4dce-96ed-2b5cfd000000?ref_=x' },
+    { text: '', href: '/gp/video/detail/amzn1.dv.gti.73d0b76f-bcf8-4dce-96ed-2b5cfd000000' },
+    { text: 'Prime Membership Fee', href: '/dp/B078T13L9H?ref_=ppx_hzod_title_dt_b_fed_digi_asin_title_' },
+  ]);
+  assert.deepEqual(items.map((i) => [i.title, i.url]), [
+    ['The Complete Matrix Trilogy (3pk)', 'https://www.amazon.de/gp/video/detail/amzn1.dv.gti.73d0b76f-bcf8-4dce-96ed-2b5cfd000000'],
+    ['Prime Membership Fee', 'https://www.amazon.de/dp/B078T13L9H'],
+  ]);
+});

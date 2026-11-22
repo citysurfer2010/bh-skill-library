@@ -6,3 +6,6 @@
 - Ändert Amazon die Seiten, kann der Abruf brechen; Tests prüfen nur die Textleser.
 - Nur amazon.de; andere Länder-Shops nicht.
 - Der Container braucht Internetzugang nach außen (amazon.de).
+
+## Digitale Bestellungen (D01-…)
+Prime Video verlinkt auf `/gp/video/detail/<ASIN oder amzn1.dv.gti.…>`, Abos (Prime-Gebühr, Music) auf `/dp/…?ref_=ppx_hzod…`; beides wird seit 22.11.2026 als Artikel gelesen. Bestellungen, die ohne Artikel gelesen wurden, fragt die Finanz-App höchstens einmal pro Woche erneut ab (je Lauf bis 60).

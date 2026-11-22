@@ -110,8 +110,10 @@ function sync({ force = false } = {}) {
       const added = storePayments(payments); link();
       const progress = { orders: 0, newOrders: 0 };
       await history(progress);
-      // Items only for paid orders the history did not cover (rare); the history already brings them.
-      const need = getDb().prepare('SELECT order_id FROM amazon_payments WHERE order_id NOT IN (SELECT order_id FROM amazon_orders_seen) GROUP BY order_id ORDER BY max(paid_on) DESC LIMIT 60').all().map((r) => r.order_id);
+      // Items for paid orders the history did not cover (rare), and once a week again for orders still without items
+      // (22.11.2026: digital orders were marked as read with no items and never tried again).
+      const need = getDb().prepare(`SELECT order_id FROM amazon_payments WHERE order_id NOT IN (SELECT order_id FROM amazon_orders_seen) GROUP BY order_id
+        UNION SELECT order_id FROM amazon_orders_seen WHERE order_id NOT IN (SELECT order_id FROM amazon_items) AND fetched_at < ? LIMIT 60`).all(new Date(Date.now() - 7 * 86_400_000).toISOString()).map((r) => r.order_id);
       const items = need.length ? storeItems({ ...Object.fromEntries(need.map((id) => [id, []])), ...(await api.items(need)) }) : 0;
       const linked = link();
       state('amazon_last_sync', now()); state('amazon_last_error', '');

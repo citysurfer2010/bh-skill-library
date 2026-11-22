@@ -87,7 +87,7 @@ async function readOrders({ since = '2021-01-01', stopAt = [], year: only = null
       let stop = false;
       for (let start = 0; start < 500 && !stop; start += 10) {
         await page.goto(HISTORY(year, start), { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page); await pause(page); pages += 1;
-        const cards = await page.$$eval('.order-card, .js-order-card', (cs) => cs.map((c) => ({ text: c.innerText, products: [...c.querySelectorAll('a[href*="/dp/"], a[href*="/gp/product/"]')].map((a) => ({ text: a.innerText || a.getAttribute('title') || '', href: a.getAttribute('href') })) })));
+        const cards = await page.$$eval('.order-card, .js-order-card', (cs) => cs.map((c) => ({ text: c.innerText, products: [...c.querySelectorAll('a[href*="/dp/"], a[href*="/gp/product/"], a[href*="/gp/video/detail/"]')].map((a) => ({ text: a.innerText || a.getAttribute('title') || '', href: a.getAttribute('href') })) })));
         for (const o of parseCards(cards)) { if (known.has(o.id)) { stop = true; reachedKnown = true; } else if (!o.date || o.date >= since) out.set(o.id, o); }
         if (cards.length < 10) stop = true;
       }
@@ -105,8 +105,9 @@ async function readItems(orderIds) {
   try {
     for (const id of orderIds.slice(0, 60)) {
       await page.goto(ORDER(id), { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page); await pause(page);
-      // Only the bought items: the rest of the page is recommendations ("Kunden kauften auch").
-      out[id] = parseItems(await page.$$eval('[data-component="purchasedItems"] a[href*="/dp/"], [data-component="purchasedItems"] a[href*="/gp/product/"], [data-component="shipments"] a[href*="/dp/"]', (as) => as.map((a) => ({ text: a.innerText || a.getAttribute('title') || '', href: a.getAttribute('href') }))));
+      // Only the bought items: the rest of the page is recommendations ("Kunden kauften auch"). Digital orders (D01-…)
+      // have no purchasedItems block; their item links carry the order page's ref "ppx_hzod" or go to Prime Video.
+      out[id] = parseItems(await page.$$eval('[data-component="purchasedItems"] a[href*="/dp/"], [data-component="purchasedItems"] a[href*="/gp/product/"], [data-component="shipments"] a[href*="/dp/"], a[href*="ppx_hzod"][href*="/dp/"], a[href*="/gp/video/detail/"]', (as) => as.map((a) => ({ text: a.innerText || a.getAttribute('title') || '', href: a.getAttribute('href') }))));
     }
     await save(ctx);
   } finally { await ctx.close().catch(() => {}); }
