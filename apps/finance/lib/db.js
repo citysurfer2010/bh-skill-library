@@ -106,6 +106,10 @@ function migrate(conn) {
   for (const col of ['product', 'details', 'usage', 'balance_type', 'balance_on']) if (!bankCols.includes(col)) conn.exec(`ALTER TABLE bank_accounts ADD COLUMN ${col} TEXT`);
   if (!bankCols.includes('balance_cents')) conn.exec('ALTER TABLE bank_accounts ADD COLUMN balance_cents INTEGER');
   // Link to the bank's own booking id, so the daily overlap never books anything twice.
+  // Since 22.11.2026: a booking can be split over several categories (loan rate = interest + repayment), the booking itself stays one.
+  conn.exec(`CREATE TABLE IF NOT EXISTS transaction_splits (transaction_id INTEGER NOT NULL REFERENCES transactions(id) ON DELETE CASCADE, category TEXT NOT NULL, cents INTEGER NOT NULL, PRIMARY KEY (transaction_id, category));
+    CREATE INDEX IF NOT EXISTS idx_splits_category ON transaction_splits(category);`);
+  if (conn.prepare("SELECT 1 FROM categories WHERE code = 'IMMORATE'").get()) conn.prepare("INSERT OR IGNORE INTO categories (code, art, name, description) VALUES ('TILG', 'Investment', 'Tilgung Immobilienkredite', 'Tilgungsanteil der Darlehensraten: baut Vermögen auf, die Restschuld sinkt')").run();
   // Since 16.11.2026: NLW ("Besitzer seit") of a flat and the sheet's interest rate of a loan (fallback when no statement names one).
   if (!conn.prepare('PRAGMA table_info(estate_units)').all().some((c) => c.name === 'owned_since')) conn.exec('ALTER TABLE estate_units ADD COLUMN owned_since TEXT');
   if (!conn.prepare('PRAGMA table_info(loans)').all().some((c) => c.name === 'rate_pct')) conn.exec('ALTER TABLE loans ADD COLUMN rate_pct REAL');

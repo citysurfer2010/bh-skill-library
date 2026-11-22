@@ -44,9 +44,10 @@ function buildRouter() {
     if (req.query.account) { where.push('account = ?'); args.push(String(req.query.account)); } else if (req.query.scope !== 'all') where.push(accounts.HOUSEHOLD);
     if (req.query.open === '1') where.push('category IS NULL');
     if (req.query.amazon === '1') where.push('amazon_order IS NOT NULL');
-    if (req.query.category) { where.push(req.query.category === 'OFFEN' ? 'category IS NULL' : 'category = ?'); if (req.query.category !== 'OFFEN') args.push(String(req.query.category)); }
+    // A split booking (loan rate) is found under each of its parts, e.g. under "Tilgung".
+    if (req.query.category) { if (req.query.category === 'OFFEN') where.push('category IS NULL'); else { where.push('(category = ? OR id IN (SELECT transaction_id FROM transaction_splits WHERE category = ?))'); args.push(String(req.query.category), String(req.query.category)); } }
     if (/^\d{1,2}$/.test(String(req.query.month || ''))) { where.push("CAST(substr(booked_on, 6, 2) AS INTEGER) = ?"); args.push(Number(req.query.month)); }
-    const rows = getDb().prepare(`SELECT t.*, c.name AS category_name, c.art, (SELECT group_concat(title, ' · ') FROM (SELECT title FROM amazon_items i WHERE i.order_id = t.amazon_order ORDER BY title)) AS amazon_titles FROM transactions t LEFT JOIN categories c ON c.code = t.category WHERE ${where.join(' AND ')} ORDER BY booked_on DESC, id DESC`).all(...args);
+    const rows = getDb().prepare(`SELECT t.*, c.name AS category_name, c.art, (SELECT group_concat(title, ' · ') FROM (SELECT title FROM amazon_items i WHERE i.order_id = t.amazon_order ORDER BY title)) AS amazon_titles, (SELECT -cents FROM transaction_splits s WHERE s.transaction_id = t.id AND s.category = 'TILG') AS repay_cents FROM transactions t LEFT JOIN categories c ON c.code = t.category WHERE ${where.join(' AND ')} ORDER BY booked_on DESC, id DESC`).all(...args);
     res.json({ transactions: rows, years: report.years() });
   });
   // Every transaction has its own address (/finance/transactions/<id>); the page asks here when the id is not in the year shown.
@@ -57,6 +58,7 @@ function buildRouter() {
   r.patch('/transactions/:id', (req, res) => {
     try {
       const out = ledger.setCategory(Number(req.params.id), req.body?.category, req.body?.note);
+      require('../lib/loan-split').detect(); // a rate moved into or out of "Immobilienkredite" gains or loses its split
       return out ? res.json(out) : res.status(404).json({ error: 'Buchung nicht gefunden' });
     } catch (e) { return res.status(400).json({ error: e.message }); }
   });
@@ -67,7 +69,7 @@ function buildRouter() {
     try {
       const parsed = parseBankFile(req.file.buffer, req.body?.account || null);
       const result = ledger.importRows({ filename: req.file.originalname.slice(0, 120), ...parsed, user: req.user.email });
-      require('../lib/transfers').detect(); require('../lib/text-rules').detect(); require('../lib/wallets').detect();
+      require('../lib/transfers').detect(); require('../lib/text-rules').detect(); require('../lib/wallets').detect(); require('../lib/loan-split').detect();
       const open = getDb().prepare(`SELECT count(*) AS n FROM transactions WHERE category IS NULL AND ${accounts.HOUSEHOLD}`).get().n;
       return res.status(201).json({ ...result, format: parsed.format, account: parsed.account, rows: parsed.rows.length, open });
     } catch (e) { return res.status(400).json({ error: e.message }); }

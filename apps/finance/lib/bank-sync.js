@@ -140,7 +140,7 @@ function syncAll(opts = {}) {
     const accs = getDb().prepare("SELECT a.* FROM bank_accounts a JOIN bank_sessions s ON s.session_id = a.session_id WHERE s.status = 'active' AND (s.valid_until IS NULL OR s.valid_until > ?) ORDER BY a.created_at").all(now());
     const out = [];
     for (const a of accs) out.push(await syncAccount(a, opts));
-    if (out.some((o) => o.added)) { require('./transfers').detect(); require('./text-rules').detect(); require('./wallets').detect(); }
+    if (out.some((o) => o.added)) { require('./transfers').detect(); require('./text-rules').detect(); require('./wallets').detect(); require('./loan-split').detect(); }
     return out;
   })().finally(() => { running = null; });
   return running;

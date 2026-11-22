@@ -13,7 +13,7 @@ window.FinTransactions = (() => {
   const visible = () => rows.filter((r) => (filter === 'open' ? !r.category : filter === 'in' ? r.amount_cents > 0 : filter === 'out' ? r.amount_cents < 0 : true));
 
   function catCell(r) {
-    if (r.category) return `${esc(r.category_name || r.category)}${r.category_source === 'rule' ? ' <span class="fin-tag" title="Automatisch aus gelernten Regeln">auto</span>' : ''}`;
+    if (r.category) return `${esc(r.category_name || r.category)}${r.category_source === 'rule' ? ' <span class="fin-tag" title="Automatisch aus gelernten Regeln">auto</span>' : ''}${r.repay_cents ? ` <span class="fin-tag" title="Davon Tilgung ${esc(euro(r.repay_cents))} (Vermögensaufbau), der Rest Zins">davon Tilgung ${esc(Fin.short(r.repay_cents))}</span>` : ''}`;
     const name = r.suggestion && cats.find((c) => c.code === r.suggestion)?.name;
     return r.suggestion ? `<span class="fin-open">Vorschlag: ${esc(name || r.suggestion)}</span>` : '<span class="fin-open">Zu prüfen</span>';
   }
