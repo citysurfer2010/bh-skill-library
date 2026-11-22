@@ -10,17 +10,52 @@ window.FinWealth = (() => {
   const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
   const label = (on) => `${MONTHS[Number(on.slice(5, 7)) - 1]} ${on.slice(2, 4)}`;
 
-  /** One series over time: a 2px line with markers (hover shows the value), y from just below the minimum. */
+  /** Nice round step for about four grid lines (1, 2, 2.5 or 5 times a power of ten). */
+  function niceStep(range) { const raw = range / 4; const p = 10 ** Math.floor(Math.log10(raw || 1)); return [1, 2, 2.5, 5, 10].map((f) => f * p).find((s) => s >= raw) || raw; }
+  const tsd = (c) => `${Math.round(c / 100000).toLocaleString('de-DE')} Tsd. €`;
+
+  /**
+   * Net worth over time: one 2px line over a light area, rounded y-axis (thousand euros, not from zero, said in the
+   * caption), the latest value labelled at the line, quarter labels below. Hover or keyboard focus shows a crosshair
+   * and a tooltip with the parts of that month.
+   */
   function line(months) {
     const rows = months.slice(-36); if (rows.length < 2) return '';
-    const W = 720; const H = 220; const L = 88; const B = 26; const vals = rows.map((m) => m.net);
-    let lo = Math.min(...vals); let hi = Math.max(...vals); const pad = Math.max((hi - lo) * 0.12, Math.abs(hi) * 0.002, 10000); lo -= pad; hi += pad;
-    const x = (i) => L + (i * (W - L - 36)) / (rows.length - 1); const y = (v) => 8 + (H - B - 8) * (1 - (v - lo) / (hi - lo));
-    const pts = rows.map((m, i) => `${x(i).toFixed(1)},${y(m.net).toFixed(1)}`).join(' ');
-    const ticks = [hi - pad, (hi + lo) / 2, lo + pad].map((v) => `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" class="fin-axis">${esc(Fin.short(Math.round(v)))}</text><line x1="${L}" x2="${W - 24}" y1="${y(v)}" y2="${y(v)}" class="fin-grid"/>`).join('');
-    const xl = rows.map((m, i) => (i % 3 === 0 || i === rows.length - 1 ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" class="fin-axis">${esc(label(m.on))}</text>` : '')).join('');
-    const dots = rows.map((m, i) => `<g class="fin-pt" tabindex="0"><circle cx="${x(i)}" cy="${y(m.net)}" r="10" class="fin-hit"/><circle cx="${x(i)}" cy="${y(m.net)}" r="4" class="fin-dot"/><title>${esc(label(m.on))}: ${esc(euro(m.net))}</title></g>`).join('');
-    return `<figure class="fin-wealth-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Nettovermögen je Monatsende, von ${esc(euro(rows[0].net))} auf ${esc(euro(rows.at(-1).net))}">${ticks}${xl}<polyline points="${pts}" class="fin-line"/>${dots}</svg><figcaption class="fin-hint">Nettovermögen je Monatsende (Achse beginnt nicht bei null)</figcaption></figure>`;
+    const W = 760; const H = 260; const L = 84; const R = 96; const T = 12; const B = 30;
+    const vals = rows.map((m) => m.net); const step = niceStep((Math.max(...vals) - Math.min(...vals)) || Math.abs(vals[0]) * 0.05 || 100000);
+    const lo = Math.floor(Math.min(...vals) / step) * step - step / 2; const hi = Math.ceil(Math.max(...vals) / step) * step + step / 2;
+    const x = (i) => L + (i * (W - L - R)) / (rows.length - 1); const y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    const pts = rows.map((m, i) => `${x(i).toFixed(1)},${y(m.net).toFixed(1)}`);
+    const grid = []; for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) grid.push(`<line x1="${L}" x2="${W - R + 8}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="fin-grid"/><text x="${L - 10}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" class="fin-axis">${esc(tsd(v))}</text>`);
+    const xl = rows.map((m, i) => (m.on.slice(5, 7) % 3 === 0 && m.on.slice(8) !== '' && i < rows.length - 1 ? `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle" class="fin-axis">${esc(label(m.on))}</text>` : '')).join('');
+    const last = rows.at(-1); const lx = x(rows.length - 1); const ly = y(last.net);
+    const area = `M${pts[0]} L${pts.slice(1).join(' L')} L${lx.toFixed(1)},${(H - B).toFixed(1)} L${x(0).toFixed(1)},${(H - B).toFixed(1)} Z`;
+    const hits = rows.map((m, i) => `<rect class="fin-hitcol" x="${(x(i) - (W - L - R) / (rows.length - 1) / 2).toFixed(1)}" y="${T}" width="${((W - L - R) / (rows.length - 1)).toFixed(1)}" height="${H - T - B}" data-i="${i}" tabindex="0" aria-label="${esc(label(m.on))}: ${esc(euro(m.net))}"/>`).join('');
+    return `<figure class="fin-wealth-chart" data-chart><div class="fin-chart-box"><svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Nettovermögen je Monatsende, von ${esc(euro(rows[0].net))} auf ${esc(euro(last.net))}">
+      ${grid.join('')}<path d="${area}" class="fin-area"/><polyline points="${pts.join(' ')}" class="fin-line"/>
+      <line class="fin-cross" x1="0" x2="0" y1="${T}" y2="${H - B}" hidden/><circle class="fin-dot fin-cur" r="5" cx="0" cy="0" hidden/>
+      <circle class="fin-dot" r="4.5" cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}"/><text x="${(lx + 10).toFixed(1)}" y="${(ly + 4).toFixed(1)}" class="fin-endlabel">${esc(tsd(last.net))}</text>
+      ${xl}<text x="${lx.toFixed(1)}" y="${H - 8}" text-anchor="middle" class="fin-axis">${esc(label(last.on))}</text>${hits}</svg>
+      <div class="fin-tip" role="status" hidden></div></div>
+      <figcaption class="fin-hint">Nettovermögen je Monatsende in Tausend Euro; die Achse beginnt nicht bei null, damit die Veränderung sichtbar ist.</figcaption></figure>`;
+  }
+
+  /** Crosshair and tooltip for the chart (pointer and keyboard). */
+  function bindChart(host, months) {
+    const fig = host.querySelector('[data-chart]'); if (!fig) return;
+    const rows = months.slice(-36); const svg = fig.querySelector('svg'); const tip = fig.querySelector('.fin-tip');
+    const cross = svg.querySelector('.fin-cross'); const cur = svg.querySelector('.fin-cur');
+    const show = (i) => {
+      const m = rows[i]; const r = svg.querySelector(`[data-i="${i}"]`); const cx = Number(r.getAttribute('x')) + Number(r.getAttribute('width')) / 2;
+      const pt = svg.querySelector('.fin-line').getAttribute('points').split(' ')[i].split(',').map(Number);
+      cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.hidden = false; cur.setAttribute('cx', pt[0]); cur.setAttribute('cy', pt[1]); cur.hidden = false;
+      tip.innerHTML = `<strong>${esc(date(m.on))}</strong><dl><dt>Netto</dt><dd>${esc(euro(m.net))}</dd><dt>Immobilien netto</dt><dd>${esc(euro(m.estate - m.debt))}</dd><dt>Konten</dt><dd>${esc(euro(m.cash_private + m.cash_property))}</dd><dt>Depot u. a.</dt><dd>${esc(euro(m.other))}</dd></dl>`;
+      tip.hidden = false; const box = fig.querySelector('.fin-chart-box').getBoundingClientRect(); const sx = box.width / svg.viewBox.baseVal.width;
+      const left = cx * sx; tip.style.setProperty('--tip-x', `${Math.min(Math.max(left, 90), box.width - 90)}px`);
+    };
+    const hide = () => { tip.hidden = true; cross.hidden = true; cur.hidden = true; };
+    svg.querySelectorAll('.fin-hitcol').forEach((r) => { const i = Number(r.dataset.i); r.addEventListener('pointerenter', () => show(i)); r.addEventListener('focus', () => show(i)); r.addEventListener('blur', hide); });
+    svg.addEventListener('pointerleave', hide);
   }
 
   function assetDialog(d, host, preset = {}) {
@@ -70,6 +105,7 @@ window.FinWealth = (() => {
     { key: 'other', label: 'Depot u. a.', align: 'right', html: (m) => amt(m.other) },
     { key: 'net', label: 'Netto', align: 'right', html: (m) => `<strong>${amt(m.net)}</strong>` },
   ], rows: [...d.months].reverse() })}`);
+    bindChart(host, d.months);
     host.querySelector('[data-add]').addEventListener('click', () => assetDialog(d, host));
     host.querySelectorAll('[data-update]').forEach((b) => b.addEventListener('click', () => assetDialog(d, host, { name: b.dataset.update, kind: b.dataset.kind })));
   }
