@@ -39,6 +39,10 @@ function buildRouter() {
   r.get('/investments', (req, res) => { const i = report.investments(yearOf(req.query.year)); res.json({ year: i.year, total: i.total, months: i.months, targets: i.targets, perYear: i.perYear }); });
   r.get('/loans', (_req, res) => { const o = loans.overview(); res.json({ ...o, loans: o.loans.map(({ history, ...l }) => ({ ...l, year_end: history.filter((h) => h.on.slice(5) >= '12-28') })) }); });
   r.get('/estate', (_req, res) => res.json(loans.estate()));
+  // Money fields get the "_cents" suffix, so the MCP client turns them into euros.
+  const MONEY = /^(rent|settlement|energy|broadcast|furnishing|total|perMonth|rentNow|settlementEntered|settlementAverage|cents)$/;
+  const cents = (v) => (Array.isArray(v) ? v.map(cents) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [MONEY.test(k) && typeof x === 'number' ? `${k === 'cents' ? 'amount' : k}_cents` : k, cents(x)])) : v);
+  r.get('/housing', (_req, res) => res.json(cents(require('../lib/housing').overview())));
   return r;
 }
 

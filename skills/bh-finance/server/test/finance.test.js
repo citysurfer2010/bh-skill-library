@@ -35,7 +35,7 @@ test('lists five read-only tools and answers in euros with the key', async () =>
     { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'get_loans', arguments: {} } },
     { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'search_transactions', arguments: { q: 'Kabel', year: 'all', limit: 5 } } },
   ].map((m) => m));
-  assert.deepEqual(list.result.tools.map((t) => t.name).sort(), ['get_estate', 'get_investments', 'get_loans', 'get_overview', 'search_transactions']);
+  assert.deepEqual(list.result.tools.map((t) => t.name).sort(), ['get_estate', 'get_housing', 'get_investments', 'get_loans', 'get_overview', 'search_transactions']);
   const l = JSON.parse(loans.result.content[0].text);
   assert.equal(l.totals.balance, 123456.78); assert.equal(l.loans[0].balance_now_eur, 90000);
   assert.equal(JSON.parse(tx.result.content[0].text).sum_eur, -23.98);

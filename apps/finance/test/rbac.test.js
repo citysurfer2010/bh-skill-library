@@ -20,6 +20,8 @@ const PROTECTED = [
   ['GET', '/loans', 'user'],
   ['GET', '/api/estate', 'admin'],
   ['GET', '/estate', 'user'],
+  ['GET', '/api/housing', 'admin'],
+  ['GET', '/housing', 'user'],
   ['GET', '/api/amazon/orders', 'admin'],
   ['GET', '/amazon', 'user'],
   ['GET', '/categories', 'user'],
@@ -124,4 +126,12 @@ test('GET /api/transactions?year=all&account=…: alle Jahre eines Kontos', asyn
   ins.run(`alle-jahre-${tag}`, '2021-02-03', -1, `aj1-${tag}`, '2026-11-15'); ins.run(`alle-jahre-${tag}`, '2025-02-03', -2, `aj2-${tag}`, '2026-11-15');
   const r = await t.call(`/api/transactions?year=all&account=${encodeURIComponent(`alle-jahre-${tag}`)}`, { as: 'a@beispiel.de', role: 'admin' });
   assert.equal(r.status, 200); assert.equal((await r.json()).transactions.length, 2);
+});
+
+test('PUT /api/housing/settlement: ohne Anmeldung 401, als user 403, als admin 204; ungültiges Jahr 400', async () => {
+  const body = { year: 2026, cents: -150000 };
+  assert.equal((await t.call('/api/housing/settlement', { method: 'PUT', body })).status, 401);
+  assert.equal((await t.call('/api/housing/settlement', { method: 'PUT', body, as: 'u@beispiel.de', role: 'user' })).status, 403);
+  assert.equal((await t.call('/api/housing/settlement', { method: 'PUT', body, as: 'a@beispiel.de', role: 'admin' })).status, 204);
+  assert.equal((await t.call('/api/housing/settlement', { method: 'PUT', body: { year: 'x' }, as: 'a@beispiel.de', role: 'admin' })).status, 400);
 });

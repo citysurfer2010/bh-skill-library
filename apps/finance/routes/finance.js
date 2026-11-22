@@ -26,11 +26,18 @@ function sameOrigin(req, res, next) {
 
 function buildRouter() {
   const r = express.Router();
-  r.use(['/overview', '/investments', '/loans', '/estate', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
+  r.use(['/overview', '/investments', '/loans', '/estate', '/housing', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
   r.get('/overview', (req, res) => res.json(report.overview(yearOf(req.query.year))));
   r.get('/investments', (req, res) => res.json(report.investments(yearOf(req.query.year))));
   r.get('/loans', (_req, res) => res.json(require('../lib/loans').overview()));
   r.get('/estate', (_req, res) => res.json(require('../lib/loans').estate()));
+  r.get('/housing', (_req, res) => res.json(require('../lib/housing').overview()));
+  // Expected Nebenkostenabrechnung of a year (negative = back payment, positive = refund, null = use the average).
+  r.put('/housing/settlement', (req, res) => {
+    const y = Number(req.body?.year); const c = req.body?.cents;
+    if (!Number.isInteger(y) || y < 2000 || y > 2100) return res.status(400).json({ error: 'Jahr ungültig' });
+    try { require('../lib/housing').setSettlement(y, c == null || c === '' ? null : Math.round(Number(c))); return res.status(204).end(); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
+  });
   r.get('/categories', (_req, res) => res.json({ categories: getDb().prepare('SELECT * FROM categories ORDER BY art, name').all(), arts: categories.ARTS }));
   const catErr = (res, e) => { if (!e.status) throw e; return res.status(e.status).json({ error: e.message }); };
   r.post('/categories', (req, res) => { try { res.status(201).json({ category: categories.create(req.body || {}) }); } catch (e) { catErr(res, e); } });

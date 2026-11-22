@@ -28,6 +28,7 @@ Die App `apps/finance` ersetzt die alte Tabelle „Finanzreport“: Kontoauszüg
 | `lib/categories.js` | Kategorien anlegen und ändern (Prüfung, Kürzel, Dubletten) |
 | `lib/loan-split.js` | Darlehensraten in Zins (Ausgabe „Immobilienkredite“) und Tilgung (Investment „Tilgung Immobilienkredite“) teilen, aus dem Banktext; Tabelle `transaction_splits` |
 | `lib/wallets.js` | PayPal und Kreditkarte: Abbuchung nur Transfer, solange das Geldbörsen-Konto selbst importiert ist; sonst Ausgabe (Händler aus dem Text) |
+| `lib/housing.js` | Wohnkosten der Mietwohnung je Jahr (Seite „Wohnkosten“): Miete, Nebenkostenabrechnung, Strom/Energie, Rundfunk; Schätzung des laufenden Jahres |
 | `lib/text-rules.js` | Feste Regeln am Verwendungszweck (Wertpapierkäufe → Aktien, Gebühren → Bankkosten) |
 | `lib/transfers.js` | Erkennt Geldtransfers zwischen eigenen Konten (eigene IBAN, eindeutiges Paar mit Kontoinhaber) |
 | `scripts/relabel-bank-accounts.js` | Einmal nach einem Update: Produkt/Beschreibung von der Bank holen, Bereich raten, automatisch vergebene Namen nach den aktuellen Regeln umbenennen (`--dry` zeigt nur) |
@@ -61,6 +62,7 @@ Server `skills/bh-finance/server` im MCP-Gateway (`servers.json`, Eintrag `finan
 | `finance_search_transactions` | Buchungen suchen (Text, Gegenpartei, Amazon-Artikel, Kategorie, Konto, Jahr); Anzahl und Summe aller Treffer |
 | `finance_get_investments` | Investments und Rücklagen eines Jahres und über die Jahre |
 | `finance_get_loans` | Kredite mit Restschuld laut Bank, Rate, Zins, Tilgung, Jahresendständen |
+| `finance_get_housing` | Wohnkosten der Mietwohnung je Jahr mit Schätzung für das laufende Jahr und allen Nebenkostenabrechnungen |
 | `finance_get_estate` | Wohnungen mit Fläche, Marktwert, Miete, Restschuld, Drive-Ordner |
 
 Beträge kommen in Euro. Dahinter liegt `/api/external/finance/*` der App mit einem API-Schlüssel im Scope `finance`: Nur wer die Finanzen sehen darf, kann ihn anlegen, und wer von der Liste „Wer die Finanzen sieht“ entfernt wird, verliert seine Finanz-Schlüssel sofort. Der Schlüssel steht als `BH_FINANCE_KEY` in `/srv/bh-platform/.env`, `platform/gateway/setup-mcp-gateway.sh` reicht ihn an das Gateway weiter; die App erreicht das Gateway intern über ihren Port aus `/srv/bh-apps/finance/app.json`, ohne den Präfix `/finance` (der gehört zum Edge).

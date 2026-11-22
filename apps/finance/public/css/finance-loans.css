@@ -73,3 +73,8 @@
   .fin-amazon-list td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; } .fin-amazon-list td:nth-child(3) { text-align: right !important; }
   .fin-amazon-list td:nth-child(4), .fin-amazon-list td:nth-child(5), .fin-amazon-list td:nth-child(6) { font-size: 13px; color: var(--bh-muted); }
 }
+/* Wohnkosten: one bar per year; the estimate of the running year is hatched (readable without color). */
+.fin-years-bars { grid-template-columns: repeat(var(--fin-n, 4), minmax(0, 96px)); justify-content: start; gap: 16px; }
+.fin-bar-fill.is-estimate { background: repeating-linear-gradient(135deg, var(--bh-primary) 0 3px, transparent 3px 7px); border: 1px solid var(--bh-primary); border-bottom: 0; }
+.fin-housing-list .fin-num { white-space: nowrap; }
+@media (max-width: 760px) { .fin-years-bars { gap: 8px; grid-template-columns: repeat(var(--fin-n, 4), minmax(0, 1fr)); } .fin-years-bars .fin-bar-value { font-size: 11px; writing-mode: horizontal-tb; transform: none; } }

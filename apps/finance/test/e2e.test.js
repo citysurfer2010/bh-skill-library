@@ -39,7 +39,7 @@ test('angemeldet: Seite kommt, jedes verlinkte Asset lädt', async () => {
 });
 
 test('Tiefe Pfade liefern dieselbe Seite', async () => {
-  for (const p of ['/transactions', '/transactions/5', '/investments', '/import', '/categories', '/loans', '/estate', '/amazon']) {
+  for (const p of ['/transactions', '/transactions/5', '/investments', '/import', '/categories', '/loans', '/estate', '/housing', '/amazon']) {
     const res = await get(p, user);
     assert.equal(res.status, 200, p);
     assert.match(await res.text(), /home-page\.js/);
@@ -103,7 +103,7 @@ test('MCP-Schlüssel (Scope finance): nur mit Finanz-Zugriff, nur lesend, beim E
   assert.equal((await key(helfer, 'finance')).status, 403, 'ohne Zugang kein Finanz-Schlüssel');
   const adminKey = (await (await key(admin2, 'finance')).json()).key;
   const ext = (k, url) => fetch(`${BASE}/api/external/finance${url}`, { headers: { authorization: `Bearer ${k}` } });
-  for (const url of ['/overview?year=2026', '/transactions?year=all&q=e&limit=5', '/investments', '/loans', '/estate']) assert.equal((await ext(adminKey, url)).status, 200, url);
+  for (const url of ['/overview?year=2026', '/transactions?year=all&q=e&limit=5', '/investments', '/loans', '/estate', '/housing']) assert.equal((await ext(adminKey, url)).status, 200, url);
   const tx = await (await ext(adminKey, '/transactions?year=all&limit=3')).json();
   assert.ok(tx.shown <= 3 && typeof tx.count === 'number');
   const readKey = (await (await key(admin2, 'read')).json()).key;
