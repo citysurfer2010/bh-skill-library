@@ -5,6 +5,8 @@
  */
 // Physical orders 302-…, digital ones (Prime Video, Kindle) D01-….
 const ORDER_ID = /\b([0-9D]\d{2}-\d{7}-\d{7})\b/;
+/** A whole order number: physical "302-…" or digital "D01-…" (22.11.2026: the items endpoint let only physical ones through). */
+const isOrderId = (x) => /^[0-9D]\d{2}-\d{7}-\d{7}$/.test(String(x || ''));
 const MONTHS = { januar: 1, februar: 2, märz: 3, maerz: 3, april: 4, mai: 5, juni: 6, juli: 7, august: 8, september: 9, oktober: 10, november: 11, dezember: 12 };
 
 /** "3. Februar 2025" → "2025-02-03" */
@@ -87,4 +89,4 @@ function parseItems(links) {
   return [...out.values()];
 }
 
-module.exports = { parseCard, parseCards, parsePayment, parsePayments, parseItems, germanDate, euroCents, ORDER_ID };
+module.exports = { parseCard, parseCards, parsePayment, parsePayments, parseItems, germanDate, euroCents, ORDER_ID, isOrderId };

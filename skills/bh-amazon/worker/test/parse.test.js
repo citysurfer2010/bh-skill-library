@@ -59,3 +59,8 @@ test('digital orders (22.11.2026): Prime Video detail links and the order page l
     ['Prime Membership Fee', 'https://www.amazon.de/dp/B078T13L9H'],
   ]);
 });
+
+test('order numbers for the items endpoint: physical and digital pass, anything else not (22.11.2026)', () => {
+  const { isOrderId } = require('../lib/parse');
+  assert.deepEqual(['302-1234567-7654321', 'D01-7353514-9403827', 'D01-123', 'x302-1234567-7654321', ''].map(isOrderId), [true, true, false, false, false]);
+});

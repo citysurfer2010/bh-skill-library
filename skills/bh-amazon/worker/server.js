@@ -1,4 +1,5 @@
 'use strict';
+const { isOrderId } = require('./lib/parse');
 /**
  * bh-amazon worker: a headless browser holding the family's Amazon session. Reachable only inside bh-apps-net,
  * every call carries the shared key from /run/bh-amazon/token. Read only: it never orders or changes anything.
@@ -27,7 +28,7 @@ const routes = {
   'POST /logout': async () => { forget(); return { connected: false }; },
   'POST /payments': async (b) => serial(() => fetcher.payments({ since: /^\d{4}-\d{2}-\d{2}$/.test(b.since || '') ? b.since : undefined })),
   'POST /orders': async (b) => serial(() => fetcher.orders({ since: /^\d{4}-\d{2}-\d{2}$/.test(b.since || '') ? b.since : undefined, stopAt: [].concat(b.stopAt || []).slice(0, 200), year: /^20\d{2}$/.test(String(b.year || '')) ? Number(b.year) : null })),
-  'POST /items': async (b) => serial(() => fetcher.items([].concat(b.orderIds || []).filter((x) => /^\d{3}-\d{7}-\d{7}$/.test(x)))),
+  'POST /items': async (b) => serial(() => fetcher.items([].concat(b.orderIds || []).filter(isOrderId))),
 };
 
 http.createServer(async (req, res) => {
