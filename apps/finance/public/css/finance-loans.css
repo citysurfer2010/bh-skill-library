@@ -92,3 +92,15 @@
 .fin-rb-verdict { margin: 8px 0 12px; }
 .fin-rb-warn { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--bh-border); border-left: 4px solid var(--bh-primary); border-radius: 4px; }
 .fin-rb-list .fin-num { white-space: nowrap; }
+/* Vermögen: one line (2px), markers, recessive grid; amounts never wrap. */
+.fin-wealth-chart { margin: 16px 0; max-width: 820px; }
+.fin-wealth-chart svg { display: block; width: 100%; height: auto; }
+.fin-wealth-chart .fin-line { fill: none; stroke: var(--bh-primary); stroke-width: 2; }
+.fin-wealth-chart .fin-dot { fill: var(--bh-primary); stroke: var(--bh-surface); stroke-width: 2; }
+.fin-wealth-chart .fin-hit { fill: transparent; }
+.fin-wealth-chart .fin-pt:hover .fin-dot, .fin-wealth-chart .fin-pt:focus .fin-dot { r: 6; }
+.fin-wealth-chart .fin-grid { stroke: var(--bh-border-light); stroke-width: 1; }
+.fin-wealth-chart .fin-axis { fill: var(--bh-muted); font-size: 11px; }
+.fin-wealth-list .fin-num, .fin-wealth-assets .fin-num { white-space: nowrap; }
+@media (max-width: 720px) { .fin-wealth-list th:nth-child(2), .fin-wealth-list td:nth-child(2), .fin-wealth-list th:nth-child(3), .fin-wealth-list td:nth-child(3) { display: none; } }
+@media (max-width: 720px) { .fin-wealth-chart { overflow-x: auto; } .fin-wealth-chart svg { min-width: 560px; } }

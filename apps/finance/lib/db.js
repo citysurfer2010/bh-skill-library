@@ -96,6 +96,8 @@ function migrate(conn) {
     CREATE TABLE IF NOT EXISTS loan_refs (unit_key TEXT NOT NULL, position INTEGER NOT NULL, ref TEXT NOT NULL, PRIMARY KEY (unit_key, position));
     -- A loan account the bank renumbered (PSD 10/2025): payments and statements of the new number count for the loan.
     CREATE TABLE IF NOT EXISTS loan_aliases (alias TEXT PRIMARY KEY, ref TEXT NOT NULL);
+    -- Depot and other assets the banks do not report: a value per name and date, entered on the page "Vermögen".
+    CREATE TABLE IF NOT EXISTS wealth_assets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, kind TEXT NOT NULL, value_cents INTEGER NOT NULL, as_of TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE (name, as_of));
     -- Drive folder of each flat and its financing papers (scripts/import-estate-links.js); kept across sheet imports.
     CREATE TABLE IF NOT EXISTS estate_links (unit_key TEXT PRIMARY KEY, folder_url TEXT, finance_url TEXT);
   `);

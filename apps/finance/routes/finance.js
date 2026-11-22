@@ -26,12 +26,17 @@ function sameOrigin(req, res, next) {
 
 function buildRouter() {
   const r = express.Router();
-  r.use(['/overview', '/investments', '/loans', '/estate', '/housing', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
+  r.use(['/overview', '/investments', '/loans', '/estate', '/housing', '/wealth', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
   r.get('/overview', (req, res) => res.json(report.overview(yearOf(req.query.year))));
   r.get('/investments', (req, res) => res.json(report.investments(yearOf(req.query.year))));
   r.get('/loans', (_req, res) => res.json(require('../lib/loans').overview()));
   r.get('/estate', (_req, res) => res.json(require('../lib/loans').estate()));
   r.get('/housing', (_req, res) => res.json(require('../lib/housing').overview()));
+  r.get('/wealth', (_req, res) => res.json(require('../lib/wealth').overview()));
+  r.post('/wealth/assets', (req, res) => {
+    try { require('../lib/wealth').addAsset({ name: req.body?.name, kind: req.body?.kind, value_cents: req.body?.value_cents, as_of: req.body?.as_of }); return res.status(204).end(); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
+  });
+  r.delete('/wealth/assets/:id', (req, res) => (require('../lib/wealth').removeAsset(req.params.id) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' })));
   // Expected Nebenkostenabrechnung of a year (negative = back payment, positive = refund, null = use the average).
   r.put('/housing/settlement', (req, res) => {
     const y = Number(req.body?.year); const c = req.body?.cents;

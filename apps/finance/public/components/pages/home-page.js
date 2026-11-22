@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Finance pages: / overview · /transactions(/id) · /investments · /loans · /housing · /amazon · /accounts · /import · /categories.
+ * Finance pages: / overview · /transactions(/id) · /investments · /loans · /housing · /wealth · /amazon · /accounts · /import · /categories.
  * Module Immobilien (own navbar tab and sidebar): /estate.
  * Loading standard: frame at once, placeholders until the data arrives, in-module links without reload.
  */
@@ -10,6 +10,7 @@
   const PAGES = [
     { id: 'overview', label: 'Übersicht', href: `${BASE}/`, icon: 'chart', match: /^\/(?:\d{4}\/?)?$/ },
     { id: 'transactions', label: 'Buchungen', href: `${BASE}/transactions`, icon: 'list', match: /^\/(?:(?:\d{4}|all)\/)?transactions(?:\/(\d+))?\/?$/ },
+    { id: 'wealth', label: 'Vermögen', href: `${BASE}/wealth`, icon: 'wallet', match: /^\/wealth\/?$/ },
     { id: 'investments', label: 'Investments und Rücklagen', href: `${BASE}/investments`, icon: 'euro', match: /^\/(?:\d{4}\/)?investments\/?$/ },
     { id: 'loans', label: 'Kredite', href: `${BASE}/loans`, icon: 'page', match: /^\/loans\/?$/ },
     { id: 'housing', label: 'Wohnkosten', href: `${BASE}/housing`, icon: 'pin', match: /^\/housing\/?$/ },
@@ -54,6 +55,7 @@
     if (p.id === 'loans') return FinLoans.render(host);
     if (p.id === 'amazon') return FinPurchases.render(host);
     if (p.id === 'housing') return FinHousing.render(host);
+    if (p.id === 'wealth') return FinWealth.render(host);
     if (p.id === 'accounts') return FinAccounts.render(host);
     if (p.id === 'import') return FinImport.render(host);
     return FinCategories.render(host);
