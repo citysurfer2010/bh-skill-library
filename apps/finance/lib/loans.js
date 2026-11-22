@@ -61,6 +61,7 @@ function overview() {
     .map(({ found_ref: found, ...l }) => ({ ...l, years: {}, last_paid: null, ref: found === '-' ? '' : found || accountNo(l.account_iban) || '', paid: [] }));
   const byRef = new Map(); // The full IBAN only while it is still this loan's account (a corrected sheet account belongs to another loan).
   for (const l of loans) for (const r of [l.ref && accountNo(l.account_iban) === l.ref ? l.account_iban : '', l.ref]) if (r) byRef.set(r, l);
+  for (const a of db.prepare('SELECT alias, ref FROM loan_aliases').all()) { const l = byRef.get(a.ref); if (l) byRef.set(a.alias, l); } // renumbered accounts
   let unmatched = 0;
   const lines = db.prepare("SELECT booked_on, amount_cents, text FROM transactions WHERE amount_cents < 0 AND (text LIKE '%TILG%' OR text LIKE '%Darl.-Leistung%' OR text LIKE '%Darlehensrate%')").all();
   for (const t of lines) {

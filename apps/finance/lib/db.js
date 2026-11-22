@@ -94,6 +94,8 @@ function migrate(conn) {
     -- A loan that finances several flats together, named by its statement ("…str.20 WE30,31"); its balance is split by market value.
     CREATE TABLE IF NOT EXISTS loan_shares (ref TEXT NOT NULL, unit_key TEXT NOT NULL, PRIMARY KEY (ref, unit_key));
     CREATE TABLE IF NOT EXISTS loan_refs (unit_key TEXT NOT NULL, position INTEGER NOT NULL, ref TEXT NOT NULL, PRIMARY KEY (unit_key, position));
+    -- A loan account the bank renumbered (PSD 10/2025): payments and statements of the new number count for the loan.
+    CREATE TABLE IF NOT EXISTS loan_aliases (alias TEXT PRIMARY KEY, ref TEXT NOT NULL);
     -- Drive folder of each flat and its financing papers (scripts/import-estate-links.js); kept across sheet imports.
     CREATE TABLE IF NOT EXISTS estate_links (unit_key TEXT PRIMARY KEY, folder_url TEXT, finance_url TEXT);
   `);

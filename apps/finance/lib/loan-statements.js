@@ -126,8 +126,10 @@ function importStatements({ statements = [], docs = [] }, knownRefs) {
 /** Balance history, latest rate and papers link of one loan account. */
 function of(ref) {
   const db = getDb();
-  const history = db.prepare('SELECT balance_on AS "on", balance_cents AS cents FROM loan_balances WHERE ref = ? ORDER BY balance_on').all(ref).map((r) => ({ ...r }));
-  const rate = db.prepare('SELECT rate_pct FROM loan_balances WHERE ref = ? AND rate_pct IS NOT NULL ORDER BY balance_on DESC LIMIT 1').get(ref)?.rate_pct ?? null;
+  // The loan's own account and the numbers the bank gave it later (loan_aliases); the newest statement wins per day.
+  const refs = [ref, ...db.prepare('SELECT alias FROM loan_aliases WHERE ref = ?').all(ref).map((a) => a.alias)]; const ph = refs.map(() => '?').join(',');
+  const history = db.prepare(`SELECT balance_on AS "on", max(balance_cents) AS cents FROM loan_balances WHERE ref IN (${ph}) GROUP BY balance_on ORDER BY balance_on`).all(...refs).map((r) => ({ ...r }));
+  const rate = db.prepare(`SELECT rate_pct FROM loan_balances WHERE ref IN (${ph}) AND rate_pct IS NOT NULL ORDER BY balance_on DESC LIMIT 1`).get(...refs)?.rate_pct ?? null;
   return { history, rate, docs: db.prepare('SELECT url FROM loan_docs WHERE ref = ?').get(ref)?.url || null };
 }
 

@@ -14,7 +14,7 @@ let input = '';
 process.stdin.on('data', (c) => { input += c; });
 process.stdin.on('end', () => {
   const db = getDb();
-  const refs = new Set(db.prepare("SELECT account_iban FROM loans WHERE account_iban != ''").all().map((l) => accountNo(l.account_iban)).filter(Boolean).concat(db.prepare('SELECT ref FROM loan_refs').all().map((r) => r.ref)));
+  const refs = new Set(db.prepare("SELECT account_iban FROM loans WHERE account_iban != ''").all().map((l) => accountNo(l.account_iban)).filter(Boolean).concat(db.prepare('SELECT ref FROM loan_refs').all().map((r) => r.ref)).concat(db.prepare('SELECT alias FROM loan_aliases').all().map((r) => r.alias)));
   const r = statements.importStatements(JSON.parse(input), refs);
   console.log(`Darlehensauszüge übernommen: ${r.balances} Kontostände, ${r.skipped} Dateien ohne passendes Darlehen`);
   closeDb();
