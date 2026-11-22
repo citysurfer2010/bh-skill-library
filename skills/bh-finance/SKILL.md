@@ -45,7 +45,7 @@ Seite „Konten und Import“ (`/finance/import`): Verbindungen (Bankkonten, Ama
 
 ## Bankabruf
 
-Unter „Importieren“ → „Bankkonten“ eine Bank verbinden (comdirect, BBBank, DKB, PayPal). Die App ruft danach einmal am Tag ab. Die Zustimmung gilt 180 Tage, dann „Neu verbinden“. Zugang bei Enable Banking: App-ID und privater Schlüssel liegen nur auf dem Server (`ENABLE_BANKING_APP_ID`, `ENABLE_BANKING_KEY_FILE` in `/srv/bh-platform/.env`); `platform/apps/setup-apps.sh` legt sie für die Apps ab. Registrierte Rückleitung: `https://apps.familiebiskup.de/finance/api/bank/callback`.
+Unter „Importieren“ → „Bankkonten“ eine Bank verbinden (comdirect, BBBank, DKB, PayPal). Die App ruft danach einmal am Tag ab. Die Zustimmung gilt 180 Tage, dann „Neu verbinden“. Zugang bei Enable Banking: App-ID und privater Schlüssel liegen nur auf dem Server (`ENABLE_BANKING_APP_ID`, `ENABLE_BANKING_KEY_FILE` in `/srv/bh-platform/.env`); `platform/apps/setup-apps.sh` legt sie für die Apps ab. Registrierte Rückleitung: `https://<App-Domain>/finance/api/bank/callback`.
 
 ## Monatsroutine
 
@@ -55,7 +55,7 @@ Unter „Importieren“ → „Bankkonten“ eine Bank verbinden (comdirect, BBB
 
 ## MCP-Werkzeuge (für Zottel)
 
-Server `skills/bh-finance/server` im MCP-Gateway (`servers.json`, Eintrag `finance`; das Gateway stellt `finance_` vor die Werkzeugnamen), nur lesend und nur für die dort genannten Personen (derzeit `matti`). Handelt Zottel für jemand anderen, z. B. ein Kind, sieht er die Werkzeuge nicht.
+Server `skills/bh-finance/server` im MCP-Gateway (`servers.json`, Eintrag `finance`; das Gateway stellt `finance_` vor die Werkzeugnamen), nur lesend und nur für die dort genannten Personen (Liste in `servers.json` auf dem Server). Handelt Zottel für jemand anderen, z. B. ein Kind, sieht er die Werkzeuge nicht.
 
 | Werkzeug | Zweck |
 |---|---|

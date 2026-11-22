@@ -1,5 +1,5 @@
 'use strict';
-/** Running year (Matti 22.11.2026): compared with the same span of the year before, averages over the months passed. */
+/** Running year (22.11.2026): compared with the same span of the year before, averages over the months passed. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

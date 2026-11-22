@@ -1,7 +1,6 @@
 'use strict';
-/** CSV import in a dialog (Matti: from a button in the page header): files, account, result in the same dialog. */
+/** CSV import in a dialog (from a button in the page header): files, account, result in the same dialog. The accounts come from the app, not from the code. */
 window.FinCsv = (() => {
-  const ACCOUNTS = [['', 'Aus der Datei erkennen'], ['comdirect', 'comdirect Girokonto'], ['CD-CCM', 'comdirect Kreditkarte'], ['BBB', 'BBBank'], ['PayPal', 'PayPal']];
 
   function open(rerender) {
     const { esc, BASE } = Fin; let account = '';
@@ -11,7 +10,10 @@ window.FinCsv = (() => {
         <label class="bh-label" for="fin-csv-account">Konto</label><div id="fin-csv-account"></div>
         <p class="fin-hint">Exporte von comdirect, BBBank und PayPal. Doppelte Buchungen werden erkannt und übersprungen. Die Kreditkarte nutzt dasselbe Format wie das Girokonto, dafür das Konto wählen.</p>`,
       onOpen: (d) => {
-        const pick = BHSelectCore.create(d.querySelector('#fin-csv-account'), { options: ACCOUNTS.map(([value, label]) => ({ value, label })), value: '', label: 'Konto', onChange: (v) => { account = v; pick.update({ value: v }); } });
+        const auto = [{ value: '', label: 'Aus der Datei erkennen' }];
+        const pick = BHSelectCore.create(d.querySelector('#fin-csv-account'), { options: auto, value: '', label: 'Konto', onChange: (v) => { account = v; pick.update({ value: v }); } });
+        // The family's own accounts (their own names), private ones first; a new name is not offered here.
+        Fin.api('GET', '/accounts').then((r) => { const own = (r.accounts || []).filter((a) => a.scope === 'haushalt').map((a) => ({ value: a.name, label: a.name })); pick.update({ options: auto.concat(own) }); }).catch(() => {});
         const input = d.querySelector('#fin-file'); const drop = d.querySelector('.fin-drop');
         const show = () => { d.querySelector('[data-files]').textContent = input.files.length ? [...input.files].map((f) => f.name).join(', ') : 'oder CSV-Dateien hierher ziehen'; };
         input.addEventListener('change', show);

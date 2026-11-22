@@ -1,6 +1,7 @@
 'use strict';
+const { accountNames } = require('./account-names');
 /**
- * PayPal and the credit card are wallets (Matti 22.11.2026): the debit on the bank account only moves money into them,
+ * PayPal and the credit card are wallets (22.11.2026): the debit on the bank account only moves money into them,
  * so it is a transfer while the wallet's own lines (with the real shops) are on file for that date. Without them the
  * debit is the purchase itself: counting it as a transfer would make the spending vanish from the overview.
  *  - covered (wallet account has lines up to that date): TRANS
@@ -14,7 +15,8 @@ const categorize = require('./categorize');
 
 const WALLETS = [
   { name: 'PayPal', line: /paypal/i, account: /^paypal\b/i },
-  { name: 'Kreditkarte', line: /monatsabrechnung visa|kreditkartenabrechnung/i, account: /^cd-ccm$|kreditkarte|credit card/i },
+  // The card account: its name from the settings (account-names.js) or a name that says what it is.
+  { name: 'Kreditkarte', line: /monatsabrechnung visa|kreditkartenabrechnung/i, account: { test: (name) => String(name).toLowerCase() === accountNames().comdirect_card.toLowerCase() || /kreditkarte|credit card/i.test(name) } },
 ];
 const LAG_DAYS = 7;
 const shift = (d, days) => new Date(Date.parse(`${d}T12:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);

@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Mieten oder Kaufen (Matti 22.11.2026): calculator on the Wohnkosten page. Pure math in calc() (also used by the unit
+ * Mieten oder Kaufen (22.11.2026): calculator on the Wohnkosten page. Pure math in calc() (also used by the unit
  * test in Node), the form in render(). Values live in the URL (shareable link); defaults as discussed: 4,5 % interest,
  * 1 % initial repayment, closing costs Berlin 11,57 % (transfer tax 6 %, notary/land register 2 %, broker 3,57 %),
  * the liquid money of the private accounts above the buffer is the equity that could go in. Amounts in euros.

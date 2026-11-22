@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Module Immobilien: the flats with value, rent and loans (Matti 15.11.2026). Loans themselves live under Finanzen → Kredite.
+ * Module Immobilien: the flats with value, rent and loans (15.11.2026). Loans themselves live under Finanzen → Kredite.
  * Search (address, flat, owner) and filters (owner, city, financing) live in the address (?q=, ?owner=, ?city=, ?debt=)
  * so every view can be shared; a set filter is highlighted, the KPIs count the flats shown.
  */

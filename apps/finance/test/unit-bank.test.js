@@ -66,7 +66,7 @@ test('connect: only known banks, state bound to the person, names by account typ
     { uid: 'u-tg', account_id: { iban: 'DE009999' }, cash_account_type: 'SVGS', name: 'Tagesgeld' }]);
   assert.equal(accounts.length, 3);
   const labels = Object.fromEntries(sync.status().accounts.map((a) => [a.uid, a.label]));
-  assert.deepEqual([labels['u-giro'], labels['u-card'], labels['u-tg']], ['comdirect', 'CD-CCM', 'comdirect Sparkonto']);
+  assert.deepEqual([labels['u-giro'], labels['u-card'], labels['u-tg']], ['comdirect', 'comdirect Kreditkarte', 'comdirect Sparkonto']);
   assert.equal(sync.status().accounts.find((a) => a.uid === 'u-giro').iban, 'DE00 … 1111');
   assert.deepEqual(sync.status().banks, ['Comdirect', 'BBBank', 'DKB', 'PayPal']);
 });
@@ -144,7 +144,7 @@ test('expired consent: error kept on the account, session marked, no more automa
 
 test('rename moves bank lines and merges with CSV lines under the new name; names stay unique', () => {
   ledger.importRows({ filename: 'c.csv', format: 'comdirect', account: 'Giro neu', rows: [{ date: '2025-01-12', cents: -999, text: 'Netflix alt', counterparty: 'Netflix' }], user: 't' });
-  assert.throws(() => sync.rename('u-giro', 'CD-CCM'), /anderen Bankkonto/);
+  assert.throws(() => sync.rename('u-giro', 'comdirect Kreditkarte'), /anderen Bankkonto/);
   assert.ok(sync.rename('u-giro', 'Giro neu'));
   const moved = rowsOf('Giro neu');
   assert.equal(moved.length, 1); assert.equal(moved[0].text, 'Netflix alt'); assert.equal(moved[0].bank_ref, 'b2');

@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Cost of the rented home per year (Matti 22.11.2026: "eine Seite für die Entwicklung der Wohnungskosten, Kosten 2026
+ * Cost of the rented home per year (22.11.2026: "eine Seite für die Entwicklung der Wohnungskosten, Kosten 2026
  * schätzen"). From the household accounts:
  *  - rent: the landlord's regular payment (the counterparty in "Wohnung" paid most often; an amount paid 3+ times a year)
  *  - settlement: every other payment to or from the landlord (Nebenkostenabrechnung: back payment or refund)

@@ -47,10 +47,10 @@ test('PayPal: transfer while the PayPal lines are on file, afterwards the purcha
 test('transfers across areas: payout from a property account is surplus, money into it is spent on the flats', () => {
   db.prepare("INSERT INTO accounts (name, scope, updated_at) VALUES ('WE01', 'immobilien', 'x'), ('Giro', 'haushalt', 'x')").run();
   db.prepare("INSERT INTO bank_sessions (session_id, aspsp, status, created_by, created_at) VALUES ('s', 'DKB', 'active', 'm', 'x')").run();
-  db.prepare("INSERT INTO bank_accounts (uid, session_id, aspsp, iban, name, label, created_at) VALUES ('a', 's', 'DKB', 'DE00120300000000000001', 'Anne Muster', 'WE01', 'x'), ('b', 's', 'DKB', 'DE00120300000000000002', 'Anne Muster', 'Giro', 'x')").run();
-  const out = add('WE01', '2026-04-01', -80000, 'Auszahlung IMK an DE00120300000000000002', 'Anne Muster');
-  const inn = add('Giro', '2026-04-01', 80000, 'Auszahlung IMK von DE00120300000000000001', 'Anne Muster', 'TRANS', 'transfer');
-  const back = add('Giro', '2026-05-02', -20000, 'Zuschuss Sanierung DE00120300000000000001', 'Anne Muster');
+  db.prepare("INSERT INTO bank_accounts (uid, session_id, aspsp, iban, name, label, created_at) VALUES ('a', 's', 'DKB', 'DE00120300000000000001', 'Erika Muster', 'WE01', 'x'), ('b', 's', 'DKB', 'DE00120300000000000002', 'Erika Muster', 'Giro', 'x')").run();
+  const out = add('WE01', '2026-04-01', -80000, 'Auszahlung IMK an DE00120300000000000002', 'Erika Muster');
+  const inn = add('Giro', '2026-04-01', 80000, 'Auszahlung IMK von DE00120300000000000001', 'Erika Muster', 'TRANS', 'transfer');
+  const back = add('Giro', '2026-05-02', -20000, 'Zuschuss Sanierung DE00120300000000000001', 'Erika Muster');
   transfers.detect();
   assert.equal(row(inn).category, 'IMMOEIN', 'an earlier transfer mark is corrected');
   assert.equal(row(back).category, 'IMMOAUS');

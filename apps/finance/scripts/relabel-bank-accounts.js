@@ -10,7 +10,7 @@
 const { getDb, closeDb } = require('../lib/db');
 const bank = require('../lib/bank-api');
 const accounts = require('../lib/accounts');
-const { BANKS, describe } = require('../lib/bank-names');
+const { namesOf, describe } = require('../lib/bank-names');
 
 const dry = process.argv.includes('--dry');
 const savingsKind = (text) => (/tagesgeld/i.test(text) ? 'Tagesgeldkonto' : /festgeld/i.test(text) ? 'Festgeldkonto' : /spar/i.test(text) ? 'Sparkonto' : null);
@@ -21,7 +21,7 @@ const savingsKind = (text) => (/tagesgeld/i.test(text) ? 'Tagesgeldkonto' : /fes
     const d = await bank.details(a.uid).catch(() => null);
     if (!d) { out.push(`${a.label}: keine Angaben von der Bank`); continue; }
     if (!dry) db.prepare('UPDATE bank_accounts SET product = ?, details = ?, usage = ? WHERE uid = ?').run(d.product || null, d.details || null, d.usage || null, a.uid);
-    const base = BANKS.find((b) => b.name === a.aspsp)?.label || a.aspsp;
+    const base = namesOf(a.aspsp).label || a.aspsp;
     const auto = a.label === base || new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} [0-9a-f]{4}(-[0-9a-f]{4})?$`, 'i').test(a.label);
     const kind = savingsKind(`${d.product || ''} ${d.details || ''}`);
     const wanted = kind ? `${base} ${kind}` : describe(base, d); // savings by their kind, like new accounts

@@ -7,7 +7,9 @@ const { getDb } = require('../lib/db');
 
 const APP_BASE = '/finance';
 // Must equal the redirect URL registered at Enable Banking.
-const REDIRECT = process.env.BANK_REDIRECT_URL || 'https://apps.familiebiskup.de/finance/api/bank/callback';
+// Where the bank sends the browser back: from the environment, else from the request's own origin (no domain in the code).
+const REDIRECT = process.env.BANK_REDIRECT_URL || '';
+const redirectFor = (req) => REDIRECT || `${req.get('origin') || `${req.protocol}://${req.get('host')}`}/finance/api/bank/callback`;
 const psuIp = (req) => String(req.get('x-forwarded-for') || req.get('x-real-ip') || req.ip || '').split(',')[0].trim() || undefined;
 const fail = (res, e) => res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message, code: e.code });
 
@@ -16,7 +18,7 @@ function buildRouter({ sameOrigin, requireFinance }) {
   r.use(sameOrigin, requireFinance);
   r.get('/status', (_req, res) => res.json(sync.status()));
   r.post('/connect', async (req, res) => {
-    try { return res.json({ url: await sync.connect({ aspsp: String(req.body?.aspsp || ''), user: req.user.email, redirectUrl: REDIRECT }) }); } catch (e) { return fail(res, e); }
+    try { return res.json({ url: await sync.connect({ aspsp: String(req.body?.aspsp || ''), user: req.user.email, redirectUrl: redirectFor(req) }) }); } catch (e) { return fail(res, e); }
   });
   // The bank sends the browser back here; the first fetch runs at once while the bank login is fresh.
   r.get('/callback', async (req, res) => {

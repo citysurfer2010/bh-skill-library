@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Fixed rules on the payment text, for partners whose lines mean different things (Matti 15.11.2026: the DKB business
+ * Fixed rules on the payment text, for partners whose lines mean different things (15.11.2026: the DKB business
  * account pays a monthly ETF savings plan to "DKB AG", which also charges fees, so the counterparty rule never gets sure).
  * Only lines nobody decided yet (open or booked by a learned rule) are changed; the person's choices stay.
  */

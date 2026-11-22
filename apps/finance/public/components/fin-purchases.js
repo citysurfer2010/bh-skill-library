@@ -1,7 +1,7 @@
 'use strict';
 /**
  * File named fin-purchases so the bundle (alphabetical) loads it after fin-base.js, whose Fin helpers it uses at once.
- * Amazon (Matti 15.11.2026): every order with its items and the bank line it was paid with. Search (item, order number)
+ * Amazon (15.11.2026): every order with its items and the bank line it was paid with. Search (item, order number)
  * and filters (year, category, with/without bank line) live in the address (?q=, ?year=, ?category=, ?link=).
  */
 window.FinPurchases = (() => {

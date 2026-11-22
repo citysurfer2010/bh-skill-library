@@ -1,7 +1,7 @@
 'use strict';
 /**
  * Regression 15.11.2026: the first full Amazon history ran for an hour in one call and stored nothing until the end,
- * so a break lost everything (Matti: "schreibt er nicht live in die Datenbank?"). Now every year is stored at once and
+ * so a break lost everything ("schreibt er nicht live in die Datenbank?"). Now every year is stored at once and
  * the next run starts at the year that broke.
  */
 const test = require('node:test');

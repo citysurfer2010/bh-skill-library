@@ -7,7 +7,7 @@ description: Liest die Amazon-Zahlungen (Ihre Zahlungen → Transaktionen) und d
 
 ## Zweck
 
-Amazon bietet Privatkunden keine Schnittstelle zur Bestellhistorie. Matti hat sich am 15.11.2026 für den Browser-Weg entschieden: Ein Browser im Container `bh-amazon` hält die Amazon-Sitzung und liest nur.
+Amazon bietet Privatkunden keine Schnittstelle zur Bestellhistorie. Am 15.11.2026 fiel die Entscheidung für den Browser-Weg: Ein Browser im Container `bh-amazon` hält die Amazon-Sitzung und liest nur.
 
 ## Aufbau
 

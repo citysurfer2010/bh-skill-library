@@ -84,7 +84,7 @@ window.AppShell = (() => {
   const freeze = (table) => { table.querySelectorAll('col').forEach((c, j) => { if (!c.style.width) c.style.width = `${Math.round(table.querySelectorAll('thead th')[j].getBoundingClientRect().width)}px`; }); table.classList.add('is-sized'); };
   const resetWidths = (table) => { try { localStorage.removeItem(`bh-list:${table.dataset.listKey}:widths`); } catch (_) { /* nothing stored */ } table.querySelectorAll('col').forEach((c) => { c.style.width = ''; }); table.classList.remove('is-sized'); };
   /**
-   * Sorting is the standard of every list (Matti 15.11.2026): a click on a header sorts, a second click reverses.
+   * Sorting is the standard of every list (15.11.2026): a click on a header sorts, a second click reverses.
    * Rows sort by their cell's data-v (from column.sortValue) or text, numbers and dates naturally; group rows stay put.
    */
   const collator = typeof Intl !== 'undefined' ? new Intl.Collator('de', { numeric: true, sensitivity: 'base' }) : null;

@@ -38,7 +38,7 @@ function link() {
 }
 
 /**
- * A refund belongs to its payment (Matti 22.11.2026: "die Erstattung sollte immer mit der Zahlung verbunden sein"):
+ * A refund belongs to its payment (22.11.2026: "die Erstattung sollte immer mit der Zahlung verbunden sein"):
  * refunds of an order take the category of its payments when these agree. Returns how many refunds changed.
  */
 function pairRefunds() {
@@ -97,7 +97,7 @@ const doneYears = () => { try { return JSON.parse(state('amazon_history_years') 
 const firstYear = Number(FIRST_FROM.slice(0, 4));
 
 /**
- * History one year per call, each year stored and linked at once (Matti 15.11.2026: "schreibt er nicht live in die
+ * History one year per call, each year stored and linked at once (15.11.2026: "schreibt er nicht live in die
  * Datenbank?"). Full run: every year not yet complete, newest first. Daily run: this year up to the newest known
  * order, the year before only if that order was not reached.
  */

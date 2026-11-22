@@ -11,7 +11,7 @@ test('German dates and euro amounts', () => {
 });
 
 test('a card: id, date, total, product names without action links', () => {
-  const o = parseCard({ text: 'Bestellung aufgegeben 3. Februar 2025 Summe 23,98 € Lieferung an Matti Bestellnr. 302-1234567-7654321 Details anzeigen', products: ['USB-C Kabel 2 m', 'Erneut kaufen', 'USB-C Kabel 2 m', 'Kinderbuch: Der kleine Drache'] });
+  const o = parseCard({ text: 'Bestellung aufgegeben 3. Februar 2025 Summe 23,98 € Lieferung an Max Bestellnr. 302-1234567-7654321 Details anzeigen', products: ['USB-C Kabel 2 m', 'Erneut kaufen', 'USB-C Kabel 2 m', 'Kinderbuch: Der kleine Drache'] });
   assert.deepEqual(o, { id: '302-1234567-7654321', date: '2025-02-03', totalCents: 2398, items: ['USB-C Kabel 2 m', 'Kinderbuch: Der kleine Drache'] });
   assert.equal(parseCard({ text: 'Keine Bestellnummer hier' }), null);
 });

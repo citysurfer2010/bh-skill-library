@@ -19,7 +19,7 @@ window.Fin = (() => {
     return data;
   }
 
-  // The year is part of the address: /finance/2026, /finance/2026/transactions, /finance/all/transactions (Matti 15.11.2026).
+  // The year is part of the address: /finance/2026, /finance/2026/transactions, /finance/all/transactions (15.11.2026).
   const YEAR_PATH = /^\/finance\/(\d{4}|all)(?=\/|$)/;
   const yearParam = () => YEAR_PATH.exec(location.pathname)?.[1] || new URLSearchParams(location.search).get('year') || null;
   const yearOf = () => { const v = yearParam(); return v && v !== 'all' ? Number(v) : null; };

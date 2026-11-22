@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Categories: create and change name, kind, purpose and monthly budget (Matti 15.11.2026: "weitere Kategorie hinzufügen").
+ * Categories: create and change name, kind, purpose and monthly budget (15.11.2026: "weitere Kategorie hinzufügen").
  * The code is the stable key in bookings and rules; it is set once and never changed here.
  */
 const { getDb } = require('./db');

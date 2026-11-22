@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Loans of the flats (Matti 15.11.2026: "Kredite-Seite"). Amount, balance, annuity and end come from the sheet;
+ * Loans of the flats (15.11.2026: "Kredite-Seite"). Amount, balance, annuity and end come from the sheet;
  * interest and repayment per year come from the bank lines that carry the loan's IBAN or account number:
  *   BBBank  "IBAN DE… RECHN.ZINS 123,45 TILG./ENTG. 678,90 TILGUNG PER …"
  *   PSD     "Darl.-Leistung 1234567890 Tilgung 678,90 Zinsen 123,45"

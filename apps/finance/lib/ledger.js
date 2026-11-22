@@ -53,7 +53,7 @@ function setCategory(id, category, note) {
     if (category !== null && !knownCategory(category)) throw new Error('Unbekannte Kategorie');
     db.prepare("UPDATE transactions SET category = ?, category_source = 'manual', suggestion = NULL WHERE id = ?").run(category, id);
     if (category) categorize.learn(tx.counterparty, category, tx.account);
-    // Payment and refund of one Amazon order move together (Matti 22.11.2026: "wenn man die Kat ändert soll sich beides ändern").
+    // Payment and refund of one Amazon order move together (22.11.2026: "wenn man die Kat ändert soll sich beides ändern").
     if (category && tx.amazon_order) db.prepare("UPDATE transactions SET category = ?, category_source = 'manual', suggestion = NULL WHERE amazon_order = ? AND id != ? AND (amount_cents > 0) != ?").run(category, tx.amazon_order, id, tx.amount_cents > 0 ? 1 : 0);
   }
   if (note !== undefined) db.prepare('UPDATE transactions SET note = ? WHERE id = ?').run(String(note).slice(0, 300), id);

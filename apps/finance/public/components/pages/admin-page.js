@@ -1,5 +1,5 @@
 'use strict';
-/** Admin settings of the finance app (role check on the server): who may see the finances (Matti: belongs here, not on the import page). */
+/** Admin settings of the finance app (role check on the server): who may see the finances (belongs here, not on the import page). */
 (async () => {
   const host = document.getElementById('page-host');
   const esc = (v) => AppShell.esc(v);

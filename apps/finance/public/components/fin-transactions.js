@@ -86,7 +86,7 @@ window.FinTransactions = (() => {
     render(pageHost, yearPart === 'all' ? null : Number(yearPart));
   }
 
-  /** Box filter and search live in the address too, so every view can be shared (Matti 15.11.2026); they only replace the entry. */
+  /** Box filter and search live in the address too, so every view can be shared (15.11.2026); they only replace the entry. */
   function setParam(key, value) {
     const q = new URLSearchParams(location.search); if (value) q.set(key, value); else q.delete(key);
     history.replaceState(null, '', `${location.pathname}${q.toString() ? `?${q}` : ''}`); listKey = keyOf(); resetButton();
@@ -98,7 +98,7 @@ window.FinTransactions = (() => {
     const b = pageHost && pageHost.querySelector('[data-reset-filters]'); if (b) b.hidden = !anyActive();
   }
 
-  /** Filters for year, category and account (Matti 15.11.2026); typing dropdowns, kept in the address, highlighted when set. */
+  /** Filters for year, category and account (15.11.2026); typing dropdowns, kept in the address, highlighted when set. */
   function filters(years) {
     const cur = allYears ? 'all' : String(year || THIS_YEAR);
     const mount = (id, options, value, label, onPick, plain) => {

@@ -135,5 +135,5 @@ test('Finanzen: CSV-Import über die Seite, Dubletten werden erkannt, fremde Her
   assert.equal(first.format, 'comdirect'); assert.equal(first.rows, 1);
   const again = await (await send(admin2)).json();
   assert.equal(again.added, 0); assert.equal(again.duplicates, 1);
-  assert.equal((await send({ ...admin2, origin: 'https://fremd.familiebiskup.de' })).status, 403);
+  assert.equal((await send({ ...admin2, origin: 'https://fremd.example.org' })).status, 403);
 });

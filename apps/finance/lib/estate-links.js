@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Drive folders of the flats (Matti 15.11.2026: "die Drive-Ordner für jede Immobilie mitverlinken").
+ * Drive folders of the flats (15.11.2026: "die Drive-Ordner für jede Immobilie mitverlinken").
  * A folder is named like the sheet's address ("PLZ, Ort, Straße Nr, Lage, WE 30, WE 31"): street part and a common
  * flat number decide; "WE 27a" and "WE 27, SP 16" belong to the folder of WE 27.
  */

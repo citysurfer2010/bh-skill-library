@@ -2,9 +2,12 @@
 /** Ledger names for new bank accounts: the usual name for the current account, the kind for savings, the bank's description otherwise. */
 const crypto = require('crypto');
 const { getDb } = require('./db');
+const { accountNames } = require('./account-names');
 
-// Ledger names as in the old spreadsheet: the current account gets the bank's usual name, a card its card name.
-const BANKS = [{ name: 'Comdirect', label: 'comdirect', card: 'CD-CCM' }, { name: 'BBBank', label: 'BBB' }, { name: 'DKB', label: 'DKB' }, { name: 'PayPal', label: 'PayPal' }];
+// The current account gets the bank's usual ledger name, a card its card name; both are settings (account-names.js).
+const BANKS = [{ name: 'Comdirect', key: 'comdirect', card: 'comdirect_card' }, { name: 'BBBank', key: 'bbbank' }, { name: 'DKB', key: 'dkb' }, { name: 'PayPal', key: 'paypal' }];
+/** Ledger name and card name of a bank from the settings. */
+function namesOf(aspsp) { const n = accountNames(); const b = BANKS.find((x) => x.name === aspsp); return b ? { label: n[b.key], card: b.card ? n[b.card] : null } : { label: aspsp, card: null }; }
 const productOf = (a) => [a.product, a.details].filter(Boolean).join(' ');
 /** Current accounts first, so they get the usual ledger name before any other account of the same bank. */
 const rank = (a) => (/giro|current|privatkonto/i.test(productOf(a)) ? 0 : /tagesgeld|spar|festgeld/i.test(productOf(a)) ? 2 : 1);
@@ -20,7 +23,7 @@ const unique = (name, taken) => { let n = name; for (let i = 2; taken(n); i += 1
 
 /** A free ledger name for a new bank account: the usual name by account type first, then bank plus IBAN end. */
 function labelFor(aspsp, account) {
-  const db = getDb(); const b = BANKS.find((x) => x.name === aspsp) || { label: aspsp };
+  const db = getDb(); const b = namesOf(aspsp);
   const iban = account.account_id?.iban || ''; const type = account.cash_account_type || '';
   const taken = (l) => !!db.prepare('SELECT 1 FROM bank_accounts WHERE label = ?').get(l);
   // comdirect reports its Tagesgeld as CACC too; only the product name tells a current account from savings.
@@ -33,11 +36,11 @@ function labelFor(aspsp, account) {
   if (!savings && !card && desc) return unique(desc, taken);
   const wanted = card && b.card ? b.card : !savings && !card && (giro || aspsp === 'PayPal') ? b.label : null;
   if (wanted && !taken(wanted)) return wanted;
-  // Savings show what they are (Matti 15.11.2026: "Tagesgeld sollte als Tagesgeldkonto ausgewiesen sein").
+  // Savings show what they are (15.11.2026: "Tagesgeld sollte als Tagesgeldkonto ausgewiesen sein").
   const kind = !savings ? null : /tagesgeld/i.test(product) ? 'Tagesgeldkonto' : /festgeld/i.test(product) ? 'Festgeldkonto' : 'Sparkonto';
   if (kind && !taken(`${b.label} ${kind}`)) return `${b.label} ${kind}`;
   const alt = `${b.label} ${kind ? `${kind} ` : ''}${iban ? iban.slice(-4) : crypto.randomBytes(2).toString('hex')}`;
   return taken(alt) ? `${alt}-${crypto.randomBytes(2).toString('hex')}` : alt;
 }
 
-module.exports = { BANKS, rank, labelFor, describe };
+module.exports = { BANKS, namesOf, rank, labelFor, describe };

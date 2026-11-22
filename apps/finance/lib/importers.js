@@ -1,4 +1,5 @@
 'use strict';
+const { accountNames } = require('./account-names'); // the file's account: a name from the settings, never from the code
 /** Reads bank exports (comdirect, BBBank, PayPal) and the JSON taken over from the old spreadsheet. */
 const { toCents, toDay } = require('./money');
 const { extract } = require('./counterparty');
@@ -30,8 +31,8 @@ const PAYPAL_TRANSFERS = new Set(['bankgutschrift auf paypal-konto', 'von nutzer
 const norm = (h) => String(h).toLowerCase().replace(/\s+/g, ' ').trim();
 const FORMATS = [
   { id: 'comdirect', account: 'comdirect', need: ['buchungstag', 'umsatz in eur', 'buchungstext'], map: (r) => ({ date: r.buchungstag, amount: r['umsatz in eur'], kind: r.vorgang, text: r.buchungstext }) },
-  { id: 'bbbank', account: 'BBB', need: ['buchungstag', 'betrag', 'name zahlungsbeteiligter'], map: (r) => ({ date: r.buchungstag, amount: r.betrag, kind: r.buchungstext, text: [r['name zahlungsbeteiligter'], r.verwendungszweck].filter(Boolean).join(' '), counterparty: r['name zahlungsbeteiligter'] }) },
-  { id: 'paypal', account: 'PayPal', need: ['datum', 'brutto', 'name'], map: (r) => ({ date: r.datum, amount: r.brutto, kind: r.beschreibung || r.typ, text: [r.name, r.beschreibung].filter(Boolean).join(' · '), counterparty: r.name }), skip: (r) => PAYPAL_TRANSFERS.has(norm(r.beschreibung || r.typ || '')) },
+  { id: 'bbbank', account: 'bbbank', need: ['buchungstag', 'betrag', 'name zahlungsbeteiligter'], map: (r) => ({ date: r.buchungstag, amount: r.betrag, kind: r.buchungstext, text: [r['name zahlungsbeteiligter'], r.verwendungszweck].filter(Boolean).join(' '), counterparty: r['name zahlungsbeteiligter'] }) },
+  { id: 'paypal', account: 'paypal', need: ['datum', 'brutto', 'name'], map: (r) => ({ date: r.datum, amount: r.brutto, kind: r.beschreibung || r.typ, text: [r.name, r.beschreibung].filter(Boolean).join(' · '), counterparty: r.name }), skip: (r) => PAYPAL_TRANSFERS.has(norm(r.beschreibung || r.typ || '')) },
 ];
 
 /** Returns { format, account, rows: [{ date, cents, kind, text, counterparty }] } or throws a readable error. */
@@ -50,7 +51,7 @@ function parseBankFile(buffer, accountOverride) {
       out.push({ date, cents, kind: m.kind || '', text: m.text || '', counterparty: m.counterparty || extract(m.text) });
     }
     if (!out.length) throw new Error('Die Datei enthält keine Buchungen.');
-    return { format: format.id, account: accountOverride || format.account, rows: out };
+    return { format: format.id, account: accountOverride || accountNames()[format.account] || format.account, rows: out };
   }
   throw new Error('Format nicht erkannt. Unterstützt sind CSV-Exporte von comdirect, BBBank und PayPal.');
 }

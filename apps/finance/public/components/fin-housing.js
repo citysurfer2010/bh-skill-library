@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Wohnkosten (Matti 22.11.2026): the rented home per year (rent, Nebenkostenabrechnung, energy, broadcast fee) and an
+ * Wohnkosten (22.11.2026): the rented home per year (rent, Nebenkostenabrechnung, energy, broadcast fee) and an
  * estimate for the running year. One series (cost per month), the estimate bar hatched; the parts are in the table.
  * The expected settlement of the running year can be entered in a dialog; otherwise the average past one counts.
  */

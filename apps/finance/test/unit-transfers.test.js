@@ -14,7 +14,7 @@ const report = require('../lib/report');
 const db = getDb();
 db.prepare("INSERT INTO categories (code, art, name) VALUES ('TRANS', 'Übertrag', 'Geldtransfer'), ('LEBEN', 'Ausgaben', 'Lebensmittel'), ('LOHN', 'Einnahmen', 'Lohn')").run();
 db.prepare("INSERT INTO bank_sessions (session_id, aspsp, status, created_by, created_at) VALUES ('s', 'DKB', 'active', 'm', 'x')").run();
-db.prepare("INSERT INTO bank_accounts (uid, session_id, aspsp, iban, name, label, created_at) VALUES ('g', 's', 'Comdirect', 'DE11200411110000001400', 'Matti Biskup', 'comdirect', 'x'), ('m', 's', 'DKB', 'DE22120300000000008687', 'Anne-Kathrin Biskup und Matti Biskup', 'WE01', 'x')").run();
+db.prepare("INSERT INTO bank_accounts (uid, session_id, aspsp, iban, name, label, created_at) VALUES ('g', 's', 'Comdirect', 'DE11200411110000001400', 'Max Muster', 'comdirect', 'x'), ('m', 's', 'DKB', 'DE22120300000000008687', 'Erika Muster und Max Muster', 'WE01', 'x')").run();
 let n = 0;
 const add = (account, day, cents, text, extra = {}) => db.prepare('INSERT INTO transactions (account, booked_on, amount_cents, text, counterparty, category, category_source, counterparty_iban, hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
   .run(account, day, cents, text, extra.party || '', extra.category || null, extra.source || null, extra.iban || null, `h${n += 1}`, 'x').lastInsertRowid;
@@ -22,7 +22,7 @@ const cat = (id) => ({ ...db.prepare('SELECT category, category_source FROM tran
 
 test('own IBAN in the bank field or the text makes a transfer; a manual choice stays', () => {
   const a = add('comdirect', '2026-02-01', -50000, 'Miete Rücklage', { iban: 'DE22120300000000008687' });
-  const b = add('BBB', '2026-02-02', -2000, 'Empfänger: Matti Kto/IBAN: DE11 2004 1111 0000 0014 00 Buchungstext: Taschengeld');
+  const b = add('Bank 2', '2026-02-02', -2000, 'Empfänger: Max Kto/IBAN: DE11 2004 1111 0000 0014 00 Buchungstext: Taschengeld');
   const c = add('comdirect', '2026-02-03', -3000, 'Überweisung DE22120300000000008687', { category: 'LEBEN', source: 'manual' });
   const self = add('comdirect', '2026-02-04', -100, 'Gebühr Konto DE11200411110000001400');
   const r = transfers.detect();
@@ -32,7 +32,7 @@ test('own IBAN in the bank field or the text makes a transfer; a manual choice s
 });
 
 test('pairs: unique opposite amounts within 3 days and named after a holder; a lone rent of the same size is not touched', () => {
-  const out = add('CD-CCM', '2026-03-10', -80000, 'Kartenausgleich Biskup');
+  const out = add('Karte', '2026-03-10', -80000, 'Kartenausgleich Muster');
   const inn = add('PayPal', '2026-03-11', 80000, 'Bankgutschrift');
   const rentA = add('comdirect', '2026-04-01', -90000, 'Miete Wohnung', { party: 'Hausverwaltung' });
   const rentB = add('WE01', '2026-04-01', 90000, 'Miete WE01', { party: 'Mieter Schulz' });

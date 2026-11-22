@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Matti 22.11.2026: "die Erstattung sollte immer mit der Zahlung verbunden sein, und wenn man die Kat ändert soll sich
+ * 22.11.2026: "die Erstattung sollte immer mit der Zahlung verbunden sein, und wenn man die Kat ändert soll sich
  * beides ändern". A refund takes its payment's category; changing either changes the other (same Amazon order).
  */
 const test = require('node:test');

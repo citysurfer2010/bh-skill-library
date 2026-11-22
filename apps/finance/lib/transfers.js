@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Money between own accounts is a transfer (TRANS), never income or spending (Matti 15.11.2026: what matters is
+ * Money between own accounts is a transfer (TRANS), never income or spending (15.11.2026: what matters is
  * money coming in from outside and going out). Two signals, in this order:
  *  1. the other side is one of our own IBANs (bank field or IBAN in the text);
  *  2. for history without IBANs: the same amount with opposite sign on two own accounts within 3 days, only when
@@ -8,7 +8,7 @@
  * Only lines nobody decided yet are changed: open lines, lines booked by a learned rule and this detection's own earlier
  * marks (so a better rule corrects them). Manual and spreadsheet categories stay, a person's correction is never overwritten.
  *
- * Across areas it is no transfer for the household (Matti 22.11.2026): money from a property account to a private one is
+ * Across areas it is no transfer for the household (22.11.2026): money from a property account to a private one is
  * the flats' surplus (IMMOEIN), money from a private account to a property account is spent on the flats (IMMOAUS).
  * The property side stays a transfer; it does not count in the household overview anyway.
  */

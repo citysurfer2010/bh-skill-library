@@ -41,7 +41,7 @@ async function save(ctx) {
   const tmp = `${SESSION}.tmp`; await ctx.storageState({ path: tmp }); fs.chmodSync(tmp, 0o600); fs.renameSync(tmp, SESSION);
 }
 
-/** Stored Amazon access (Matti 15.11.2026: login in the .env), handed to this container only: {"email","password"}. */
+/** Stored Amazon access (15.11.2026: login in the .env), handed to this container only: {"email","password"}. */
 function credentials() {
   try { const c = JSON.parse(fs.readFileSync(process.env.CREDENTIALS_FILE || '/run/bh-amazon/credentials', 'utf8')); return c.email && c.password ? c : null; } catch { return null; }
 }

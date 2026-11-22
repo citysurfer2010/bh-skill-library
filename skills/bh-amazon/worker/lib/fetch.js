@@ -75,7 +75,7 @@ async function readPayments({ since = '2021-01-01' } = {}) {
  * Order history by year, ten orders a page: number, date, total and the items with their product links.
  * The payments page only shows the last weeks, so the history comes from here. stopAt: an order already known
  * (daily run: read the current year only up to there). year: read only this year, so the caller can store each
- * year at once and a broken run loses at most one year (Matti 15.11.2026).
+ * year at once and a broken run loses at most one year (15.11.2026).
  */
 async function orders(opts = {}) { return withLogin(() => readOrders(opts)); }
 async function readOrders({ since = '2021-01-01', stopAt = [], year: only = null } = {}) {

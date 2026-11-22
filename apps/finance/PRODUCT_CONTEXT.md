@@ -7,7 +7,7 @@
 Ersetzt die Tabelle „Finanzreport“: Kontoauszüge importieren, Kategorien zuordnen, Monat für Monat auswerten, Investments und Rücklagen verfolgen.
 
 ## 2. Zielgruppe
-Matti und freigegebene Familienmitglieder. Admins sehen die Daten immer, alle anderen nur nach Freigabe.
+Admins und freigegebene Familienmitglieder. Admins sehen die Daten immer, alle anderen nur nach Freigabe.
 
 ## 3. UX-Prinzipien
 _(Welche Leitlinien gelten, zum Beispiel „ein Klick bis zur Einreichung“?)_

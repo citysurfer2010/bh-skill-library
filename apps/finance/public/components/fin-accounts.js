@@ -69,7 +69,7 @@ window.FinAccounts = (() => {
   }
 
   /** Rename in a dialog; focus comes back to the row's pencil. */
-  /** Name and kind in one dialog; the list shows the kind but is not edited in the row (Matti 15.11.2026). */
+  /** Name and kind in one dialog; the list shows the kind but is not edited in the row (15.11.2026). */
   function renameForm(host, box, scopes) {
     const old = box.dataset.name; const scope = box.dataset.scope;
     FinRename.open({ current: old, scope, scopes,

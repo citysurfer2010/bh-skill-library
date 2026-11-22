@@ -1,5 +1,5 @@
 'use strict';
-/** Loan rates (Matti 22.11.2026): interest is spending, repayment builds wealth; the booking stays one line. */
+/** Loan rates (22.11.2026): interest is spending, repayment builds wealth; the booking stays one line. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

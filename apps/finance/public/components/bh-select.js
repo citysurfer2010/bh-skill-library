@@ -4,7 +4,7 @@
  *       size 'md'|'sm', label (aria-label), triggerText, searchPlaceholder, testId.
  * List in a portal (position: fixed), opens up/down; keyboard: arrows, Enter, Esc, Home/End; typing on the closed field opens it
  * with the typed text in the search; phone: bottom sheet. The field keeps the width of its longest entry, whatever is chosen.
- * Standard since 15.11.2026 (Matti): every dropdown is a typing dropdown with a fixed width. */
+ * Standard since 15.11.2026: every dropdown is a typing dropdown with a fixed width. */
 (function () {
   const SEARCH_FROM = 0; // Kept for callers that read it; every list is searchable unless searchable: false
   let uid = 0;

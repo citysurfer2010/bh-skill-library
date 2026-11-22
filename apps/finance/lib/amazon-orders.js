@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Amazon orders with their items and the bank lines they were paid with (Matti 15.11.2026: "wo sehe ich die Amazon
+ * Amazon orders with their items and the bank lines they were paid with (15.11.2026: "wo sehe ich die Amazon
  * Transaktionen?"). An order is known from the order history or from a bank line that carries its number.
  */
 const { getDb } = require('./db');

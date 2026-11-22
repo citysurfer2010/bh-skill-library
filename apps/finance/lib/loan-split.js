@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Loan rates split into interest and repayment (Matti 22.11.2026: "ja aufteilen", for private and property accounts).
+ * Loan rates split into interest and repayment (22.11.2026: "ja aufteilen", for private and property accounts).
  * The interest (and fees) is spending ("Immobilienkredite"), the repayment builds wealth ("Tilgung Immobilienkredite",
  * kind Investment): the debt falls by that amount. The split comes from the bank's own text (BBBank/PSD "RECHN.ZINS …
  * TILG./ENTG. …", "Darl.-Leistung … Tilgung … Zinsen …"); a rate without it stays whole. The booking stays one line;

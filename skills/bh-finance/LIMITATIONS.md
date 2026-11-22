@@ -1,6 +1,6 @@
 # BH Finanzen: Bekannte Grenzen
 
-- Bankabruf für comdirect, BBBank, DKB und PayPal. Die Enable-Banking-Anwendung ist eingeschränkt: nur Konten, die Matti im Kontrollzentrum verknüpft hat, sind abrufbar (neues Konto → dort zuerst verknüpfen). Ob comdirect die Kreditkarte über PSD2 liefert, ist offen; sonst bleibt sie beim CSV-Import.
+- Bankabruf für comdirect, BBBank, DKB und PayPal. Die Enable-Banking-Anwendung ist eingeschränkt: nur Konten, die im Kontrollzentrum verknüpft hat, sind abrufbar (neues Konto → dort zuerst verknüpfen). Ob comdirect die Kreditkarte über PSD2 liefert, ist offen; sonst bleibt sie beim CSV-Import.
 - Wie weit zurück eine Bank liefert, legt sie fest; ältere Monate per CSV nachtragen.
 - Der Bankschlüssel liegt im gemeinsamen Geheimnis-Ordner des App-Containers; alle Apps dort laufen als derselbe Benutzer und könnten ihn lesen.
 - Der Abgleich CSV ↔ Bank nutzt Betrag und Datum; zwei gleich hohe Buchungen in derselben Woche können vertauscht verknüpft werden (Summen bleiben richtig).

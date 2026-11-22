@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Editing an account in a dialog (Matti: inline does not work well): name and, where given, the kind of account.
+ * Editing an account in a dialog (inline does not work well): name and, where given, the kind of account.
  * Joining an existing account by its name asks first, in the same dialog.
  */
 window.FinRename = (() => {

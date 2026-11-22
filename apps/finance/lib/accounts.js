@@ -6,7 +6,7 @@
  */
 const { getDb } = require('./db');
 
-// Shown as „Privat“ (Matti 15.11.2026); stored as haushalt because the overview counts it as the household.
+// Shown as „Privat“ (15.11.2026); stored as haushalt because the overview counts it as the household.
 const SCOPES = { haushalt: 'Privat', immobilien: 'Immobilien', treuhand: 'Treuhand' };
 const now = () => new Date().toISOString();
 /** SQL condition on transactions.account: true for household accounts only. */

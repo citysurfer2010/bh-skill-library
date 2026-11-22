@@ -1,5 +1,5 @@
 'use strict';
-/** Mieten oder Kaufen (Matti 22.11.2026): annuity, residual debt, term and the comparison with the free room per month. */
+/** Mieten oder Kaufen (22.11.2026): annuity, residual debt, term and the comparison with the free room per month. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { calc, DEFAULTS } = require('../public/components/fin-rentbuy.js');

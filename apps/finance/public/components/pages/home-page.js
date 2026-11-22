@@ -18,7 +18,7 @@
     { id: 'import', label: 'Importieren', href: `${BASE}/import`, icon: 'upload', match: /^\/import\/?$/ },
     { id: 'categories', label: 'Kategorien', href: `${BASE}/categories`, icon: 'settings', match: /^\/categories\/?$/ },
   ];
-  // Module Immobilien: its own tab and sidebar; loans stay in Finanzen (Matti 15.11.2026).
+  // Module Immobilien: its own tab and sidebar; loans stay in Finanzen (15.11.2026).
   const ESTATE = [{ id: 'estate', label: 'Wohnungen', href: `${BASE}/estate`, icon: 'home', match: /^\/estate\/?$/ }];
   let me = null;
 

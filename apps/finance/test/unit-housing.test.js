@@ -1,5 +1,5 @@
 'use strict';
-/** Wohnkosten (Matti 22.11.2026): rent, Nebenkostenabrechnung, energy, broadcast fee per year and an estimate of the running year. */
+/** Wohnkosten (22.11.2026): rent, Nebenkostenabrechnung, energy, broadcast fee per year and an estimate of the running year. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

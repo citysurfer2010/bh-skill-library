@@ -69,7 +69,7 @@ function assign(db, parsed, knownRefs) {
   const add = db.prepare('INSERT OR IGNORE INTO loan_refs (unit_key, position, ref) VALUES (?, ?, ?)');
   const put = db.prepare('INSERT OR REPLACE INTO loan_refs (unit_key, position, ref) VALUES (?, ?, ?)');
   const near = (a, b, tol) => a != null && b != null && Math.abs(a - b) <= tol;
-  // The sheet may name an account at the wrong one of several loans of the same bank (Matti 16.11.2026: two NordLB loans
+  // The sheet may name an account at the wrong one of several loans of the same bank (16.11.2026: two NordLB loans
   // together for two flats). When the statement's granted amount contradicts that loan but fits exactly one other loan
   // of the same bank for the same flats, the account moves there; the first loan is marked "-" (sheet account wrong).
   const all = db.prepare('SELECT l.*, r.ref AS known_ref FROM loans l LEFT JOIN loan_refs r USING (unit_key, position)').all();
@@ -105,7 +105,7 @@ function importStatements({ statements = [], docs = [] }, knownRefs) {
   db.exec('BEGIN IMMEDIATE');
   try {
     assign(db, parsed.filter(Boolean), knownRefs);
-    // A header naming several flats ("WE30,31") marks a loan shared by them (Matti 16.11.2026); one flat number never does.
+    // A header naming several flats ("WE30,31") marks a loan shared by them (16.11.2026); one flat number never does.
     const share = db.prepare('INSERT OR IGNORE INTO loan_shares (ref, unit_key) VALUES (?, ?)');
     for (const p of parsed) {
       if (!p || !knownRefs.has(p.ref)) continue;

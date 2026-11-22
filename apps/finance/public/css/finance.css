@@ -121,7 +121,7 @@
 .fin-kind-immobilien { background: var(--bh-info-bg); color: var(--bh-info); }
 .fin-kind-treuhand { background: var(--bh-warn-bg); color: var(--bh-warn); }
 
-/* Filter bar of the transactions (Matti 15.11.2026): one row right of the count, a set filter is highlighted; on the phone a grid below the count. */
+/* Filter bar of the transactions (15.11.2026): one row right of the count, a set filter is highlighted; on the phone a grid below the count. */
 .bhlp-toolbar-right:has(.fin-filters) { flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
 .fin-filters { flex: 1 1 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; padding-block: 6px; }
 .fin-filters .fin-acc-filter { min-width: 120px; }

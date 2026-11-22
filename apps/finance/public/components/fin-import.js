@@ -1,6 +1,6 @@
 'use strict';
 /**
- * „Konten und Import“ (Matti 15.11.2026: as tables, actions in the page header, each in a dialog):
+ * „Konten und Import“ (15.11.2026: as tables, actions in the page header, each in a dialog):
  * connections (bank accounts and Amazon) and the import history. Who may see the finances lives on the admin page.
  */
 window.FinImport = (() => {

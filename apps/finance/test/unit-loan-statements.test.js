@@ -40,7 +40,7 @@ test('import keeps only known loans; overview: balance today from the last state
   ], docs: [{ ref: '1234567', url: 'https://drive.google.com/drive/folders/x' }, { ref: '1234567', url: 'javascript:alert(1)' }] }, refs);
   assert.deepEqual(r, { balances: 4, skipped: 1 }, 'the shared middle balance is stored once and updated, a foreign account is skipped');
   const db = getDb(); let n = 0;
-  const pay = (day, z, ti) => db.prepare('INSERT INTO transactions (account, booked_on, amount_cents, text, counterparty, hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run('BBB', day, -31000, `Teilzahlung Darlehen IBAN ${IBAN}RECHN.ZINS ${z} TILG./ENTG. ${ti} TILGUNG PER ${day}`, 'Bank', `s${n += 1}`, 'x');
+  const pay = (day, z, ti) => db.prepare('INSERT INTO transactions (account, booked_on, amount_cents, text, counterparty, hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Bank 2', day, -31000, `Teilzahlung Darlehen IBAN ${IBAN}RECHN.ZINS ${z} TILG./ENTG. ${ti} TILGUNG PER ${day}`, 'Bank', `s${n += 1}`, 'x');
   pay('2024-12-30', '109,00', '201,00'); // already in the statement balance
   pay('2025-01-31', '108,60', '201,40');
   pay('2025-02-28', '108,20', '201,80');
