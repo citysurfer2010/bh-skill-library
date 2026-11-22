@@ -77,7 +77,7 @@ function overview(today = new Date()) {
   const months = ends.map(point);
   const current = new Map(); for (const x of assets) current.set(x.name, x);
   return {
-    asOf: now, start, months, now: months.at(-1), kinds: KINDS,
+    asOf: now, start, months, now: months.at(-1), kinds: KINDS, positions: require('./depot').positions(),
     assets: [...current.values()].map((x) => ({ ...x, history: assets.filter((y) => y.name === x.name).map((y) => ({ id: y.id, on: y.as_of, cents: y.value_cents })) })),
     missing: list.filter((a) => a.balance == null).map((a) => a.name),
   };

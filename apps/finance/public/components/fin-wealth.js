@@ -76,13 +76,38 @@ window.FinWealth = (() => {
     });
   }
 
+  function depotDialog(host) {
+    BHModal.open({
+      title: 'Depot-Export hochladen', submitLabel: 'Hochladen', busyLabel: 'Lese …',
+      body: `<label class="bh-label" for="fin-depot-file">Datei (CSV aus dem Online-Banking, z. B. DKB „Depot exportieren“)</label><input id="fin-depot-file" class="bh-input" type="file" name="file" accept=".csv,text/csv" required>
+        <p class="fin-hint">Die App summiert die Positionen (Bewertungskurs × Stückzahl) zum Erstellungsdatum und trägt den Depotwert in den Verlauf ein. Ein neuer Export am selben Tag ersetzt den alten.</p>`,
+      onSubmit: async (form) => {
+        const file = form.elements.file.files[0]; if (!file) throw new Error('Bitte eine Datei wählen.');
+        const body = new FormData(); body.set('file', file);
+        const r = await Fin.api('POST', '/wealth/depot', body);
+        Toast.success(`${r.label}: ${euro(r.total_cents)} am ${date(r.on)} (${r.positions} Positionen)`); render(host);
+      },
+    });
+  }
+
+  function positionsList(list) {
+    if (!list.length) return '';
+    return AppShell.list({ title: `Depot-Positionen (Stand ${esc(date(list[0].as_of))})`, className: 'fin-wealth-assets', columns: [
+      { key: 'name', label: 'Wertpapier', html: (p) => `<strong>${esc(p.name)}</strong><div class="fin-hint">${esc([p.asset_class, p.isin].filter(Boolean).join(' · '))}</div>` },
+      { key: 'qty', label: 'Stück', align: 'right', html: (p) => `<span class="fin-num">${esc(p.qty.toLocaleString('de-DE', { maximumFractionDigits: 4 }))}</span>` },
+      { key: 'price_cents', label: 'Kurs', align: 'right', html: (p) => amt(p.price_cents) },
+      { key: 'value_cents', label: 'Wert', align: 'right', html: (p) => `<strong>${amt(p.value_cents)}</strong>` },
+      { key: 'gain', label: 'Gewinn', align: 'right', sortValue: (p) => (p.invested_cents == null ? 0 : p.value_cents - p.invested_cents), html: (p) => (p.invested_cents == null ? '–' : `${amt(p.value_cents - p.invested_cents)}<div class="fin-hint">${esc((((p.value_cents - p.invested_cents) / p.invested_cents) * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 }))} %</div>`) },
+    ], rows: list });
+  }
+
   async function render(host) {
     const d = await Fin.api('GET', '/wealth'); const n = d.now;
     const yearStart = d.months.find((m) => m.on.slice(0, 4) === d.asOf.slice(0, 4)) || d.months[0];
     const prevEnd = [...d.months].reverse().find((m) => m.on < `${d.asOf.slice(0, 4)}-01-01`);
     const base = prevEnd || yearStart; const delta = n.net - base.net;
     AppShell.render(host, `<header class="app-topbar"><div><h1>Vermögen</h1><div class="sub">Wohnungen zum Marktwert minus Restschuld, Konten (privat und Immobilienkonten), Depot und Sonstiges. Kautionskonten zählen nicht, das Geld gehört den Mietern.</div></div>
-      <div class="app-topbar-actions"><button type="button" class="bh-btn" data-add>Wert eintragen</button></div></header>
+      <div class="app-topbar-actions"><button type="button" class="bh-btn" data-depot>Depot-Export hochladen</button><button type="button" class="bh-btn" data-add>Wert eintragen</button></div></header>
       ${AppShell.kpis([
     { label: 'Nettovermögen', value: euro(n.net), sub: `${delta >= 0 ? '+' : ''}${euro(delta)} seit ${esc(date(base.on))}` },
     { label: 'Immobilien netto', value: euro(n.estate - n.debt), sub: `Marktwert ${euro(n.estate)} − Restschuld ${euro(n.debt)}` },
@@ -96,7 +121,8 @@ window.FinWealth = (() => {
     { key: 'value_cents', label: 'Wert', align: 'right', html: (a) => amt(a.value_cents) },
     { key: 'as_of', label: 'Stand', html: (a) => `<span class="fin-num">${esc(date(a.as_of))}</span>` },
     { key: 'act', label: 'Aktion', srOnly: true, sortable: false, html: (a) => `<button type="button" class="fin-link-btn" data-update="${esc(a.name)}" data-kind="${esc(a.kind)}">Neuer Wert</button>` },
-  ], rows: d.assets, empty: 'Noch nichts eingetragen. Depot, Bausparvertrag oder Beteiligungen über „Wert eintragen“ erfassen.' })}
+  ], rows: d.assets, empty: 'Noch nichts eingetragen. Depot-Export hochladen oder Bausparvertrag und Beteiligungen über „Wert eintragen“ erfassen.' })}
+      ${positionsList(d.positions || [])}
       ${AppShell.list({ title: 'Je Monatsende', className: 'fin-wealth-list', columns: [
     { key: 'on', label: 'Stand', html: (m) => `<span class="fin-num">${esc(date(m.on))}</span>` },
     { key: 'estate', label: 'Wohnungen', align: 'right', html: (m) => amt(m.estate) },
@@ -107,6 +133,7 @@ window.FinWealth = (() => {
   ], rows: [...d.months].reverse() })}`);
     bindChart(host, d.months);
     host.querySelector('[data-add]').addEventListener('click', () => assetDialog(d, host));
+    host.querySelector('[data-depot]').addEventListener('click', () => depotDialog(host));
     host.querySelectorAll('[data-update]').forEach((b) => b.addEventListener('click', () => assetDialog(d, host, { name: b.dataset.update, kind: b.dataset.kind })));
   }
 

@@ -56,4 +56,4 @@ function parseBankFile(buffer, accountOverride) {
   throw new Error('Format nicht erkannt. Unterstützt sind CSV-Exporte von comdirect, BBBank und PayPal.');
 }
 
-module.exports = { parseBankFile, parseCsv, FORMATS, PAYPAL_TRANSFERS };
+module.exports = { parseBankFile, parseCsv, decode, FORMATS, PAYPAL_TRANSFERS };

@@ -26,7 +26,7 @@ window.FinCsv = (() => {
         const lines = []; let open = 0; let failed = 0;
         for (const file of files) {
           const body = new FormData(); body.set('file', file); if (account) body.set('account', account);
-          try { const r = await Fin.api('POST', '/imports', body); lines.push(`<li>${esc(file.name)}: ${r.added} neu für ${esc(r.account)}, ${r.duplicates} schon vorhanden</li>`); open = Math.max(open, r.open); } catch (x) { failed += 1; lines.push(`<li class="fin-bank-error-inline">${esc(file.name)}: ${esc(x.message)}</li>`); }
+          try { const r = await Fin.api('POST', '/imports', body); lines.push(r.depot ? `<li>${esc(file.name)}: Depot-Export erkannt, ${r.added} Positionen, Depotwert ${esc(Fin.euro(r.total_cents))} am ${esc(Fin.date(r.on))} unter <a href="${BASE}/wealth">Vermögen</a> eingetragen</li>` : `<li>${esc(file.name)}: ${r.added} neu für ${esc(r.account)}, ${r.duplicates} schon vorhanden</li>`); open = Math.max(open, r.open); } catch (x) { failed += 1; lines.push(`<li class="fin-bank-error-inline">${esc(file.name)}: ${esc(x.message)}</li>`); }
         }
         rerender();
         return { next: { title: failed ? 'Import mit Fehlern' : 'Import fertig', submitLabel: 'Schließen', body: `<ul class="fin-csv-result">${lines.join('')}</ul>${open ? `<p><a class="bh-btn bh-btn-sm" href="${BASE}/all/transactions?category=OFFEN">${open} Buchungen zuordnen</a></p>` : ''}`, onSubmit: async () => {} } };

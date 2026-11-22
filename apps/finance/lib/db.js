@@ -98,6 +98,8 @@ function migrate(conn) {
     CREATE TABLE IF NOT EXISTS loan_aliases (alias TEXT PRIMARY KEY, ref TEXT NOT NULL);
     -- Depot and other assets the banks do not report: a value per name and date, entered on the page "Vermögen".
     CREATE TABLE IF NOT EXISTS wealth_assets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, kind TEXT NOT NULL, value_cents INTEGER NOT NULL, as_of TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE (name, as_of));
+    -- Positions of a depot export (lib/depot.js): the value of the depot on that day is their sum.
+    CREATE TABLE IF NOT EXISTS wealth_positions (asset_name TEXT NOT NULL, as_of TEXT NOT NULL, name TEXT NOT NULL, wkn TEXT NOT NULL DEFAULT '', isin TEXT NOT NULL DEFAULT '', qty REAL NOT NULL, price_cents INTEGER NOT NULL, value_cents INTEGER NOT NULL, invested_cents INTEGER, asset_class TEXT NOT NULL DEFAULT '');
     -- Drive folder of each flat and its financing papers (scripts/import-estate-links.js); kept across sheet imports.
     CREATE TABLE IF NOT EXISTS estate_links (unit_key TEXT PRIMARY KEY, folder_url TEXT, finance_url TEXT);
   `);

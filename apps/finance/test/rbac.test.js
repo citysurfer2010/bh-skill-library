@@ -137,3 +137,8 @@ test('PUT /api/housing/settlement: ohne Anmeldung 401, als user 403, als admin 2
   assert.equal((await t.call('/api/housing/settlement', { method: 'PUT', body, as: 'a@beispiel.de', role: 'admin' })).status, 204);
   assert.equal((await t.call('/api/housing/settlement', { method: 'PUT', body: { year: 'x' }, as: 'a@beispiel.de', role: 'admin' })).status, 400);
 });
+
+test('POST /api/wealth/depot: without login 401, as user 403', async () => {
+  assert.equal((await t.call('/api/wealth/depot', { method: 'POST', body: {} })).status, 401);
+  assert.equal((await t.call('/api/wealth/depot', { method: 'POST', body: {}, as: 'u@beispiel.de', role: 'user' })).status, 403);
+});

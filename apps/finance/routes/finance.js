@@ -36,6 +36,11 @@ function buildRouter() {
   r.post('/wealth/assets', (req, res) => {
     try { require('../lib/wealth').addAsset({ name: req.body?.name, kind: req.body?.kind, value_cents: req.body?.value_cents, as_of: req.body?.as_of }); return res.status(204).end(); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
   });
+  // Depot export (positions with price and quantity) on the page "Vermögen".
+  r.post('/wealth/depot', upload.single('file'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Bitte eine Datei wählen' });
+    try { return res.json(require('../lib/depot').importDepot(req.file.buffer)); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
+  });
   r.delete('/wealth/assets/:id', (req, res) => (require('../lib/wealth').removeAsset(req.params.id) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' })));
   // Expected Nebenkostenabrechnung of a year (negative = back payment, positive = refund, null = use the average).
   r.put('/housing/settlement', (req, res) => {
@@ -78,6 +83,10 @@ function buildRouter() {
   r.get('/imports', (_req, res) => res.json({ imports: getDb().prepare('SELECT i.*, MIN(t.booked_on) AS first, MAX(t.booked_on) AS last FROM imports i LEFT JOIN transactions t ON t.import_id = i.id GROUP BY i.id ORDER BY i.id DESC LIMIT 50').all() }));
   r.post('/imports', upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Bitte eine CSV-Datei wählen' });
+    // A depot export sent to the transaction import goes to the page "Vermögen" instead of failing.
+    if (require('../lib/depot').isDepotExport(req.file.buffer)) {
+      try { const d = require('../lib/depot').importDepot(req.file.buffer); return res.json({ depot: true, account: d.label, added: d.positions, duplicates: 0, open: 0, total_cents: d.total_cents, on: d.on }); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
+    }
     try {
       const parsed = parseBankFile(req.file.buffer, req.body?.account || null);
       const result = ledger.importRows({ filename: req.file.originalname.slice(0, 120), ...parsed, user: req.user.email });
