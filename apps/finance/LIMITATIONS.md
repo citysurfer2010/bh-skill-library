@@ -9,6 +9,7 @@
 
 | Modul | Datei | Offene Punkte |
 |-------|-------|---------------|
+| Darlehensauszüge | `lib/loan-statements.js` | Ein PDF mit mehreren Auszügen wird an jeder „IBAN für dieses Konto“ geteilt (Signal Iduna); andere Banken mit mehreren Konten in einem PDF werden noch als ein Auszug gelesen. Gilt die Tabelle (Portfolioübersicht) als neuer als der letzte Auszug, zählt trotzdem der Auszug, weil das Tabellendatum der Importtag ist. |
 | Mieten oder Kaufen | `public/components/fin-rentbuy.js` | Zins über die ganze Laufzeit gleich (kein Anschlusszins), keine Wertentwicklung der Wohnung, keine Mietsteigerung, keine Steuern; Kaufnebenkosten sind verloren und werden nicht auf Jahre verteilt. Freier Cashflow und Sparraten trägt man selbst ein (stehen nur in der Adresse, nicht in der Datenbank). |
 | Wohnkosten | `lib/housing.js` | Vermieter = häufigster Empfänger unter „Wohnung“ auf Privatkonten; Miete = Betrag, der im Jahr mindestens 3-mal gezahlt wurde, jede andere Zahlung an den Vermieter gilt als Nebenkostenabrechnung. Ändert sich die Miete im November/Dezember (unter 3 Zahlungen im Jahr), zählen diese Monate vorübergehend als Abrechnung. Energie nur bei bekannten Versorgern (Stadtwerke, Vattenfall, GASAG …). Ein Umzug (neuer Vermieter) wird noch nicht getrennt dargestellt. |
 

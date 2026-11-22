@@ -47,6 +47,17 @@ function parse(text) {
 }
 
 /**
+ * One PDF can hold several statements (Signal Iduna sends one per sub-account, "…-00", "…-01"); each starts with
+ * "IBAN für dieses Konto". Read every part on its own, else all balances land on the first account (22.11.2026: the
+ * small loan's balance overwrote the main loan of a flat, ~370.000 € too little debt).
+ */
+function parseAll(text) {
+  const t = String(text || ''); const at = [...t.matchAll(/IBAN für dieses Konto/g)].map((m) => m.index);
+  if (at.length < 2) return [parse(t)].filter(Boolean);
+  return at.map((i, k) => parse(t.slice(i, at[k + 1] ?? t.length))).filter(Boolean);
+}
+
+/**
  * A statement of an account the sheet does not know is given to a loan of the same flat folder when that loan has no
  * account, its bank is the bank of a known loan in the same folder, and it is the only such loan; otherwise it is skipped.
  */
@@ -87,7 +98,7 @@ function assign(db, parsed, knownRefs) {
 /** Statements in ({ name, text, folderId?, place? }), docs ({ ref, url }) too; returns how many balances were stored. */
 function importStatements({ statements = [], docs = [] }, knownRefs) {
   const db = getDb(); let balances = 0; let skipped = 0;
-  const parsed = statements.map((s) => { const p = parse(s.text); return p && { ...p, folderId: s.folderId || null, from: s.place || '' }; });
+  const parsed = statements.flatMap((s) => parseAll(s.text).map((p) => ({ ...p, folderId: s.folderId || null, from: s.place || '' })));
   const ins = db.prepare('INSERT INTO loan_balances (ref, balance_on, balance_cents, rate_pct) VALUES (?, ?, ?, ?) ON CONFLICT (ref, balance_on) DO UPDATE SET balance_cents = excluded.balance_cents, rate_pct = COALESCE(excluded.rate_pct, rate_pct)');
   const doc = db.prepare('INSERT INTO loan_docs (ref, url) VALUES (?, ?) ON CONFLICT (ref) DO UPDATE SET url = excluded.url');
   db.exec('BEGIN IMMEDIATE');
@@ -119,4 +130,4 @@ function of(ref) {
   return { history, rate, docs: db.prepare('SELECT url FROM loan_docs WHERE ref = ?').get(ref)?.url || null };
 }
 
-module.exports = { parse, importStatements, of };
+module.exports = { parse, parseAll, importStatements, of };
