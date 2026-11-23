@@ -26,4 +26,4 @@ Amazon bietet Privatkunden keine Schnittstelle zur Bestellhistorie. Am 15.11.202
 
 ## Schnittstelle
 
-`GET /status` · `POST /login {email,password}` → `{state: ok|code|captcha|approve|error}` · `POST /login/answer {code|captcha}` · `POST /logout` · `POST /payments {since}` → `{payments:[{orderId,date,cents,method}]}` · `POST /items {orderIds}` → `{<id>: [{asin,title,url}]}`. Abgelaufene Sitzung: 409 mit `code: login`.
+`GET /status` · `POST /login {email,password}` → `{state: ok|code|captcha|approve|error}` · `POST /login/answer {code|captcha}` · `POST /logout` · `POST /payments {since}` → `{payments:[{orderId,date,cents,method}]}` · `POST /items {orderIds}` → `{<id>: [{asin,title,url}]}`. `POST /invoice {orderId}` → `{orderId, source: invoice|summary, pdf}` (PDF base64: Rechnung des Verkäufers, sonst druckbare Bestellübersicht; 23.11.2026 für die Steuererklärung). Abgelaufene Sitzung: 409 mit `code: login`.

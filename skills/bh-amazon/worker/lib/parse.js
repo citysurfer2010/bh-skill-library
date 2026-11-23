@@ -89,4 +89,19 @@ function parseItems(links) {
   return [...out.values()];
 }
 
-module.exports = { parseCard, parseCards, parsePayment, parsePayments, parseItems, germanDate, euroCents, ORDER_ID, isOrderId };
+/**
+ * Invoice PDFs of an order (23.11.2026: invoices for the tax return). Amazon lists them in the invoice popover as
+ * links to /documents/download/…/invoice.pdf; sellers' own invoices sometimes as …/invoice/… links. Absolute URLs, no duplicates.
+ */
+function invoiceLinks(hrefs, base = 'https://www.amazon.de') {
+  const out = [];
+  for (const h of hrefs || []) {
+    if (!h || !/\/documents\/download\/|invoice\.pdf|\/invoice\/download/i.test(h)) continue;
+    let url; try { url = new URL(h, base).href; } catch { continue; }
+    if (!/^https:\/\/[^/]*amazon\./.test(url) || out.includes(url)) continue;
+    out.push(url);
+  }
+  return out;
+}
+
+module.exports = { invoiceLinks, parseCard, parseCards, parsePayment, parsePayments, parseItems, germanDate, euroCents, ORDER_ID, isOrderId };

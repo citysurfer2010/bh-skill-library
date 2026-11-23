@@ -2,7 +2,7 @@
 /** Reads "Ihre Zahlungen → Transaktionen" back to a date, and the items of single orders. Slow on purpose: one page at a time. */
 const { context, save, hasSession, forget, LoginNeeded, credentials } = require('./session');
 const login = require('./login');
-const { parsePayments, parseItems, parseCards } = require('./parse');
+const { parsePayments, parseItems, parseCards, invoiceLinks } = require('./parse');
 
 const PAYMENTS = 'https://www.amazon.de/cpe/yourpayments/transactions';
 const HISTORY = (year, start) => `https://www.amazon.de/your-orders/orders?timeFilter=year-${year}&startIndex=${start}`;
@@ -114,4 +114,27 @@ async function readItems(orderIds) {
   return out;
 }
 
-module.exports = { payments, items, orders, extractRows };
+/**
+ * Invoice of one order as PDF (base64). First the invoice popover of the order, the first PDF there is fetched
+ * with the session's cookies; without one (older or digital orders) the printable order summary is saved as PDF.
+ */
+const INVOICES = (id) => `https://www.amazon.de/gp/shared-cs/ajax/invoice/invoice.html?orderId=${encodeURIComponent(id)}&relatedRequestId=bh&isADriveSubscription=&isBookingOrder=0`;
+const SUMMARY = (id) => `https://www.amazon.de/gp/css/summary/print.html?orderID=${encodeURIComponent(id)}`;
+async function invoice(orderId) { return withLogin(() => readInvoice(orderId)); }
+async function readInvoice(orderId) {
+  if (!hasSession()) throw new LoginNeeded();
+  const ctx = await context(); const page = await ctx.newPage();
+  try {
+    await page.goto(INVOICES(orderId), { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page); await pause(page);
+    for (const url of invoiceLinks(await page.$$eval('a[href]', (as) => as.map((a) => a.getAttribute('href'))))) {
+      const r = await ctx.request.get(url, { timeout: 60_000 });
+      if (r.ok() && /pdf/i.test(r.headers()['content-type'] || '')) { await save(ctx); return { orderId, source: 'invoice', pdf: (await r.body()).toString('base64') }; }
+    }
+    await page.goto(SUMMARY(orderId), { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page); await pause(page);
+    const pdf = await page.pdf({ format: 'A4', printBackground: true });
+    await save(ctx);
+    return { orderId, source: 'summary', pdf: pdf.toString('base64') };
+  } finally { await ctx.close().catch(() => {}); }
+}
+
+module.exports = { payments, items, orders, invoice, extractRows };

@@ -64,3 +64,9 @@ test('order numbers for the items endpoint: physical and digital pass, anything 
   const { isOrderId } = require('../lib/parse');
   assert.deepEqual(['302-1234567-7654321', 'D01-7353514-9403827', 'D01-123', 'x302-1234567-7654321', ''].map(isOrderId), [true, true, false, false, false]);
 });
+
+test('invoiceLinks: only Amazon invoice PDFs, absolute and once', () => {
+  const { invoiceLinks } = require('../lib/parse');
+  const hrefs = ['/documents/download/aaaa-1111/invoice.pdf', '/documents/download/aaaa-1111/invoice.pdf', '/gp/help/customer/display.html', 'https://evil.example.com/documents/download/x/invoice.pdf', '/gp/invoice/download?id=2', null];
+  assert.deepEqual(invoiceLinks(hrefs), ['https://www.amazon.de/documents/download/aaaa-1111/invoice.pdf', 'https://www.amazon.de/gp/invoice/download?id=2']);
+});

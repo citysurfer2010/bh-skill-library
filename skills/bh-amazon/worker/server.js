@@ -29,6 +29,8 @@ const routes = {
   'POST /payments': async (b) => serial(() => fetcher.payments({ since: /^\d{4}-\d{2}-\d{2}$/.test(b.since || '') ? b.since : undefined })),
   'POST /orders': async (b) => serial(() => fetcher.orders({ since: /^\d{4}-\d{2}-\d{2}$/.test(b.since || '') ? b.since : undefined, stopAt: [].concat(b.stopAt || []).slice(0, 200), year: /^20\d{2}$/.test(String(b.year || '')) ? Number(b.year) : null })),
   'POST /items': async (b) => serial(() => fetcher.items([].concat(b.orderIds || []).filter(isOrderId))),
+  // One order's invoice as PDF (base64): the seller's invoice if Amazon offers one, else the printable order summary.
+  'POST /invoice': async (b) => { if (!isOrderId(String(b.orderId || ''))) throw Object.assign(new Error('Bestellnummer ungültig'), { code: 'input' }); return serial(() => fetcher.invoice(String(b.orderId))); },
 };
 
 http.createServer(async (req, res) => {
@@ -37,6 +39,6 @@ http.createServer(async (req, res) => {
   if (!TOKEN || !same(String(req.headers.authorization || ''), `Bearer ${TOKEN}`)) return send(res, 401, { error: 'Schlüssel fehlt oder falsch' });
   const fn = routes[key]; if (!fn) return send(res, 404, { error: 'unbekannt' });
   try { return send(res, 200, await fn(await body(req))); } catch (e) {
-    return send(res, e.code === 'login' ? 409 : 502, { error: e.message, code: e.code || 'error' });
+    return send(res, e.code === 'login' ? 409 : e.code === 'input' ? 400 : 502, { error: e.message, code: e.code || 'error' });
   }
 }).listen(PORT, '0.0.0.0', () => console.log(`[bh-amazon] läuft auf Port ${PORT}`));
