@@ -52,7 +52,7 @@ Bei `Access token expired or revoked` zuerst `auth.refreshToken()` aufrufen.
 |---|---|
 | `gmail.createDraft` | Erstellt einen E-Mail-Entwurf. |
 | `gmail.downloadAttachment` | Lädt einen E-Mail-Anhang herunter (binär-sicher: PDF/XLSX/Bilder). |
-| `gmail.get` | Liest eine Gmail-Nachricht nach ID. |
+| `gmail.get (listet seit 23.11.2026 auch die Anhänge mit attachmentId für gmail.downloadAttachment)` | Liest eine Gmail-Nachricht nach ID. |
 | `gmail.listLabels` | Listet alle Gmail-Labels auf. |
 | `gmail.modify` | Ändert Labels einer Gmail-Nachricht (z.B. |
 | `gmail.search` | Durchsucht Google Mail nach Nachrichten. |

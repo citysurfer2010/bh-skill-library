@@ -24,7 +24,17 @@ function formatMessage(msg) {
   const hdrs = {};
   for (const h of (msg.payload?.headers || [])) hdrs[h.name.toLowerCase()] = h.value;
   const body = extractBody(msg.payload);
-  return `ID: ${msg.id}\nVon: ${hdrs.from || '?'}\nAn: ${hdrs.to || '?'}\nBetreff: ${hdrs.subject || '(kein Betreff)'}\nDatum: ${hdrs.date || '?'}\nSnippet: ${msg.snippet || ''}\n\n${body.substring(0, 2000)}`;
+  const att = listAttachments(msg.payload);
+  const attText = att.length ? `\n\nAnhänge (${att.length}):\n${att.map((x) => `- ${x.filename} (${x.mimeType}, ${x.size} Bytes) attachmentId: ${x.attachmentId}`).join('\n')}` : '';
+  return `ID: ${msg.id}\nVon: ${hdrs.from || '?'}\nAn: ${hdrs.to || '?'}\nBetreff: ${hdrs.subject || '(kein Betreff)'}\nDatum: ${hdrs.date || '?'}\nSnippet: ${msg.snippet || ''}\n\n${body.substring(0, 2000)}${attText}`;
+}
+
+// Attachments of a message with their ids, so gmail.downloadAttachment can fetch them (23.11.2026: get showed none).
+function listAttachments(part, out = []) {
+  if (!part) return out;
+  if (part.filename && part.body?.attachmentId) out.push({ filename: part.filename, mimeType: part.mimeType || '', size: part.body.size || 0, attachmentId: part.body.attachmentId });
+  for (const p of part.parts || []) listAttachments(p, out);
+  return out;
 }
 
 // RFC 2047: a raw non-ASCII header is read as Latin-1 by Gmail ("„getrennt“" became mojibake in the subject,
@@ -52,4 +62,4 @@ function encodeEmail(headers, body) {
   return Buffer.from(lines.join('\r\n')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-module.exports = { decodeBase64Url, extractBody, formatMessage, encodeEmail, encodeHeaderValue };
+module.exports = { decodeBase64Url, extractBody, formatMessage, listAttachments, encodeEmail, encodeHeaderValue };
