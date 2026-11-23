@@ -126,10 +126,13 @@ async function readInvoice(orderId) {
   const ctx = await context(); const page = await ctx.newPage();
   try {
     await page.goto(INVOICES(orderId), { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page); await pause(page);
-    for (const url of invoiceLinks(await page.$$eval('a[href]', (as) => as.map((a) => a.getAttribute('href'))))) {
+    // One invoice per seller or shipment: return all of them (23.11.2026: the first one alone missed items).
+    const pdfs = [];
+    for (const url of invoiceLinks(await page.$$eval('a[href]', (as) => as.map((a) => a.getAttribute('href')))).slice(0, 10)) {
       const r = await ctx.request.get(url, { timeout: 60_000 });
-      if (r.ok() && /pdf/i.test(r.headers()['content-type'] || '')) { await save(ctx); return { orderId, source: 'invoice', pdf: (await r.body()).toString('base64') }; }
+      if (r.ok() && /pdf/i.test(r.headers()['content-type'] || '')) pdfs.push((await r.body()).toString('base64'));
     }
+    if (pdfs.length) { await save(ctx); return { orderId, source: 'invoice', pdf: pdfs[0], pdfs }; }
     await page.goto(SUMMARY(orderId), { waitUntil: 'domcontentloaded', timeout: 60_000 }); await guard(page); await pause(page);
     const pdf = await page.pdf({ format: 'A4', printBackground: true });
     await save(ctx);
