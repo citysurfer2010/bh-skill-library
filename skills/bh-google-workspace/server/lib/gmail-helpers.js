@@ -62,4 +62,20 @@ function encodeEmail(headers, body) {
   return Buffer.from(lines.join('\r\n')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-module.exports = { decodeBase64Url, extractBody, formatMessage, listAttachments, encodeEmail, encodeHeaderValue };
+// Mail with attachments (24.11.2026: a filled form had to go back to the sender). attachments: [{ filename, mimeType, content (base64) }].
+function encodeEmailWithAttachments(headers, body, attachments, bodyType = 'text/plain; charset=utf-8') {
+  const boundary = `bh-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  const h = { ...headers, 'MIME-Version': '1.0', 'Content-Type': `multipart/mixed; boundary="${boundary}"` };
+  const lines = [];
+  for (const [k, v] of Object.entries(h)) lines.push(`${k}: ${encodeHeaderValue(k, v)}`);
+  lines.push('', `--${boundary}`, `Content-Type: ${bodyType}`, 'Content-Transfer-Encoding: base64', '', Buffer.from(body || '', 'utf8').toString('base64').replace(/.{76}/g, '$&\r\n'));
+  for (const a of attachments) {
+    const name = String(a.filename || 'anhang').replace(/["\r\n]/g, '');
+    const enc = `=?UTF-8?B?${Buffer.from(name, 'utf8').toString('base64')}?=`;
+    lines.push(`--${boundary}`, `Content-Type: ${a.mimeType || 'application/octet-stream'}; name="${enc}"`, `Content-Disposition: attachment; filename="${enc}"`, 'Content-Transfer-Encoding: base64', '', String(a.content || '').replace(/\s+/g, '').replace(/.{76}/g, '$&\r\n'));
+  }
+  lines.push(`--${boundary}--`, '');
+  return Buffer.from(lines.join('\r\n')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+module.exports = { decodeBase64Url, extractBody, formatMessage, listAttachments, encodeEmail, encodeEmailWithAttachments, encodeHeaderValue };
