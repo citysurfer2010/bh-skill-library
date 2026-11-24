@@ -21,6 +21,8 @@
   ];
   // Module Immobilien: its own tab and sidebar; loans stay in Finanzen (15.11.2026).
   const ESTATE = [{ id: 'estate', label: 'Wohnungen', href: `${BASE}/estate`, icon: 'home', match: /^\/estate\/?$/ }];
+  // Module Einkommensteuer (24.11.2026): overview and one entry per tax year in its sidebar.
+  const TAX = { id: 'tax', label: 'Übersicht', href: `${BASE}/tax`, icon: 'chart', match: /^\/tax(?:\/(\d{4}))?\/?$/ };
   let me = null;
 
   /** Old links with ?year=2026 become /finance/2026/… (other query parameters stay). */
@@ -33,8 +35,22 @@
     history.replaceState(null, '', `${Fin.yearHref(y, page)}${q.toString() ? `?${q}` : ''}`);
   }
 
+  async function taxRoute() {
+    const y = TAX.match.exec(path())[1];
+    Navbar.render('tax', me);
+    const d = await Fin.api('GET', '/tax').catch(() => ({ items: [] }));
+    const items = [{ id: 'tax', label: 'Übersicht', href: TAX.href, icon: 'chart' }, ...d.items.map((r) => ({ id: `tax-${r.year}`, label: String(r.year), href: `${BASE}/tax/${r.year}`, icon: 'check', count: r.open_todos || undefined }))];
+    ModuleSidebar.show({ title: 'Einkommensteuer', active: y ? `tax-${y}` : 'tax', storageKey: 'finance-sidebar-collapsed', items });
+    AppShell.crumbs(y ? [['Einkommensteuer', TAX.href], [y]] : [['Einkommensteuer', TAX.href]]);
+    AppShell.loading(host, y ? `Einkommensteuer ${y}` : 'Einkommensteuer', 'cards');
+    me = me || await FinanceApi.me();
+    if (!me.finance) { AppShell.render(host, '<header class="app-topbar"><div><h1>Kein Zugang</h1></div></header>'); return undefined; }
+    return y ? FinTax.year(host, Number(y)) : FinTax.overview(host, d);
+  }
+
   async function route() {
     yearQueryToPath();
+    if (TAX.match.test(path())) return taxRoute();
     const estate = ESTATE.find((x) => x.match.test(path()));
     const p = estate || PAGES.find((x) => x.match.test(path())) || PAGES[0];
     const id = p.match.exec(path())?.[1];
@@ -66,9 +82,9 @@
   AppShell.links(`${BASE}/`, go);
   window.addEventListener('popstate', () => route().catch(fail));
   try {
-    Navbar.render(/^\/estate/.test(path()) ? 'estate' : 'home', null);
+    Navbar.render(/^\/estate/.test(path()) ? 'estate' : /^\/tax/.test(path()) ? 'tax' : 'home', null);
     const pending = route();
-    Navbar.render(/^\/estate/.test(path()) ? 'estate' : 'home', await FinanceApi.me());
+    Navbar.render(/^\/estate/.test(path()) ? 'estate' : /^\/tax/.test(path()) ? 'tax' : 'home', await FinanceApi.me());
     await pending;
   } catch (e) { fail(e); }
 })();

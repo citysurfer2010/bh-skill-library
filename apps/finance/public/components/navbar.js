@@ -9,7 +9,8 @@
   // Module tabs: extend when adding new pages. `id` is the value for Navbar.render().
   var TABS = [
     { id: 'home', href: '/finance/', label: 'Finanzen' },
-    { id: 'estate', href: '/finance/estate', label: 'Immobilien' }, // Module Immobilien (15.11.2026); loans stay under Finanzen
+    { id: 'estate', href: '/finance/estate', label: 'Immobilien' },
+    { id: 'tax', href: '/finance/tax', label: 'Einkommensteuer' }, // Module Einkommensteuer (24.11.2026) // Module Immobilien (15.11.2026); loans stay under Finanzen
   ];
   var shell = null;
 

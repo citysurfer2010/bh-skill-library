@@ -98,6 +98,10 @@ function migrate(conn) {
     CREATE TABLE IF NOT EXISTS loan_aliases (alias TEXT PRIMARY KEY, ref TEXT NOT NULL);
     -- Depot and other assets the banks do not report: a value per name and date, entered on the page "Vermögen".
     CREATE TABLE IF NOT EXISTS wealth_assets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, kind TEXT NOT NULL, value_cents INTEGER NOT NULL, as_of TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE (name, as_of));
+    -- Einkommensteuer per year (lib/tax-years.js): status, refund (+) or back payment (-), dates, links.
+    CREATE TABLE IF NOT EXISTS tax_years (year INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'in Vorbereitung', refund_cents INTEGER, filed_on TEXT, notice_on TEXT, drive_url TEXT, draft_url TEXT, invoices_url TEXT, note TEXT NOT NULL DEFAULT '');
+    -- Documents still to get or scan for a tax year (lib/doc-todos.js).
+    CREATE TABLE IF NOT EXISTS doc_todos (id INTEGER PRIMARY KEY AUTOINCREMENT, year INTEGER NOT NULL, title TEXT NOT NULL, unit TEXT NOT NULL DEFAULT '', kind TEXT NOT NULL DEFAULT 'Besorgen', note TEXT NOT NULL DEFAULT '', done_at TEXT, created_at TEXT NOT NULL);
     -- Positions of a depot export (lib/depot.js): the value of the depot on that day is their sum.
     CREATE TABLE IF NOT EXISTS wealth_positions (asset_name TEXT NOT NULL, as_of TEXT NOT NULL, name TEXT NOT NULL, wkn TEXT NOT NULL DEFAULT '', isin TEXT NOT NULL DEFAULT '', qty REAL NOT NULL, price_cents INTEGER NOT NULL, value_cents INTEGER NOT NULL, invested_cents INTEGER, asset_class TEXT NOT NULL DEFAULT '');
     -- Drive folder of each flat and its financing papers (scripts/import-estate-links.js); kept across sheet imports.

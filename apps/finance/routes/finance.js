@@ -26,13 +26,23 @@ function sameOrigin(req, res, next) {
 
 function buildRouter() {
   const r = express.Router();
-  r.use(['/overview', '/investments', '/loans', '/estate', '/housing', '/wealth', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
+  r.use(['/overview', '/investments', '/loans', '/estate', '/housing', '/wealth', '/todos', '/tax', '/categories', '/transactions', '/imports', '/access', '/accounts'], sameOrigin, requireFinance);
   r.get('/overview', (req, res) => res.json(report.overview(yearOf(req.query.year))));
   r.get('/investments', (req, res) => res.json(report.investments(yearOf(req.query.year))));
   r.get('/loans', (_req, res) => res.json(require('../lib/loans').overview()));
   r.get('/estate', (_req, res) => res.json(require('../lib/loans').estate()));
   r.get('/housing', (_req, res) => res.json(require('../lib/housing').overview()));
   r.get('/wealth', (_req, res) => res.json(require('../lib/wealth').overview()));
+  // Unterlagen: documents still to get or scan per tax year.
+  const todo = (fn) => (req, res) => { try { return fn(req, res, require('../lib/doc-todos')); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); } };
+  r.get('/todos', todo((req, res, t) => res.json(t.list(req.query.year))));
+  // Modul Einkommensteuer: years with status and refunds, one year with its documents.
+  r.get('/tax', todo((_req, res) => res.json(require('../lib/tax-years').list())));
+  r.get('/tax/:year', todo((req, res) => res.json(require('../lib/tax-years').get(req.params.year))));
+  r.put('/tax/:year', todo((req, res) => { require('../lib/tax-years').save(req.params.year, req.body || {}); return res.status(204).end(); }));
+  r.post('/todos', todo((req, res, t) => res.status(201).json({ id: t.add(req.body || {}) })));
+  r.patch('/todos/:id', todo((req, res, t) => (t.update(req.params.id, req.body || {}) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' }))));
+  r.delete('/todos/:id', todo((req, res, t) => (t.remove(req.params.id) ? res.status(204).end() : res.status(404).json({ error: 'Nicht gefunden' }))));
   r.post('/wealth/assets', (req, res) => {
     try { require('../lib/wealth').addAsset({ name: req.body?.name, kind: req.body?.kind, value_cents: req.body?.value_cents, as_of: req.body?.as_of, url: req.body?.url }); return res.status(204).end(); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); }
   });

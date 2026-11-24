@@ -147,3 +147,12 @@
 .fin-rbw-chart .fin-cross { stroke: var(--bh-muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .fin-rbw-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; margin: 16px 0 0; font-size: 14px; }
 .fin-rbw-legend + .fin-rbw-chart { margin-top: 4px; }
+
+/* Unterlagen */
+.fin-todo-tick { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 2px solid var(--bh-border-mid); border-radius: var(--bh-radius-sm); background: var(--bh-surface); color: transparent; cursor: pointer; }
+.fin-todo-tick svg { width: 18px; height: 18px; }
+.fin-todo-tick:hover { border-color: var(--bh-primary); }
+.fin-todo-tick:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--bh-focus-ring); }
+.fin-todo-tick.is-done { border-color: var(--bh-ok); background: var(--bh-ok-bg); color: var(--bh-ok); }
+.fin-tax-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.fin-neg { color: var(--bh-danger); }

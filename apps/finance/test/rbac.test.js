@@ -142,3 +142,20 @@ test('POST /api/wealth/depot: without login 401, as user 403', async () => {
   assert.equal((await t.call('/api/wealth/depot', { method: 'POST', body: {} })).status, 401);
   assert.equal((await t.call('/api/wealth/depot', { method: 'POST', body: {}, as: 'u@beispiel.de', role: 'user' })).status, 403);
 });
+
+test('Unterlagen /api/todos: ohne Login 401, als user 403, als admin anlegen, abhaken, löschen', async () => {
+  assert.equal((await t.call('/api/todos')).status, 401);
+  assert.equal((await t.call('/api/todos', { as: 'u@beispiel.de', role: 'user' })).status, 403);
+  const c = await t.call('/api/todos', { method: 'POST', body: { year: 2030, title: 'Test-Unterlage' }, as: 'a@beispiel.de', role: 'admin' });
+  assert.equal(c.status, 201); const { id } = await c.json();
+  assert.equal((await t.call(`/api/todos/${id}`, { method: 'PATCH', body: { done: true }, as: 'a@beispiel.de', role: 'admin' })).status, 204);
+  assert.equal((await t.call(`/api/todos/${id}`, { method: 'DELETE', as: 'a@beispiel.de', role: 'admin' })).status, 204);
+  assert.equal((await t.call('/api/todos', { method: 'POST', body: { year: 2030, title: '' }, as: 'a@beispiel.de', role: 'admin' })).status, 400);
+});
+
+test('Einkommensteuer /api/tax: ohne Login 401, als user 403, als admin lesen und speichern', async () => {
+  assert.equal((await t.call('/api/tax')).status, 401);
+  assert.equal((await t.call('/api/tax', { as: 'u@beispiel.de', role: 'user' })).status, 403);
+  assert.equal((await t.call('/api/tax/2031', { method: 'PUT', body: { status: 'eingereicht' }, as: 'a@beispiel.de', role: 'admin' })).status, 204);
+  const r = await t.call('/api/tax/2031', { as: 'a@beispiel.de', role: 'admin' }); assert.equal(r.status, 200); assert.equal((await r.json()).year.status, 'eingereicht');
+});
