@@ -156,3 +156,4 @@
 .fin-todo-tick.is-done { border-color: var(--bh-ok); background: var(--bh-ok-bg); color: var(--bh-ok); }
 .fin-tax-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
 .fin-neg { color: var(--bh-danger); }
+.fin-tax-years .fin-hint { margin: 2px 0 0; font-size: 12px; font-weight: 400; }

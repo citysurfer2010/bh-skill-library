@@ -42,3 +42,25 @@ test('tax years: list merges years with documents, total counts only years with 
   assert.throws(() => tax.save(2027, { drive_url: 'javascript:x' }), /https/);
   assert.throws(() => tax.save(2027, { status: 'irgendwas' }), /Status/);
 });
+
+test('tax years: payout, advisor fee and result after advice; final documents must be https', () => {
+  const tax = require('../lib/tax-years');
+  tax.save(2026, { status: 'abgeschlossen', refund_cents: 200000, paid_on: '2027-04-01', paid_cents: 190000, advisor_cents: 50000, return_url: 'https://drive.example.com/r', notice_url: 'https://drive.example.com/n' });
+  tax.save(2025, { status: 'Bescheid erhalten', refund_cents: 30000, advisor_cents: 10000 });
+  tax.save(2024, { status: 'eingereicht', refund_cents: 70000, advisor_cents: 5000 });
+  const t = tax.get(2026).year;
+  assert.equal(t.net_cents, 140000);
+  assert.equal(t.return_url, 'https://drive.example.com/r');
+  assert.equal(tax.get(2025).year.net_cents, 20000, 'without payout the notice counts');
+  assert.equal(tax.get(2024).year.net_cents, -5000, 'filed only: just the fee');
+  assert.equal(tax.net({ status: 'in Vorbereitung', refund_cents: 1 }), null);
+  const l = tax.list();
+  assert.equal(l.total_advisor_cents, 65000);
+  assert.equal(l.total_paid_cents, 190000);
+  assert.ok(l.items.find((r) => r.year === 2026).net_cents === 140000);
+  tax.save(2026, { note: 'x' });
+  assert.equal(tax.get(2026).year.paid_cents, 190000, 'partial save keeps the other fields');
+  assert.throws(() => tax.save(2026, { notice_url: 'http://x' }), /https/);
+  assert.throws(() => tax.save(2026, { advisor_cents: -1 }), /Berater/);
+  assert.throws(() => tax.save(2026, { paid_on: '1.4.2027' }), /Datum/);
+});

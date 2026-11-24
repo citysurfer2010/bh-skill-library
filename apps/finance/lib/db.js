@@ -126,6 +126,10 @@ function migrate(conn) {
   // Optional link per asset (22.11.2026: portal of an employee participation), kept across value points.
   if (!conn.prepare('PRAGMA table_info(wealth_assets)').all().some((c) => c.name === 'url')) conn.exec('ALTER TABLE wealth_assets ADD COLUMN url TEXT');
   if (!conn.prepare('PRAGMA table_info(transactions)').all().some((c) => c.name === 'bank_ref')) conn.exec('ALTER TABLE transactions ADD COLUMN bank_ref TEXT');
+  // Final documents, payout by the tax office and advisor fee per tax year (24.11.2026).
+  const taxCols = conn.prepare('PRAGMA table_info(tax_years)').all().map((c) => c.name);
+  for (const col of ['return_url', 'notice_url', 'paid_on']) if (!taxCols.includes(col)) conn.exec(`ALTER TABLE tax_years ADD COLUMN ${col} TEXT`);
+  for (const col of ['paid_cents', 'advisor_cents']) if (!taxCols.includes(col)) conn.exec(`ALTER TABLE tax_years ADD COLUMN ${col} INTEGER`);
   conn.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_bank_ref ON transactions(account, bank_ref) WHERE bank_ref IS NOT NULL; CREATE INDEX IF NOT EXISTS idx_tx_account_amount ON transactions(account, amount_cents, booked_on);');
 }
 
